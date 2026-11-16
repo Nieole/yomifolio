@@ -1,0 +1,421 @@
+# Collected dependency manifest
+
+Generated 2026-11-16. Labels come from lock metadata, not legal conclusions. Missing entries are explicit; a link is not a replacement for required license text.
+
+| Ecosystem | Package/version | Scope | Source | Texts |
+|---|---|---|---|---|
+| Go | github.com/chai2010/webp v1.4.0 | full module graph; not linkage proof | https://proxy.golang.org/github.com/chai2010/webp/@v/v1.4.0.zip | [LICENSE](LICENSES/go/github.com/chai2010/webp@v1.4.0/LICENSE), [AUTHORS](LICENSES/go/github.com/chai2010/webp@v1.4.0/internal/libwebp-1.4.0/AUTHORS), [COPYING](LICENSES/go/github.com/chai2010/webp@v1.4.0/internal/libwebp-1.4.0/COPYING), [PATENTS](LICENSES/go/github.com/chai2010/webp@v1.4.0/internal/libwebp-1.4.0/PATENTS) |
+| Go | github.com/disintegration/imaging v1.6.2 | full module graph; not linkage proof | https://proxy.golang.org/github.com/disintegration/imaging/@v/v1.6.2.zip | [LICENSE](LICENSES/go/github.com/disintegration/imaging@v1.6.2/LICENSE) |
+| Go | github.com/dustin/go-humanize v1.0.1 | full module graph; not linkage proof | https://proxy.golang.org/github.com/dustin/go-humanize/@v/v1.0.1.zip | [LICENSE](LICENSES/go/github.com/dustin/go-humanize@v1.0.1/LICENSE) |
+| Go | github.com/ebitengine/purego v0.10.1 | full module graph; not linkage proof | https://proxy.golang.org/github.com/ebitengine/purego/@v/v0.10.1.zip | [LICENSE](LICENSES/go/github.com/ebitengine/purego@v0.10.1/LICENSE) |
+| Go | github.com/fsnotify/fsnotify v1.10.1 | full module graph; not linkage proof | https://proxy.golang.org/github.com/fsnotify/fsnotify/@v/v1.10.1.zip | [LICENSE](LICENSES/go/github.com/fsnotify/fsnotify@v1.10.1/LICENSE) |
+| Go | github.com/gen2brain/avif v0.6.0 | full module graph; not linkage proof | https://proxy.golang.org/github.com/gen2brain/avif/@v/v0.6.0.zip | [LICENSE](LICENSES/go/github.com/gen2brain/avif@v0.6.0/LICENSE), [LICENSE.aom](LICENSES/go/github.com/gen2brain/avif@v0.6.0/lib/LICENSE.aom), [LICENSE.libavif](LICENSES/go/github.com/gen2brain/avif@v0.6.0/lib/LICENSE.libavif) |
+| Go | github.com/go-chi/chi/v5 v5.3.2 | full module graph; not linkage proof | https://proxy.golang.org/github.com/go-chi/chi/v5/@v/v5.3.2.zip | [LICENSE](LICENSES/go/github.com/go-chi/chi/v5@v5.3.2/LICENSE) |
+| Go | github.com/go-chi/cors v1.2.2 | full module graph; not linkage proof | https://proxy.golang.org/github.com/go-chi/cors/@v/v1.2.2.zip | [LICENSE](LICENSES/go/github.com/go-chi/cors@v1.2.2/LICENSE) |
+| Go | github.com/google/pprof v0.0.0-20260802141513-ef3492d7dac3 | full module graph; not linkage proof | https://proxy.golang.org/github.com/google/pprof/@v/v0.0.0-20260802141513-ef3492d7dac3.zip | **MISSING** |
+| Go | github.com/google/uuid v1.6.0 | full module graph; not linkage proof | https://proxy.golang.org/github.com/google/uuid/@v/v1.6.0.zip | [LICENSE](LICENSES/go/github.com/google/uuid@v1.6.0/LICENSE) |
+| Go | github.com/hashicorp/golang-lru/v2 v2.0.7 | full module graph; not linkage proof | https://proxy.golang.org/github.com/hashicorp/golang-lru/v2/@v/v2.0.7.zip | [LICENSE](LICENSES/go/github.com/hashicorp/golang-lru/v2@v2.0.7/LICENSE), [LICENSE_list](LICENSES/go/github.com/hashicorp/golang-lru/v2@v2.0.7/simplelru/LICENSE_list) |
+| Go | github.com/mattn/go-isatty v0.0.24 | full module graph; not linkage proof | https://proxy.golang.org/github.com/mattn/go-isatty/@v/v0.0.24.zip | [LICENSE](LICENSES/go/github.com/mattn/go-isatty@v0.0.24/LICENSE) |
+| Go | github.com/mozillazg/go-pinyin v0.21.0 | full module graph; not linkage proof | https://proxy.golang.org/github.com/mozillazg/go-pinyin/@v/v0.21.0.zip | [LICENSE](LICENSES/go/github.com/mozillazg/go-pinyin@v0.21.0/LICENSE) |
+| Go | github.com/ncruces/go-strftime v1.0.0 | full module graph; not linkage proof | https://proxy.golang.org/github.com/ncruces/go-strftime/@v/v1.0.0.zip | [LICENSE](LICENSES/go/github.com/ncruces/go-strftime@v1.0.0/LICENSE) |
+| Go | github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 | full module graph; not linkage proof | https://proxy.golang.org/github.com/nfnt/resize/@v/v0.0.0-20180221191011-83c6a9932646.zip | [LICENSE](LICENSES/go/github.com/nfnt/resize@v0.0.0-20180221191011-83c6a9932646/LICENSE) |
+| Go | github.com/nwaples/rardecode/v2 v2.4.1 | full module graph; not linkage proof | https://proxy.golang.org/github.com/nwaples/rardecode/v2/@v/v2.4.1.zip | [LICENSE](LICENSES/go/github.com/nwaples/rardecode/v2@v2.4.1/LICENSE) |
+| Go | github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec | full module graph; not linkage proof | https://proxy.golang.org/github.com/remyoudompheng/bigfft/@v/v0.0.0-20230129092748-24d4a6f8daec.zip | [LICENSE](LICENSES/go/github.com/remyoudompheng/bigfft@v0.0.0-20230129092748-24d4a6f8daec/LICENSE) |
+| Go | github.com/tetratelabs/wazero v1.12.0 | full module graph; not linkage proof | https://proxy.golang.org/github.com/tetratelabs/wazero/@v/v1.12.0.zip | [LICENSE](LICENSES/go/github.com/tetratelabs/wazero@v1.12.0/LICENSE), [NOTICE](LICENSES/go/github.com/tetratelabs/wazero@v1.12.0/NOTICE) |
+| Go | golang.org/x/crypto v0.55.0 | full module graph; not linkage proof | https://proxy.golang.org/golang.org/x/crypto/@v/v0.55.0.zip | [LICENSE](LICENSES/go/golang.org/x/crypto@v0.55.0/LICENSE), [PATENTS](LICENSES/go/golang.org/x/crypto@v0.55.0/PATENTS) |
+| Go | golang.org/x/image v0.45.0 | full module graph; not linkage proof | https://proxy.golang.org/golang.org/x/image/@v/v0.45.0.zip | [LICENSE](LICENSES/go/golang.org/x/image@v0.45.0/LICENSE), [PATENTS](LICENSES/go/golang.org/x/image@v0.45.0/PATENTS) |
+| Go | golang.org/x/mod v0.37.0 | full module graph; not linkage proof | https://proxy.golang.org/golang.org/x/mod/@v/v0.37.0.zip | **MISSING** |
+| Go | golang.org/x/net v0.57.0 | full module graph; not linkage proof | https://proxy.golang.org/golang.org/x/net/@v/v0.57.0.zip | **MISSING** |
+| Go | golang.org/x/sync v0.22.0 | full module graph; not linkage proof | https://proxy.golang.org/golang.org/x/sync/@v/v0.22.0.zip | [LICENSE](LICENSES/go/golang.org/x/sync@v0.22.0/LICENSE), [PATENTS](LICENSES/go/golang.org/x/sync@v0.22.0/PATENTS) |
+| Go | golang.org/x/sys v0.47.0 | full module graph; not linkage proof | https://proxy.golang.org/golang.org/x/sys/@v/v0.47.0.zip | [LICENSE](LICENSES/go/golang.org/x/sys@v0.47.0/LICENSE), [PATENTS](LICENSES/go/golang.org/x/sys@v0.47.0/PATENTS) |
+| Go | golang.org/x/term v0.45.0 | full module graph; not linkage proof | https://proxy.golang.org/golang.org/x/term/@v/v0.45.0.zip | **MISSING** |
+| Go | golang.org/x/text v0.41.0 | full module graph; not linkage proof | https://proxy.golang.org/golang.org/x/text/@v/v0.41.0.zip | **MISSING** |
+| Go | golang.org/x/tools v0.47.0 | full module graph; not linkage proof | https://proxy.golang.org/golang.org/x/tools/@v/v0.47.0.zip | **MISSING** |
+| Go | gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 | full module graph; not linkage proof | https://proxy.golang.org/gopkg.in/check.v1/@v/v0.0.0-20161208181325-20d25e280405.zip | **MISSING** |
+| Go | gopkg.in/natefinch/lumberjack.v2 v2.2.1 | full module graph; not linkage proof | https://proxy.golang.org/gopkg.in/natefinch/lumberjack.v2/@v/v2.2.1.zip | [LICENSE](LICENSES/go/gopkg.in/natefinch/lumberjack.v2@v2.2.1/LICENSE) |
+| Go | gopkg.in/yaml.v3 v3.0.1 | full module graph; not linkage proof | https://proxy.golang.org/gopkg.in/yaml.v3/@v/v3.0.1.zip | [LICENSE](LICENSES/go/gopkg.in/yaml.v3@v3.0.1/LICENSE), [NOTICE](LICENSES/go/gopkg.in/yaml.v3@v3.0.1/NOTICE) |
+| Go | modernc.org/cc/v4 v4.29.1 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/cc/v4/@v/v4.29.1.zip | **MISSING** |
+| Go | modernc.org/ccgo/v4 v4.34.6 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/ccgo/v4/@v/v4.34.6.zip | **MISSING** |
+| Go | modernc.org/fileutil v1.4.0 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/fileutil/@v/v1.4.0.zip | **MISSING** |
+| Go | modernc.org/gc/v2 v2.6.5 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/gc/v2/@v/v2.6.5.zip | **MISSING** |
+| Go | modernc.org/gc/v3 v3.1.4 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/gc/v3/@v/v3.1.4.zip | **MISSING** |
+| Go | modernc.org/goabi0 v0.2.0 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/goabi0/@v/v0.2.0.zip | **MISSING** |
+| Go | modernc.org/libc v1.74.4 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/libc/@v/v1.74.4.zip | [AUTHORS](LICENSES/go/modernc.org/libc@v1.74.4/AUTHORS), [LICENSE](LICENSES/go/modernc.org/libc@v1.74.4/LICENSE), [LICENSE-3RD-PARTY.md](LICENSES/go/modernc.org/libc@v1.74.4/LICENSE-3RD-PARTY.md) |
+| Go | modernc.org/mathutil v1.7.1 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/mathutil/@v/v1.7.1.zip | [AUTHORS](LICENSES/go/modernc.org/mathutil@v1.7.1/AUTHORS), [LICENSE](LICENSES/go/modernc.org/mathutil@v1.7.1/LICENSE), [AUTHORS](LICENSES/go/modernc.org/mathutil@v1.7.1/mersenne/AUTHORS), [LICENSE](LICENSES/go/modernc.org/mathutil@v1.7.1/mersenne/LICENSE) |
+| Go | modernc.org/memory v1.11.0 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/memory/@v/v1.11.0.zip | [AUTHORS](LICENSES/go/modernc.org/memory@v1.11.0/AUTHORS), [LICENSE](LICENSES/go/modernc.org/memory@v1.11.0/LICENSE), [LICENSE-GO](LICENSES/go/modernc.org/memory@v1.11.0/LICENSE-GO), [LICENSE-LOGO](LICENSES/go/modernc.org/memory@v1.11.0/LICENSE-LOGO), [LICENSE-MMAP-GO](LICENSES/go/modernc.org/memory@v1.11.0/LICENSE-MMAP-GO) |
+| Go | modernc.org/opt v0.2.0 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/opt/@v/v0.2.0.zip | **MISSING** |
+| Go | modernc.org/sortutil v1.2.1 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/sortutil/@v/v1.2.1.zip | **MISSING** |
+| Go | modernc.org/sqlite v1.57.0 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/sqlite/@v/v1.57.0.zip | [AUTHORS](LICENSES/go/modernc.org/sqlite@v1.57.0/AUTHORS), [LICENSE](LICENSES/go/modernc.org/sqlite@v1.57.0/LICENSE), [LICENSE-SQLITE](LICENSES/go/modernc.org/sqlite@v1.57.0/LICENSE-SQLITE), [LICENSE-SQLITE_VEC](LICENSES/go/modernc.org/sqlite@v1.57.0/LICENSE-SQLITE_VEC) |
+| Go | modernc.org/strutil v1.2.1 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/strutil/@v/v1.2.1.zip | **MISSING** |
+| Go | modernc.org/token v1.1.0 | full module graph; not linkage proof | https://proxy.golang.org/modernc.org/token/@v/v1.1.0.zip | **MISSING** |
+| NPM | @asamuzakjp/css-color 7.0.1 | dev/build-only possible | https://registry.npmjs.org/@asamuzakjp/css-color/-/css-color-7.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/@asamuzakjp/css-color/7.0.1/LICENSE) |
+| NPM | lru-cache 11.5.3 | dev/build-only possible | https://registry.npmjs.org/lru-cache/-/lru-cache-11.5.3.tgz | [LICENSE.md](LICENSES/npm/node_modules/@asamuzakjp/css-color/node_modules/lru-cache/11.5.3/LICENSE.md) |
+| NPM | @asamuzakjp/dom-selector 9.2.1 | dev/build-only possible | https://registry.npmjs.org/@asamuzakjp/dom-selector/-/dom-selector-9.2.1.tgz | [LICENSE](LICENSES/npm/node_modules/@asamuzakjp/dom-selector/9.2.1/LICENSE) |
+| NPM | lru-cache 11.5.3 | dev/build-only possible | https://registry.npmjs.org/lru-cache/-/lru-cache-11.5.3.tgz | [LICENSE.md](LICENSES/npm/node_modules/@asamuzakjp/dom-selector/node_modules/lru-cache/11.5.3/LICENSE.md) |
+| NPM | @babel/code-frame 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/code-frame/7.29.7/LICENSE) |
+| NPM | @babel/compat-data 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/compat-data/-/compat-data-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/compat-data/7.29.7/LICENSE) |
+| NPM | @babel/core 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/core/-/core-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/core/7.29.7/LICENSE) |
+| NPM | @babel/generator 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/generator/-/generator-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/generator/7.29.7/LICENSE) |
+| NPM | @babel/helper-compilation-targets 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/helper-compilation-targets/-/helper-compilation-targets-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/helper-compilation-targets/7.29.7/LICENSE) |
+| NPM | @babel/helper-globals 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/helper-globals/-/helper-globals-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/helper-globals/7.29.7/LICENSE) |
+| NPM | @babel/helper-module-imports 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/helper-module-imports/-/helper-module-imports-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/helper-module-imports/7.29.7/LICENSE) |
+| NPM | @babel/helper-module-transforms 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/helper-module-transforms/-/helper-module-transforms-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/helper-module-transforms/7.29.7/LICENSE) |
+| NPM | @babel/helper-string-parser 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/helper-string-parser/7.29.7/LICENSE) |
+| NPM | @babel/helper-validator-identifier 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/helper-validator-identifier/7.29.7/LICENSE) |
+| NPM | @babel/helper-validator-option 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/helper-validator-option/-/helper-validator-option-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/helper-validator-option/7.29.7/LICENSE) |
+| NPM | @babel/helpers 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/helpers/-/helpers-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/helpers/7.29.7/LICENSE) |
+| NPM | @babel/parser 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/parser/-/parser-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/parser/7.29.7/LICENSE) |
+| NPM | @babel/runtime 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/runtime/-/runtime-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/runtime/7.29.7/LICENSE) |
+| NPM | @babel/template 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/template/-/template-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/template/7.29.7/LICENSE) |
+| NPM | @babel/traverse 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/traverse/-/traverse-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/traverse/7.29.7/LICENSE) |
+| NPM | @babel/types 7.29.7 | dev/build-only possible | https://registry.npmjs.org/@babel/types/-/types-7.29.7.tgz | [LICENSE](LICENSES/npm/node_modules/@babel/types/7.29.7/LICENSE) |
+| NPM | @bramus/specificity 2.4.2 | dev/build-only possible | https://registry.npmjs.org/@bramus/specificity/-/specificity-2.4.2.tgz | [LICENSE](LICENSES/npm/node_modules/@bramus/specificity/2.4.2/LICENSE) |
+| NPM | @cacheable/memory 2.2.0 | dev/build-only possible | https://registry.npmjs.org/@cacheable/memory/-/memory-2.2.0.tgz | [LICENSE](LICENSES/npm/node_modules/@cacheable/memory/2.2.0/LICENSE) |
+| NPM | @cacheable/utils 2.5.0 | dev/build-only possible | https://registry.npmjs.org/@cacheable/utils/-/utils-2.5.0.tgz | [LICENSE](LICENSES/npm/node_modules/@cacheable/utils/2.5.0/LICENSE) |
+| NPM | @csstools/color-helpers 6.1.1 | dev/build-only possible | https://registry.npmjs.org/@csstools/color-helpers/-/color-helpers-6.1.1.tgz | [LICENSE.md](LICENSES/npm/node_modules/@csstools/color-helpers/6.1.1/LICENSE.md) |
+| NPM | @csstools/css-calc 3.4.0 | dev/build-only possible | https://registry.npmjs.org/@csstools/css-calc/-/css-calc-3.4.0.tgz | [LICENSE.md](LICENSES/npm/node_modules/@csstools/css-calc/3.4.0/LICENSE.md) |
+| NPM | @csstools/css-color-parser 4.2.3 | dev/build-only possible | https://registry.npmjs.org/@csstools/css-color-parser/-/css-color-parser-4.2.3.tgz | [LICENSE.md](LICENSES/npm/node_modules/@csstools/css-color-parser/4.2.3/LICENSE.md) |
+| NPM | @csstools/css-parser-algorithms 4.0.0 | dev/build-only possible | https://registry.npmjs.org/@csstools/css-parser-algorithms/-/css-parser-algorithms-4.0.0.tgz | [LICENSE.md](LICENSES/npm/node_modules/@csstools/css-parser-algorithms/4.0.0/LICENSE.md) |
+| NPM | @csstools/css-syntax-patches-for-csstree 1.1.14 | dev/build-only possible | https://registry.npmjs.org/@csstools/css-syntax-patches-for-csstree/-/css-syntax-patches-for-csstree-1.1.14.tgz | [LICENSE.md](LICENSES/npm/node_modules/@csstools/css-syntax-patches-for-csstree/1.1.14/LICENSE.md) |
+| NPM | @csstools/css-tokenizer 4.0.1 | dev/build-only possible | https://registry.npmjs.org/@csstools/css-tokenizer/-/css-tokenizer-4.0.1.tgz | [LICENSE.md](LICENSES/npm/node_modules/@csstools/css-tokenizer/4.0.1/LICENSE.md) |
+| NPM | @emnapi/core 1.11.1 | dev/build-only possible | https://registry.npmjs.org/@emnapi/core/-/core-1.11.1.tgz | not installed (optional/platform entry) |
+| NPM | @emnapi/runtime 1.11.1 | dev/build-only possible | https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.11.1.tgz | not installed (optional/platform entry) |
+| NPM | @emnapi/wasi-threads 1.2.2 | dev/build-only possible | https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.2.tgz | not installed (optional/platform entry) |
+| NPM | @eslint-community/eslint-utils 4.9.1 | dev/build-only possible | https://registry.npmjs.org/@eslint-community/eslint-utils/-/eslint-utils-4.9.1.tgz | [LICENSE](LICENSES/npm/node_modules/@eslint-community/eslint-utils/4.9.1/LICENSE) |
+| NPM | eslint-visitor-keys 3.4.3 | dev/build-only possible | https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-3.4.3.tgz | [LICENSE](LICENSES/npm/node_modules/@eslint-community/eslint-utils/node_modules/eslint-visitor-keys/3.4.3/LICENSE) |
+| NPM | @eslint-community/regexpp 4.12.2 | dev/build-only possible | https://registry.npmjs.org/@eslint-community/regexpp/-/regexpp-4.12.2.tgz | [LICENSE](LICENSES/npm/node_modules/@eslint-community/regexpp/4.12.2/LICENSE) |
+| NPM | @eslint/config-array 0.23.5 | dev/build-only possible | https://registry.npmjs.org/@eslint/config-array/-/config-array-0.23.5.tgz | [LICENSE](LICENSES/npm/node_modules/@eslint/config-array/0.23.5/LICENSE) |
+| NPM | @eslint/config-helpers 0.7.0 | dev/build-only possible | https://registry.npmjs.org/@eslint/config-helpers/-/config-helpers-0.7.0.tgz | [LICENSE](LICENSES/npm/node_modules/@eslint/config-helpers/0.7.0/LICENSE) |
+| NPM | @eslint/core 1.2.1 | dev/build-only possible | https://registry.npmjs.org/@eslint/core/-/core-1.2.1.tgz | [LICENSE](LICENSES/npm/node_modules/@eslint/core/1.2.1/LICENSE) |
+| NPM | @eslint/js 10.0.1 | dev/build-only possible | https://registry.npmjs.org/@eslint/js/-/js-10.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/@eslint/js/10.0.1/LICENSE) |
+| NPM | @eslint/object-schema 3.0.5 | dev/build-only possible | https://registry.npmjs.org/@eslint/object-schema/-/object-schema-3.0.5.tgz | [LICENSE](LICENSES/npm/node_modules/@eslint/object-schema/3.0.5/LICENSE) |
+| NPM | @eslint/plugin-kit 0.7.3 | dev/build-only possible | https://registry.npmjs.org/@eslint/plugin-kit/-/plugin-kit-0.7.3.tgz | [LICENSE](LICENSES/npm/node_modules/@eslint/plugin-kit/0.7.3/LICENSE) |
+| NPM | @exodus/bytes 1.15.1 | dev/build-only possible | https://registry.npmjs.org/@exodus/bytes/-/bytes-1.15.1.tgz | [LICENSE](LICENSES/npm/node_modules/@exodus/bytes/1.15.1/LICENSE) |
+| NPM | @humanfs/core 0.19.1 | dev/build-only possible | https://registry.npmjs.org/@humanfs/core/-/core-0.19.1.tgz | [LICENSE](LICENSES/npm/node_modules/@humanfs/core/0.19.1/LICENSE) |
+| NPM | @humanfs/node 0.16.7 | dev/build-only possible | https://registry.npmjs.org/@humanfs/node/-/node-0.16.7.tgz | [LICENSE](LICENSES/npm/node_modules/@humanfs/node/0.16.7/LICENSE) |
+| NPM | @humanwhocodes/module-importer 1.0.1 | dev/build-only possible | https://registry.npmjs.org/@humanwhocodes/module-importer/-/module-importer-1.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/@humanwhocodes/module-importer/1.0.1/LICENSE) |
+| NPM | @humanwhocodes/retry 0.4.3 | dev/build-only possible | https://registry.npmjs.org/@humanwhocodes/retry/-/retry-0.4.3.tgz | [LICENSE](LICENSES/npm/node_modules/@humanwhocodes/retry/0.4.3/LICENSE) |
+| NPM | @jridgewell/gen-mapping 0.3.13 | dev/build-only possible | https://registry.npmjs.org/@jridgewell/gen-mapping/-/gen-mapping-0.3.13.tgz | [LICENSE](LICENSES/npm/node_modules/@jridgewell/gen-mapping/0.3.13/LICENSE) |
+| NPM | @jridgewell/remapping 2.3.5 | dev/build-only possible | https://registry.npmjs.org/@jridgewell/remapping/-/remapping-2.3.5.tgz | [LICENSE](LICENSES/npm/node_modules/@jridgewell/remapping/2.3.5/LICENSE) |
+| NPM | @jridgewell/resolve-uri 3.1.2 | dev/build-only possible | https://registry.npmjs.org/@jridgewell/resolve-uri/-/resolve-uri-3.1.2.tgz | [LICENSE](LICENSES/npm/node_modules/@jridgewell/resolve-uri/3.1.2/LICENSE) |
+| NPM | @jridgewell/sourcemap-codec 1.6.0 | dev/build-only possible | https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.6.0.tgz | [LICENSE](LICENSES/npm/node_modules/@jridgewell/sourcemap-codec/1.6.0/LICENSE) |
+| NPM | @jridgewell/trace-mapping 0.3.31 | dev/build-only possible | https://registry.npmjs.org/@jridgewell/trace-mapping/-/trace-mapping-0.3.31.tgz | [LICENSE](LICENSES/npm/node_modules/@jridgewell/trace-mapping/0.3.31/LICENSE) |
+| NPM | @keyv/bigmap 1.3.1 | dev/build-only possible | https://registry.npmjs.org/@keyv/bigmap/-/bigmap-1.3.1.tgz | [LICENSE](LICENSES/npm/node_modules/@keyv/bigmap/1.3.1/LICENSE) |
+| NPM | @keyv/serialize 1.1.1 | dev/build-only possible | https://registry.npmjs.org/@keyv/serialize/-/serialize-1.1.1.tgz | [LICENSE](LICENSES/npm/node_modules/@keyv/serialize/1.1.1/LICENSE) |
+| NPM | @napi-rs/wasm-runtime 1.2.1 | dev/build-only possible | https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-1.2.1.tgz | not installed (optional/platform entry) |
+| NPM | @oxc-project/types 0.150.0 | dev/build-only possible | https://registry.npmjs.org/@oxc-project/types/-/types-0.150.0.tgz | [LICENSE](LICENSES/npm/node_modules/@oxc-project/types/0.150.0/LICENSE) |
+| NPM | @rolldown/binding-android-arm-eabi 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-android-arm-eabi/-/binding-android-arm-eabi-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-android-arm64 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-android-arm64/-/binding-android-arm64-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-darwin-arm64 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-darwin-arm64/-/binding-darwin-arm64-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-darwin-x64 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-darwin-x64/-/binding-darwin-x64-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-freebsd-x64 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-freebsd-x64/-/binding-freebsd-x64-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-linux-arm-gnueabihf 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-linux-arm-gnueabihf/-/binding-linux-arm-gnueabihf-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-linux-arm64-gnu 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-linux-arm64-gnu/-/binding-linux-arm64-gnu-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-linux-arm64-musl 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-linux-arm64-musl/-/binding-linux-arm64-musl-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-linux-ppc64-gnu 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-linux-ppc64-gnu/-/binding-linux-ppc64-gnu-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-linux-s390x-gnu 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-linux-s390x-gnu/-/binding-linux-s390x-gnu-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-linux-x64-gnu 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-linux-x64-gnu/-/binding-linux-x64-gnu-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-linux-x64-musl 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-linux-x64-musl/-/binding-linux-x64-musl-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-openharmony-arm64 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-openharmony-arm64/-/binding-openharmony-arm64-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-win32-arm64-msvc 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-win32-arm64-msvc/-/binding-win32-arm64-msvc-1.2.9.tgz | not installed (optional/platform entry) |
+| NPM | @rolldown/binding-win32-x64-msvc 1.2.9 | dev/build-only possible | https://registry.npmjs.org/@rolldown/binding-win32-x64-msvc/-/binding-win32-x64-msvc-1.2.9.tgz | **MISSING** |
+| NPM | @rolldown/pluginutils 1.0.1 | dev/build-only possible | https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/@rolldown/pluginutils/1.0.1/LICENSE) |
+| NPM | @tailwindcss/node 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/node/-/node-4.3.3.tgz | [LICENSE](LICENSES/npm/node_modules/@tailwindcss/node/4.3.3/LICENSE) |
+| NPM | @tailwindcss/oxide 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/oxide/-/oxide-4.3.3.tgz | [LICENSE](LICENSES/npm/node_modules/@tailwindcss/oxide/4.3.3/LICENSE) |
+| NPM | @tailwindcss/oxide-android-arm64 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/oxide-android-arm64/-/oxide-android-arm64-4.3.3.tgz | not installed (optional/platform entry) |
+| NPM | @tailwindcss/oxide-darwin-arm64 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/oxide-darwin-arm64/-/oxide-darwin-arm64-4.3.3.tgz | not installed (optional/platform entry) |
+| NPM | @tailwindcss/oxide-darwin-x64 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/oxide-darwin-x64/-/oxide-darwin-x64-4.3.3.tgz | not installed (optional/platform entry) |
+| NPM | @tailwindcss/oxide-freebsd-x64 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/oxide-freebsd-x64/-/oxide-freebsd-x64-4.3.3.tgz | not installed (optional/platform entry) |
+| NPM | @tailwindcss/oxide-linux-arm-gnueabihf 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/oxide-linux-arm-gnueabihf/-/oxide-linux-arm-gnueabihf-4.3.3.tgz | not installed (optional/platform entry) |
+| NPM | @tailwindcss/oxide-linux-arm64-gnu 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/oxide-linux-arm64-gnu/-/oxide-linux-arm64-gnu-4.3.3.tgz | not installed (optional/platform entry) |
+| NPM | @tailwindcss/oxide-linux-arm64-musl 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/oxide-linux-arm64-musl/-/oxide-linux-arm64-musl-4.3.3.tgz | not installed (optional/platform entry) |
+| NPM | @tailwindcss/oxide-linux-x64-gnu 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/oxide-linux-x64-gnu/-/oxide-linux-x64-gnu-4.3.3.tgz | not installed (optional/platform entry) |
+| NPM | @tailwindcss/oxide-linux-x64-musl 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/oxide-linux-x64-musl/-/oxide-linux-x64-musl-4.3.3.tgz | not installed (optional/platform entry) |
+| NPM | @tailwindcss/oxide-wasm32-wasi 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/oxide-wasm32-wasi/-/oxide-wasm32-wasi-4.3.3.tgz | not installed (optional/platform entry) |
+| NPM | @tailwindcss/oxide-win32-arm64-msvc 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/oxide-win32-arm64-msvc/-/oxide-win32-arm64-msvc-4.3.3.tgz | not installed (optional/platform entry) |
+| NPM | @tailwindcss/oxide-win32-x64-msvc 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/oxide-win32-x64-msvc/-/oxide-win32-x64-msvc-4.3.3.tgz | [LICENSE](LICENSES/npm/node_modules/@tailwindcss/oxide-win32-x64-msvc/4.3.3/LICENSE) |
+| NPM | @tailwindcss/vite 4.3.3 | dev/build-only possible | https://registry.npmjs.org/@tailwindcss/vite/-/vite-4.3.3.tgz | [LICENSE](LICENSES/npm/node_modules/@tailwindcss/vite/4.3.3/LICENSE) |
+| NPM | @testing-library/dom 10.4.2 | dev/build-only possible | https://registry.npmjs.org/@testing-library/dom/-/dom-10.4.2.tgz | [LICENSE](LICENSES/npm/node_modules/@testing-library/dom/10.4.2/LICENSE) |
+| NPM | @testing-library/react 16.3.3 | dev/build-only possible | https://registry.npmjs.org/@testing-library/react/-/react-16.3.3.tgz | [LICENSE](LICENSES/npm/node_modules/@testing-library/react/16.3.3/LICENSE) |
+| NPM | @tybys/wasm-util 0.10.3 | dev/build-only possible | https://registry.npmjs.org/@tybys/wasm-util/-/wasm-util-0.10.3.tgz | not installed (optional/platform entry) |
+| NPM | @types/aria-query 5.0.4 | dev/build-only possible | https://registry.npmjs.org/@types/aria-query/-/aria-query-5.0.4.tgz | [LICENSE](LICENSES/npm/node_modules/@types/aria-query/5.0.4/LICENSE) |
+| NPM | @types/chai 5.2.3 | dev/build-only possible | https://registry.npmjs.org/@types/chai/-/chai-5.2.3.tgz | [LICENSE](LICENSES/npm/node_modules/@types/chai/5.2.3/LICENSE) |
+| NPM | @types/d3-color 3.1.3 | production or optional transitive | https://registry.npmjs.org/@types/d3-color/-/d3-color-3.1.3.tgz | [LICENSE](LICENSES/npm/node_modules/@types/d3-color/3.1.3/LICENSE) |
+| NPM | @types/d3-drag 3.0.7 | production or optional transitive | https://registry.npmjs.org/@types/d3-drag/-/d3-drag-3.0.7.tgz | [LICENSE](LICENSES/npm/node_modules/@types/d3-drag/3.0.7/LICENSE) |
+| NPM | @types/d3-interpolate 3.0.4 | production or optional transitive | https://registry.npmjs.org/@types/d3-interpolate/-/d3-interpolate-3.0.4.tgz | [LICENSE](LICENSES/npm/node_modules/@types/d3-interpolate/3.0.4/LICENSE) |
+| NPM | @types/d3-selection 3.0.12 | production or optional transitive | https://registry.npmjs.org/@types/d3-selection/-/d3-selection-3.0.12.tgz | [LICENSE](LICENSES/npm/node_modules/@types/d3-selection/3.0.12/LICENSE) |
+| NPM | @types/d3-transition 3.0.9 | production or optional transitive | https://registry.npmjs.org/@types/d3-transition/-/d3-transition-3.0.9.tgz | [LICENSE](LICENSES/npm/node_modules/@types/d3-transition/3.0.9/LICENSE) |
+| NPM | @types/d3-zoom 3.0.8 | production or optional transitive | https://registry.npmjs.org/@types/d3-zoom/-/d3-zoom-3.0.8.tgz | [LICENSE](LICENSES/npm/node_modules/@types/d3-zoom/3.0.8/LICENSE) |
+| NPM | @types/deep-eql 4.0.2 | dev/build-only possible | https://registry.npmjs.org/@types/deep-eql/-/deep-eql-4.0.2.tgz | [LICENSE](LICENSES/npm/node_modules/@types/deep-eql/4.0.2/LICENSE) |
+| NPM | @types/esrecurse 4.3.1 | dev/build-only possible | https://registry.npmjs.org/@types/esrecurse/-/esrecurse-4.3.1.tgz | [LICENSE](LICENSES/npm/node_modules/@types/esrecurse/4.3.1/LICENSE) |
+| NPM | @types/estree 1.0.8 | dev/build-only possible | https://registry.npmjs.org/@types/estree/-/estree-1.0.8.tgz | [LICENSE](LICENSES/npm/node_modules/@types/estree/1.0.8/LICENSE) |
+| NPM | @types/json-schema 7.0.15 | dev/build-only possible | https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.15.tgz | [LICENSE](LICENSES/npm/node_modules/@types/json-schema/7.0.15/LICENSE) |
+| NPM | @types/node 26.6.2 | dev/build-only possible | https://registry.npmjs.org/@types/node/-/node-26.6.2.tgz | [LICENSE](LICENSES/npm/node_modules/@types/node/26.6.2/LICENSE) |
+| NPM | @types/react 19.3.0 | production or optional transitive | https://registry.npmjs.org/@types/react/-/react-19.3.0.tgz | [LICENSE](LICENSES/npm/node_modules/@types/react/19.3.0/LICENSE) |
+| NPM | @types/react-dom 19.3.0 | production or optional transitive | https://registry.npmjs.org/@types/react-dom/-/react-dom-19.3.0.tgz | [LICENSE](LICENSES/npm/node_modules/@types/react-dom/19.3.0/LICENSE) |
+| NPM | @typescript-eslint/eslint-plugin 8.70.0 | dev/build-only possible | https://registry.npmjs.org/@typescript-eslint/eslint-plugin/-/eslint-plugin-8.70.0.tgz | [LICENSE](LICENSES/npm/node_modules/@typescript-eslint/eslint-plugin/8.70.0/LICENSE) |
+| NPM | ignore 7.0.9 | dev/build-only possible | https://registry.npmjs.org/ignore/-/ignore-7.0.9.tgz | [LICENSE-MIT](LICENSES/npm/node_modules/@typescript-eslint/eslint-plugin/node_modules/ignore/7.0.9/LICENSE-MIT) |
+| NPM | @typescript-eslint/parser 8.70.0 | dev/build-only possible | https://registry.npmjs.org/@typescript-eslint/parser/-/parser-8.70.0.tgz | [LICENSE](LICENSES/npm/node_modules/@typescript-eslint/parser/8.70.0/LICENSE) |
+| NPM | @typescript-eslint/project-service 8.70.0 | dev/build-only possible | https://registry.npmjs.org/@typescript-eslint/project-service/-/project-service-8.70.0.tgz | [LICENSE](LICENSES/npm/node_modules/@typescript-eslint/project-service/8.70.0/LICENSE) |
+| NPM | @typescript-eslint/scope-manager 8.70.0 | dev/build-only possible | https://registry.npmjs.org/@typescript-eslint/scope-manager/-/scope-manager-8.70.0.tgz | [LICENSE](LICENSES/npm/node_modules/@typescript-eslint/scope-manager/8.70.0/LICENSE) |
+| NPM | @typescript-eslint/tsconfig-utils 8.70.0 | dev/build-only possible | https://registry.npmjs.org/@typescript-eslint/tsconfig-utils/-/tsconfig-utils-8.70.0.tgz | [LICENSE](LICENSES/npm/node_modules/@typescript-eslint/tsconfig-utils/8.70.0/LICENSE) |
+| NPM | @typescript-eslint/type-utils 8.70.0 | dev/build-only possible | https://registry.npmjs.org/@typescript-eslint/type-utils/-/type-utils-8.70.0.tgz | [LICENSE](LICENSES/npm/node_modules/@typescript-eslint/type-utils/8.70.0/LICENSE) |
+| NPM | @typescript-eslint/types 8.70.0 | dev/build-only possible | https://registry.npmjs.org/@typescript-eslint/types/-/types-8.70.0.tgz | [LICENSE](LICENSES/npm/node_modules/@typescript-eslint/types/8.70.0/LICENSE) |
+| NPM | @typescript-eslint/typescript-estree 8.70.0 | dev/build-only possible | https://registry.npmjs.org/@typescript-eslint/typescript-estree/-/typescript-estree-8.70.0.tgz | [LICENSE](LICENSES/npm/node_modules/@typescript-eslint/typescript-estree/8.70.0/LICENSE) |
+| NPM | semver 7.8.5 | dev/build-only possible | https://registry.npmjs.org/semver/-/semver-7.8.5.tgz | [LICENSE](LICENSES/npm/node_modules/@typescript-eslint/typescript-estree/node_modules/semver/7.8.5/LICENSE) |
+| NPM | @typescript-eslint/utils 8.70.0 | dev/build-only possible | https://registry.npmjs.org/@typescript-eslint/utils/-/utils-8.70.0.tgz | [LICENSE](LICENSES/npm/node_modules/@typescript-eslint/utils/8.70.0/LICENSE) |
+| NPM | @typescript-eslint/visitor-keys 8.70.0 | dev/build-only possible | https://registry.npmjs.org/@typescript-eslint/visitor-keys/-/visitor-keys-8.70.0.tgz | [LICENSE](LICENSES/npm/node_modules/@typescript-eslint/visitor-keys/8.70.0/LICENSE) |
+| NPM | @vitejs/plugin-react 6.1.1 | dev/build-only possible | https://registry.npmjs.org/@vitejs/plugin-react/-/plugin-react-6.1.1.tgz | [LICENSE](LICENSES/npm/node_modules/@vitejs/plugin-react/6.1.1/LICENSE) |
+| NPM | @vitest/mocker 5.0.1 | dev/build-only possible | https://registry.npmjs.org/@vitest/mocker/-/mocker-5.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/@vitest/mocker/5.0.1/LICENSE) |
+| NPM | magic-string 1.4.1 | dev/build-only possible | https://registry.npmjs.org/magic-string/-/magic-string-1.4.1.tgz | [LICENSE](LICENSES/npm/node_modules/@vitest/mocker/node_modules/magic-string/1.4.1/LICENSE) |
+| NPM | @vitest/spy 5.0.1 | dev/build-only possible | https://registry.npmjs.org/@vitest/spy/-/spy-5.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/@vitest/spy/5.0.1/LICENSE) |
+| NPM | @xyflow/react 12.11.6 | production or optional transitive | https://registry.npmjs.org/@xyflow/react/-/react-12.11.6.tgz | [LICENSE](LICENSES/npm/node_modules/@xyflow/react/12.11.6/LICENSE) |
+| NPM | @xyflow/system 0.0.82 | production or optional transitive | https://registry.npmjs.org/@xyflow/system/-/system-0.0.82.tgz | [LICENSE](LICENSES/npm/node_modules/@xyflow/system/0.0.82/LICENSE) |
+| NPM | @yui540/comimi 0.26.0 | production or optional transitive | https://registry.npmjs.org/@yui540/comimi/-/comimi-0.26.0.tgz | [LICENSE](LICENSES/npm/node_modules/@yui540/comimi/0.26.0/LICENSE) |
+| NPM | @yui540/comimi-react 0.3.0 | production or optional transitive | https://registry.npmjs.org/@yui540/comimi-react/-/comimi-react-0.3.0.tgz | [LICENSE](LICENSES/npm/node_modules/@yui540/comimi-react/0.3.0/LICENSE) |
+| NPM | acorn 8.18.0 | dev/build-only possible | https://registry.npmjs.org/acorn/-/acorn-8.18.0.tgz | [LICENSE](LICENSES/npm/node_modules/acorn/8.18.0/LICENSE) |
+| NPM | acorn-jsx 5.3.2 | dev/build-only possible | https://registry.npmjs.org/acorn-jsx/-/acorn-jsx-5.3.2.tgz | [LICENSE](LICENSES/npm/node_modules/acorn-jsx/5.3.2/LICENSE) |
+| NPM | agent-base 6.0.2 | production or optional transitive | https://registry.npmjs.org/agent-base/-/agent-base-6.0.2.tgz | [LICENSE-EXTRACT.txt](LICENSES/npm/node_modules/agent-base/6.0.2/LICENSE-EXTRACT.txt) |
+| NPM | ajv 6.15.0 | dev/build-only possible | https://registry.npmjs.org/ajv/-/ajv-6.15.0.tgz | [LICENSE](LICENSES/npm/node_modules/ajv/6.15.0/LICENSE) |
+| NPM | ansi-regex 5.0.1 | dev/build-only possible | https://registry.npmjs.org/ansi-regex/-/ansi-regex-5.0.1.tgz | [license](LICENSES/npm/node_modules/ansi-regex/5.0.1/license) |
+| NPM | aria-query 5.3.0 | dev/build-only possible | https://registry.npmjs.org/aria-query/-/aria-query-5.3.0.tgz | [LICENSE](LICENSES/npm/node_modules/aria-query/5.3.0/LICENSE) |
+| NPM | assertion-error 2.0.1 | dev/build-only possible | https://registry.npmjs.org/assertion-error/-/assertion-error-2.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/assertion-error/2.0.1/LICENSE) |
+| NPM | asynckit 0.4.0 | production or optional transitive | https://registry.npmjs.org/asynckit/-/asynckit-0.4.0.tgz | [LICENSE](LICENSES/npm/node_modules/asynckit/0.4.0/LICENSE) |
+| NPM | axios 1.20.0 | production or optional transitive | https://registry.npmjs.org/axios/-/axios-1.20.0.tgz | [LICENSE](LICENSES/npm/node_modules/axios/1.20.0/LICENSE) |
+| NPM | balanced-match 4.0.4 | dev/build-only possible | https://registry.npmjs.org/balanced-match/-/balanced-match-4.0.4.tgz | [LICENSE.md](LICENSES/npm/node_modules/balanced-match/4.0.4/LICENSE.md) |
+| NPM | baseline-browser-mapping 2.11.4 | dev/build-only possible | https://registry.npmjs.org/baseline-browser-mapping/-/baseline-browser-mapping-2.11.4.tgz | [LICENSE.txt](LICENSES/npm/node_modules/baseline-browser-mapping/2.11.4/LICENSE.txt) |
+| NPM | bidi-js 1.1.0 | dev/build-only possible | https://registry.npmjs.org/bidi-js/-/bidi-js-1.1.0.tgz | [LICENSE.txt](LICENSES/npm/node_modules/bidi-js/1.1.0/LICENSE.txt) |
+| NPM | brace-expansion 5.0.8 | dev/build-only possible | https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.8.tgz | [LICENSE](LICENSES/npm/node_modules/brace-expansion/5.0.8/LICENSE) |
+| NPM | browserslist 4.28.7 | dev/build-only possible | https://registry.npmjs.org/browserslist/-/browserslist-4.28.7.tgz | [LICENSE](LICENSES/npm/node_modules/browserslist/4.28.7/LICENSE) |
+| NPM | cacheable 2.5.0 | dev/build-only possible | https://registry.npmjs.org/cacheable/-/cacheable-2.5.0.tgz | [LICENSE](LICENSES/npm/node_modules/cacheable/2.5.0/LICENSE) |
+| NPM | call-bind-apply-helpers 1.0.2 | production or optional transitive | https://registry.npmjs.org/call-bind-apply-helpers/-/call-bind-apply-helpers-1.0.2.tgz | [LICENSE](LICENSES/npm/node_modules/call-bind-apply-helpers/1.0.2/LICENSE) |
+| NPM | caniuse-lite 1.0.30001806 | dev/build-only possible | https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001806.tgz | [LICENSE](LICENSES/npm/node_modules/caniuse-lite/1.0.30001806/LICENSE) |
+| NPM | chai 6.2.2 | dev/build-only possible | https://registry.npmjs.org/chai/-/chai-6.2.2.tgz | [LICENSE](LICENSES/npm/node_modules/chai/6.2.2/LICENSE) |
+| NPM | classcat 5.0.5 | production or optional transitive | https://registry.npmjs.org/classcat/-/classcat-5.0.5.tgz | [LICENSE.md](LICENSES/npm/node_modules/classcat/5.0.5/LICENSE.md) |
+| NPM | combined-stream 1.0.8 | production or optional transitive | https://registry.npmjs.org/combined-stream/-/combined-stream-1.0.8.tgz | [License](LICENSES/npm/node_modules/combined-stream/1.0.8/License) |
+| NPM | convert-source-map 2.0.0 | dev/build-only possible | https://registry.npmjs.org/convert-source-map/-/convert-source-map-2.0.0.tgz | [LICENSE](LICENSES/npm/node_modules/convert-source-map/2.0.0/LICENSE) |
+| NPM | cookie 1.1.1 | production or optional transitive | https://registry.npmjs.org/cookie/-/cookie-1.1.1.tgz | [LICENSE](LICENSES/npm/node_modules/cookie/1.1.1/LICENSE) |
+| NPM | cross-spawn 7.0.6 | dev/build-only possible | https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz | [LICENSE](LICENSES/npm/node_modules/cross-spawn/7.0.6/LICENSE) |
+| NPM | css-tree 3.2.1 | dev/build-only possible | https://registry.npmjs.org/css-tree/-/css-tree-3.2.1.tgz | [LICENSE](LICENSES/npm/node_modules/css-tree/3.2.1/LICENSE) |
+| NPM | csstype 3.2.3 | production or optional transitive | https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz | [LICENSE](LICENSES/npm/node_modules/csstype/3.2.3/LICENSE) |
+| NPM | d3-color 3.1.0 | production or optional transitive | https://registry.npmjs.org/d3-color/-/d3-color-3.1.0.tgz | [LICENSE](LICENSES/npm/node_modules/d3-color/3.1.0/LICENSE) |
+| NPM | d3-dispatch 3.0.1 | production or optional transitive | https://registry.npmjs.org/d3-dispatch/-/d3-dispatch-3.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/d3-dispatch/3.0.1/LICENSE) |
+| NPM | d3-drag 3.0.0 | production or optional transitive | https://registry.npmjs.org/d3-drag/-/d3-drag-3.0.0.tgz | [LICENSE](LICENSES/npm/node_modules/d3-drag/3.0.0/LICENSE) |
+| NPM | d3-ease 3.0.1 | production or optional transitive | https://registry.npmjs.org/d3-ease/-/d3-ease-3.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/d3-ease/3.0.1/LICENSE) |
+| NPM | d3-interpolate 3.0.1 | production or optional transitive | https://registry.npmjs.org/d3-interpolate/-/d3-interpolate-3.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/d3-interpolate/3.0.1/LICENSE) |
+| NPM | d3-selection 3.0.0 | production or optional transitive | https://registry.npmjs.org/d3-selection/-/d3-selection-3.0.0.tgz | [LICENSE](LICENSES/npm/node_modules/d3-selection/3.0.0/LICENSE) |
+| NPM | d3-timer 3.0.1 | production or optional transitive | https://registry.npmjs.org/d3-timer/-/d3-timer-3.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/d3-timer/3.0.1/LICENSE) |
+| NPM | d3-transition 3.0.1 | production or optional transitive | https://registry.npmjs.org/d3-transition/-/d3-transition-3.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/d3-transition/3.0.1/LICENSE) |
+| NPM | d3-zoom 3.0.0 | production or optional transitive | https://registry.npmjs.org/d3-zoom/-/d3-zoom-3.0.0.tgz | [LICENSE](LICENSES/npm/node_modules/d3-zoom/3.0.0/LICENSE) |
+| NPM | data-urls 7.0.0 | dev/build-only possible | https://registry.npmjs.org/data-urls/-/data-urls-7.0.0.tgz | [LICENSE.txt](LICENSES/npm/node_modules/data-urls/7.0.0/LICENSE.txt) |
+| NPM | whatwg-url 16.0.1 | dev/build-only possible | https://registry.npmjs.org/whatwg-url/-/whatwg-url-16.0.1.tgz | [LICENSE.txt](LICENSES/npm/node_modules/data-urls/node_modules/whatwg-url/16.0.1/LICENSE.txt) |
+| NPM | date-fns 4.4.0 | production or optional transitive | https://registry.npmjs.org/date-fns/-/date-fns-4.4.0.tgz | [LICENSE.md](LICENSES/npm/node_modules/date-fns/4.4.0/LICENSE.md) |
+| NPM | debug 4.4.3 | production or optional transitive | https://registry.npmjs.org/debug/-/debug-4.4.3.tgz | [LICENSE](LICENSES/npm/node_modules/debug/4.4.3/LICENSE) |
+| NPM | decimal.js 10.6.0 | dev/build-only possible | https://registry.npmjs.org/decimal.js/-/decimal.js-10.6.0.tgz | [LICENCE.md](LICENSES/npm/node_modules/decimal.js/10.6.0/LICENCE.md) |
+| NPM | deep-is 0.1.4 | dev/build-only possible | https://registry.npmjs.org/deep-is/-/deep-is-0.1.4.tgz | [LICENSE](LICENSES/npm/node_modules/deep-is/0.1.4/LICENSE) |
+| NPM | delayed-stream 1.0.0 | production or optional transitive | https://registry.npmjs.org/delayed-stream/-/delayed-stream-1.0.0.tgz | [License](LICENSES/npm/node_modules/delayed-stream/1.0.0/License) |
+| NPM | dequal 2.0.3 | dev/build-only possible | https://registry.npmjs.org/dequal/-/dequal-2.0.3.tgz | [license](LICENSES/npm/node_modules/dequal/2.0.3/license) |
+| NPM | detect-libc 2.1.2 | dev/build-only possible | https://registry.npmjs.org/detect-libc/-/detect-libc-2.1.2.tgz | [LICENSE](LICENSES/npm/node_modules/detect-libc/2.1.2/LICENSE) |
+| NPM | dom-accessibility-api 0.5.16 | dev/build-only possible | https://registry.npmjs.org/dom-accessibility-api/-/dom-accessibility-api-0.5.16.tgz | [LICENSE.md](LICENSES/npm/node_modules/dom-accessibility-api/0.5.16/LICENSE.md) |
+| NPM | dunder-proto 1.0.1 | production or optional transitive | https://registry.npmjs.org/dunder-proto/-/dunder-proto-1.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/dunder-proto/1.0.1/LICENSE) |
+| NPM | electron-to-chromium 1.5.396 | dev/build-only possible | https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.5.396.tgz | [LICENSE](LICENSES/npm/node_modules/electron-to-chromium/1.5.396/LICENSE) |
+| NPM | enhanced-resolve 5.24.4 | dev/build-only possible | https://registry.npmjs.org/enhanced-resolve/-/enhanced-resolve-5.24.4.tgz | [LICENSE](LICENSES/npm/node_modules/enhanced-resolve/5.24.4/LICENSE) |
+| NPM | entities 8.0.0 | dev/build-only possible | https://registry.npmjs.org/entities/-/entities-8.0.0.tgz | [LICENSE](LICENSES/npm/node_modules/entities/8.0.0/LICENSE) |
+| NPM | es-define-property 1.0.1 | production or optional transitive | https://registry.npmjs.org/es-define-property/-/es-define-property-1.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/es-define-property/1.0.1/LICENSE) |
+| NPM | es-errors 1.3.0 | production or optional transitive | https://registry.npmjs.org/es-errors/-/es-errors-1.3.0.tgz | [LICENSE](LICENSES/npm/node_modules/es-errors/1.3.0/LICENSE) |
+| NPM | es-module-lexer 2.3.2 | dev/build-only possible | https://registry.npmjs.org/es-module-lexer/-/es-module-lexer-2.3.2.tgz | [LICENSE](LICENSES/npm/node_modules/es-module-lexer/2.3.2/LICENSE) |
+| NPM | es-object-atoms 1.1.1 | production or optional transitive | https://registry.npmjs.org/es-object-atoms/-/es-object-atoms-1.1.1.tgz | [LICENSE](LICENSES/npm/node_modules/es-object-atoms/1.1.1/LICENSE) |
+| NPM | es-set-tostringtag 2.1.0 | production or optional transitive | https://registry.npmjs.org/es-set-tostringtag/-/es-set-tostringtag-2.1.0.tgz | [LICENSE](LICENSES/npm/node_modules/es-set-tostringtag/2.1.0/LICENSE) |
+| NPM | escalade 3.2.0 | dev/build-only possible | https://registry.npmjs.org/escalade/-/escalade-3.2.0.tgz | [license](LICENSES/npm/node_modules/escalade/3.2.0/license) |
+| NPM | escape-string-regexp 4.0.0 | dev/build-only possible | https://registry.npmjs.org/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz | [license](LICENSES/npm/node_modules/escape-string-regexp/4.0.0/license) |
+| NPM | eslint 10.11.0 | dev/build-only possible | https://registry.npmjs.org/eslint/-/eslint-10.11.0.tgz | [LICENSE](LICENSES/npm/node_modules/eslint/10.11.0/LICENSE) |
+| NPM | eslint-plugin-react-hooks 7.1.1 | dev/build-only possible | https://registry.npmjs.org/eslint-plugin-react-hooks/-/eslint-plugin-react-hooks-7.1.1.tgz | [LICENSE](LICENSES/npm/node_modules/eslint-plugin-react-hooks/7.1.1/LICENSE) |
+| NPM | eslint-plugin-react-refresh 0.5.7 | dev/build-only possible | https://registry.npmjs.org/eslint-plugin-react-refresh/-/eslint-plugin-react-refresh-0.5.7.tgz | [LICENSE](LICENSES/npm/node_modules/eslint-plugin-react-refresh/0.5.7/LICENSE) |
+| NPM | eslint-scope 9.1.2 | dev/build-only possible | https://registry.npmjs.org/eslint-scope/-/eslint-scope-9.1.2.tgz | [LICENSE](LICENSES/npm/node_modules/eslint-scope/9.1.2/LICENSE) |
+| NPM | eslint-visitor-keys 5.0.1 | dev/build-only possible | https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-5.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/eslint-visitor-keys/5.0.1/LICENSE) |
+| NPM | espree 11.2.0 | dev/build-only possible | https://registry.npmjs.org/espree/-/espree-11.2.0.tgz | [LICENSE](LICENSES/npm/node_modules/espree/11.2.0/LICENSE) |
+| NPM | esquery 1.7.0 | dev/build-only possible | https://registry.npmjs.org/esquery/-/esquery-1.7.0.tgz | [license.txt](LICENSES/npm/node_modules/esquery/1.7.0/license.txt) |
+| NPM | esrecurse 4.3.0 | dev/build-only possible | https://registry.npmjs.org/esrecurse/-/esrecurse-4.3.0.tgz | [LICENSE-EXTRACT.txt](LICENSES/npm/node_modules/esrecurse/4.3.0/LICENSE-EXTRACT.txt) |
+| NPM | estraverse 5.3.0 | dev/build-only possible | https://registry.npmjs.org/estraverse/-/estraverse-5.3.0.tgz | [LICENSE.BSD](LICENSES/npm/node_modules/estraverse/5.3.0/LICENSE.BSD) |
+| NPM | estree-walker 3.0.3 | dev/build-only possible | https://registry.npmjs.org/estree-walker/-/estree-walker-3.0.3.tgz | [LICENSE](LICENSES/npm/node_modules/estree-walker/3.0.3/LICENSE) |
+| NPM | esutils 2.0.3 | dev/build-only possible | https://registry.npmjs.org/esutils/-/esutils-2.0.3.tgz | [LICENSE.BSD](LICENSES/npm/node_modules/esutils/2.0.3/LICENSE.BSD) |
+| NPM | expect-type 1.4.0 | dev/build-only possible | https://registry.npmjs.org/expect-type/-/expect-type-1.4.0.tgz | [LICENSE](LICENSES/npm/node_modules/expect-type/1.4.0/LICENSE) |
+| NPM | fast-deep-equal 3.1.3 | dev/build-only possible | https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz | [LICENSE](LICENSES/npm/node_modules/fast-deep-equal/3.1.3/LICENSE) |
+| NPM | fast-json-stable-stringify 2.1.0 | dev/build-only possible | https://registry.npmjs.org/fast-json-stable-stringify/-/fast-json-stable-stringify-2.1.0.tgz | [LICENSE](LICENSES/npm/node_modules/fast-json-stable-stringify/2.1.0/LICENSE) |
+| NPM | fast-levenshtein 2.0.6 | dev/build-only possible | https://registry.npmjs.org/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz | [LICENSE.md](LICENSES/npm/node_modules/fast-levenshtein/2.0.6/LICENSE.md) |
+| NPM | fdir 6.5.0 | dev/build-only possible | https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz | [LICENSE](LICENSES/npm/node_modules/fdir/6.5.0/LICENSE) |
+| NPM | file-entry-cache 11.1.5 | dev/build-only possible | https://registry.npmjs.org/file-entry-cache/-/file-entry-cache-11.1.5.tgz | [LICENSE](LICENSES/npm/node_modules/file-entry-cache/11.1.5/LICENSE) |
+| NPM | find-up 5.0.0 | dev/build-only possible | https://registry.npmjs.org/find-up/-/find-up-5.0.0.tgz | [license](LICENSES/npm/node_modules/find-up/5.0.0/license) |
+| NPM | flat-cache 6.1.23 | dev/build-only possible | https://registry.npmjs.org/flat-cache/-/flat-cache-6.1.23.tgz | [LICENSE](LICENSES/npm/node_modules/flat-cache/6.1.23/LICENSE) |
+| NPM | flatted 3.4.4 | dev/build-only possible | https://registry.npmjs.org/flatted/-/flatted-3.4.4.tgz | [LICENSE](LICENSES/npm/node_modules/flatted/3.4.4/LICENSE) |
+| NPM | follow-redirects 1.16.0 | production or optional transitive | https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.16.0.tgz | [LICENSE](LICENSES/npm/node_modules/follow-redirects/1.16.0/LICENSE) |
+| NPM | form-data 4.0.6 | production or optional transitive | https://registry.npmjs.org/form-data/-/form-data-4.0.6.tgz | [License](LICENSES/npm/node_modules/form-data/4.0.6/License) |
+| NPM | fsevents 2.3.3 | dev/build-only possible | https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz | not installed (optional/platform entry) |
+| NPM | function-bind 1.1.2 | production or optional transitive | https://registry.npmjs.org/function-bind/-/function-bind-1.1.2.tgz | [LICENSE](LICENSES/npm/node_modules/function-bind/1.1.2/LICENSE) |
+| NPM | gensync 1.0.0-beta.2 | dev/build-only possible | https://registry.npmjs.org/gensync/-/gensync-1.0.0-beta.2.tgz | [LICENSE](LICENSES/npm/node_modules/gensync/1.0.0-beta.2/LICENSE) |
+| NPM | get-intrinsic 1.3.0 | production or optional transitive | https://registry.npmjs.org/get-intrinsic/-/get-intrinsic-1.3.0.tgz | [LICENSE](LICENSES/npm/node_modules/get-intrinsic/1.3.0/LICENSE) |
+| NPM | get-proto 1.0.1 | production or optional transitive | https://registry.npmjs.org/get-proto/-/get-proto-1.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/get-proto/1.0.1/LICENSE) |
+| NPM | glob-parent 6.0.2 | dev/build-only possible | https://registry.npmjs.org/glob-parent/-/glob-parent-6.0.2.tgz | [LICENSE](LICENSES/npm/node_modules/glob-parent/6.0.2/LICENSE) |
+| NPM | globals 17.12.0 | dev/build-only possible | https://registry.npmjs.org/globals/-/globals-17.12.0.tgz | [license](LICENSES/npm/node_modules/globals/17.12.0/license) |
+| NPM | gopd 1.2.0 | production or optional transitive | https://registry.npmjs.org/gopd/-/gopd-1.2.0.tgz | [LICENSE](LICENSES/npm/node_modules/gopd/1.2.0/LICENSE) |
+| NPM | graceful-fs 4.2.11 | dev/build-only possible | https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.11.tgz | [LICENSE](LICENSES/npm/node_modules/graceful-fs/4.2.11/LICENSE) |
+| NPM | has-symbols 1.1.0 | production or optional transitive | https://registry.npmjs.org/has-symbols/-/has-symbols-1.1.0.tgz | [LICENSE](LICENSES/npm/node_modules/has-symbols/1.1.0/LICENSE) |
+| NPM | has-tostringtag 1.0.2 | production or optional transitive | https://registry.npmjs.org/has-tostringtag/-/has-tostringtag-1.0.2.tgz | [LICENSE](LICENSES/npm/node_modules/has-tostringtag/1.0.2/LICENSE) |
+| NPM | hashery 1.5.1 | dev/build-only possible | https://registry.npmjs.org/hashery/-/hashery-1.5.1.tgz | [LICENSE](LICENSES/npm/node_modules/hashery/1.5.1/LICENSE) |
+| NPM | hasown 2.0.4 | production or optional transitive | https://registry.npmjs.org/hasown/-/hasown-2.0.4.tgz | [LICENSE](LICENSES/npm/node_modules/hasown/2.0.4/LICENSE) |
+| NPM | hermes-estree 0.25.1 | dev/build-only possible | https://registry.npmjs.org/hermes-estree/-/hermes-estree-0.25.1.tgz | [LICENSE](LICENSES/npm/node_modules/hermes-estree/0.25.1/LICENSE) |
+| NPM | hermes-parser 0.25.1 | dev/build-only possible | https://registry.npmjs.org/hermes-parser/-/hermes-parser-0.25.1.tgz | [LICENSE](LICENSES/npm/node_modules/hermes-parser/0.25.1/LICENSE) |
+| NPM | hookified 1.15.1 | dev/build-only possible | https://registry.npmjs.org/hookified/-/hookified-1.15.1.tgz | [LICENSE](LICENSES/npm/node_modules/hookified/1.15.1/LICENSE) |
+| NPM | html-encoding-sniffer 6.0.0 | dev/build-only possible | https://registry.npmjs.org/html-encoding-sniffer/-/html-encoding-sniffer-6.0.0.tgz | [LICENSE.txt](LICENSES/npm/node_modules/html-encoding-sniffer/6.0.0/LICENSE.txt) |
+| NPM | https-proxy-agent 5.0.1 | production or optional transitive | https://registry.npmjs.org/https-proxy-agent/-/https-proxy-agent-5.0.1.tgz | [LICENSE-EXTRACT.txt](LICENSES/npm/node_modules/https-proxy-agent/5.0.1/LICENSE-EXTRACT.txt) |
+| NPM | ignore 5.3.2 | dev/build-only possible | https://registry.npmjs.org/ignore/-/ignore-5.3.2.tgz | [LICENSE-MIT](LICENSES/npm/node_modules/ignore/5.3.2/LICENSE-MIT) |
+| NPM | imurmurhash 0.1.4 | dev/build-only possible | https://registry.npmjs.org/imurmurhash/-/imurmurhash-0.1.4.tgz | [LICENSE-EXTRACT.txt](LICENSES/npm/node_modules/imurmurhash/0.1.4/LICENSE-EXTRACT.txt) |
+| NPM | is-extglob 2.1.1 | dev/build-only possible | https://registry.npmjs.org/is-extglob/-/is-extglob-2.1.1.tgz | [LICENSE](LICENSES/npm/node_modules/is-extglob/2.1.1/LICENSE) |
+| NPM | is-glob 4.0.3 | dev/build-only possible | https://registry.npmjs.org/is-glob/-/is-glob-4.0.3.tgz | [LICENSE](LICENSES/npm/node_modules/is-glob/4.0.3/LICENSE) |
+| NPM | is-potential-custom-element-name 1.0.1 | dev/build-only possible | https://registry.npmjs.org/is-potential-custom-element-name/-/is-potential-custom-element-name-1.0.1.tgz | [LICENSE-MIT.txt](LICENSES/npm/node_modules/is-potential-custom-element-name/1.0.1/LICENSE-MIT.txt) |
+| NPM | isexe 2.0.0 | dev/build-only possible | https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz | [LICENSE](LICENSES/npm/node_modules/isexe/2.0.0/LICENSE) |
+| NPM | jiti 2.7.0 | dev/build-only possible | https://registry.npmjs.org/jiti/-/jiti-2.7.0.tgz | [LICENSE](LICENSES/npm/node_modules/jiti/2.7.0/LICENSE) |
+| NPM | js-tokens 4.0.0 | dev/build-only possible | https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz | [LICENSE](LICENSES/npm/node_modules/js-tokens/4.0.0/LICENSE) |
+| NPM | jsdom 30.1.0 | dev/build-only possible | https://registry.npmjs.org/jsdom/-/jsdom-30.1.0.tgz | [LICENSE.txt](LICENSES/npm/node_modules/jsdom/30.1.0/LICENSE.txt) |
+| NPM | lru-cache 11.5.2 | dev/build-only possible | https://registry.npmjs.org/lru-cache/-/lru-cache-11.5.2.tgz | [LICENSE.md](LICENSES/npm/node_modules/jsdom/node_modules/lru-cache/11.5.2/LICENSE.md) |
+| NPM | jsesc 3.1.0 | dev/build-only possible | https://registry.npmjs.org/jsesc/-/jsesc-3.1.0.tgz | [LICENSE-MIT.txt](LICENSES/npm/node_modules/jsesc/3.1.0/LICENSE-MIT.txt) |
+| NPM | json-schema-traverse 0.4.1 | dev/build-only possible | https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-0.4.1.tgz | [LICENSE](LICENSES/npm/node_modules/json-schema-traverse/0.4.1/LICENSE) |
+| NPM | json-stable-stringify-without-jsonify 1.0.1 | dev/build-only possible | https://registry.npmjs.org/json-stable-stringify-without-jsonify/-/json-stable-stringify-without-jsonify-1.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/json-stable-stringify-without-jsonify/1.0.1/LICENSE) |
+| NPM | json5 2.2.3 | dev/build-only possible | https://registry.npmjs.org/json5/-/json5-2.2.3.tgz | [LICENSE.md](LICENSES/npm/node_modules/json5/2.2.3/LICENSE.md) |
+| NPM | keyv 5.6.0 | dev/build-only possible | https://registry.npmjs.org/keyv/-/keyv-5.6.0.tgz | [LICENSE](LICENSES/npm/node_modules/keyv/5.6.0/LICENSE) |
+| NPM | levn 0.4.1 | dev/build-only possible | https://registry.npmjs.org/levn/-/levn-0.4.1.tgz | [LICENSE](LICENSES/npm/node_modules/levn/0.4.1/LICENSE) |
+| NPM | lightningcss 1.32.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss/-/lightningcss-1.32.0.tgz | [LICENSE](LICENSES/npm/node_modules/lightningcss/1.32.0/LICENSE) |
+| NPM | lightningcss-android-arm64 1.32.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-android-arm64/-/lightningcss-android-arm64-1.32.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-darwin-arm64 1.32.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-darwin-arm64/-/lightningcss-darwin-arm64-1.32.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-darwin-x64 1.32.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-darwin-x64/-/lightningcss-darwin-x64-1.32.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-freebsd-x64 1.32.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-freebsd-x64/-/lightningcss-freebsd-x64-1.32.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-linux-arm-gnueabihf 1.32.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-linux-arm-gnueabihf/-/lightningcss-linux-arm-gnueabihf-1.32.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-linux-arm64-gnu 1.32.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-linux-arm64-gnu/-/lightningcss-linux-arm64-gnu-1.32.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-linux-arm64-musl 1.32.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-linux-arm64-musl/-/lightningcss-linux-arm64-musl-1.32.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-linux-x64-gnu 1.32.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-linux-x64-gnu/-/lightningcss-linux-x64-gnu-1.32.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-linux-x64-musl 1.32.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-linux-x64-musl/-/lightningcss-linux-x64-musl-1.32.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-win32-arm64-msvc 1.32.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-win32-arm64-msvc/-/lightningcss-win32-arm64-msvc-1.32.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-win32-x64-msvc 1.32.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-win32-x64-msvc/-/lightningcss-win32-x64-msvc-1.32.0.tgz | [LICENSE](LICENSES/npm/node_modules/lightningcss-win32-x64-msvc/1.32.0/LICENSE) |
+| NPM | locate-path 6.0.0 | dev/build-only possible | https://registry.npmjs.org/locate-path/-/locate-path-6.0.0.tgz | [license](LICENSES/npm/node_modules/locate-path/6.0.0/license) |
+| NPM | lru-cache 5.1.1 | dev/build-only possible | https://registry.npmjs.org/lru-cache/-/lru-cache-5.1.1.tgz | [LICENSE](LICENSES/npm/node_modules/lru-cache/5.1.1/LICENSE) |
+| NPM | lucide-react 1.47.0 | production or optional transitive | https://registry.npmjs.org/lucide-react/-/lucide-react-1.47.0.tgz | [LICENSE](LICENSES/npm/node_modules/lucide-react/1.47.0/LICENSE) |
+| NPM | lz-string 1.5.0 | dev/build-only possible | https://registry.npmjs.org/lz-string/-/lz-string-1.5.0.tgz | [LICENSE](LICENSES/npm/node_modules/lz-string/1.5.0/LICENSE) |
+| NPM | magic-string 0.30.21 | dev/build-only possible | https://registry.npmjs.org/magic-string/-/magic-string-0.30.21.tgz | [LICENSE](LICENSES/npm/node_modules/magic-string/0.30.21/LICENSE) |
+| NPM | math-intrinsics 1.1.0 | production or optional transitive | https://registry.npmjs.org/math-intrinsics/-/math-intrinsics-1.1.0.tgz | [LICENSE](LICENSES/npm/node_modules/math-intrinsics/1.1.0/LICENSE) |
+| NPM | mdn-data 2.27.1 | dev/build-only possible | https://registry.npmjs.org/mdn-data/-/mdn-data-2.27.1.tgz | [LICENSE](LICENSES/npm/node_modules/mdn-data/2.27.1/LICENSE) |
+| NPM | mime-db 1.52.0 | production or optional transitive | https://registry.npmjs.org/mime-db/-/mime-db-1.52.0.tgz | [LICENSE](LICENSES/npm/node_modules/mime-db/1.52.0/LICENSE) |
+| NPM | mime-types 2.1.35 | production or optional transitive | https://registry.npmjs.org/mime-types/-/mime-types-2.1.35.tgz | [LICENSE](LICENSES/npm/node_modules/mime-types/2.1.35/LICENSE) |
+| NPM | minimatch 10.2.6 | dev/build-only possible | https://registry.npmjs.org/minimatch/-/minimatch-10.2.6.tgz | [LICENSE.md](LICENSES/npm/node_modules/minimatch/10.2.6/LICENSE.md) |
+| NPM | ms 2.1.3 | production or optional transitive | https://registry.npmjs.org/ms/-/ms-2.1.3.tgz | [license.md](LICENSES/npm/node_modules/ms/2.1.3/license.md) |
+| NPM | nanoid 3.3.19 | dev/build-only possible | https://registry.npmjs.org/nanoid/-/nanoid-3.3.19.tgz | [LICENSE](LICENSES/npm/node_modules/nanoid/3.3.19/LICENSE) |
+| NPM | natural-compare 1.4.0 | dev/build-only possible | https://registry.npmjs.org/natural-compare/-/natural-compare-1.4.0.tgz | **MISSING** |
+| NPM | node-releases 2.0.51 | dev/build-only possible | https://registry.npmjs.org/node-releases/-/node-releases-2.0.51.tgz | [LICENSE](LICENSES/npm/node_modules/node-releases/2.0.51/LICENSE) |
+| NPM | obug 2.2.1 | dev/build-only possible | https://registry.npmjs.org/obug/-/obug-2.2.1.tgz | [LICENSE](LICENSES/npm/node_modules/obug/2.2.1/LICENSE) |
+| NPM | optionator 0.9.4 | dev/build-only possible | https://registry.npmjs.org/optionator/-/optionator-0.9.4.tgz | [LICENSE](LICENSES/npm/node_modules/optionator/0.9.4/LICENSE) |
+| NPM | p-limit 3.1.0 | dev/build-only possible | https://registry.npmjs.org/p-limit/-/p-limit-3.1.0.tgz | [license](LICENSES/npm/node_modules/p-limit/3.1.0/license) |
+| NPM | p-locate 5.0.0 | dev/build-only possible | https://registry.npmjs.org/p-locate/-/p-locate-5.0.0.tgz | [license](LICENSES/npm/node_modules/p-locate/5.0.0/license) |
+| NPM | parse5 8.0.1 | dev/build-only possible | https://registry.npmjs.org/parse5/-/parse5-8.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/parse5/8.0.1/LICENSE) |
+| NPM | path-exists 4.0.0 | dev/build-only possible | https://registry.npmjs.org/path-exists/-/path-exists-4.0.0.tgz | [license](LICENSES/npm/node_modules/path-exists/4.0.0/license) |
+| NPM | path-key 3.1.1 | dev/build-only possible | https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz | [license](LICENSES/npm/node_modules/path-key/3.1.1/license) |
+| NPM | picocolors 1.1.1 | dev/build-only possible | https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz | [LICENSE](LICENSES/npm/node_modules/picocolors/1.1.1/LICENSE) |
+| NPM | picomatch 4.0.7 | dev/build-only possible | https://registry.npmjs.org/picomatch/-/picomatch-4.0.7.tgz | [LICENSE](LICENSES/npm/node_modules/picomatch/4.0.7/LICENSE) |
+| NPM | postcss 8.5.28 | dev/build-only possible | https://registry.npmjs.org/postcss/-/postcss-8.5.28.tgz | [LICENSE](LICENSES/npm/node_modules/postcss/8.5.28/LICENSE) |
+| NPM | prelude-ls 1.2.1 | dev/build-only possible | https://registry.npmjs.org/prelude-ls/-/prelude-ls-1.2.1.tgz | [LICENSE](LICENSES/npm/node_modules/prelude-ls/1.2.1/LICENSE) |
+| NPM | pretty-format 27.5.1 | dev/build-only possible | https://registry.npmjs.org/pretty-format/-/pretty-format-27.5.1.tgz | [LICENSE](LICENSES/npm/node_modules/pretty-format/27.5.1/LICENSE) |
+| NPM | ansi-styles 5.2.0 | dev/build-only possible | https://registry.npmjs.org/ansi-styles/-/ansi-styles-5.2.0.tgz | [license](LICENSES/npm/node_modules/pretty-format/node_modules/ansi-styles/5.2.0/license) |
+| NPM | proxy-from-env 2.1.0 | production or optional transitive | https://registry.npmjs.org/proxy-from-env/-/proxy-from-env-2.1.0.tgz | [LICENSE](LICENSES/npm/node_modules/proxy-from-env/2.1.0/LICENSE) |
+| NPM | punycode 2.3.1 | dev/build-only possible | https://registry.npmjs.org/punycode/-/punycode-2.3.1.tgz | [LICENSE-MIT.txt](LICENSES/npm/node_modules/punycode/2.3.1/LICENSE-MIT.txt) |
+| NPM | qified 0.10.1 | dev/build-only possible | https://registry.npmjs.org/qified/-/qified-0.10.1.tgz | [LICENSE](LICENSES/npm/node_modules/qified/0.10.1/LICENSE) |
+| NPM | hookified 2.2.0 | dev/build-only possible | https://registry.npmjs.org/hookified/-/hookified-2.2.0.tgz | [LICENSE](LICENSES/npm/node_modules/qified/node_modules/hookified/2.2.0/LICENSE) |
+| NPM | react 19.3.0 | production or optional transitive | https://registry.npmjs.org/react/-/react-19.3.0.tgz | [LICENSE](LICENSES/npm/node_modules/react/19.3.0/LICENSE) |
+| NPM | react-dom 19.3.0 | production or optional transitive | https://registry.npmjs.org/react-dom/-/react-dom-19.3.0.tgz | [LICENSE](LICENSES/npm/node_modules/react-dom/19.3.0/LICENSE) |
+| NPM | react-is 17.0.2 | dev/build-only possible | https://registry.npmjs.org/react-is/-/react-is-17.0.2.tgz | [LICENSE](LICENSES/npm/node_modules/react-is/17.0.2/LICENSE) |
+| NPM | react-router 7.18.4 | production or optional transitive | https://registry.npmjs.org/react-router/-/react-router-7.18.4.tgz | [LICENSE.md](LICENSES/npm/node_modules/react-router/7.18.4/LICENSE.md) |
+| NPM | react-router-dom 7.18.4 | production or optional transitive | https://registry.npmjs.org/react-router-dom/-/react-router-dom-7.18.4.tgz | [LICENSE.md](LICENSES/npm/node_modules/react-router-dom/7.18.4/LICENSE.md) |
+| NPM | react-virtuoso 4.18.14 | production or optional transitive | https://registry.npmjs.org/react-virtuoso/-/react-virtuoso-4.18.14.tgz | [LICENSE](LICENSES/npm/node_modules/react-virtuoso/4.18.14/LICENSE) |
+| NPM | require-from-string 2.0.2 | dev/build-only possible | https://registry.npmjs.org/require-from-string/-/require-from-string-2.0.2.tgz | [license](LICENSES/npm/node_modules/require-from-string/2.0.2/license) |
+| NPM | rolldown 1.2.9 | dev/build-only possible | https://registry.npmjs.org/rolldown/-/rolldown-1.2.9.tgz | [LICENSE](LICENSES/npm/node_modules/rolldown/1.2.9/LICENSE) |
+| NPM | saxes 6.0.0 | dev/build-only possible | https://registry.npmjs.org/saxes/-/saxes-6.0.0.tgz | **MISSING** |
+| NPM | scheduler 0.28.0 | production or optional transitive | https://registry.npmjs.org/scheduler/-/scheduler-0.28.0.tgz | [LICENSE](LICENSES/npm/node_modules/scheduler/0.28.0/LICENSE) |
+| NPM | semver 6.3.1 | dev/build-only possible | https://registry.npmjs.org/semver/-/semver-6.3.1.tgz | [LICENSE](LICENSES/npm/node_modules/semver/6.3.1/LICENSE) |
+| NPM | set-cookie-parser 2.7.2 | production or optional transitive | https://registry.npmjs.org/set-cookie-parser/-/set-cookie-parser-2.7.2.tgz | [LICENSE](LICENSES/npm/node_modules/set-cookie-parser/2.7.2/LICENSE) |
+| NPM | shebang-command 2.0.0 | dev/build-only possible | https://registry.npmjs.org/shebang-command/-/shebang-command-2.0.0.tgz | [license](LICENSES/npm/node_modules/shebang-command/2.0.0/license) |
+| NPM | shebang-regex 3.0.0 | dev/build-only possible | https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz | [license](LICENSES/npm/node_modules/shebang-regex/3.0.0/license) |
+| NPM | siginfo 2.0.0 | dev/build-only possible | https://registry.npmjs.org/siginfo/-/siginfo-2.0.0.tgz | [LICENSE](LICENSES/npm/node_modules/siginfo/2.0.0/LICENSE) |
+| NPM | source-map-js 1.2.1 | dev/build-only possible | https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.1.tgz | [LICENSE](LICENSES/npm/node_modules/source-map-js/1.2.1/LICENSE) |
+| NPM | stackback 0.0.2 | dev/build-only possible | https://registry.npmjs.org/stackback/-/stackback-0.0.2.tgz | **MISSING** |
+| NPM | std-env 4.2.0 | dev/build-only possible | https://registry.npmjs.org/std-env/-/std-env-4.2.0.tgz | [LICENCE](LICENSES/npm/node_modules/std-env/4.2.0/LICENCE) |
+| NPM | tailwindcss 4.3.3 | dev/build-only possible | https://registry.npmjs.org/tailwindcss/-/tailwindcss-4.3.3.tgz | [LICENSE](LICENSES/npm/node_modules/tailwindcss/4.3.3/LICENSE) |
+| NPM | tapable 2.3.3 | dev/build-only possible | https://registry.npmjs.org/tapable/-/tapable-2.3.3.tgz | [LICENSE](LICENSES/npm/node_modules/tapable/2.3.3/LICENSE) |
+| NPM | tinybench 6.1.4 | dev/build-only possible | https://registry.npmjs.org/tinybench/-/tinybench-6.1.4.tgz | [LICENSE](LICENSES/npm/node_modules/tinybench/6.1.4/LICENSE) |
+| NPM | tinyexec 1.3.0 | dev/build-only possible | https://registry.npmjs.org/tinyexec/-/tinyexec-1.3.0.tgz | [LICENSE](LICENSES/npm/node_modules/tinyexec/1.3.0/LICENSE) |
+| NPM | tinyglobby 0.2.17 | dev/build-only possible | https://registry.npmjs.org/tinyglobby/-/tinyglobby-0.2.17.tgz | [LICENSE](LICENSES/npm/node_modules/tinyglobby/0.2.17/LICENSE) |
+| NPM | tldts 7.4.9 | dev/build-only possible | https://registry.npmjs.org/tldts/-/tldts-7.4.9.tgz | [LICENSE](LICENSES/npm/node_modules/tldts/7.4.9/LICENSE) |
+| NPM | tldts-core 7.4.9 | dev/build-only possible | https://registry.npmjs.org/tldts-core/-/tldts-core-7.4.9.tgz | [LICENSE](LICENSES/npm/node_modules/tldts-core/7.4.9/LICENSE) |
+| NPM | tough-cookie 6.0.2 | dev/build-only possible | https://registry.npmjs.org/tough-cookie/-/tough-cookie-6.0.2.tgz | [LICENSE](LICENSES/npm/node_modules/tough-cookie/6.0.2/LICENSE) |
+| NPM | tr46 6.0.0 | dev/build-only possible | https://registry.npmjs.org/tr46/-/tr46-6.0.0.tgz | [LICENSE.md](LICENSES/npm/node_modules/tr46/6.0.0/LICENSE.md) |
+| NPM | ts-api-utils 2.5.0 | dev/build-only possible | https://registry.npmjs.org/ts-api-utils/-/ts-api-utils-2.5.0.tgz | [LICENSE.md](LICENSES/npm/node_modules/ts-api-utils/2.5.0/LICENSE.md) |
+| NPM | tslib 2.8.1 | dev/build-only possible | https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz | not installed (optional/platform entry) |
+| NPM | type-check 0.4.0 | dev/build-only possible | https://registry.npmjs.org/type-check/-/type-check-0.4.0.tgz | [LICENSE](LICENSES/npm/node_modules/type-check/0.4.0/LICENSE) |
+| NPM | typescript 6.0.3 | dev/build-only possible | https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz | [LICENSE.txt](LICENSES/npm/node_modules/typescript/6.0.3/LICENSE.txt) |
+| NPM | typescript-eslint 8.70.0 | dev/build-only possible | https://registry.npmjs.org/typescript-eslint/-/typescript-eslint-8.70.0.tgz | [LICENSE](LICENSES/npm/node_modules/typescript-eslint/8.70.0/LICENSE) |
+| NPM | undici 8.10.2 | dev/build-only possible | https://registry.npmjs.org/undici/-/undici-8.10.2.tgz | [LICENSE](LICENSES/npm/node_modules/undici/8.10.2/LICENSE) |
+| NPM | undici-types 8.9.0 | dev/build-only possible | https://registry.npmjs.org/undici-types/-/undici-types-8.9.0.tgz | [LICENSE](LICENSES/npm/node_modules/undici-types/8.9.0/LICENSE) |
+| NPM | update-browserslist-db 1.2.3 | dev/build-only possible | https://registry.npmjs.org/update-browserslist-db/-/update-browserslist-db-1.2.3.tgz | [LICENSE](LICENSES/npm/node_modules/update-browserslist-db/1.2.3/LICENSE) |
+| NPM | uri-js 4.4.1 | dev/build-only possible | https://registry.npmjs.org/uri-js/-/uri-js-4.4.1.tgz | [LICENSE](LICENSES/npm/node_modules/uri-js/4.4.1/LICENSE) |
+| NPM | use-sync-external-store 1.6.0 | production or optional transitive | https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.6.0.tgz | [LICENSE](LICENSES/npm/node_modules/use-sync-external-store/1.6.0/LICENSE) |
+| NPM | vite 8.3.0 | dev/build-only possible | https://registry.npmjs.org/vite/-/vite-8.3.0.tgz | [LICENSE.md](LICENSES/npm/node_modules/vite/8.3.0/LICENSE.md) |
+| NPM | lightningcss 1.33.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss/-/lightningcss-1.33.0.tgz | [LICENSE](LICENSES/npm/node_modules/vite/node_modules/lightningcss/1.33.0/LICENSE) |
+| NPM | lightningcss-android-arm64 1.33.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-android-arm64/-/lightningcss-android-arm64-1.33.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-darwin-arm64 1.33.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-darwin-arm64/-/lightningcss-darwin-arm64-1.33.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-darwin-x64 1.33.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-darwin-x64/-/lightningcss-darwin-x64-1.33.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-freebsd-x64 1.33.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-freebsd-x64/-/lightningcss-freebsd-x64-1.33.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-linux-arm-gnueabihf 1.33.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-linux-arm-gnueabihf/-/lightningcss-linux-arm-gnueabihf-1.33.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-linux-arm64-gnu 1.33.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-linux-arm64-gnu/-/lightningcss-linux-arm64-gnu-1.33.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-linux-arm64-musl 1.33.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-linux-arm64-musl/-/lightningcss-linux-arm64-musl-1.33.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-linux-x64-gnu 1.33.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-linux-x64-gnu/-/lightningcss-linux-x64-gnu-1.33.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-linux-x64-musl 1.33.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-linux-x64-musl/-/lightningcss-linux-x64-musl-1.33.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-win32-arm64-msvc 1.33.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-win32-arm64-msvc/-/lightningcss-win32-arm64-msvc-1.33.0.tgz | not installed (optional/platform entry) |
+| NPM | lightningcss-win32-x64-msvc 1.33.0 | dev/build-only possible | https://registry.npmjs.org/lightningcss-win32-x64-msvc/-/lightningcss-win32-x64-msvc-1.33.0.tgz | [LICENSE](LICENSES/npm/node_modules/vite/node_modules/lightningcss-win32-x64-msvc/1.33.0/LICENSE) |
+| NPM | vitest 5.0.1 | dev/build-only possible | https://registry.npmjs.org/vitest/-/vitest-5.0.1.tgz | [LICENSE.md](LICENSES/npm/node_modules/vitest/5.0.1/LICENSE.md) |
+| NPM | magic-string 1.4.1 | dev/build-only possible | https://registry.npmjs.org/magic-string/-/magic-string-1.4.1.tgz | [LICENSE](LICENSES/npm/node_modules/vitest/node_modules/magic-string/1.4.1/LICENSE) |
+| NPM | w3c-xmlserializer 5.0.0 | dev/build-only possible | https://registry.npmjs.org/w3c-xmlserializer/-/w3c-xmlserializer-5.0.0.tgz | [LICENSE.md](LICENSES/npm/node_modules/w3c-xmlserializer/5.0.0/LICENSE.md) |
+| NPM | webidl-conversions 8.0.1 | dev/build-only possible | https://registry.npmjs.org/webidl-conversions/-/webidl-conversions-8.0.1.tgz | [LICENSE.md](LICENSES/npm/node_modules/webidl-conversions/8.0.1/LICENSE.md) |
+| NPM | whatwg-mimetype 5.0.0 | dev/build-only possible | https://registry.npmjs.org/whatwg-mimetype/-/whatwg-mimetype-5.0.0.tgz | [LICENSE.txt](LICENSES/npm/node_modules/whatwg-mimetype/5.0.0/LICENSE.txt) |
+| NPM | whatwg-url 17.1.1 | dev/build-only possible | https://registry.npmjs.org/whatwg-url/-/whatwg-url-17.1.1.tgz | [LICENSE.txt](LICENSES/npm/node_modules/whatwg-url/17.1.1/LICENSE.txt) |
+| NPM | which 2.0.2 | dev/build-only possible | https://registry.npmjs.org/which/-/which-2.0.2.tgz | [LICENSE](LICENSES/npm/node_modules/which/2.0.2/LICENSE) |
+| NPM | why-is-node-running 2.3.0 | dev/build-only possible | https://registry.npmjs.org/why-is-node-running/-/why-is-node-running-2.3.0.tgz | [LICENSE](LICENSES/npm/node_modules/why-is-node-running/2.3.0/LICENSE) |
+| NPM | word-wrap 1.2.5 | dev/build-only possible | https://registry.npmjs.org/word-wrap/-/word-wrap-1.2.5.tgz | [LICENSE](LICENSES/npm/node_modules/word-wrap/1.2.5/LICENSE) |
+| NPM | xml-name-validator 5.0.0 | dev/build-only possible | https://registry.npmjs.org/xml-name-validator/-/xml-name-validator-5.0.0.tgz | [LICENSE.txt](LICENSES/npm/node_modules/xml-name-validator/5.0.0/LICENSE.txt) |
+| NPM | xmlchars 2.2.0 | dev/build-only possible | https://registry.npmjs.org/xmlchars/-/xmlchars-2.2.0.tgz | [LICENSE](LICENSES/npm/node_modules/xmlchars/2.2.0/LICENSE) |
+| NPM | yallist 3.1.1 | dev/build-only possible | https://registry.npmjs.org/yallist/-/yallist-3.1.1.tgz | [LICENSE](LICENSES/npm/node_modules/yallist/3.1.1/LICENSE) |
+| NPM | yocto-queue 0.1.0 | dev/build-only possible | https://registry.npmjs.org/yocto-queue/-/yocto-queue-0.1.0.tgz | [license](LICENSES/npm/node_modules/yocto-queue/0.1.0/license) |
+| NPM | zod 4.3.6 | dev/build-only possible | https://registry.npmjs.org/zod/-/zod-4.3.6.tgz | [LICENSE](LICENSES/npm/node_modules/zod/4.3.6/LICENSE) |
+| NPM | zod-validation-error 4.0.2 | dev/build-only possible | https://registry.npmjs.org/zod-validation-error/-/zod-validation-error-4.0.2.tgz | [LICENSE](LICENSES/npm/node_modules/zod-validation-error/4.0.2/LICENSE) |
+| NPM | zustand 4.5.7 | production or optional transitive | https://registry.npmjs.org/zustand/-/zustand-4.5.7.tgz | [LICENSE](LICENSES/npm/node_modules/zustand/4.5.7/LICENSE) |
+| Go runtime | Go go1.27.4 | use actual release toolchain; platform runtime/C toolchain review separate | official Go tag | [LICENSE](LICENSES/go-runtime/go1.27.4/LICENSE), [PATENTS](LICENSES/go-runtime/go1.27.4/PATENTS) |
+| Go runtime | Go go1.26.10 | use actual release toolchain; platform runtime/C toolchain review separate | official Go tag | [LICENSE](LICENSES/go-runtime/go1.26.10/LICENSE), [PATENTS](LICENSES/go-runtime/go1.26.10/PATENTS) |
+
+## Collection gaps
+
+- Go legal texts unavailable locally: github.com/google/pprof@v0.0.0-20260802141513-ef3492d7dac3
+- Go legal texts unavailable locally: golang.org/x/mod@v0.37.0
+- Go legal texts unavailable locally: golang.org/x/net@v0.57.0
+- Go legal texts unavailable locally: golang.org/x/term@v0.45.0
+- Go legal texts unavailable locally: golang.org/x/text@v0.41.0
+- Go legal texts unavailable locally: golang.org/x/tools@v0.47.0
+- Go legal texts unavailable locally: gopkg.in/check.v1@v0.0.0-20161208181325-20d25e280405
+- Go legal texts unavailable locally: modernc.org/cc/v4@v4.29.1
+- Go legal texts unavailable locally: modernc.org/ccgo/v4@v4.34.6
+- Go legal texts unavailable locally: modernc.org/fileutil@v1.4.0
+- Go legal texts unavailable locally: modernc.org/gc/v2@v2.6.5
+- Go legal texts unavailable locally: modernc.org/gc/v3@v3.1.4
+- Go legal texts unavailable locally: modernc.org/goabi0@v0.2.0
+- Go legal texts unavailable locally: modernc.org/opt@v0.2.0
+- Go legal texts unavailable locally: modernc.org/sortutil@v1.2.1
+- Go legal texts unavailable locally: modernc.org/strutil@v1.2.1
+- Go legal texts unavailable locally: modernc.org/token@v1.1.0
+- Installed NPM package has no collected legal file: @rolldown/binding-win32-x64-msvc@1.2.9 (node_modules/@rolldown/binding-win32-x64-msvc)
+- Installed NPM package has no collected legal file: natural-compare@1.4.0 (node_modules/natural-compare)
+- Installed NPM package has no collected legal file: saxes@6.0.0 (node_modules/saxes)
+- Installed NPM package has no collected legal file: stackback@0.0.2 (node_modules/stackback)

@@ -1,6 +1,8 @@
 # Issue tracker: Local Markdown
 
-Issues and specs (you may know a spec as a PRD) for this repo live as markdown files in `.scratch/`.
+Engineering issues and specs (you may know a spec as a PRD) for this repo live as markdown files in `.scratch/`.
+
+GitHub Issues is a public feedback intake surface, not the engineering tracker. Public reports do not change the publish/fetch rules below; skills continue to create and read engineering tickets locally.
 
 ## Conventions
 

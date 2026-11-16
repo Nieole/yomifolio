@@ -79,4 +79,6 @@ GOCACHE="$(pwd)/.gocache" GOTMPDIR="$(pwd)/.tmp" go test ./...
 
 以发布页实际文件名为准，旧 release 可能仍叫 `manga-manager`；不要构造未发布的下载深链。本文与截图描述当前源码，下载二进制的功能以其 release notes 为准，不承诺新发布的时间。
 
+贡献约定见 [CONTRIBUTING.md](../CONTRIBUTING.md)。依赖变更还需复核[第三方通知与发布限制](../THIRD_PARTY_NOTICES.md)；其完整性校验不是合规审计。
+
 版本变更记录在 [CHANGELOG.md](../CHANGELOG.md)。问题与建议可[新建 issue](https://github.com/Nieole/yomifolio/issues/new/choose)；本指南不要求创建或推送 release tag。

@@ -4,6 +4,7 @@
 
 [![CI](https://github.com/Nieole/yomifolio/actions/workflows/ci.yml/badge.svg)](https://github.com/Nieole/yomifolio/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/Nieole/yomifolio)](https://github.com/Nieole/yomifolio/releases/latest)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
 English · [简体中文](README.zh-CN.md) | [Download](https://github.com/Nieole/yomifolio/releases/latest) · [Quick start](#quick-start) · [Documentation](#documentation)
 
@@ -70,4 +71,8 @@ Online metadata sources and LLM-assisted metadata, grouping, and recommendations
 
 ## Contributing and feedback
 
-For bugs and feature requests, [open an issue](https://github.com/Nieole/yomifolio/issues/new/choose) with the version, platform, steps to reproduce, and sanitized logs. Do not post credentials or private library files.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and safe reporting guidance. For bugs and feature requests, [open an issue](https://github.com/Nieole/yomifolio/issues/new/choose) with the version, platform, steps to reproduce, and sanitized logs. Do not post credentials or private library files. Report security issues using the [private-channel guidance](SECURITY.md).
+
+## License
+
+[Apache License 2.0](LICENSE) · Yomifolio contributors. Third-party components retain their own licenses; see [notices and outstanding release checks](THIRD_PARTY_NOTICES.md). The code license does not grant rights to third-party comics or artwork.

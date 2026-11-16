@@ -77,4 +77,6 @@ Read [web/README.md](../web/README.md) before changing frontend dependencies. It
 
 The existing release workflow accepts `v*` tags or manual dispatch. Native runners build Linux AMD64, Windows AMD64, and Darwin ARM64 binaries with CGO enabled, after CI. Only tagged runs publish GitHub Release assets; manual runs produce workflow artifacts. New outputs are `yomifolio-${version}-${os}-${arch}` plus `.exe` on Windows, with SHA256 checksums for published assets. Older release assets may retain `manga-manager` filenames; use the filenames and release notes on the actual release page. See the actual [workflow](../.github/workflows/release.yml) rather than creating speculative asset URLs.
 
+For contributions, read [CONTRIBUTING.md](../CONTRIBUTING.md). Dependency changes also require review of the [notice inventory and release limitations](../THIRD_PARTY_NOTICES.md); its integrity check is not a compliance audit.
+
 Version changes belong in [CHANGELOG.md](../CHANGELOG.md). For bugs or suggestions, [open an issue](https://github.com/Nieole/yomifolio/issues/new/choose). This guide is not an instruction to create or push a release tag.
