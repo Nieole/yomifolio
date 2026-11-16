@@ -7648,6 +7648,6 @@
   ],
   "inputs": {
     "go.mod": "aa562158416681c8da16946156662c211e15a5e83d6766d33a6e55f1f49fa54a",
-    "web\\package-lock.json": "443f974bf7a86d4ad55078a8db962393c16db57625a4c5408823570fd203a853"
+    "web/package-lock.json": "443f974bf7a86d4ad55078a8db962393c16db57625a4c5408823570fd203a853"
   }
 }

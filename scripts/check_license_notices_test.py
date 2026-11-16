@@ -2,7 +2,7 @@
 
 import hashlib
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import shutil
 import subprocess
 import sys
@@ -73,6 +73,21 @@ class NoticeIntegrityTests(unittest.TestCase):
         result = self.run_check()
         self.assertEqual(result.returncode, 1)
         self.assertIn('missing manifest input', result.stderr)
+
+
+class RepositoryManifestTests(unittest.TestCase):
+    def test_real_manifest_paths_use_portable_posix_separators(self):
+        root = Path(__file__).resolve().parent.parent
+        manifest = json.loads((root / 'LICENSES/manifest.json').read_text(encoding='utf-8'))
+        paths = [item['file'] for item in manifest['files']] + list(manifest['inputs'])
+        self.assertIn('web/package-lock.json', manifest['inputs'])
+        for relative in paths:
+            with self.subTest(path=relative):
+                self.assertNotIn('\\', relative)
+                path = PurePosixPath(relative)
+                self.assertFalse(path.is_absolute())
+                self.assertNotIn('..', path.parts)
+                self.assertTrue(root.joinpath(*path.parts).is_file())
 
 
 if __name__ == '__main__':
