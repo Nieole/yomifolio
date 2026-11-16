@@ -30,7 +30,7 @@ type apiFixture struct {
 	admin          *administrationHTTP
 	media          *contentHTTP
 	store          database.Store
-	imageCache     *imageMemoryCache
+	imageCache     *bookcontent.MemoryCache
 	content        *bookcontent.Service
 	stats          *dashboard.Service
 	scanner        *scanner.Scanner

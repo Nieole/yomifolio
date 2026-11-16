@@ -3,7 +3,7 @@
 // 两条最容易写错的边界：同键覆盖必须先减旧值（用驱逐回调记账的实现正是栽在这里），
 // 单条超预算必须直接不收。
 
-package api
+package bookcontent
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 
 func TestImageMemoryCacheRespectsByteBudget(t *testing.T) {
 	const budget = 10 << 10 // 10 KiB
-	cache := newImageMemoryCache(budget)
+	cache := NewMemoryCache(budget)
 
 	// 塞入远超预算的数据。
 	for i := 0; i < 100; i++ {
@@ -43,7 +43,7 @@ func TestImageMemoryCacheRespectsByteBudget(t *testing.T) {
 // 旧值的字节永久留在计数里，几轮覆盖后计数虚高越过预算，缓存从此再也存不进任何东西。
 func TestImageMemoryCacheOverwriteDoesNotLeakBytes(t *testing.T) {
 	const budget = 10 << 10
-	cache := newImageMemoryCache(budget)
+	cache := NewMemoryCache(budget)
 
 	payload := make([]byte, 1<<10)
 	for i := 0; i < 200; i++ {
@@ -69,7 +69,7 @@ func TestImageMemoryCacheOverwriteDoesNotLeakBytes(t *testing.T) {
 // 收了必然立刻把其它全部驱逐光，缓存等于只剩这一条。
 func TestImageMemoryCacheRejectsOversizedEntry(t *testing.T) {
 	const budget = 4 << 10
-	cache := newImageMemoryCache(budget)
+	cache := NewMemoryCache(budget)
 
 	cache.Add("small", make([]byte, 1<<10))
 	cache.Add("huge", make([]byte, budget+1))
@@ -83,7 +83,7 @@ func TestImageMemoryCacheRejectsOversizedEntry(t *testing.T) {
 }
 
 func TestImageMemoryCachePurgeResetsAccounting(t *testing.T) {
-	cache := newImageMemoryCache(10 << 10)
+	cache := NewMemoryCache(10 << 10)
 	cache.Add("a", make([]byte, 1<<10))
 	cache.Purge()
 
@@ -100,7 +100,7 @@ func TestImageMemoryCachePurgeResetsAccounting(t *testing.T) {
 // TestImageMemoryCacheConcurrentAccess 保证记账与内容在同一把锁内，-race 下无漂移。
 func TestImageMemoryCacheConcurrentAccess(t *testing.T) {
 	const budget = 64 << 10
-	cache := newImageMemoryCache(budget)
+	cache := NewMemoryCache(budget)
 
 	var wg sync.WaitGroup
 	for w := 0; w < 8; w++ {
@@ -123,7 +123,7 @@ func TestImageMemoryCacheConcurrentAccess(t *testing.T) {
 }
 
 func TestImageMemoryCacheReturnsStoredBytes(t *testing.T) {
-	cache := newImageMemoryCache(10 << 10)
+	cache := NewMemoryCache(10 << 10)
 	want := []byte("page-image-bytes")
 	cache.Add("k", want)
 	got, ok := cache.Get("k")

@@ -1,4 +1,4 @@
-// 守**资料库扫描**与**系列扫描**任务的进度所有权（模型见 taskScanObserver）。
+// 守**资料库扫描**与**系列扫描**任务的进度所有权（模型见 scanning.NewObserver）。
 //
 // 这两个**任务键**的拼法在整个包里人尽皆知，「谁能写它们的进度」若不由交出去的那个
 // **扫描观察者**决定就等于不受约束；反过来观察者一旦没交出去，整个扫描期间的计数、阶段与
@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"yomifolio/internal/application/scanning"
 	"yomifolio/internal/scanner"
 )
 
@@ -31,7 +32,7 @@ func startedScanRig(t *testing.T, key string, identity TaskIdentity) (scanner.Sc
 	progress := seedTask(t, c.taskEngine, taskSeed{
 		Key: key, Identity: identity, CanCancel: true, CanPause: true,
 	})
-	return newTaskScanObserver(progress), snapshots, clock
+	return scanning.NewObserver(progress), snapshots, clock
 }
 
 // TestScanProgressFlowsThroughHandedOverObserver 走完一整条交接：启动任务拿到**运行句柄**、
@@ -131,7 +132,7 @@ func TestScanReportDoesNotRestateLaunchDeclaration(t *testing.T) {
 // 断言的是 nil 接口值而不是「一个什么都不做的观察者」：带类型的 nil 指针在扫描器那边
 // `observer == nil` 判不出来，会在第一条报文上解引用。
 func TestScanObserverIsNilWithoutHandle(t *testing.T) {
-	if observer := newTaskScanObserver(nil); observer != nil {
+	if observer := scanning.NewObserver(nil); observer != nil {
 		t.Fatalf("没拿到句柄却造出了观察者 %#v —— 写入资格漏出去了", observer)
 	}
 }

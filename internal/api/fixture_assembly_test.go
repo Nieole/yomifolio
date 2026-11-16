@@ -19,7 +19,7 @@ import (
 
 func newAPIFixture(store database.Store, scan *scanner.Scanner, cfg *config.Manager, cfgPath string, sizes controllerCacheSizes) *apiFixture {
 	transport := NewTransport(cfg)
-	cache := newImageMemoryCache(sizes.imageBytes)
+	cache := bookcontent.NewMemoryCache(sizes.imageBytes)
 	content := bookcontent.New(func(ctx context.Context, id int64) (bookcontent.Source, error) {
 		b, err := store.GetBook(ctx, id)
 		return bookPageSourceFromBook(b), err
@@ -57,7 +57,7 @@ type controllerCacheSizes struct {
 }
 
 func defaultControllerCacheSizes() controllerCacheSizes {
-	return controllerCacheSizes{defaultImageCacheBytes, 128, 512}
+	return controllerCacheSizes{bookcontent.DefaultImageCacheBytes, 128, 512}
 }
 func (c *apiFixture) Close() {
 	if c.process != nil {
