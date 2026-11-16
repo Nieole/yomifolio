@@ -66,7 +66,7 @@ The five canonical triage roles, used verbatim as the `Status:` value in each is
 
 ### Domain docs
 
-Single-context: one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
 ## Configuration & Runtime Notes
 Runtime config lives in `config.yaml`, which is gitignored and never committed (it may hold secrets such as `llm.api_key`). `config.example.yaml` is the tracked template; the server also generates a default on first run. `README.md` documents the flags and env vars that override the config path and log directory — both resolve to absolute at startup, and the database and cache locations come from `database.path` / `cache.dir`. Generated runtime data belongs in `data/` and should not be committed. When editing runtime config flows, `config.Manager` is the source of truth rather than mutating copied snapshots inline.
