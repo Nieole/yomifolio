@@ -109,7 +109,7 @@ func (h *Handle) AdvanceLive(current, total int) {
 // Phase 报告**阶段**：正在做什么。它只动阶段与文案，不碰计数与总数，
 // 因此播报阶段不必编造一个凑数的计数值。
 //
-// 名字用 Phase 而不是 Stage：CONTEXT.md 把 stage 列为这个概念要避开的词。
+// 名字用 Phase 而不是 Stage：GLOSSARY.md 把 stage 列为这个概念要避开的词。
 func (h *Handle) Phase(phase, code string, params map[string]string) {
 	h.Report(Frame{Phase: phase, Code: code, Params: params})
 }

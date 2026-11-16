@@ -1,5 +1,5 @@
 /**
- * 守中文词条只用 CONTEXT.md 的规范词：禁用词一旦出现在面向用户那一层就变红。
+ * 守中文词条只用 GLOSSARY.md 的规范词：禁用词一旦出现在面向用户那一层就变红。
  * 判据是正则而不是子串，中间插得下字的复合词写成带间隔的形态——「动态规则合集」正是这样漏过去的。
  * 同一个字在别的语境下本来就对的（作品群的「宇宙」对上系列关系的「同宇宙」），按词条登记进 allow。
  * 「建议」「候选」这类整词都要看上下文的不进表，一刀切会误伤，交给评审。
@@ -15,7 +15,7 @@ interface BannedTerm {
   allow?: Record<string, string>;
 }
 
-// 每条都是 CONTEXT.md 里写明的 _Avoid_ 词，right 是它该让位给谁。
+// 每条都是 GLOSSARY.md 里写明的 _Avoid_ 词，right 是它该让位给谁。
 const BANNED_TERMS: BannedTerm[] = [
   { pattern: /书库/, wrong: '书库', right: '资料库' },
   { pattern: /资源库/, wrong: '资源库', right: '资料库' },

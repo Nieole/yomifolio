@@ -36,7 +36,7 @@ func seedScanLibrary(t *testing.T, c *apiFixture) (database.Library, string, Tas
 
 // TestRetryReplaysTheForcedScanThatJustFailed 钉住刚失败的那次带**强制**时，重试重放的仍是强制扫描。
 //
-// **强制**是一次运行的属性而不是一个身份（见 CONTEXT.md 的**变体**）：同一个任务的两次运行，
+// **强制**是一次运行的属性而不是一个身份（见 GLOSSARY.md 的**变体**）：同一个任务的两次运行，
 // 一次强制一次不强制。丢掉它的后果是用户点重试之后跑的是一次增量扫描——那次扫描会跳过它本来要
 // 重读的每一个归档，看上去几秒就「成功」了，而用户当初点强制正是因为增量拦截漏了东西。
 func TestRetryReplaysTheForcedScanThatJustFailed(t *testing.T) {

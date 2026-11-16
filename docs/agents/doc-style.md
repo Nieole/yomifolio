@@ -33,7 +33,7 @@
 | --- | --- | --- |
 | `README.md` | 用户、部署者 | 是什么、能干什么、怎么装、怎么配 |
 | `AGENTS.md` | 在仓库里干活的人和 agent | 结构、命令、风格、约定 |
-| `CONTEXT.md` | 两者 | 只有词汇，没有实现 |
+| `GLOSSARY.md` | 两者 | 只有词汇，没有实现 |
 | `docs/adr/` | 要改架构的人 | 拦阻性决策 |
 | `docs/agents/` | agent | 技能协作细节 |
 | `CHANGELOG.md` | 用户 | 版本史 |
