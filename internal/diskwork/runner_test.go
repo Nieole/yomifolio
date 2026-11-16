@@ -184,8 +184,8 @@ func TestRunnerPauseGateBlocksBeforeToken(t *testing.T) {
 	}()
 
 	select {
-	case <-done:
-		t.Fatal("expected Do to block on the paused gate")
+	case err := <-done:
+		t.Fatalf("expected Do to block on the paused gate, got %v", err)
 	case <-time.After(80 * time.Millisecond):
 	}
 	if ran.Load() {
@@ -261,8 +261,8 @@ func TestRunnerSkipsWorkWhenCancelledWhileQueued(t *testing.T) {
 	}()
 
 	select {
-	case <-done:
-		t.Fatal("expected Do to queue for the busy volume")
+	case err := <-done:
+		t.Fatalf("expected Do to queue for the busy volume, got %v", err)
 	case <-time.After(80 * time.Millisecond):
 	}
 	cancel()

@@ -74,8 +74,8 @@ func TestTransferPausedWhileQueuedForQuotaDoesNotStartRead(t *testing.T) {
 		case <-deadline:
 			cancel()
 			lease.Release()
-			<-done
-			t.Fatal("copy did not queue for quota")
+			err := <-done
+			t.Fatalf("copy did not queue for quota: %v", err)
 		default:
 		}
 		if !waiting {
@@ -88,8 +88,8 @@ func TestTransferPausedWhileQueuedForQuotaDoesNotStartRead(t *testing.T) {
 	case path := <-work.executed:
 		cancel()
 		gate.Resume()
-		<-done
-		t.Fatalf("paused copy performed IO after waiting for quota: %s", path)
+		err := <-done
+		t.Fatalf("paused copy performed IO after waiting for quota: %s (result: %v)", path, err)
 	case err := <-done:
 		t.Fatalf("paused copy exited: %v", err)
 	case <-time.After(100 * time.Millisecond):
@@ -98,8 +98,8 @@ func TestTransferPausedWhileQueuedForQuotaDoesNotStartRead(t *testing.T) {
 		if volume.Active != 0 {
 			cancel()
 			gate.Resume()
-			<-done
-			t.Fatalf("paused copy retained acquired quota: %+v", volume)
+			err := <-done
+			t.Fatalf("paused copy retained acquired quota: %+v (result: %v)", volume, err)
 		}
 	}
 	gate.Resume()
@@ -110,8 +110,8 @@ func TestTransferPausedWhileQueuedForQuotaDoesNotStartRead(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		cancel()
-		<-done
-		t.Fatal("resume did not complete")
+		err := <-done
+		t.Fatalf("resume did not complete: %v", err)
 	}
 	content, err := os.ReadFile(plan.Operations[0].Destination)
 	if err != nil || string(content) != "x" {
@@ -155,15 +155,15 @@ func TestTransferPausesWithinCurrentBookAndResumesSameStaging(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		cancel()
 		gate.Resume()
-		<-done
-		t.Fatal("copy did not reach pause boundary")
+		transferErr := <-done
+		t.Fatalf("copy did not reach pause boundary: %v", transferErr)
 	}
 	select {
 	case second := <-chunks:
 		cancel()
 		gate.Resume()
-		<-done
-		t.Fatalf("paused transfer kept copying current book: %d then %d", first, second)
+		transferErr := <-done
+		t.Fatalf("paused transfer kept copying current book: %d then %d (result: %v)", first, second, transferErr)
 	case err := <-done:
 		t.Fatalf("paused transfer exited: %v", err)
 	case <-time.After(100 * time.Millisecond):
@@ -171,36 +171,36 @@ func TestTransferPausesWithinCurrentBookAndResumesSameStaging(t *testing.T) {
 	if _, err := os.Stat(plan.Operations[0].Destination); !errors.Is(err, os.ErrNotExist) {
 		cancel()
 		gate.Resume()
-		<-done
-		t.Fatalf("partial target visible: %v", err)
+		transferErr := <-done
+		t.Fatalf("partial target visible: %v (result: %v)", err, transferErr)
 	}
 	staging, err := filepath.Glob(filepath.Join(filepath.Dir(plan.Operations[0].Destination), ".mm-transfer-*.tmp"))
 	if err != nil || len(staging) != 1 {
 		cancel()
 		gate.Resume()
-		<-done
-		t.Fatalf("staging=%v %v", staging, err)
+		transferErr := <-done
+		t.Fatalf("staging=%v %v (result: %v)", staging, err, transferErr)
 	}
 	info, err := os.Stat(staging[0])
 	if err != nil || info.Size() != first {
 		cancel()
 		gate.Resume()
-		<-done
-		t.Fatalf("staging offset changed: %v %v", info, err)
+		transferErr := <-done
+		t.Fatalf("staging offset changed: %v %v (result: %v)", info, err, transferErr)
 	}
 	for _, volume := range scheduler.Snapshot() {
 		if volume.Active != 0 {
 			cancel()
 			gate.Resume()
-			<-done
-			t.Fatalf("paused copy retained IO quota: %+v", volume)
+			transferErr := <-done
+			t.Fatalf("paused copy retained IO quota: %+v (result: %v)", volume, transferErr)
 		}
 	}
 	if len(scheduler.Snapshot()) == 0 {
 		cancel()
 		gate.Resume()
-		<-done
-		t.Fatal("copy never acquired a real IO quota")
+		transferErr := <-done
+		t.Fatalf("copy never acquired a real IO quota: %v", transferErr)
 	}
 	readerCtx, stopReader := context.WithTimeout(context.Background(), time.Second)
 	defer stopReader()
@@ -208,16 +208,16 @@ func TestTransferPausesWithinCurrentBookAndResumesSameStaging(t *testing.T) {
 	if err != nil {
 		cancel()
 		gate.Resume()
-		<-done
-		t.Fatalf("reader blocked by paused copy: %v", err)
+		transferErr := <-done
+		t.Fatalf("reader blocked by paused copy: %v (result: %v)", err, transferErr)
 	}
 	read, readErr := os.ReadFile(plan.Operations[0].SourcePath)
 	lease.Release()
 	if readErr != nil || !bytes.Equal(read, content) {
 		cancel()
 		gate.Resume()
-		<-done
-		t.Fatalf("reader failed during pause: %v", readErr)
+		transferErr := <-done
+		t.Fatalf("reader failed during pause: %v (result: %v)", readErr, transferErr)
 	}
 	// Resume each observed block; the same staged file must accumulate the whole book.
 	gate.Resume()
@@ -237,8 +237,8 @@ func TestTransferPausesWithinCurrentBookAndResumesSameStaging(t *testing.T) {
 		case <-time.After(3 * time.Second):
 			cancel()
 			gate.Resume()
-			<-done
-			t.Fatal("resume did not finish")
+			transferErr := <-done
+			t.Fatalf("resume did not finish: %v", transferErr)
 		}
 	}
 }

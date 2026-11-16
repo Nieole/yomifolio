@@ -28,7 +28,7 @@ GOCACHE="$(pwd)/.gocache" GOTMPDIR="$(pwd)/.tmp" go test ./...
 - **`GOCACHE` 相反，共享纯赚。** Go 构建缓存内容寻址且并发安全，多棵树指向同一份既省盘又省时间；
   每树一份会很快涨到十几 GB。
 
-Use `./build.sh` for a full release-style build; it installs frontend dependencies, builds `web`, and cross-compiles binaries into `build/`. 升级前端依赖前读 `web/README.md`：两条 `npm audit` high 已确认不可达，`npm audit fix --force` 会把 `react-router-dom` 降级 7 个小版本。
+Use `./build.sh` for a full release-style build; it installs frontend dependencies, builds `web`, and cross-compiles binaries into `build/`. 升级前端依赖前读 `web/README.md`，复核 TypeScript/ESLint 兼容边界与安全 override，再对实际锁文件运行审计；不要用 `npm audit fix --force` 绕过兼容性检查。
 
 ## Coding Style & Naming Conventions
 Go code should stay `gofmt`-clean and package-oriented; keep handlers thin and push logic into `internal/*` services. React/TypeScript uses the existing Vite + ESLint setup, 2-space indentation, PascalCase for components (`SeriesHeader.tsx`), and `useX` for hooks (`useReaderPreferences.ts`). Prefer small, behavior-preserving refactors over broad rewrites. 跑在任务里的代码写日志用带 ctx 的

@@ -4,7 +4,7 @@
 
 ## 环境要求
 
-部署优先选[预编译版本](https://github.com/Nieole/yomifolio/releases/latest)。源码构建需要 Go、Node/npm 与可用的 C 工具链：**WebP 编码依赖 CGO**，SQLite 驱动无需 CGO 不代表整个程序无需 CGO。复现检查时使用 [CI 工作流](../.github/workflows/ci.yml) 指定的工具链；模块最低版本见 `go.mod`，不要混淆模块声明与 CI 实际版本。
+部署优先选[预编译版本](https://github.com/Nieole/yomifolio/releases/latest)。源码构建需要 Go、Node/npm 与可用的 C 工具链：**WebP 编码依赖 CGO**，SQLite 驱动无需 CGO 不代表整个程序无需 CGO。复现检查时使用 [CI 工作流](../.github/workflows/ci.yml) 指定的工具链；Node 本地版本以 `.node-version` 为准，模块最低版本见 `go.mod`，不要混淆模块声明与 CI 实际版本。golangci-lint 的分析器必须支持所选 Go 的导出格式，仅用新 Go 重编旧 lint 不能补上分析器支持。
 
 前端为 React 19 / Vite 8 / TailwindCSS 4、TypeScript，使用 React Router、React Virtuoso、React Flow；后端使用 chi、sqlc、内嵌 modernc SQLite 及 WebP/AVIF 等图像库。精确版本以 `go.mod`、`web/package-lock.json` 为准，不在两种语言重复维护依赖版本表。
 

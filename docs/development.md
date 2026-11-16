@@ -4,7 +4,7 @@
 
 ## Requirements
 
-Prefer [prebuilt releases](https://github.com/Nieole/yomifolio/releases/latest) for deployment. Source builds need Go, Node/npm, and a working C toolchain: **WebP encoding requires CGO**, even though the SQLite driver itself does not. CI currently uses **Go 1.26.10 and Node 24**; `go.mod` declares **Go 1.25.0**. Use the CI versions when reproducing CI results, rather than treating the module directive as the CI version.
+Prefer [prebuilt releases](https://github.com/Nieole/yomifolio/releases/latest) for deployment. Source builds need Go, Node/npm, and a working C toolchain: **WebP encoding requires CGO**, even though the SQLite driver itself does not. Use the toolchain versions pinned in [CI](../.github/workflows/ci.yml) and `.node-version` when reproducing CI results. `go.mod` declares the minimum Go version required by the dependency graph, not the CI toolchain. The linter must support that toolchain's export format; rebuilding an older golangci-lint with a newer Go compiler does not update its analyzers.
 
 The frontend uses React 19, Vite 8, TailwindCSS 4, TypeScript, React Router, React Virtuoso, and React Flow. The backend uses chi, sqlc, embedded modernc SQLite, and image libraries including chai2010/webp, gen2brain/avif, nfnt/resize, disintegration/imaging, and x/image. Exact versions belong in `go.mod` and `web/package-lock.json`, not a duplicated version table.
 

@@ -307,8 +307,8 @@ func TestHandleDiskGateBlocksBeforeToken(t *testing.T) {
 	}()
 
 	select {
-	case <-done:
-		t.Fatal("expected Disk to block on the paused gate")
+	case err := <-done:
+		t.Fatalf("expected Disk to block on the paused gate, got %v", err)
 	case <-ran:
 		t.Fatal("closure ran while the task was paused")
 	case <-time.After(80 * time.Millisecond):

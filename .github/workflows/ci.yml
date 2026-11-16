@@ -37,13 +37,13 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.26.10"
+          go-version: "1.27.4"
           cache: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24"
+          node-version: "26.13.1"
           cache: npm
           cache-dependency-path: web/package-lock.json
 
@@ -68,12 +68,10 @@ jobs:
 
       - name: Lint Go (golangci-lint)
         if: matrix.os == 'ubuntu-latest'
-        # golangci-lint-action v8+ 要求 golangci-lint >= v2.1.0（下面钉的是 v2.12.2）。
-        # v9 是把运行时从 node20 搬到 node24 的那一版——GitHub 已弃用 node20，
-        # 留在 v7 只会一直被强制降级运行并刷弃用告警。
-        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        # Go 1.27 的导出格式要求支持该版本的分析器；仅用新 Go 重编旧 lint 不够。
+        uses: golangci/golangci-lint-action@d583c34f0599d37dbac4a198b9c83201be380893 # v9.3.0
         with:
-          version: v2.12.2
+          version: v2.15.0
 
       - name: Check documentation style
         if: matrix.os == 'ubuntu-latest'
@@ -86,7 +84,7 @@ jobs:
         env:
           GOTOOLCHAIN: auto
         run: |
-          go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
+          go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
           govulncheck ./...
 
       - name: Run Go tests

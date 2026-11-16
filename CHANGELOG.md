@@ -6,6 +6,8 @@
 
 ### 待发布（Yomifolio 更名、兼容升级与项目展示）
 
+- 升级 Go 与前后端稳定依赖，CI/发布工具链统一为 Go 1.27.4、Node 26.13.1；更新支持 Go 1.27 的 lint 分析器及漏洞扫描工具，修复构建、测试工具与传递依赖的已知安全问题。Go 最低要求随依赖提升至 1.26；TypeScript 维持 6.0.3，等待兼容的 ESLint 支持后再升 7，不改变产品功能或数据库结构。
+
 - 项目品牌更名为 Yomifolio，Go 模块、发布二进制、环境变量、日志及 Web / 协议展示同步采用新名称；GitHub 仓库已更名为 [Nieole/yomifolio](https://github.com/Nieole/yomifolio)，核验仓库 id 不变，本地 origin 已更新。
 - 启动路径采用 CLI > 非空且去除首尾空白的 `YOMIFOLIO_*` > 对应旧 `MANGA_MANAGER_*` > 默认值；保留默认数据库路径与 OPDS 条目身份，新日志使用 `yomifolio.log`，旧日志文件保留。
 - 新会话 Cookie 使用 `yomifolio_session`，旧 `mm_session` 验证成功后安全换名；新 Cookie 存在时不回退旧值，登出撤销并清除两种会话，保持原有认证与 CSRF 规则。
