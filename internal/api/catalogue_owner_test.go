@@ -3,15 +3,15 @@ package api
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/reading"
-	"manga-manager/internal/recommendation"
-	"manga-manager/internal/seriescontext"
-	"manga-manager/internal/seriesreview"
 	"math"
 	"testing"
 	"time"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/reading"
+	"yomifolio/internal/recommendation"
+	"yomifolio/internal/seriescontext"
+	"yomifolio/internal/seriesreview"
 )
 
 func TestSeriesReviewCompleteIntentAndIsolation(t *testing.T) {

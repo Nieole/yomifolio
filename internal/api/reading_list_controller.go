@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
 )
 
 type CreateReadingListRequest struct {

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"manga-manager/internal/bookidentity"
+	"yomifolio/internal/bookidentity"
 )
 
 func TestFileEvidenceRetainsWholeByteMD5AndCancellation(t *testing.T) {

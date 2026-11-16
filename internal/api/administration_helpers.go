@@ -2,8 +2,8 @@ package api
 
 import (
 	"fmt"
-	"manga-manager/internal/application/configuration"
-	"manga-manager/internal/config"
+	"yomifolio/internal/application/configuration"
+	"yomifolio/internal/config"
 )
 
 func (c *administrationHTTP) systemCapabilities() SystemCapabilitiesResponse {

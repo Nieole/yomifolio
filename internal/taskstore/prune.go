@@ -7,7 +7,7 @@ import (
 	"database/sql"
 	"time"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // PruneRuns 按分层保留裁剪历史，返回各层清掉的行数。

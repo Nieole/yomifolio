@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // recordActivity projects the maximum absolute page per book and day, not page-turn increments.

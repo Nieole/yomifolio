@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // 索引名。两条部分唯一索引是**准入**的落点，改名等于改判据，因此写成常量而不是散在 DDL 里。

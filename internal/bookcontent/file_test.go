@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"manga-manager/internal/bookcontent"
-	"manga-manager/internal/config"
-	"manga-manager/internal/parser"
-	"manga-manager/internal/task"
-	"manga-manager/internal/taskstore"
 	_ "modernc.org/sqlite"
+	"yomifolio/internal/bookcontent"
+	"yomifolio/internal/config"
+	"yomifolio/internal/parser"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskstore"
 )
 
 func TestWholeBookHandleRetainsAccessUntilClose(t *testing.T) {

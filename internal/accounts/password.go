@@ -3,7 +3,7 @@ package accounts
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 var ErrCurrentPassword = errors.New("current password incorrect")

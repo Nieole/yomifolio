@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"manga-manager/internal/seriesreview"
+	"yomifolio/internal/seriesreview"
 )
 
 type seriesReviewResponse struct {

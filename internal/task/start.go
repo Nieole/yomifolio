@@ -13,8 +13,8 @@ import (
 	"runtime/debug"
 	"time"
 
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/taskcontrol"
 )
 
 // ErrEngineStopped rejects launch inputs after process shutdown begins.

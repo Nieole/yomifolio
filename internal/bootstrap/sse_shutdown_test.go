@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"manga-manager/internal/bootstrap"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/bootstrap"
+	"yomifolio/internal/parser"
 )
 
 // The real host must end a browser's event stream before net/http drains ordinary

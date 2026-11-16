@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // hostPathJSONNames 是判定为「宿主机文件系统路径」的字段名，按 json 标签匹配（无标签则按字段名小写）。

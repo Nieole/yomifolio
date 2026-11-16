@@ -3,8 +3,8 @@ package accounts
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/database"
 	"strings"
+	"yomifolio/internal/database"
 )
 
 var ErrForbidden = errors.New("administrator required")

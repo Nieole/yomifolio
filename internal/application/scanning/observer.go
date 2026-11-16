@@ -1,9 +1,9 @@
 package scanning
 
 import (
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/scanner"
 	"path/filepath"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/scanner"
 )
 
 // taskScanObserver 把一次扫描的报文写进它所属任务的**运行句柄**。

@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/bootstrap"
-	"manga-manager/internal/database"
+	"yomifolio/internal/bootstrap"
+	"yomifolio/internal/database"
 
 	"github.com/go-chi/chi/v5"
 )

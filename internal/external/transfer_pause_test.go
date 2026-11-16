@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/storageio"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/storageio"
+	"yomifolio/internal/taskcontrol"
 )
 
 type transferDisk struct {

@@ -3,7 +3,7 @@ package api
 import (
 	"errors"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // TaskVariant 是**变体**：同一类工作在同一个作用域上的第二个身份。

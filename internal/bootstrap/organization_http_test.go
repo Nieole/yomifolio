@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"manga-manager/internal/bootstrap"
-	"manga-manager/internal/database"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
+	"yomifolio/internal/bootstrap"
+	"yomifolio/internal/database"
 
 	"github.com/go-chi/chi/v5"
 )

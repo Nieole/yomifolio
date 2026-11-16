@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/seriesmeta"
+	"yomifolio/internal/database"
+	"yomifolio/internal/seriesmeta"
 )
 
 func fixture(t *testing.T) (database.Store, database.Series) {

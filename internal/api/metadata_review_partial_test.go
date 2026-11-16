@@ -14,9 +14,9 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/proposal"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/proposal"
 )
 
 // seedPartialApplyFixture 造一个「title 已有值、summary/publisher 为空」的系列，

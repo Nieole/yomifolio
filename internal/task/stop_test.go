@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/taskcontrol"
 )
 
 // TestStopAllCancelsBeforeResuming 判据落在**每条运行**自己的一对动作上：

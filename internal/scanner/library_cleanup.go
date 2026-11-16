@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"manga-manager/internal/database"
 	"os"
+	"yomifolio/internal/database"
 )
 
 type cleanupStore interface {

@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"manga-manager/internal/application"
-	"manga-manager/internal/application/runtime"
-	"manga-manager/internal/config"
-	"manga-manager/internal/task"
+	"yomifolio/internal/application"
+	"yomifolio/internal/application/runtime"
+	"yomifolio/internal/config"
+	"yomifolio/internal/task"
 )
 
 // 任务控制（暂停/恢复/取消）与重试查找的哨兵错误。引擎只表达「为什么不行」，

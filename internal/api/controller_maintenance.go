@@ -1,8 +1,8 @@
 package api
 
 import (
-	"manga-manager/internal/task"
 	"net/http"
+	"yomifolio/internal/task"
 )
 
 func (c *maintenanceHTTP) rebuildIndex(w http.ResponseWriter, r *http.Request) {

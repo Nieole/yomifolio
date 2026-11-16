@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func TestExternalTransferHTTPAcceptedRunPreservesPartialCommitAndCoverage(t *testing.T) {

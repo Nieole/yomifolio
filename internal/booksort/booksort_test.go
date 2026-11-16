@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func TestExtractSortNumberSupportsChineseOrdinalChapters(t *testing.T) {

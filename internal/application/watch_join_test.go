@@ -3,10 +3,10 @@ package application_test
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
 	"testing"
 	"time"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 func TestJoinWatchedCancelsOwnedBodyAndWaitsForItsExit(t *testing.T) {

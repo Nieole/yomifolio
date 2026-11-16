@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 // TestSetupRoutesEnforcesSession 通过真实的 SetupRoutes 路由树验证多用户 authGate 接入了 /api 组：

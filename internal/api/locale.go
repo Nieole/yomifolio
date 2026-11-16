@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/metadata"
 )
 
 func requestLocale(r *http.Request) string {

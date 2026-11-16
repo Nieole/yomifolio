@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
 )
 
 // Atomic write consumers have no general transaction or database handle capability.

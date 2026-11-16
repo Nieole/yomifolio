@@ -8,7 +8,7 @@ import (
 	"database/sql"
 	"strings"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // taskReadColumns 是身份行上除主键外要读回的列，LoadTasks 与 ListTasks 共用这一份。

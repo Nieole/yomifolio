@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func TestBulkMetadataTransactionAndRefreshFailure(t *testing.T) {

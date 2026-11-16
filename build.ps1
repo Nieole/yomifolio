@@ -1,6 +1,6 @@
 param(
     [string]$OutputDir = "build",
-    [string]$BinaryName = "manga-manager-win-amd64.exe",
+    [string]$BinaryName = "yomifolio-win-amd64.exe",
     [switch]$SkipFrontend
 )
 

@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 // RecordFacts supplies only identity and current library protection facts.

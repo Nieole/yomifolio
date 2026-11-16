@@ -4,14 +4,14 @@ package maintenance
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/application"
-	"manga-manager/internal/application/scanning"
-	"manga-manager/internal/bookidentity"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/koreader"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/application"
+	"yomifolio/internal/application/scanning"
+	"yomifolio/internal/bookidentity"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/koreader"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // Store supplies maintenance candidates and derived-index writes.

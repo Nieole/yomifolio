@@ -4,15 +4,15 @@ import (
 	"archive/zip"
 	"context"
 	"fmt"
-	"manga-manager/internal/application/runtime"
-	"manga-manager/internal/parser"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
 	"os"
 	"path/filepath"
 	"sync"
 	"testing"
 	"time"
+	"yomifolio/internal/application/runtime"
+	"yomifolio/internal/parser"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 func TestShutdownRetiresResourcesAfterAdmittedReaderExits(t *testing.T) {

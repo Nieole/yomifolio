@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // rejectLinkURL 让数据库拒收指定 url 的链接插入。事务体里「写入被 DB 拒了」只有一种形状，

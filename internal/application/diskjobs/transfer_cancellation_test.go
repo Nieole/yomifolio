@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/application"
-	"manga-manager/internal/application/diskjobs"
-	"manga-manager/internal/config"
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/storageio"
-	"manga-manager/internal/task"
+	"yomifolio/internal/application"
+	"yomifolio/internal/application/diskjobs"
+	"yomifolio/internal/config"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/storageio"
+	"yomifolio/internal/task"
 )
 
 func TestTransferCancelledDuringCurrentBookPublishesOnlyCommittedFacts(t *testing.T) {

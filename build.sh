@@ -10,7 +10,7 @@ npm ci
 npm run build
 cd ..
 
-echo "Building Manga Manager Backend..."
+echo "Building Yomifolio Backend..."
 
 # 版本信息注入：不注入的话本地构建出来的二进制在「关于」页与日志里恒为 dev/unknown，
 # 与 release 工作流的产物不可区分，用户报问题时无法判断跑的是哪个版本。
@@ -21,13 +21,13 @@ VERSION_FLAGS="-X 'main.Version=${VERSION}' -X 'main.Commit=${COMMIT}' -X 'main.
 echo "Version: ${VERSION} (${COMMIT})"
 
 echo "Building Mac ARM64..."
-CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w ${VERSION_FLAGS}" -o build/manga-manager-mac-arm64 ./cmd/server
+CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w ${VERSION_FLAGS}" -o build/yomifolio-mac-arm64 ./cmd/server
 
 echo "Building Linux AMD64..."
-CGO_ENABLED=1 GOOS=linux GOARCH=amd64 CC="zig cc -target x86_64-linux-musl" CXX="zig c++ -target x86_64-linux-musl" go build -ldflags="-extldflags=-static -s -w ${VERSION_FLAGS}" -o build/manga-manager-linux-amd64 ./cmd/server
+CGO_ENABLED=1 GOOS=linux GOARCH=amd64 CC="zig cc -target x86_64-linux-musl" CXX="zig c++ -target x86_64-linux-musl" go build -ldflags="-extldflags=-static -s -w ${VERSION_FLAGS}" -o build/yomifolio-linux-amd64 ./cmd/server
 
 echo "Building Windows AMD64..."
-CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC="zig cc -target x86_64-windows-gnu" CXX="zig c++ -target x86_64-windows-gnu" go build -ldflags="-s -w ${VERSION_FLAGS}" -o build/manga-manager-win-amd64.exe ./cmd/server
+CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC="zig cc -target x86_64-windows-gnu" CXX="zig c++ -target x86_64-windows-gnu" go build -ldflags="-s -w ${VERSION_FLAGS}" -o build/yomifolio-win-amd64.exe ./cmd/server
 
 echo "Build Completed: ./build"
 ls -lh build/

@@ -16,7 +16,9 @@ Layout 路由位于 `ApplicationSessionScope` 内；全屏阅读器与作品群�
 
 API 是规则与授权的最终裁决者；前端守卫只避免向无权限用户呈现无法使用的整屏管理操作。`src/api/generated.ts` 是生成的服务契约，不手工维护平行类型。功能异步请求必须校验所请求的作用域仍有效，避免切库或切系列后旧结果覆盖新视图。
 
-locale 与 theme 提供表现偏好，不混入业务事实或用户在线会话。验证命令、依赖说明归 `AGENTS.md` 和 `web/README.md`，不在此复制。
+locale 与 theme 提供表现偏好，不混入业务事实或用户在线会话。普通设备偏好（含阅读偏好）统一使用 `yomifolio_*` 键，由 `src/utils/browserPreferences.ts` 集中定义；新键存在时优先，否则兼容读取并复制旧 `manga_manager_*` / `manga_*` 值。保留旧值以便写入失败后重试，storage 不可用不得导致应用崩溃，解析与取值校验仍归调用方。此迁移不涉及离线书、队列、owner、cache 或认证与 Service Worker 身份。Layout 与 Dashboard 的资料库内部事件统一使用 `yomifolio:open-add-library` / `yomifolio:open-edit-library`。
+
+验证命令、依赖说明归 `AGENTS.md` 和 `web/README.md`，不在此复制。
 
 核对入口：`src/App.tsx`、`src/session/ApplicationRoutes.test.tsx`、任务观察 hooks 与页面切换竞态测试。
 

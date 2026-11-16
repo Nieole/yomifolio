@@ -5,7 +5,7 @@
 package api
 
 import (
-	"manga-manager/internal/bookcontent"
+	"yomifolio/internal/bookcontent"
 
 	"archive/zip"
 	"bytes"
@@ -20,9 +20,9 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/parser"
 )
 
 var png1x1 = []byte{

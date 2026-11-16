@@ -12,7 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // TestAttemptLimiterLockoutAndReset 覆盖限流器核心语义：达阈值即锁定、成功清零、窗口外重置、指数退避递增。

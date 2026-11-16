@@ -2,13 +2,13 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/reading"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/reading"
 )
 
 func testReaderSubject(t *testing.T, uid int64) reading.Subject {

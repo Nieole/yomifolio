@@ -16,9 +16,9 @@ import (
 	"strings"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/proposal"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/proposal"
 )
 
 // seedPendingMetadataReview 造一个系列 + 一条待裁决的提案。

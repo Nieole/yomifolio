@@ -66,7 +66,7 @@ export const messages: MessageCatalog = {
     'franchise.retryFailed': '本次更新未完成，后台仍会继续重试。',
     'franchise.refresh': '重试读取状态',
 
-    'app.name': 'Manga Manager',
+    'app.name': 'Yomifolio',
     'app.koreader': 'KOReader',
 
     // 多用户鉴权
@@ -859,7 +859,7 @@ export const messages: MessageCatalog = {
     'dashboard.title': '仪表板',
     'dashboard.onboarding.badge': '首次使用引导',
     'dashboard.onboarding.title': '先把第一个资料库接进来',
-    'dashboard.onboarding.description': 'Manga Manager 已经启动成功。下一步建议先添加一个漫画目录，然后再测试 LLM 连接、触发首次扫描，并根据你的设备调整缓存与超分设置。',
+    'dashboard.onboarding.description': 'Yomifolio 已经启动成功。下一步建议先添加一个漫画目录，然后再测试 LLM 连接、触发首次扫描，并根据你的设备调整缓存与超分设置。',
     'dashboard.onboarding.step1.title': '1. 添加资料库',
     'dashboard.onboarding.step1.description': '从侧边栏或这里直接添加一个本地目录，系统会据此建立索引。',
     'dashboard.onboarding.step1.action': '立即添加',

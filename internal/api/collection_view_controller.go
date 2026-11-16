@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/reading"
 )
 
 // CollectionView 是合集页左栏的一个列表项，手工合集与智能书架共用。

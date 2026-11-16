@@ -23,12 +23,12 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
-	"manga-manager/internal/api"
-	"manga-manager/internal/bootstrap"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/logger"
-	"manga-manager/web"
+	"yomifolio/internal/api"
+	"yomifolio/internal/bootstrap"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/logger"
+	"yomifolio/web"
 )
 
 var (
@@ -37,19 +37,24 @@ var (
 	BuildTime = "unknown"
 )
 
+func registerPathFlags(fs *flag.FlagSet) (configPath, dataDir *string) {
+	configPath = fs.String("config", envOrDefault("YOMIFOLIO_CONFIG", envOrDefault("MANGA_MANAGER_CONFIG", "config.yaml")), "path to the config file (env YOMIFOLIO_CONFIG; legacy MANGA_MANAGER_CONFIG)")
+	dataDir = fs.String("data-dir", envOrDefault("YOMIFOLIO_DATA_DIR", envOrDefault("MANGA_MANAGER_DATA_DIR", "data")), "directory for log files (env YOMIFOLIO_DATA_DIR; legacy MANGA_MANAGER_DATA_DIR)")
+	return
+}
+
 func main() {
-	configPath := flag.String("config", envOrDefault("MANGA_MANAGER_CONFIG", "config.yaml"), "path to the config file (env MANGA_MANAGER_CONFIG)")
-	dataDir := flag.String("data-dir", envOrDefault("MANGA_MANAGER_DATA_DIR", "data"), "directory for log files (env MANGA_MANAGER_DATA_DIR)")
+	configPath, dataDir := registerPathFlags(flag.CommandLine)
 	showVersion := flag.Bool("version", false, "print build version and exit")
 	flag.Parse()
 
 	if *showVersion {
-		fmt.Printf("Manga Manager %s\ncommit: %s\nbuilt: %s\n", Version, Commit, BuildTime)
+		fmt.Printf("Yomifolio %s\ncommit: %s\nbuilt: %s\n", Version, Commit, BuildTime)
 		return
 	}
 
 	// 把配置文件与日志目录解析为绝对路径，使其位置与进程工作目录(cwd)解耦：二者均可经
-	// -config/-data-dir 命令行参数或 MANGA_MANAGER_CONFIG/MANGA_MANAGER_DATA_DIR 环境变量覆盖。
+	// -config/-data-dir > YOMIFOLIO_CONFIG/YOMIFOLIO_DATA_DIR > 旧 MANGA_MANAGER_* > 默认。
 	// 数据库与缓存目录本就可经 config 的 database.path / cache.dir 指定绝对路径。
 	resolvedConfigPath := absOrSelf(*configPath)
 	resolvedDataDir := absOrSelf(*dataDir)
@@ -68,7 +73,7 @@ func main() {
 	// 日志文件的句柄在这里登记归还：defer 最先登记因而最后执行，停机路径上所有收尾（含 store.Close）
 	// 写出的日志都还落得进文件。下面走 os.Exit 的致命分支会跳过它，那时句柄由进程退出交还给 OS。
 	defer func() { _ = logger.Close() }()
-	slog.Info("Starting Manga Manager...", "version", Version, "commit", Commit, "build_time", BuildTime,
+	slog.Info("Starting Yomifolio...", "version", Version, "commit", Commit, "build_time", BuildTime,
 		"config", resolvedConfigPath, "data_dir", resolvedDataDir)
 
 	cfgManager := config.NewManager(cfg)
@@ -183,7 +188,7 @@ func main() {
 			// Fallback to index.html for SPA routing
 			index, err := web.FS.ReadFile("dist/index.html")
 			if err != nil {
-				w.Write([]byte("Manga Manager API is running. Web builds are not yet embedded. Please run UI building task."))
+				w.Write([]byte("Yomifolio API is running. Web builds are not yet embedded. Please run UI building task."))
 				return
 			}
 			writeStaticContent(w, r, "/index.html", index)

@@ -2,11 +2,11 @@ package seriescontext
 
 import (
 	"database/sql"
-	"manga-manager/internal/booksort"
-	"manga-manager/internal/reading"
 	"sort"
 	"strings"
 	"time"
+	"yomifolio/internal/booksort"
+	"yomifolio/internal/reading"
 )
 
 type Volume struct {

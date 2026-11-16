@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"manga-manager/internal/application/relocating"
-	"manga-manager/internal/relocation"
+	"yomifolio/internal/application/relocating"
+	"yomifolio/internal/relocation"
 )
 
 type RelocationPlan = relocation.RelocationPlan

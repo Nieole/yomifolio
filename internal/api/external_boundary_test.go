@@ -3,11 +3,11 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"manga-manager/internal/database"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"yomifolio/internal/database"
 )
 
 func TestExternalSessionHTTPRejectsOtherLibraryWithConflictCode(t *testing.T) {

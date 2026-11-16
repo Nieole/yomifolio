@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"manga-manager/internal/config"
+	"yomifolio/internal/config"
 )
 
 // ErrVersionRequired prevents a settings document from overwriting an unseen configuration.

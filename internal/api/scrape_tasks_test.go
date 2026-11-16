@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/task"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/task"
 )
 
 // scrapeTaskStore 只实现两个刮削启动点真正会调到的那几个方法。其余方法留给内嵌的 nil 接口——

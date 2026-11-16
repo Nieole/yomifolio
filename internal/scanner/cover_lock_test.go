@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 // scanAndSettleCover 跑一次整库扫描并等封面队列排空，返回那本书当时的行。

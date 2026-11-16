@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { writePreference } from '../utils/browserPreferences';
 import { APP_THEMES, DARK_THEMES, LIGHT_THEMES, THEME_STORAGE_KEY, applyTheme, getStoredThemeId, getThemeById, type AppTheme, type AppThemeId } from './themes';
 
 interface ThemeContextValue {
@@ -17,7 +18,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     applyTheme(themeId);
-    window.localStorage.setItem(THEME_STORAGE_KEY, themeId);
+    writePreference(THEME_STORAGE_KEY, themeId);
   }, [themeId]);
 
   const setTheme = useCallback((nextThemeId: AppThemeId | string) => {

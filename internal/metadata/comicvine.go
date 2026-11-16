@@ -149,7 +149,7 @@ func (c *ComicVineProvider) SearchMetadata(ctx context.Context, title string, li
 		// net/http 的 refererForURL 在请求已显式带 Referer 时会原样沿用——这里给它一个不含凭据的值。
 		req.Header.Set("Referer", c.endpoint())
 		// Comic Vine 会拒绝空 User-Agent，必须显式设置。
-		req.Header.Set("User-Agent", "MangaManager/1.0 (https://github.com/manga-manager)")
+		req.Header.Set("User-Agent", "Yomifolio/1.0 (https://github.com/Nieole/yomifolio)")
 		req.Header.Set("Accept", "application/json")
 
 		resp, err := c.httpClient.Do(req)

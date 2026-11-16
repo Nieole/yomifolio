@@ -3,10 +3,10 @@ package organize_test
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
 	"path/filepath"
 	"testing"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
 )
 
 func TestManualCollectionsNameAndIdentity(t *testing.T) {

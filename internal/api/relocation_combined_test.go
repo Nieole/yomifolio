@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"manga-manager/internal/testfixture"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,10 +13,11 @@ import (
 	"strconv"
 	"testing"
 	"time"
+	"yomifolio/internal/testfixture"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/scanner"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/scanner"
 
 	"github.com/go-chi/chi/v5"
 )

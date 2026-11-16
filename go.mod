@@ -1,4 +1,4 @@
-module manga-manager
+module yomifolio
 
 go 1.25.0
 

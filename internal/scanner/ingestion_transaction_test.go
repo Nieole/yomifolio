@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"manga-manager/internal/config"
+	"yomifolio/internal/config"
 )
 
 func TestScanRecoversNextBatchAfterSeriesCreationRollsBack(t *testing.T) {

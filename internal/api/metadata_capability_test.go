@@ -2,11 +2,11 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/metadata"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"yomifolio/internal/metadata"
 )
 
 type searchOnlySource struct{ limit, offset int }

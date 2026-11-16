@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 // fakeClock 让节流的时序断言可控。固定 sleep 的用例既慢，又杀不掉

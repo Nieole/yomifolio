@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/application/libraries"
+	"yomifolio/internal/application/libraries"
 )
 
 func TestLibraryCreateHTTPSeparatesSavedFactsAndInitialScanAdmission(t *testing.T) {

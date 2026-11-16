@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
 )
 
 // ProposalQueries is the transaction-bound persistence for adjudicated proposal metadata.

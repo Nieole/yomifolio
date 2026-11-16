@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // taskIDsOf 取一批任务的 id，供断言定序与命中集合。

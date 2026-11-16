@@ -13,8 +13,10 @@ import { useLibraryInvalidation, useLibraryRefresh, useSessionRecovery, useSessi
 import { isTerminalRunStatus } from '../../utils/runStatus';
 import type { RunSnapshot } from '../../api/generated';
 
-const RECENT_PATHS_KEY = 'manga_manager_recent_external_paths';
-const IGNORE_EXT_KEY = 'manga_manager_external_ignore_extension';
+import { PREFERENCE_KEYS, readPreference, writePreference } from '../../utils/browserPreferences';
+
+const RECENT_PATHS_KEY = PREFERENCE_KEYS.recentExternalPaths;
+const IGNORE_EXT_KEY = PREFERENCE_KEYS.externalIgnoreExtension;
 
 interface UseExternalLibraryParams {
   libId: string | undefined;
@@ -98,14 +100,14 @@ export function useExternalLibrary({
   // 1. 初始化：localStorage 读取
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(RECENT_PATHS_KEY);
+      const stored = readPreference(RECENT_PATHS_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as unknown;
         if (Array.isArray(parsed)) {
           setRecentExternalPaths(parsed.filter((item) => typeof item === 'string'));
         }
       }
-      if (localStorage.getItem(IGNORE_EXT_KEY) === 'true') {
+      if (readPreference(IGNORE_EXT_KEY) === 'true') {
         setExternalIgnoreExtensionState(true);
       }
     } catch {
@@ -114,7 +116,7 @@ export function useExternalLibrary({
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(IGNORE_EXT_KEY, externalIgnoreExtension ? 'true' : 'false');
+    writePreference(IGNORE_EXT_KEY, externalIgnoreExtension ? 'true' : 'false');
   }, [externalIgnoreExtension]);
 
   // 2. 切库时清掉外部会话，并作废在飞的会话请求——1.5 秒一次的轮询响应回来时库可能已经换了，
@@ -138,7 +140,7 @@ export function useExternalLibrary({
     if (!normalized) return;
     setRecentExternalPaths((prev) => {
       const next = [normalized, ...prev.filter((item) => item !== normalized)].slice(0, 5);
-      localStorage.setItem(RECENT_PATHS_KEY, JSON.stringify(next));
+      writePreference(RECENT_PATHS_KEY, JSON.stringify(next));
       return next;
     });
   }, []);

@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/task"
+	"yomifolio/internal/database"
+	"yomifolio/internal/task"
 )
 
 // Store supplies library facts, persistence, and relocation protection.

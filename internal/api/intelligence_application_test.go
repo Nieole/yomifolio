@@ -2,10 +2,10 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/task"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/task"
 )
 
 func (c *apiFixture) launchBatchScrapeAllSeriesTask(ctx context.Context, key string, trigger task.Trigger) error {

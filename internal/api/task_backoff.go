@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"manga-manager/internal/application/runtime"
-	"manga-manager/internal/config"
-	"manga-manager/internal/task"
+	"yomifolio/internal/application/runtime"
+	"yomifolio/internal/config"
+	"yomifolio/internal/task"
 )
 
 // maxBackoffHours 是封顶小时数的上限（100 年），用来挡住溢出而不是表达策略。

@@ -5,13 +5,13 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/recommendation"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"yomifolio/internal/recommendation"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func TestDeleteLibraryInvalidatesCaches(t *testing.T) {

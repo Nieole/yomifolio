@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/database"
+	"yomifolio/internal/parser"
 
 	"github.com/go-chi/chi/v5"
 )

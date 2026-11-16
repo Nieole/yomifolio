@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/task"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/task"
 )
 
 // seedCoverRunLibrary 建一个真的能查回来的资料库：封面运行的任务声明要读它的名字与存储画像，

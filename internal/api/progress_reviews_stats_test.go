@@ -10,17 +10,17 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"manga-manager/internal/recommendation"
-	"manga-manager/internal/testfixture"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
+	"yomifolio/internal/recommendation"
+	"yomifolio/internal/testfixture"
 
 	"github.com/go-chi/chi/v5"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // withUserContext 把一个已登录用户注入请求上下文（等价于 authGate 解析会话后的效果），

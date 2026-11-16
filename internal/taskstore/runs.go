@@ -12,7 +12,7 @@ import (
 
 	sqlite "modernc.org/sqlite"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // sqliteConstraintUnique 是 SQLITE_CONSTRAINT_UNIQUE 的扩展结果码。

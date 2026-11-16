@@ -1,9 +1,9 @@
 package scanning
 
 import (
-	"manga-manager/internal/config"
-	"manga-manager/internal/scanner"
-	"manga-manager/internal/task"
+	"yomifolio/internal/config"
+	"yomifolio/internal/scanner"
+	"yomifolio/internal/task"
 )
 
 // LimitsForPath describes the real scanner concurrency for a library path.

@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/config"
+	"yomifolio/internal/parser"
 )
 
 // unreadablePagesArchive 打得开、读不出页目录，用来触碰归档打开**之后**的那条失败出口。

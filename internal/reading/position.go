@@ -7,7 +7,7 @@ import (
 	"errors"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // Position identifies one reading fact. OccurredAt and FactID survive transport retries.

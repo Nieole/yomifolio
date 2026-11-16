@@ -10,14 +10,14 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"manga-manager/internal/bookidentity"
 	"strings"
 	"time"
+	"yomifolio/internal/bookidentity"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 
-	"manga-manager/internal/reading"
+	"yomifolio/internal/reading"
 )
 
 // kosync 进度载荷各字段的长度上限。设备侧本就只会推送文件路径/百分比串/设备名，

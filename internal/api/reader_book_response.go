@@ -1,8 +1,8 @@
 package api
 
 import (
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
 )
 
 // readerBookResponse preserves the public book shape and its host-path redaction policy.

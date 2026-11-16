@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/parser"
-	"manga-manager/internal/seriesmeta"
+	"yomifolio/internal/database"
+	"yomifolio/internal/parser"
+	"yomifolio/internal/seriesmeta"
 )
 
 func TestScanInitialMetadataAndExistingLocks(t *testing.T) {

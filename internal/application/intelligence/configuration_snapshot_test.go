@@ -2,14 +2,14 @@ package intelligence_test
 
 import (
 	"context"
-	"manga-manager/internal/application"
-	"manga-manager/internal/application/intelligence"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/task"
-	"manga-manager/internal/taskstore"
 	"path/filepath"
 	"testing"
+	"yomifolio/internal/application"
+	"yomifolio/internal/application/intelligence"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskstore"
 )
 
 func TestGroupingPinsSourceBeforeDeferredRunStarts(t *testing.T) {

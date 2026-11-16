@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"manga-manager/internal/external"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
 	"strconv"
 	"strings"
+	"yomifolio/internal/external"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // TransferLaunch contains the single prepared plan and optional admitted run.

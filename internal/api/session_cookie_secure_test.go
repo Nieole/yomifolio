@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
+	"yomifolio/internal/config"
 )
 
 func TestSessionCookieSecure(t *testing.T) {
@@ -131,11 +131,19 @@ func TestSessionCookieSecure(t *testing.T) {
 				rec := httptest.NewRecorder()
 				emit(rec)
 				cookies := rec.Result().Cookies()
-				if len(cookies) != 1 {
-					t.Fatalf("%s: 期望恰好 1 个 Cookie，得到 %d 个", label, len(cookies))
+				wantCount := 1
+				if label == "clear" {
+					wantCount = 2
+					requireCookieCleared(t, cookies, sessionCookieName)
+					requireCookieCleared(t, cookies, legacySessionCookieName)
 				}
-				if cookies[0].Secure != tc.want {
-					t.Fatalf("%s: Cookie.Secure = %v, want %v", label, cookies[0].Secure, tc.want)
+				if len(cookies) != wantCount {
+					t.Fatalf("%s: want %d cookies, got %d", label, wantCount, len(cookies))
+				}
+				for _, cookie := range cookies {
+					if cookie.Secure != tc.want {
+						t.Fatalf("%s: %s.Secure = %v, want %v", label, cookie.Name, cookie.Secure, tc.want)
+					}
 				}
 			}
 		})

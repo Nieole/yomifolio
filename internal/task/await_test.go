@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 // TestAwaitReturnsImmediatelyForATerminalRun 守已经收尾的运行不必等：登记与「已经是终态了吗」

@@ -11,8 +11,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
 )
 
 // TestSmartCollectionCountMatchesListing 是主判据：对同一个用户，

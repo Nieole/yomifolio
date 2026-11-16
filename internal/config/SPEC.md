@@ -18,6 +18,10 @@ parent: mm-architecture
 - `Coordinate` 提供同一串行边界下的读取、校验、写入与发布步骤，外部持久参与者自己决定补偿，`Publish` 不回滚磁盘。`StartWatcher` 去抖后走重载，文件消失时不自动重建。
 - `ResolveStoragePolicy` 按最具体路径策略解析并返回卷键，不改入参；这里只产出策略，不发放 IO 许可。
 
+## 启动路径兼容
+
+`cmd/server` 解析配置文件与日志目录路径：显式 `-config` / `-data-dir` > `YOMIFOLIO_CONFIG` / `YOMIFOLIO_DATA_DIR` > 对应旧 `MANGA_MANAGER_CONFIG` / `MANGA_MANAGER_DATA_DIR` > 默认 `config.yaml` / `data`。两组环境变量均先去除首尾空白，仅非空值参与选择；显式 CLI 参数不经过环境变量回退。数据库与缓存位置仍由 `database.path` / `cache.dir` 决定，默认数据库路径 `./data/manga.db` 保持兼容，不因更名新建或搬迁数据库。
+
 ## 边界与限制
 
 不导入兄弟包、不拥有 HTTP 设置端点或资料库数据库行。`runtimecfg.Apply` 负责配置派生的进程资源效果，本包通过注入回调协调，不自行重建解析池、图片并发闸或日志资源；不得把快照副本当成第二份可写运行时配置。

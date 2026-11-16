@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 const seriesLockTestComicInfo = `<?xml version="1.0" encoding="utf-8"?>

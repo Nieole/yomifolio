@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
 )
 
 func TestRecentBooksBindsReaderAndPreservesAnonymousCompatibility(t *testing.T) {

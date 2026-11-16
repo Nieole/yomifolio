@@ -1,8 +1,8 @@
 package config_test
 
 import (
-	"manga-manager/internal/config"
 	"testing"
+	"yomifolio/internal/config"
 )
 
 func TestFieldTimingCatalogCoversConfigurationAndKeepsStartupFieldsExplicit(t *testing.T) {

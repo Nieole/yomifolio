@@ -6,8 +6,8 @@ import (
 	"errors"
 	"strings"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
 )
 
 var ErrSmartSnapshotEmpty = errors.New("Smart collection has no members to snapshot")

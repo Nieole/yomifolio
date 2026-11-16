@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
 )
 
 // rejectedDedupWindow 是回溯多少条最近的拒绝记录参与去重。

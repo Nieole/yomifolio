@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/task"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/task"
 )
 
 // restartWithSeededRun 播下一条停在**活动态**的运行，再另起一个 Controller 走一遍重启恢复：

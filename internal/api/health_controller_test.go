@@ -11,7 +11,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func TestGetHealthReport(t *testing.T) {

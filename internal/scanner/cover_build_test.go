@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/config"
+	"yomifolio/internal/parser"
 )
 
 // coverReadFailingArchive 打得开、列得出页目录、读不出页，正好停在封面构建读那一页的出口上；

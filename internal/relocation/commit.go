@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/config"
+	"yomifolio/internal/runhandle"
 )
 
 // RelocationOperation survives run history pruning and records the committed boundary.

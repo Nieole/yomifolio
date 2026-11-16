@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 // eventsOf 取这条运行至今落下的全部事件。

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 type reviewInboxCounts struct {

@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"strconv"
 
-	"manga-manager/internal/application"
-	"manga-manager/internal/bookcontent"
-	"manga-manager/internal/database"
-	"manga-manager/internal/external"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/application"
+	"yomifolio/internal/bookcontent"
+	"yomifolio/internal/database"
+	"yomifolio/internal/external"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // Store supplies the current library identity for launch declarations.

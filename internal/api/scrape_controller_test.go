@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
 )
 
 func TestScrapeSeriesMetadataValidationHandlers(t *testing.T) {

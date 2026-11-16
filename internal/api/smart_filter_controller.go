@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"manga-manager/internal/organize"
 	"net/http"
+	"yomifolio/internal/organize"
 )
 
 type SmartFilter = organize.SmartFilter

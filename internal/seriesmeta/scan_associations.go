@@ -3,8 +3,8 @@ package seriesmeta
 import (
 	"context"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/database"
+	"yomifolio/internal/parser"
 )
 
 // ScanAssociationQueries is the scanner's transaction-bound append capability.

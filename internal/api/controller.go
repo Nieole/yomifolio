@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/application/configuration"
-	"manga-manager/internal/config"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/application/configuration"
+	"yomifolio/internal/config"
+	"yomifolio/internal/taskcontrol"
 
 	"github.com/go-chi/chi/v5"
 )

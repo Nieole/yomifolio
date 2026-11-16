@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // ErrRunCoalesced means this launch supplied no body to await.

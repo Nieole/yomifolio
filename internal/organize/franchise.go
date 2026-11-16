@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // Rebuild synchronizes derived collections from a single transactionally consistent relation graph.

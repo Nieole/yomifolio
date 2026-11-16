@@ -4,10 +4,10 @@ package catalogsearch
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
 	"strconv"
 	"strings"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
 )
 
 type Store interface {

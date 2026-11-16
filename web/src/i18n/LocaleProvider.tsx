@@ -3,8 +3,9 @@ import { apiClient } from '../api/client';
 import { formatDistanceToNow } from 'date-fns';
 import { enUS, zhCN } from 'date-fns/locale';
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type AppLocale, type MessageCatalog } from './core';
+import { PREFERENCE_KEYS, readPreference, writePreference } from '../utils/browserPreferences';
 
-const LOCALE_STORAGE_KEY = 'manga_manager_locale';
+const LOCALE_STORAGE_KEY = PREFERENCE_KEYS.locale;
 const localeCatalogLoaders: Record<AppLocale, () => Promise<{ messages: MessageCatalog }>> = {
   'zh-CN': () => import('./locales/zh-CN'),
   'en-US': () => import('./locales/en-US'),
@@ -56,7 +57,7 @@ export function getClientLocale(): AppLocale {
   if (typeof window === 'undefined') {
     return DEFAULT_LOCALE as AppLocale;
   }
-  const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+  const stored = readPreference(LOCALE_STORAGE_KEY);
   if (stored) {
     return normalizeAppLocale(stored);
   }
@@ -191,7 +192,7 @@ export function LocaleProvider({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+      writePreference(LOCALE_STORAGE_KEY, locale);
     }
     if (typeof document !== 'undefined') {
       document.documentElement.lang = locale;

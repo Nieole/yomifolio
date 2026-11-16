@@ -12,7 +12,7 @@ import (
 	"slices"
 	"strconv"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // SaveRunLimits 记下这次运行实际生效的并发上限。整份覆盖：上限是一次快照，不按键合并。

@@ -7,10 +7,10 @@ import (
 	"errors"
 	"net/http"
 
-	"manga-manager/internal/application/libraries"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/task"
+	"yomifolio/internal/application/libraries"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/task"
 )
 
 type deleteLibraryResponse struct {

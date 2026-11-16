@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/task"
+	"yomifolio/internal/database"
+	"yomifolio/internal/task"
 )
 
 func TestWatchDoesNotQualifyCleanupAfterRenameCommitFails(t *testing.T) {

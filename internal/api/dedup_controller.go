@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // getDuplicateBooks 返回按 file_hash 分组的重复书籍。

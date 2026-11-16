@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // TestRunEventsRoundTripEveryKind 守四类事件各自那几格都落得下也读得回。

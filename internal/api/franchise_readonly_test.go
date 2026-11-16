@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // seedFranchiseCollection 造两个有关系的系列并重建，返回作品群合集 id 与两个系列 id。

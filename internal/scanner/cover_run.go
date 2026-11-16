@@ -12,8 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/taskcontrol"
 )
 
 // CoverObserver 是一条**封面运行**收下报文的对象，由发起那条运行的一方交出。

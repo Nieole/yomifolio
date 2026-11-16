@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // BookmarkStore supplies only bookmark persistence and the book's page bounds.

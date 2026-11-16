@@ -66,7 +66,7 @@ export const messages: MessageCatalog = {
     'franchise.retryFailed': 'The update did not finish. Automatic retries will continue.',
     'franchise.refresh': 'Retry loading status',
 
-    'app.name': 'Manga Manager',
+    'app.name': 'Yomifolio',
     'app.koreader': 'KOReader',
 
     // Multi-user auth
@@ -859,7 +859,7 @@ export const messages: MessageCatalog = {
     'dashboard.title': 'Dashboard',
     'dashboard.onboarding.badge': 'First-run guide',
     'dashboard.onboarding.title': 'Connect your first library',
-    'dashboard.onboarding.description': 'Manga Manager is up and running. Start by adding a manga directory, then test LLM connectivity, trigger the first scan, and tune cache or upscaling settings for your device.',
+    'dashboard.onboarding.description': 'Yomifolio is up and running. Start by adding a manga directory, then test LLM connectivity, trigger the first scan, and tune cache or upscaling settings for your device.',
     'dashboard.onboarding.step1.title': '1. Add a library',
     'dashboard.onboarding.step1.description': 'Add a local directory from the sidebar or here so the system can index it.',
     'dashboard.onboarding.step1.action': 'Add now',

@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/xml"
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strconv"
 	"testing"
 	"time"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
 )
 
 func TestNavigationProjectsTargetForCurrentReader(t *testing.T) {

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // runPanickingTask 经启动入口起一个当场 panic 的任务体。

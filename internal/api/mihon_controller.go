@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/bookcontent"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/bookcontent"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/reading"
 
 	"github.com/go-chi/chi/v5"
 )

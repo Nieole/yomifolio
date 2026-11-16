@@ -3,7 +3,7 @@ package seriesediting
 import (
 	"context"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // SQLTransactions is used only by the SQLite adapter; use cases consume scoped stores.

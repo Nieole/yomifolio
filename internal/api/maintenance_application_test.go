@@ -1,9 +1,9 @@
 package api
 
 import (
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/metadata"
 
-	"manga-manager/internal/application/maintenance"
+	"yomifolio/internal/application/maintenance"
 )
 
 func (c *apiFixture) assembleMaintenanceUseCases() {

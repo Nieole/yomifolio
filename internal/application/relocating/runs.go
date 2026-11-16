@@ -6,10 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"manga-manager/internal/relocation"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
 	"strconv"
+	"yomifolio/internal/relocation"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // ErrCheckQueued means an existing queued check absorbed this launch.

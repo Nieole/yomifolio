@@ -8,8 +8,8 @@ import (
 	"slices"
 	"strings"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
 )
 
 // MaxReadingListReorderItems bounds a single reorder gesture.

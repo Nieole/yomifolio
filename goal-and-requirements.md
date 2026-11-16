@@ -2,12 +2,12 @@
 id: manga-manager
 type: goal-and-requirements
 status: active
-title: Manga Manager 产品目标与范围
+title: Yomifolio 产品目标与范围
 ---
 
 ## 目标与读者
 
-Manga Manager 是自托管的本地漫画、画集与轻小说库管理及阅读服务。它把本地归档组织成资料库、系列与书，让管理员管理藏书、元数据和后台工作，让不同用户通过浏览器和阅读客户端继续自己的阅读。
+Yomifolio 是自托管的本地漫画、画集与轻小说库管理及阅读服务。它把本地归档组织成资料库、系列与书，让管理员管理藏书、元数据和后台工作，让不同用户通过浏览器和阅读客户端继续自己的阅读。
 
 ## 能力
 

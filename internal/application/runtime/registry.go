@@ -3,12 +3,12 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"manga-manager/internal/application/intelligence"
-	"manga-manager/internal/application/maintenance"
-	"manga-manager/internal/application/scanning"
-	"manga-manager/internal/config"
-	"manga-manager/internal/task"
 	"sort"
+	"yomifolio/internal/application/intelligence"
+	"yomifolio/internal/application/maintenance"
+	"yomifolio/internal/application/scanning"
+	"yomifolio/internal/config"
+	"yomifolio/internal/task"
 )
 
 type restartKey struct {

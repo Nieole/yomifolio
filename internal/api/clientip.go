@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"manga-manager/internal/config"
+	"yomifolio/internal/config"
 )
 
 // clientIP 返回用于限流分桶的客户端 IP。

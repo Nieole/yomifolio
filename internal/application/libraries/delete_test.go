@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/application/libraries"
-	"manga-manager/internal/database"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
-	"manga-manager/internal/taskstore"
+	"yomifolio/internal/application/libraries"
+	"yomifolio/internal/database"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskstore"
 )
 
 type watchedLibrary struct {

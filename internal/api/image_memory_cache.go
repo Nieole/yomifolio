@@ -1,6 +1,6 @@
 package api
 
-import "manga-manager/internal/bookcontent"
+import "yomifolio/internal/bookcontent"
 
 type imageMemoryCache = bookcontent.MemoryCache
 

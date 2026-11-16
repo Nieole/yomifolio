@@ -4,11 +4,11 @@ import (
 	"context"
 	"io/fs"
 	"log/slog"
-	"manga-manager/internal/config"
-	"manga-manager/internal/taskcontrol"
 	"path/filepath"
 	"strings"
 	"sync"
+	"yomifolio/internal/config"
+	"yomifolio/internal/taskcontrol"
 )
 
 // ingestionPlan keeps discovery scope distinct from the library root used to interpret sources.

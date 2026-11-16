@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"testing"
 
-	"manga-manager/internal/images"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/images"
+	"yomifolio/internal/parser"
 )
 
 // TestPersistConfigRebuildsDerivedResources 守卫「配置双路径一致」修复：经 API 保存配置（persistConfig）

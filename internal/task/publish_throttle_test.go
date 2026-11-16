@@ -7,7 +7,7 @@ import (
 	"context"
 	"testing"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 // advancingBody 报 count 次同样展示态的**计数推进**，然后正常返回。

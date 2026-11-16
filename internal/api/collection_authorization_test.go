@@ -3,10 +3,10 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
 	"net/http"
 	"testing"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
 )
 
 func TestRegularUserCanReadButCannotMutateManualCollections(t *testing.T) {

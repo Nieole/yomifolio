@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // TestMoveFileToTrashRelocatesFile 覆盖同设备下的常规路径（os.Rename 成功）。

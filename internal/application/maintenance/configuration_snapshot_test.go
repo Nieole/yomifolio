@@ -1,11 +1,11 @@
 package maintenance_test
 
 import (
-	"manga-manager/internal/config"
-	"manga-manager/internal/task"
 	"os"
 	"path/filepath"
 	"testing"
+	"yomifolio/internal/config"
+	"yomifolio/internal/task"
 )
 
 func TestQueuedThumbnailRebuildKeepsItsOriginalCacheProtection(t *testing.T) {

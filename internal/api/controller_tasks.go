@@ -6,12 +6,12 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"manga-manager/internal/database"
 	"net/http"
 	"strconv"
 	"strings"
+	"yomifolio/internal/database"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // taskRelauncher 用原运行的作用域与**任务参数**重新发起同一个任务。返回 errTaskAlreadyRunning

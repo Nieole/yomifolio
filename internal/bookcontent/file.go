@@ -7,7 +7,7 @@ import (
 	"os"
 	"sync"
 
-	"manga-manager/internal/parser"
+	"yomifolio/internal/parser"
 )
 
 // FileError identifies a storage failure for a resolved book source.

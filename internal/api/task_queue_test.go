@@ -15,9 +15,9 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/config"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // scanSeed 是一条库级扫描的播种声明：每个库一个身份，因此可以同时活着好几条。

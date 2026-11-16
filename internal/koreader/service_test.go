@@ -9,17 +9,17 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"manga-manager/internal/bookidentity"
-	"manga-manager/internal/testfixture"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+	"yomifolio/internal/bookidentity"
+	"yomifolio/internal/testfixture"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/diskwork"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/diskwork"
 )
 
 func newTestService(t *testing.T, matchMode string) (*Service, database.Store, string) {

@@ -12,7 +12,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // newDBForTest 在临时目录开一个照生产连接参数来的库，**不迁移**：迁移本身要守的那几条

@@ -6,7 +6,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"manga-manager/internal/config"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -15,9 +14,10 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"yomifolio/internal/config"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/task"
+	"yomifolio/internal/database"
+	"yomifolio/internal/task"
 )
 
 // runEventsOf 走端点取一条运行的事件流与阶段时间线。

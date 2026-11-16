@@ -3,9 +3,9 @@ package seriesmeta_test
 import (
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/seriesmeta"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/seriesmeta"
 )
 
 func TestProposalDistinguishesAbsentAndEmptyCollections(t *testing.T) {

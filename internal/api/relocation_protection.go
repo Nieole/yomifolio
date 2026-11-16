@@ -1,8 +1,8 @@
 package api
 
 import (
-	"manga-manager/internal/database"
 	"net/http"
+	"yomifolio/internal/database"
 )
 
 type LibraryRelocationProtection = database.LibraryRelocationProtection

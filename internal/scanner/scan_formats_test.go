@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 func newFormatTestScanner(t *testing.T, store database.Store) *Scanner {

@@ -5,10 +5,10 @@ import (
 	"sort"
 	"sync"
 
-	"manga-manager/internal/application"
-	"manga-manager/internal/logger"
-	"manga-manager/internal/relocation"
-	"manga-manager/internal/task"
+	"yomifolio/internal/application"
+	"yomifolio/internal/logger"
+	"yomifolio/internal/relocation"
+	"yomifolio/internal/task"
 )
 
 type relocationTopology struct {

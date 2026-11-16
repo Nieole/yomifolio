@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/runtimecfg"
-	"manga-manager/internal/scanner"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/runtimecfg"
+	"yomifolio/internal/scanner"
 )
 
 func TestRelocationPolicyCrashRecoversFromActualDurabilityBoundaries(t *testing.T) {

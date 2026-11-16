@@ -1,4 +1,4 @@
-# Manga Manager 配置模板 / configuration template
+# Yomifolio 配置模板 / configuration template
 #
 # 用法：复制为 config.yaml 后按需修改（config.yaml 已被 .gitignore 忽略，不会入库）。
 #   cp config.example.yaml config.yaml

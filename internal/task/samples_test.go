@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 // samplesOf 取这条运行至今落下的全部采样点。

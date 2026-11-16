@@ -11,9 +11,9 @@ import (
 	"sync"
 	"testing"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/parser"
-	"manga-manager/internal/runtimecfg"
+	"yomifolio/internal/config"
+	"yomifolio/internal/parser"
+	"yomifolio/internal/runtimecfg"
 
 	"gopkg.in/yaml.v3"
 )

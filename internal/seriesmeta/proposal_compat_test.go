@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/seriesmeta"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/seriesmeta"
 )
 
 // writeMetadata 在一次事务里调用写入器，与生产上的调用形态一致（裁决与写入同事务）。

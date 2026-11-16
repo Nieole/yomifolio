@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"strings"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/database"
+	"yomifolio/internal/parser"
 )
 
 // ScanMetadata contains only metadata columns for the scanner's identity upsert.

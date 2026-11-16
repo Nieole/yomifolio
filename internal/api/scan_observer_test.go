@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/scanner"
+	"yomifolio/internal/scanner"
 )
 
 // newScanEventsTestController 手工拼装这条链路唯一需要的组件：任务引擎。

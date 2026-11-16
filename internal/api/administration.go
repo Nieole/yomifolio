@@ -2,15 +2,15 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/accounts"
-	"manga-manager/internal/application/configuration"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/koreader"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+	"yomifolio/internal/accounts"
+	"yomifolio/internal/application/configuration"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/koreader"
 )
 
 // AdministrationStore supplies session and diagnostic queries plus the existing

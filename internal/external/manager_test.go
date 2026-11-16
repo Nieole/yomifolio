@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func newExternalTestStore(t *testing.T) (database.Store, database.Library, string) {

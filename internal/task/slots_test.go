@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 // deferredRunner 是「先登记、按需执行」版的后台能力：用例因此能决定哪一条任务体何时开跑，

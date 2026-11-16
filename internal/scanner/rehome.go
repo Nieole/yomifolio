@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // rehomeCandidate 是一条**可能**已被改名的已入库记录。

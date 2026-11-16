@@ -17,7 +17,7 @@ import (
 func TestGetSystemLogsHonorsFilterAndLimit(t *testing.T) {
 	controller, _, _, _ := newTestController(t)
 	cfg := controller.currentConfig()
-	logPath := filepath.Join(filepath.Dir(cfg.Database.Path), "manga_manager.log")
+	logPath := filepath.Join(filepath.Dir(cfg.Database.Path), "yomifolio.log")
 
 	content := "" +
 		"time=2026-01-01T00:00:00Z level=DEBUG msg=\"trace\"\n" +
@@ -59,7 +59,7 @@ func TestGetSystemLogsHonorsFilterAndLimit(t *testing.T) {
 func TestGetSystemLogsTaskKeyFilter(t *testing.T) {
 	controller, _, _, _ := newTestController(t)
 	cfg := controller.currentConfig()
-	logPath := filepath.Join(filepath.Dir(cfg.Database.Path), "manga_manager.log")
+	logPath := filepath.Join(filepath.Dir(cfg.Database.Path), "yomifolio.log")
 
 	content := "" +
 		"time=2026-01-01T00:00:00Z level=ERROR msg=\"unrelated\"\n" +
@@ -98,7 +98,7 @@ func TestGetSystemLogsTaskKeyFilter(t *testing.T) {
 func TestGetSystemLogsSurvivesOversizedLine(t *testing.T) {
 	controller, _, _, _ := newTestController(t)
 	cfg := controller.currentConfig()
-	logPath := filepath.Join(filepath.Dir(cfg.Database.Path), "manga_manager.log")
+	logPath := filepath.Join(filepath.Dir(cfg.Database.Path), "yomifolio.log")
 
 	huge := strings.Repeat("A", 200*1024)
 	content := "" +

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/database"
+	"yomifolio/internal/parser"
 )
 
 func TestComicInfoCommittedFileSurvivesFactStoreFailure(t *testing.T) {

@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/task"
+	"yomifolio/internal/database"
+	"yomifolio/internal/task"
 
 	"github.com/go-chi/chi/v5"
 )

@@ -3,10 +3,10 @@ package organize
 import (
 	"context"
 	"encoding/json"
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
 	"sort"
 	"strings"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
 )
 
 type aiGroupingReviewProposal struct {

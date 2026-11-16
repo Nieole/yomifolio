@@ -7,8 +7,8 @@ import (
 	"sort"
 	"time"
 
-	"manga-manager/internal/booksort"
-	"manga-manager/internal/database"
+	"yomifolio/internal/booksort"
+	"yomifolio/internal/database"
 )
 
 var ErrInvalidSubject = errors.New("invalid reading subject")

@@ -5,8 +5,8 @@ package proposal
 import (
 	"context"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/seriesmeta"
+	"yomifolio/internal/database"
+	"yomifolio/internal/seriesmeta"
 )
 
 // Queries 是提案裁决在一次事务内要用到的查询集合。生产上 *database.Queries 天然满足它，

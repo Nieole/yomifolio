@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
 )
 
 type aiGroupingReviewSeriesView struct {

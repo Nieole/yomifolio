@@ -142,7 +142,7 @@ function DashboardContent() {
                                 description={t('dashboard.onboarding.step1.description')}
                                 actionLabel={t('dashboard.onboarding.step1.action')}
                                 // 建库是管理员动作；普通用户点了只会吃 403。
-                                onClick={isAdmin ? () => window.dispatchEvent(new Event('manga-manager:open-add-library')) : undefined}
+                                onClick={isAdmin ? () => window.dispatchEvent(new Event('yomifolio:open-add-library')) : undefined}
                                 icon={<FolderPlus className="w-5 h-5 text-komgaPrimary" />}
                             />
                             <OnboardingCard

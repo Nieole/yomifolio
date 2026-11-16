@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // ScopeRef 指向一个作用域对象，是 LastRunIDsForScopes 的查询键与结果键。

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // countingTransferStore 统计两条查询各被调用了几次。

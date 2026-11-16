@@ -181,7 +181,7 @@ func (a *AniListProvider) SearchMetadata(ctx context.Context, title string, limi
 		}
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Accept", "application/json")
-		req.Header.Set("User-Agent", "MangaManager/1.0 (https://github.com/manga-manager)")
+		req.Header.Set("User-Agent", "Yomifolio/1.0 (https://github.com/Nieole/yomifolio)")
 
 		resp, err := a.httpClient.Do(req)
 		if err != nil {

@@ -1,8 +1,8 @@
 package api
 
 import (
-	"manga-manager/internal/bookcontent"
-	"manga-manager/internal/database"
+	"yomifolio/internal/bookcontent"
+	"yomifolio/internal/database"
 )
 
 type bookPageSource = bookcontent.Source

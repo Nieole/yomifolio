@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/application"
-	"manga-manager/internal/config"
-	"manga-manager/internal/logger"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
-	"manga-manager/internal/taskstore"
 	_ "modernc.org/sqlite"
+	"yomifolio/internal/application"
+	"yomifolio/internal/config"
+	"yomifolio/internal/logger"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskstore"
 )
 
 func testRuns(t *testing.T, background func(func()), publish func(task.Snapshot)) (*application.Runs, *task.Engine) {

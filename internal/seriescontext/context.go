@@ -6,13 +6,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/proposal"
-	"manga-manager/internal/reading"
-	"manga-manager/internal/seriesmeta"
-	"manga-manager/internal/task"
 	"time"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/proposal"
+	"yomifolio/internal/reading"
+	"yomifolio/internal/seriesmeta"
+	"yomifolio/internal/task"
 )
 
 type Store interface {

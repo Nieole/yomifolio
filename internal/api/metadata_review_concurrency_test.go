@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/proposal"
+	"yomifolio/internal/database"
+	"yomifolio/internal/proposal"
 )
 
 type interleavingProposalStore struct {

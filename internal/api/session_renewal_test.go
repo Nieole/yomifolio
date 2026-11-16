@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 // slidingRenewalPassword 是本文件夹具账户的口令（长度须过 minPasswordLen）。

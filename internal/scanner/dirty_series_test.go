@@ -13,8 +13,8 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 // flakyRefreshStore 让 RefreshSeriesDerivedData 前 n 次调用失败，之后恢复正常。

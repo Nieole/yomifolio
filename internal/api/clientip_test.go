@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"manga-manager/internal/config"
+	"yomifolio/internal/config"
 )
 
 func newClientIPController(t *testing.T, trusted ...string) *administrationHTTP {

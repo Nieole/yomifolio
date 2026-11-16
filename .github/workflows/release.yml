@@ -60,7 +60,7 @@ jobs:
             EXT=""
           fi
 
-          OUTPUT_NAME="manga-manager-${VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}${EXT}"
+          OUTPUT_NAME="yomifolio-${VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}${EXT}"
 
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "output_name=${OUTPUT_NAME}" >> "$GITHUB_OUTPUT"

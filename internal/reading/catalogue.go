@@ -3,7 +3,7 @@ package reading
 import (
 	"context"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // SeriesCatalogueStore keeps subject aggregates inside SQL so filtering, ordering,

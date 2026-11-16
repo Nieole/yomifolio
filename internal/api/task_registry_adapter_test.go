@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/application/runtime"
-	"manga-manager/internal/task"
+	"yomifolio/internal/application/runtime"
+	"yomifolio/internal/task"
 )
 
 func (c *apiFixture) buildTaskDispatch() map[taskDispatchKey]taskDispatch {

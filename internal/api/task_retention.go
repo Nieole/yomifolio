@@ -1,8 +1,8 @@
 package api
 
 import (
-	"manga-manager/internal/application"
 	"time"
+	"yomifolio/internal/application"
 )
 
 const cleanupRunHistoryTaskKey = application.CleanupRunHistoryTaskKey

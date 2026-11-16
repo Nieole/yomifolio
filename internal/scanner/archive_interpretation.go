@@ -4,16 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
-	"manga-manager/internal/bookidentity"
-	"manga-manager/internal/booksort"
-	"manga-manager/internal/config"
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/parser"
-	"manga-manager/internal/storageio"
-	"manga-manager/internal/taskcontrol"
 	"path/filepath"
 	"strings"
 	"time"
+	"yomifolio/internal/bookidentity"
+	"yomifolio/internal/booksort"
+	"yomifolio/internal/config"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/parser"
+	"yomifolio/internal/storageio"
+	"yomifolio/internal/taskcontrol"
 )
 
 // interpretedBook contains observed source facts, without ownership IDs or SQL intent.

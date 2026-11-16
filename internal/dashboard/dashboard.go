@@ -5,11 +5,11 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"manga-manager/internal/reading"
 	"sync"
 	"time"
+	"yomifolio/internal/reading"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 
 	"golang.org/x/sync/singleflight"
 )

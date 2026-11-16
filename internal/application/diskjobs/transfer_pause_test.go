@@ -10,14 +10,14 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/application"
-	"manga-manager/internal/application/diskjobs"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/storageio"
-	"manga-manager/internal/task"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/application"
+	"yomifolio/internal/application/diskjobs"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/storageio"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskcontrol"
 )
 
 func TestTransferRunPauseResumeAndCancelKeepCommittedRange(t *testing.T) {

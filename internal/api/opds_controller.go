@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/reading"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -246,10 +246,10 @@ func (c *ReaderHTTP) opdsRoot(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().Format(time.RFC3339)
 	feed := OPDSFeed{
 		XMLNS:   "http://www.w3.org/2005/Atom",
-		Title:   "Manga Manager OPDS Catalog",
+		Title:   "Yomifolio OPDS Catalog",
 		ID:      "urn:manga-manager:opds:root",
 		Updated: now,
-		Author:  &OPDSAuthor{Name: "Manga Manager"},
+		Author:  &OPDSAuthor{Name: "Yomifolio"},
 		Links: []OPDSLink{
 			{Rel: "self", Href: "/opds/v1.2/", Type: "application/atom+xml;profile=opds-catalog;kind=navigation"},
 			{Rel: "start", Href: "/opds/v1.2/", Type: "application/atom+xml;profile=opds-catalog;kind=navigation"},
@@ -309,8 +309,8 @@ func (c *ReaderHTTP) opdsRoot(w http.ResponseWriter, r *http.Request) {
 func (c *ReaderHTTP) opdsOpenSearch(w http.ResponseWriter, r *http.Request) {
 	description := OpenSearchDescription{
 		XMLNS:          "http://a9.com/-/spec/opensearch/1.1/",
-		ShortName:      "Manga Manager",
-		Description:    "Search Manga Manager series",
+		ShortName:      "Yomifolio",
+		Description:    "Search Yomifolio series",
 		InputEncoding:  "UTF-8",
 		OutputEncoding: "UTF-8",
 		URLs: []OpenSearchURL{

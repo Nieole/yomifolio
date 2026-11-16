@@ -87,7 +87,7 @@ func (c *administrationHTTP) getClientConnections(w http.ResponseWriter, r *http
 			Description: "OPDS catalog root for compatible comic readers.",
 			Enabled:     true,
 			Health:      "ready",
-			AuthNote:    "No authentication is required by Manga Manager.",
+			AuthNote:    "No authentication is required by Yomifolio.",
 			Diagnostics: []string{"Catalog root is always available while the server is running.", "Use this URL for OPDS-compatible readers.", "Book entries include OPDS-PSE page streaming links for clients that support comic page streaming."},
 		},
 		{
@@ -100,7 +100,7 @@ func (c *administrationHTTP) getClientConnections(w http.ResponseWriter, r *http
 			Description: "Search descriptor discoverable by OPDS clients.",
 			Enabled:     true,
 			Health:      "ready",
-			AuthNote:    "No authentication is required by Manga Manager.",
+			AuthNote:    "No authentication is required by Yomifolio.",
 			Diagnostics: []string{"Expose this descriptor only if the OPDS client supports OpenSearch discovery.", "If search does not appear in a client, use the OPDS root URL instead."},
 		},
 		{
@@ -113,7 +113,7 @@ func (c *administrationHTTP) getClientConnections(w http.ResponseWriter, r *http
 			Description: "Unified OPDS feed for manual, AI, snapshot, and smart collections.",
 			Enabled:     true,
 			Health:      "ready",
-			AuthNote:    "No authentication is required by Manga Manager.",
+			AuthNote:    "No authentication is required by Yomifolio.",
 			Diagnostics: []string{"Use this when the client supports adding multiple catalog feeds.", "Dynamic smart collections are resolved on request."},
 		},
 		{
@@ -126,7 +126,7 @@ func (c *administrationHTTP) getClientConnections(w http.ResponseWriter, r *http
 			Description: "OPDS feed sorted by recently added series.",
 			Enabled:     true,
 			Health:      "ready",
-			AuthNote:    "No authentication is required by Manga Manager.",
+			AuthNote:    "No authentication is required by Yomifolio.",
 			Diagnostics: []string{"Use this feed when a client supports separate catalog shortcuts.", "Add libraryId as a query parameter to scope the feed to one library."},
 		},
 		{
@@ -139,7 +139,7 @@ func (c *administrationHTTP) getClientConnections(w http.ResponseWriter, r *http
 			Description: "OPDS navigation feed for ordered reading lists.",
 			Enabled:     true,
 			Health:      "ready",
-			AuthNote:    "No authentication is required by Manga Manager.",
+			AuthNote:    "No authentication is required by Yomifolio.",
 			Diagnostics: []string{"Use this endpoint for curated reading-order lists.", "Each list opens as a paged series feed."},
 		},
 		{
@@ -152,7 +152,7 @@ func (c *administrationHTTP) getClientConnections(w http.ResponseWriter, r *http
 			Description: "Private Mihon/Tachiyomi style JSON API root.",
 			Enabled:     true,
 			Health:      "ready",
-			AuthNote:    "No authentication is required by Manga Manager.",
+			AuthNote:    "No authentication is required by Yomifolio.",
 			Diagnostics: []string{"Use the base API root when configuring a compatible extension.", "This endpoint is JSON and is not an OPDS feed."},
 		},
 		{
@@ -165,7 +165,7 @@ func (c *administrationHTTP) getClientConnections(w http.ResponseWriter, r *http
 			Description: "JSON collection list for Mihon/Tachiyomi style clients.",
 			Enabled:     true,
 			Health:      "ready",
-			AuthNote:    "No authentication is required by Manga Manager.",
+			AuthNote:    "No authentication is required by Yomifolio.",
 			Diagnostics: []string{"Use this endpoint for client-side collection discovery.", "Manual, AI, snapshot, and smart collection views share this gateway."},
 		},
 		{
@@ -178,7 +178,7 @@ func (c *administrationHTTP) getClientConnections(w http.ResponseWriter, r *http
 			Description: "JSON series page sorted by recently added time.",
 			Enabled:     true,
 			Health:      "ready",
-			AuthNote:    "No authentication is required by Manga Manager.",
+			AuthNote:    "No authentication is required by Yomifolio.",
 			Diagnostics: []string{"Use this endpoint for extension-side recent shelves.", "Supports page, limit, and libraryId query parameters."},
 		},
 		{
@@ -191,7 +191,7 @@ func (c *administrationHTTP) getClientConnections(w http.ResponseWriter, r *http
 			Description: "JSON reading-list catalog for Mihon/Tachiyomi style clients.",
 			Enabled:     true,
 			Health:      "ready",
-			AuthNote:    "No authentication is required by Manga Manager.",
+			AuthNote:    "No authentication is required by Yomifolio.",
 			Diagnostics: []string{"Use this endpoint for curated reading-order discovery.", "List members are available at /api/mihon/v1/reading-lists/{id}/series."},
 		},
 		{
@@ -204,7 +204,7 @@ func (c *administrationHTTP) getClientConnections(w http.ResponseWriter, r *http
 			Description: "JSON feed of recently read books for compatible clients.",
 			Enabled:     true,
 			Health:      "ready",
-			AuthNote:    "No authentication is required by Manga Manager.",
+			AuthNote:    "No authentication is required by Yomifolio.",
 			Diagnostics: []string{"Use this endpoint to build client-side continue-reading shelves.", "Progress writes still use the existing book progress endpoint."},
 		},
 		{

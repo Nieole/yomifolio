@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // TestKOReaderManagementEndpointsWithStoredProgress 覆盖「koreader_progress 表里已有进度记录」这一前提。

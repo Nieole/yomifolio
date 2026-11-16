@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
 )
 
 // testDB 是用例侧的适配器，与装配处那个同形——本包只认 Queries 与 Database 两个接口。

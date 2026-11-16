@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/storageio"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/config"
+	"yomifolio/internal/storageio"
+	"yomifolio/internal/taskcontrol"
 )
 
 // slowAcquireThreshold 是「等令牌等了很久」的观测阈值。没有它，慢盘上的排队对用户是无声的。

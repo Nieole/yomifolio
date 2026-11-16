@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // BookQueryStore supplies catalogue rows and one batched reader-position lookup.

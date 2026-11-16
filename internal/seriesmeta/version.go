@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // 指纹串的分隔符：取 ASCII 的记录/单元/组分隔符，元数据文本里不会出现，因此拼接不可能歧义。

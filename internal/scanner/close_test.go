@@ -2,10 +2,10 @@ package scanner
 
 import (
 	"context"
-	"manga-manager/internal/config"
 	"os"
 	"path/filepath"
 	"testing"
+	"yomifolio/internal/config"
 )
 
 func TestCloseDrainsStandaloneCoversBeforeCacheRelease(t *testing.T) {

@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/scanner"
-	"manga-manager/internal/task"
+	"yomifolio/internal/config"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/scanner"
+	"yomifolio/internal/task"
 )
 
 // coverRunQueues 是「哪一批封面归哪一条运行」的配对处：批先进这里攒着，运行开跑时**认领**

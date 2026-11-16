@@ -17,8 +17,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/database"
+	"yomifolio/internal/parser"
 )
 
 func TestExportBookComicInfo(t *testing.T) {

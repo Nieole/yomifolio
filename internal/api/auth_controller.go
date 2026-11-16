@@ -21,13 +21,14 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"manga-manager/internal/accounts"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/accounts"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 const (
-	sessionCookieName = "mm_session"
+	sessionCookieName       = "yomifolio_session"
+	legacySessionCookieName = "mm_session"
 	// 会话有效期 30 天，滑动续期：距上次活跃超过 sessionTouchAfter 才续，服务端 expires_at 与
 	// 浏览器 Cookie 同一节奏一起推后（见 authGate），二者分叉就等于续期对客户端是哑的。
 	sessionTTL        = 30 * 24 * time.Hour
@@ -196,8 +197,13 @@ func (c *administrationHTTP) setSessionCookie(w http.ResponseWriter, r *http.Req
 }
 
 func (c *administrationHTTP) clearSessionCookie(w http.ResponseWriter, r *http.Request) {
+	c.clearNamedSessionCookie(w, r, sessionCookieName)
+	c.clearNamedSessionCookie(w, r, legacySessionCookieName)
+}
+
+func (c *administrationHTTP) clearNamedSessionCookie(w http.ResponseWriter, r *http.Request, name string) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     sessionCookieName,
+		Name:     name,
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
@@ -208,6 +214,27 @@ func (c *administrationHTTP) clearSessionCookie(w http.ResponseWriter, r *http.R
 		MaxAge:   -1,
 		Expires:  time.Unix(0, 0),
 	})
+}
+
+// requestSessionCookie never falls back after a new-name cookie is present (even empty,
+// expired or invalid). Duplicate selected cookies are ambiguous and fail closed.
+func requestSessionCookie(r *http.Request) (*http.Cookie, error) {
+	for _, name := range []string{sessionCookieName, legacySessionCookieName} {
+		var selected *http.Cookie
+		for _, cookie := range r.Cookies() {
+			if cookie.Name != name {
+				continue
+			}
+			if selected != nil {
+				return nil, http.ErrNoCookie
+			}
+			selected = cookie
+		}
+		if selected != nil {
+			return selected, nil
+		}
+	}
+	return nil, http.ErrNoCookie
 }
 
 // ---- 阅读协议 HTTP Basic 鉴权（OPDS / Mihon）----
@@ -232,12 +259,12 @@ func (c *administrationHTTP) resolveBasicAuthUser(ctx context.Context, username,
 }
 
 // basicAuthChallenge 是协议侧的默认 WWW-Authenticate 值。
-const basicAuthChallenge = `Basic realm="manga-manager"`
+const basicAuthChallenge = `Basic realm="Yomifolio"`
 
 // basicAuthChallengePasswordChange 把「先去网页端改密」这条原因写进 realm。
 // 多数 Basic 客户端不显示响应体、只显示 realm，realm 因此是这条拒绝唯一的可见解释；
 // 头字段按 ASCII 写，避免阅读器把 UTF-8 realm 渲染成乱码。
-const basicAuthChallengePasswordChange = `Basic realm="manga-manager: change your initial password in the web UI first"`
+const basicAuthChallengePasswordChange = `Basic realm="Yomifolio: change your initial password in the web UI first"`
 
 // respondPasswordChangeRequired 应答「口令正确、但账号尚未完成首登改密」。
 // 用 401 而非 403：客户端会重新索要凭据，用户在网页端改密后把新口令填进去就恢复了；
@@ -458,7 +485,7 @@ func (c *administrationHTTP) authGate(next http.Handler) http.Handler {
 			jsonError(w, http.StatusUnauthorized, apiText(requestLocale(r), "auth.login_required"))
 			return
 		}
-		cookie, err := r.Cookie(sessionCookieName)
+		cookie, err := requestSessionCookie(r)
 		if err != nil || cookie.Value == "" {
 			jsonError(w, http.StatusUnauthorized, apiText(requestLocale(r), "auth.login_required"))
 			return
@@ -490,10 +517,18 @@ func (c *administrationHTTP) authGate(next http.Handler) http.Handler {
 		// 滑动续期：推后服务端 expires_at 的同时，必须用同一个令牌、同一套属性把 Cookie 重下发，
 		// 否则浏览器那份 Max-Age 永远停在登录那一刻，天天在用的用户仍会在第 30 天被踢下线。
 		// 落库失败就不下发：客户端比服务端活得久只会把无声失效换成更迷惑的失效。
+		if cookie.Name == legacySessionCookieName && now.Sub(sess.LastSeenAt) <= sessionTouchAfter {
+			// Rename without extending the server-side lifetime or changing identity/CSRF.
+			c.setSessionCookie(w, r, cookie.Value, sess.ExpiresAt)
+			c.clearNamedSessionCookie(w, r, legacySessionCookieName)
+		}
 		if now.Sub(sess.LastSeenAt) > sessionTouchAfter {
 			expires := now.Add(sessionTTL)
 			if err := c.store.TouchSession(r.Context(), sess.ID, now, expires); err == nil {
 				c.setSessionCookie(w, r, cookie.Value, expires)
+				if cookie.Name == legacySessionCookieName {
+					c.clearNamedSessionCookie(w, r, legacySessionCookieName)
+				}
 			}
 		}
 		ctx := context.WithValue(r.Context(), userCtxKey, user)
@@ -528,6 +563,7 @@ func (c *administrationHTTP) startSession(ctx context.Context, w http.ResponseWr
 		return "", err
 	}
 	c.setSessionCookie(w, r, raw, expires)
+	c.clearNamedSessionCookie(w, r, legacySessionCookieName)
 	return csrf, nil
 }
 
@@ -551,11 +587,17 @@ func (c *administrationHTTP) authStatus(w http.ResponseWriter, r *http.Request) 
 		"setup_required": count == 0,
 		"authenticated":  false,
 	}
-	if cookie, e := r.Cookie(sessionCookieName); e == nil && cookie.Value != "" {
+	if cookie, e := requestSessionCookie(r); e == nil && cookie.Value != "" {
 		if sess, user, err := c.store.GetSessionWithUser(ctx, hashSessionID(cookie.Value), time.Now()); err == nil {
 			resp["authenticated"] = true
 			resp["user"] = user
 			resp["csrf_token"] = sess.CSRFToken
+			if cookie.Name == legacySessionCookieName {
+				c.setSessionCookie(w, r, cookie.Value, sess.ExpiresAt)
+				c.clearNamedSessionCookie(w, r, legacySessionCookieName)
+			}
+		} else {
+			c.clearSessionCookie(w, r)
 		}
 	}
 	jsonResponse(w, http.StatusOK, resp)
@@ -656,6 +698,12 @@ func (c *administrationHTTP) login(w http.ResponseWriter, r *http.Request) {
 
 // logout 删除当前会话并清 cookie。
 func (c *administrationHTTP) logout(w http.ResponseWriter, r *http.Request) {
+	// Revoke both presented tokens: clearing the new cookie must not resurrect an old login.
+	for _, cookie := range r.Cookies() {
+		if cookie.Name == sessionCookieName || cookie.Name == legacySessionCookieName {
+			_ = c.store.DeleteSession(r.Context(), hashSessionID(cookie.Value))
+		}
+	}
 	if sess, ok := sessionFromContext(r.Context()); ok {
 		_ = c.store.DeleteSession(r.Context(), sess.ID)
 	}

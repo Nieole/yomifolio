@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 var (

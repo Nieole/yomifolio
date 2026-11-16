@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"manga-manager/internal/task"
 	"strconv"
 	"strings"
+	"yomifolio/internal/task"
 )
 
 // RestartDefinition declares the only supported retry and automatic replay identities.

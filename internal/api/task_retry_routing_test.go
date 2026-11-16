@@ -15,7 +15,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // taskRouteRig 是一台起在**真路由**上、已登录管理员的服务器。

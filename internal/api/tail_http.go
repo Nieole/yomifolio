@@ -2,14 +2,14 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/bookcontent"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/proposal"
-	"manga-manager/internal/scanner"
-	"manga-manager/internal/task"
 	"net/http"
+	"yomifolio/internal/bookcontent"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/proposal"
+	"yomifolio/internal/scanner"
+	"yomifolio/internal/task"
 )
 
 // ContentQueries locates content and diagnoses unavailable library storage.

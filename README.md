@@ -1,9 +1,9 @@
-# Manga Manager 📚
+# Yomifolio 📚
 
-[![CI](https://github.com/Nieole/manga_manager/actions/workflows/ci.yml/badge.svg)](https://github.com/Nieole/manga_manager/actions/workflows/ci.yml)
-[![Release](https://github.com/Nieole/manga_manager/actions/workflows/release.yml/badge.svg)](https://github.com/Nieole/manga_manager/actions/workflows/release.yml)
+[![CI](https://github.com/Nieole/yomifolio/actions/workflows/ci.yml/badge.svg)](https://github.com/Nieole/yomifolio/actions/workflows/ci.yml)
+[![Release](https://github.com/Nieole/yomifolio/actions/workflows/release.yml/badge.svg)](https://github.com/Nieole/yomifolio/actions/workflows/release.yml)
 
-Manga Manager 是一款自托管的本地漫画 / 画集管理与阅读服务器,基于 `Go` + `React (Vite + TailwindCSS)` 构建。
+Yomifolio 是一款自托管的本地漫画 / 画集管理与阅读服务器,基于 `Go` + `React (Vite + TailwindCSS)` 构建。
 
 它不依赖任何云端数据库,完全围绕本地文件扫描工作:把硬盘上散落的压缩包(`zip` / `cbz` / `rar` / `cbr`)整理为带封面、元数据、阅读进度的系列书库,并通过浏览器、OPDS 客户端、Mihon、KOReader 等多种入口阅读。内置多用户账户体系,可为不同成员分别记录阅读进度。后端编译为单个二进制,解压即用;数据库、缩略图、配置与日志都落在本地 `data/` 目录,不污染系统环境。
 
@@ -60,7 +60,7 @@ Manga Manager 是一款自托管的本地漫画 / 画集管理与阅读服务器
 - 内置解压安全护栏(单条目 256 MiB 上限)与批量误删保护(库根不可达或超过 50% 系列疑似丢失时中止清理)。
 
 ### 👥 多用户与账户
-- 内置**多用户账户体系**:服务端会话 Cookie(`mm_session`)+ CSRF 令牌 + `bcrypt` 口令。角色分**管理员**(全部权限)与**普通用户**(只读浏览 + 记录本人进度 / 书签 / 短评)。
+- 内置**多用户账户体系**:服务端会话 Cookie(`yomifolio_session`,兼容旧 `mm_session` 安全过渡)+ CSRF 令牌 + `bcrypt` 口令。角色分**管理员**(全部权限)与**普通用户**(只读浏览 + 记录本人进度 / 书签 / 短评)。
 - 首次通过浏览器访问会**强制创建管理员**;管理员新建的账号首次登录需**强制改密**,且改密完成前该账号在 OPDS / Mihon / KOReader 上一律不可用(读写皆拒),必须先到网页端改密。
 - **每用户独立**记录阅读进度、书签、系列短评与深度统计(连读天数、阅读时长、周期分布);首个管理员创建时会自动迁移历史的全局进度 / 活动 / 无主 KOReader 账户。
 - 管理员保护:不能删除自己,也不能降级 / 删除最后一位管理员。
@@ -130,7 +130,7 @@ Manga Manager 是一款自托管的本地漫画 / 画集管理与阅读服务器
 
 ## 📦 部署与使用
 
-得益于 Go 的交叉编译,Manga Manager 可在 Windows / Linux / macOS 上运行。
+得益于 Go 的交叉编译,Yomifolio 可在 Windows / Linux / macOS 上运行。
 
 ### 0. GitHub Actions 自动构建与发布
 
@@ -160,7 +160,7 @@ Windows 下可使用 `build.ps1`(仅产出 Windows AMD64 单个二进制,使用�
 在 `build/` 中选择对应平台的可执行文件运行(以 macOS ARM64 为例):
 
 ```bash
-./manga-manager-mac-arm64
+./yomifolio-mac-arm64
 ```
 
 首次运行会自动生成 `data/` 目录,用于存放缩略图、数据库、配置与日志。
@@ -172,12 +172,15 @@ Windows 下可使用 `build.ps1`(仅产出 Windows AMD64 单个二进制,使用�
 ### 4. 命令行参数与环境变量
 
 ```bash
-./manga-manager-mac-arm64 -config /path/to/config.yaml -data-dir /path/to/data
-./manga-manager-mac-arm64 -version
+./yomifolio-mac-arm64 -config /path/to/config.yaml -data-dir /path/to/data
+./yomifolio-mac-arm64 -version
 ```
 
-- `-config`(或环境变量 `MANGA_MANAGER_CONFIG`):配置文件路径,默认 `config.yaml`。
-- `-data-dir`(或环境变量 `MANGA_MANAGER_DATA_DIR`):数据目录,默认 `data`。
+- `-config`(或环境变量 `YOMIFOLIO_CONFIG`):配置文件路径,默认 `config.yaml`。
+- `-data-dir`(或环境变量 `YOMIFOLIO_DATA_DIR`):日志目录,默认 `data`;数据库和缓存路径仍由配置中的 `database.path` / `cache.dir` 决定。
+- 优先级为显式命令行参数 > 新 `YOMIFOLIO_*` 环境变量 > 对应旧 `MANGA_MANAGER_CONFIG` / `MANGA_MANAGER_DATA_DIR` > 默认值。环境变量先去除首尾空白,空值或纯空白视为未设置。
+- 从 Manga Manager 升级无需搬迁数据:默认数据库路径仍为 `data/manga.db`,OPDS 条目身份保持不变。普通浏览器偏好优先使用新键,缺失时读取并复制旧键;复制失败保留旧值以便重试。离线索引、页图缓存、待同步进度与 owner 保留底层兼容名称,不复制或搬迁,用户隔离与登出清理规则不变。
+- 旧 `mm_session` 会话验证成功后换发 `yomifolio_session` 并清除旧 Cookie,身份与 CSRF 不变;新 Cookie 存在时不回退旧值,登出会撤销请求携带的两种会话并清除两种 Cookie。新日志写入 `yomifolio.log`,既有日志文件保留。
 - 配置文件支持基于 `fsnotify` 的热重载,可参考仓库内 `config.example.yaml`(该模板并非穷举所有配置项)。热重载的三条行为值得知道:
   - 编辑器保存产生的多个事件会在 **500ms** 内合并,只重载一次;
   - 重载前先做**取值校验**(端口范围、枚举值、并发下限等),不通过则整份拒绝并保留当前配置,日志里会列出具体问题——此时磁盘配置与运行中的配置会分叉,请按日志修正后重新保存;

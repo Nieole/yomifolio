@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/proposal"
+	"yomifolio/internal/database"
+	"yomifolio/internal/proposal"
 )
 
 // seriesMetadataVersionOf 走 GET /context 读出这一刻的元数据版本，即用户打开编辑器时手里那份。

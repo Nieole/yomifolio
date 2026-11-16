@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/task"
+	"yomifolio/internal/database"
+	"yomifolio/internal/task"
 )
 
 // TestExternalLibraryTasksDeclareTheirLibraryScope 钉住外部库扫描与传输都落在**资料库**作用域

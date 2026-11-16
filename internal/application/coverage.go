@@ -2,10 +2,10 @@ package application
 
 import (
 	"context"
-	"manga-manager/internal/database"
-	"manga-manager/internal/relocation"
-	"manga-manager/internal/task"
 	"path/filepath"
+	"yomifolio/internal/database"
+	"yomifolio/internal/relocation"
+	"yomifolio/internal/task"
 )
 
 // LibraryRoots reads the same current library roots used by relocation coordination.

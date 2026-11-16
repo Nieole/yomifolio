@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"manga-manager/internal/seriesmeta"
+	"yomifolio/internal/seriesmeta"
 )
 
 // SelectionTransaction owns one atomic incremental edit across the selected series.

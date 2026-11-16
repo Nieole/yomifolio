@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { PREFERENCE_KEYS, readPreference, writePreference } from '../../utils/browserPreferences';
 import { apiClient, isAxiosError } from '../../api/client';
 import { useToast } from '../../components/ToastProvider';
 import { useI18n } from '../../i18n/LocaleProvider';
@@ -26,7 +27,7 @@ export function useLibraryManagement(isAdmin: boolean, onRelocation: (id: string
   const [editLibId, setEditLibId] = useState('');
   const [supportedScanFormats, setSupportedScanFormats] = useState(DEFAULT_SCAN_FORMATS);
   const [recentLibraryPaths, setRecentLibraryPaths] = useState<string[]>(() => {
-    try { const saved: unknown = JSON.parse(localStorage.getItem('manga_manager_recent_library_paths') ?? '[]'); return Array.isArray(saved) ? saved.filter((v): v is string => typeof v === 'string') : []; } catch { return []; }
+    try { const saved: unknown = JSON.parse(readPreference(PREFERENCE_KEYS.recentLibraryPaths) ?? '[]'); return Array.isArray(saved) ? saved.filter((v): v is string => typeof v === 'string') : []; } catch { return []; }
   });
   const addForm = useLibraryForm(EMPTY);
   const editForm = useLibraryForm(EMPTY);
@@ -68,7 +69,7 @@ export function useLibraryManagement(isAdmin: boolean, onRelocation: (id: string
     const clean = path.trim(); if (!clean) return;
     const next = [clean, ...recentLibraryPaths.filter(value => value !== clean)].slice(0, 5);
     setRecentLibraryPaths(next);
-    try { localStorage.setItem('manga_manager_recent_library_paths', JSON.stringify(next)); } catch { /* The save remains committed if local preferences cannot be written. */ }
+    try { writePreference(PREFERENCE_KEYS.recentLibraryPaths, JSON.stringify(next)); } catch { /* The save remains committed if local preferences cannot be written. */ }
   };
   const errorMessage = (error: unknown, fallback: string) => {
     if (!isAxiosError(error)) return fallback;

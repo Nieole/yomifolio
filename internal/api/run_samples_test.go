@@ -8,15 +8,15 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"manga-manager/internal/config"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+	"yomifolio/internal/config"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // runSamplesOf 走端点取一条运行的吞吐曲线。

@@ -1,16 +1,21 @@
 import { useEffect, useState } from 'react';
+import { readPreference, writePreference } from '../../utils/browserPreferences';
 
 export function useStickyState<T>(
   defaultValue: T,
   key: string,
 ): [T, React.Dispatch<React.SetStateAction<T>>] {
   const [value, setValue] = useState<T>(() => {
-    const stickyValue = window.localStorage.getItem(key);
-    return stickyValue !== null ? JSON.parse(stickyValue) : defaultValue;
+    try {
+      const stickyValue = readPreference(key);
+      return stickyValue !== null ? JSON.parse(stickyValue) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
   });
 
   useEffect(() => {
-    window.localStorage.setItem(key, JSON.stringify(value));
+    writePreference(key, JSON.stringify(value));
   }, [key, value]);
 
   return [value, setValue];

@@ -133,4 +133,4 @@ jobs:
         # runner image default so a WebP-less binary can never be produced unnoticed.
         env:
           CGO_ENABLED: "1"
-        run: go build -o build/manga-manager-ci ./cmd/server
+        run: go build -o build/yomifolio-ci ./cmd/server

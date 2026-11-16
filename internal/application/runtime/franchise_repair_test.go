@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/application/runtime"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/application/runtime"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/reading"
 )
 
 func TestRuntimeResumesDurableFranchiseRepairAndRetriesFailure(t *testing.T) {

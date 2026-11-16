@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/organize"
+	"yomifolio/internal/organize"
 )
 
 func TestCollectionAddMissingSeriesReturnsNotFoundAndKeepsBatchAtomic(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // authTestServer 起一个真实路由的测试服务器。

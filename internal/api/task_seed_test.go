@@ -15,8 +15,8 @@ import (
 	"sync"
 	"testing"
 
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // errSeededRunQueued 表示这次播种被准入闸门拦在了**排队中**：运行确实落地了（脚手架没有绕开

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 func TestActiveIndexRejectsSecondActiveRun(t *testing.T) {

@@ -118,7 +118,7 @@ func (m *MangaDexProvider) SearchMetadata(ctx context.Context, title string, lim
 		if err != nil {
 			return nil, 0, fmt.Errorf("mangadex: failed to create request: %w", err)
 		}
-		req.Header.Set("User-Agent", "MangaManager/1.0 (https://github.com/manga-manager)")
+		req.Header.Set("User-Agent", "Yomifolio/1.0 (https://github.com/Nieole/yomifolio)")
 		req.Header.Set("Accept", "application/json")
 
 		resp, err := m.httpClient.Do(req)

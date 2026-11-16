@@ -3,10 +3,10 @@ package api
 import (
 	"context"
 
-	"manga-manager/internal/dashboard"
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
-	"manga-manager/internal/recommendation"
+	"yomifolio/internal/dashboard"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
+	"yomifolio/internal/recommendation"
 )
 
 // ReaderQueryStore supplies read-only catalogue and statistics projections.

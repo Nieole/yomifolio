@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func TestBookmarkAndTimeEndpointsRejectInvalidReader(t *testing.T) {

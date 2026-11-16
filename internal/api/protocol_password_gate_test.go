@@ -15,8 +15,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/koreader"
+	"yomifolio/internal/database"
+	"yomifolio/internal/koreader"
 )
 
 // protocolGateFixture 是三条协议链路共用的装配：两个站点账号（一个待改密、一个正常），

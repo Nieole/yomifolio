@@ -1,16 +1,16 @@
 package api
 
 import (
-	"manga-manager/internal/catalogsearch"
-	"manga-manager/internal/seriescontext"
+	"yomifolio/internal/catalogsearch"
+	"yomifolio/internal/seriescontext"
 
 	"context"
 	"errors"
-	"manga-manager/internal/database"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"yomifolio/internal/database"
 )
 
 type failedSeriesSearch struct{ database.Store }

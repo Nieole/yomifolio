@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // CatalogueFilters describes list selection independently of the selected reader.

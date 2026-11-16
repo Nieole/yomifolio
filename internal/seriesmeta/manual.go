@@ -8,7 +8,7 @@ import (
 	"errors"
 	"strings"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // ManualQueries is the transaction-bound persistence needed for manual replacement.

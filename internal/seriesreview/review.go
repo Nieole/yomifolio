@@ -4,11 +4,11 @@ package seriesreview
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
 	"math"
 	"strings"
 	"time"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
 )
 
 type Store interface {

@@ -3,9 +3,9 @@ package organize_test
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
 	"testing"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
 )
 
 func TestRelationChangesRebuildDerivedCollections(t *testing.T) {

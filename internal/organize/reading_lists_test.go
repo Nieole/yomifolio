@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/reading"
 )
 
 func TestOrderedReadingListsOwnMembershipAndAtomicReorder(t *testing.T) {

@@ -6,13 +6,13 @@ package koreader
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"manga-manager/internal/bookidentity"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"yomifolio/internal/bookidentity"
 
-	"manga-manager/internal/config"
+	"yomifolio/internal/config"
 )
 
 func TestHashKeyTrimsAndMatchesMD5(t *testing.T) {

@@ -5,20 +5,20 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"manga-manager/internal/testfixture"
 	"os"
 	"path/filepath"
 	"sync"
 	"testing"
 	"time"
+	"yomifolio/internal/testfixture"
 
-	"manga-manager/internal/application"
-	"manga-manager/internal/application/scanning"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/scanner"
-	"manga-manager/internal/task"
-	"manga-manager/internal/taskstore"
+	"yomifolio/internal/application"
+	"yomifolio/internal/application/scanning"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/scanner"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskstore"
 )
 
 func newScanService(t *testing.T) (*scanning.Service, database.Store, database.Library, *task.Engine) {

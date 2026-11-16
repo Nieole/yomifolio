@@ -5,10 +5,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/reading"
 	"strconv"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/reading"
 )
 
 type Item struct {

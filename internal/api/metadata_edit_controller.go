@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
-	"manga-manager/internal/application/seriesediting"
-	"manga-manager/internal/seriesmeta"
 	"net/http"
+	"yomifolio/internal/application/seriesediting"
+	"yomifolio/internal/seriesmeta"
 )
 
 type UpdateAuthorRequest = seriesmeta.Author

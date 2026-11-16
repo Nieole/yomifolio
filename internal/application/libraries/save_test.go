@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"manga-manager/internal/application/libraries"
-	"manga-manager/internal/database"
-	"manga-manager/internal/task"
+	"yomifolio/internal/application/libraries"
+	"yomifolio/internal/database"
+	"yomifolio/internal/task"
 )
 
 func TestCreateLibraryKeepsCommittedResultWhenInitialScanAdmissionFails(t *testing.T) {

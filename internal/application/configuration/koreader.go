@@ -1,8 +1,8 @@
 package configuration
 
 import (
-	"manga-manager/internal/config"
 	"strings"
+	"yomifolio/internal/config"
 )
 
 // KOReaderSettings is the editable device-sync section, not a full settings document.

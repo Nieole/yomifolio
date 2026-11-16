@@ -8,13 +8,13 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"manga-manager/internal/testfixture"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"yomifolio/internal/testfixture"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func TestCollectionViewsIncludeStaticAndSmartCollections(t *testing.T) {

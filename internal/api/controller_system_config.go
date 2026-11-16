@@ -5,15 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"manga-manager/internal/application/configuration"
-	"manga-manager/internal/config"
-	"manga-manager/internal/metadata"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
+	"yomifolio/internal/application/configuration"
+	"yomifolio/internal/config"
+	"yomifolio/internal/metadata"
 )
 
 func (c *administrationHTTP) browseDirs(w http.ResponseWriter, r *http.Request) {
@@ -175,7 +175,7 @@ func (c *administrationHTTP) testLLMConfig(w http.ResponseWriter, r *http.Reques
 	}
 
 	if req.Prompt == "" {
-		req.Prompt = "Hello, this is a test from Manga Manager."
+		req.Prompt = "Hello, this is a test from Yomifolio."
 	}
 	if req.BaseURL == "" && req.Endpoint != "" {
 		c := config.NormalizeLLMConnection(config.LLMConnection{Provider: req.Provider, Endpoint: req.Endpoint})

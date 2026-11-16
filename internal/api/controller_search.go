@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"manga-manager/internal/catalogsearch"
+	"yomifolio/internal/catalogsearch"
 )
 
 func (c *ReaderHTTP) searchBooks(w http.ResponseWriter, r *http.Request) {

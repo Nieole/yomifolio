@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // taskIsActive 判断任务是否处于「仍在占用运行槽位」的状态。

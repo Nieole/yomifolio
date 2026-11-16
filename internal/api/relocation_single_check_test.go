@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
-	"manga-manager/internal/taskstore"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskstore"
 )
 
 type forbiddenCommitFiles struct{ calls atomic.Int64 }

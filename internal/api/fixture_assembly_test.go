@@ -2,19 +2,19 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/application/runtime"
-	"manga-manager/internal/application/scanning"
-	"manga-manager/internal/application/seriesediting"
-	"manga-manager/internal/bookcontent"
-	"manga-manager/internal/config"
-	"manga-manager/internal/dashboard"
-	"manga-manager/internal/database"
-	"manga-manager/internal/logger"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/recommendation"
-	"manga-manager/internal/scanner"
-	"manga-manager/internal/task"
 	"time"
+	"yomifolio/internal/application/runtime"
+	"yomifolio/internal/application/scanning"
+	"yomifolio/internal/application/seriesediting"
+	"yomifolio/internal/bookcontent"
+	"yomifolio/internal/config"
+	"yomifolio/internal/dashboard"
+	"yomifolio/internal/database"
+	"yomifolio/internal/logger"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/recommendation"
+	"yomifolio/internal/scanner"
+	"yomifolio/internal/task"
 )
 
 func newAPIFixture(store database.Store, scan *scanner.Scanner, cfg *config.Manager, cfgPath string, sizes controllerCacheSizes) *apiFixture {

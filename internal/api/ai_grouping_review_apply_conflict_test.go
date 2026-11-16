@@ -13,9 +13,9 @@ import (
 	"sync"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/organize"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/organize"
 )
 
 // preemptingAIGroupingStore 在开事务之前抢先把候选合集应用掉，精确复现「事务外读到待应用、

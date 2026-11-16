@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 // writeCacheFile 在 cacheDir 下按相对路径落一个占位文件。

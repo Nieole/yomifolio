@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"manga-manager/web"
+	"yomifolio/web"
 )
 
 // parseCSP 把策略串解析成「指令 -> source 集合」。

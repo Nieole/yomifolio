@@ -8,7 +8,7 @@ import (
 	"sort"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // TestExtractSortNumberMixedCJKForms 覆盖多种中日卷/话形式与小数章、缺号回退。

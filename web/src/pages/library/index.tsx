@@ -32,9 +32,11 @@ import { useLibraryFilterOptions } from './hooks/useLibraryFilterOptions';
 import { useLibraryCardActions } from './hooks/useLibraryCardActions';
 import { useLibraryTransfer } from '../../features/external-library/useLibraryTransfer';
 
+import { PREFERENCE_KEYS, readPreference, writePreference } from '../../utils/browserPreferences';
+
 const ALL_STATUSES = ['completed', 'ongoing', 'cancelled', 'hiatus'];
-const PAGINATION_MODE_KEY = 'manga_manager_pagination_mode';
-const VIEW_MODE_KEY = 'manga_manager_library_view_mode';
+const PAGINATION_MODE_KEY = PREFERENCE_KEYS.paginationMode;
+const VIEW_MODE_KEY = PREFERENCE_KEYS.libraryViewMode;
 
 export default function LibraryPage() {
   const { libId } = useParams<{ libId: string }>();
@@ -76,20 +78,20 @@ export default function LibraryPage() {
 
   // 分页模式是纯前端体验偏好，不能影响后端数据契约；后端仍以 page/pageSize/cursor 返回稳定结果。
   const [paginationMode, setPaginationMode] = useState<PaginationMode>(() => {
-    const stored = localStorage.getItem(PAGINATION_MODE_KEY);
+    const stored = readPreference(PAGINATION_MODE_KEY);
     return stored === 'infinite' ? 'infinite' : 'paged';
   });
   useEffect(() => {
-    localStorage.setItem(PAGINATION_MODE_KEY, paginationMode);
+    writePreference(PAGINATION_MODE_KEY, paginationMode);
   }, [paginationMode]);
 
   // 视图密度也是纯前端体验偏好，与分页模式同样只影响渲染布局，不改后端契约。
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    const stored = localStorage.getItem(VIEW_MODE_KEY);
+    const stored = readPreference(VIEW_MODE_KEY);
     return stored === 'compact' || stored === 'list' ? stored : 'grid';
   });
   useEffect(() => {
-    localStorage.setItem(VIEW_MODE_KEY, viewMode);
+    writePreference(VIEW_MODE_KEY, viewMode);
   }, [viewMode]);
 
   const [externalDrawerOpen, setExternalDrawerOpen] = useState(false);

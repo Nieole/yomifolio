@@ -7,7 +7,7 @@ import (
 	"context"
 	"log/slog"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 // report 把一帧上报写进运行行并按节流水位投递。

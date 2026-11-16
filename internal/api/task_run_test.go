@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // identityForTest 造一份最小可用的**身份**，与 specForTest 那把任务键 `scan_library_1` 相配。

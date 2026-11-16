@@ -4,8 +4,8 @@ package accounts
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/database"
 	"strings"
+	"yomifolio/internal/database"
 )
 
 // MinimumPasswordBytes is shared by site-account password write intents.

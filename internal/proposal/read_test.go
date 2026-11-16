@@ -13,8 +13,8 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
 )
 
 // countingFieldRowDB 统计批量字段行查询被调了几次。不是行为替身：底下仍是同一个真库，

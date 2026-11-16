@@ -9,14 +9,14 @@ package scanner
 import (
 	"context"
 	"database/sql"
-	"manga-manager/internal/testfixture"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+	"yomifolio/internal/testfixture"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 // scanOnceForRehome 跑一次非强制的整库扫描。

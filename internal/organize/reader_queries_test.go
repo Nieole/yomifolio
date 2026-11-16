@@ -3,10 +3,10 @@ package organize_test
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/reading"
 	"testing"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/reading"
 )
 
 func TestOrganizedReaderQueriesBindSubjectsAndKeepListFallbackSeparate(t *testing.T) {
