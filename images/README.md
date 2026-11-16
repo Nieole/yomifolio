@@ -9,7 +9,7 @@ These four PNGs are **real browser captures of the current application**, not UI
 | `yomifolio-reader-desktop.png` | Fit-screen, paged, double-page reading | 1440 × 1000 | 463,144 bytes |
 | `yomifolio-reader-mobile.png` | Touch viewport, single-column continuous reading | 390 × 844 | 181,210 bytes |
 
-Device scale factor is 1. The mobile image uses Chrome touch/device emulation, not a physical phone. UI language is English and the application theme is Midnight. Reader toolbars are the application's own controls. Screenshots are direct CDP PNG output, without retouching, compositing, cropping or substituted business DOM/API responses. Older images in this directory are retained for existing documentation links; this provenance statement applies only to the four files above.
+Device scale factor is 1. The mobile image uses Chrome touch/device emulation, not a physical phone. UI language is English and the application theme is Midnight. Reader toolbars are the application's own controls. Screenshots are direct CDP PNG output, without retouching, compositing, cropping or substituted business DOM/API responses. This provenance statement applies to the four files above; no third-party comic artwork is included in this screenshot set.
 
 ## Original demonstration material
 
