@@ -81,4 +81,6 @@ GOCACHE="$(pwd)/.gocache" GOTMPDIR="$(pwd)/.tmp" go test ./...
 
 贡献约定见 [CONTRIBUTING.md](../CONTRIBUTING.md)。依赖变更还需复核[第三方通知与发布限制](../THIRD_PARTY_NOTICES.md)；其完整性校验不是合规审计。
 
+仓库展示上线、传播与效果复查见[维护者清单](discoverability.md)；清单不会自动发布版本或创建提醒。
+
 版本变更记录在 [CHANGELOG.md](../CHANGELOG.md)。问题与建议可[新建 issue](https://github.com/Nieole/yomifolio/issues/new/choose)；本指南不要求创建或推送 release tag。

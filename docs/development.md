@@ -79,4 +79,6 @@ The existing release workflow accepts `v*` tags or manual dispatch. Native runne
 
 For contributions, read [CONTRIBUTING.md](../CONTRIBUTING.md). Dependency changes also require review of the [notice inventory and release limitations](../THIRD_PARTY_NOTICES.md); its integrity check is not a compliance audit.
 
+For repository publication, outreach and follow-up metrics, see the [maintainer checklist (中文)](discoverability.md); it does not publish a release or schedule reminders.
+
 Version changes belong in [CHANGELOG.md](../CHANGELOG.md). For bugs or suggestions, [open an issue](https://github.com/Nieole/yomifolio/issues/new/choose). This guide is not an instruction to create or push a release tag.
