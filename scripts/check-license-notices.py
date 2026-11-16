@@ -23,7 +23,8 @@ def main():
         target = (root / relative).resolve()
         if not target.is_relative_to(root) or not target.is_file():
             errors.append(f'{relative}: missing manifest input')
-        elif hashlib.sha256(target.read_bytes()).hexdigest() != expected:
+        # Dependency inputs use canonical LF; legal texts above remain byte-exact.
+        elif hashlib.sha256(target.read_bytes().replace(b'\r\n', b'\n')).hexdigest() != expected:
             errors.append(f'{relative}: dependencies changed; review and refresh notices')
     if errors:
         print('\n'.join(errors), file=sys.stderr)

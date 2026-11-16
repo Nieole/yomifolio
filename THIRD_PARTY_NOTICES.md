@@ -95,6 +95,6 @@ waifu2x and Real-CUGAN executables/models are user-supplied optional external pr
 5. Adopt a release delivery mechanism for this collection; uploading only the executable and checksum does not deliver the legal files. Publication of a new binary requires this follow-up; adding a root license is not enough.
 6. Review any new screenshots/media, bundled fonts, data, AI executables or models. The code license does not grant rights in third-party content or user libraries.
 
-Run `python scripts/check-license-notices.py` to check recorded bytes and dependency-input fingerprints. When dependencies change, obtain their actual license/notice texts, review embedded components and source obligations, then update the collected texts, inventory and input fingerprints together. Do not merely update hashes to make the check pass.
+Run `python scripts/check-license-notices.py` to check recorded legal-file bytes and dependency-input fingerprints. Text dependency inputs use canonical LF line endings, so a Windows CRLF checkout does not count as a dependency change; legal-file bytes are never normalized. When dependencies change, obtain their actual license/notice texts, review embedded components and source obligations, then update the collected texts, inventory and input fingerprints together. Do not merely update hashes to make the check pass.
 
 The integrity check and this collection are **not a representation that a bare-binary release is ready or that all third-party obligations have been discharged**.

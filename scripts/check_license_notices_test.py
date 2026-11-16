@@ -23,13 +23,19 @@ class NoticeIntegrityTests(unittest.TestCase):
         self.legal.write_bytes(b'Original legal text\n')
         self.input = self.root / 'go.mod'
         self.input.write_bytes(b'module example\n')
+        (self.root / 'web').mkdir()
+        self.lock = self.root / 'web/package-lock.json'
+        self.lock.write_bytes(b'{\n  "name": "example"\n}\n')
         self.manifest = {
             'files': [{
                 'file': 'LICENSES/example.txt',
                 'bytes': self.legal.stat().st_size,
                 'sha256': hashlib.sha256(self.legal.read_bytes()).hexdigest(),
             }],
-            'inputs': {'go.mod': hashlib.sha256(self.input.read_bytes()).hexdigest()},
+            'inputs': {
+                'go.mod': hashlib.sha256(self.input.read_bytes()).hexdigest(),
+                'web/package-lock.json': hashlib.sha256(self.lock.read_bytes()).hexdigest(),
+            },
             'gaps': ['Example unresolved provenance'],
         }
 
@@ -61,6 +67,18 @@ class NoticeIntegrityTests(unittest.TestCase):
         result = self.run_check()
         self.assertEqual(result.returncode, 1)
         self.assertIn('dependencies changed', result.stderr)
+
+    def test_crlf_dependency_inputs_pass(self):
+        for path in [self.input, self.lock]:
+            path.write_bytes(path.read_bytes().replace(b'\n', b'\r\n'))
+        result = self.run_check()
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_crlf_legal_text_still_fails_byte_check(self):
+        self.legal.write_bytes(self.legal.read_bytes().replace(b'\n', b'\r\n'))
+        result = self.run_check()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('differs from the recorded source', result.stderr)
 
     def test_outside_manifest_path_fails(self):
         self.manifest['files'][0]['file'] = '../outside.txt'
