@@ -28,7 +28,7 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - macos-14 # darwin/arm64 is a released target — exercise it on PRs (CGO + WebP + path handling)
+          - macos-15 # darwin/arm64 is a released target — exercise it on PRs (CGO + WebP + path handling)
 
     steps:
       - name: Checkout
