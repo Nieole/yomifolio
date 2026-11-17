@@ -59,9 +59,9 @@ func TestCopyFileToExternalLibraryNeverExposesPartialDestination(t *testing.T) {
 			size = info.Size()
 		}
 		_ = writer.Close()
-		<-done
-		t.Fatalf("传输中途最终路径已可见（size=%d）—— 进程此刻被杀就会在用户盘上留下一本"+
-			"打不开的坏书，而且因为路径已存在，重传会被当成「已经有了」永远跳过", size)
+		copyErr := <-done
+		t.Fatalf("传输中途最终路径已可见（size=%d，copyErr=%v）—— 进程此刻被杀就会在用户盘上留下一本"+
+			"打不开的坏书，而且因为路径已存在，重传会被当成「已经有了」永远跳过", size, copyErr)
 	}
 
 	// 收尾：关掉写端让拷贝正常结束，确认最终文件是完整的。
@@ -108,7 +108,9 @@ func TestCopyFileToExternalLibraryCleansUpTemporaryFileOnFailure(t *testing.T) {
 	}
 	time.Sleep(200 * time.Millisecond)
 	_ = writer.Close()
-	<-done
+	if copyErr := <-done; copyErr != nil {
+		t.Fatalf("CopyFile: %v", copyErr)
+	}
 
 	entries, err := os.ReadDir(dstDir)
 	if err != nil {
