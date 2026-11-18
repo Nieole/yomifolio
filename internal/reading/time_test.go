@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/reading"
+	"yomifolio/internal/reading"
 )
 
 func TestReadingTimeAccumulatesOnlyForItsReaderAndReceiptDay(t *testing.T) {

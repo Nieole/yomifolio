@@ -17,9 +17,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/config"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // setBackoff 改这三个阈值，与经设置页保存走同一条路（换掉配置快照）。

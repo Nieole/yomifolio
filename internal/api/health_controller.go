@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func (c *administrationHTTP) getHealthReport(w http.ResponseWriter, r *http.Request) {

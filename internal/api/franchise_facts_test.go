@@ -2,17 +2,17 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/seriescontext"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
+	"yomifolio/internal/seriescontext"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/proposal"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/proposal"
 )
 
 func TestFranchiseFactCoverageUsesMetadataHTTPAndProposalUseCases(t *testing.T) {

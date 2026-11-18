@@ -3,9 +3,9 @@ package api
 import (
 	"context"
 	"log/slog"
-	"manga-manager/internal/dashboard"
-	"manga-manager/internal/recommendation"
 	"time"
+	"yomifolio/internal/dashboard"
+	"yomifolio/internal/recommendation"
 )
 
 // transportEffects shares query caches without retaining feature services.

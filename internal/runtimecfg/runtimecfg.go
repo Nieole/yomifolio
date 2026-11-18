@@ -2,11 +2,11 @@ package runtimecfg
 
 import (
 	"errors"
-	"manga-manager/internal/config"
-	"manga-manager/internal/images"
-	"manga-manager/internal/logger"
-	"manga-manager/internal/parser"
 	"sync"
+	"yomifolio/internal/config"
+	"yomifolio/internal/images"
+	"yomifolio/internal/logger"
+	"yomifolio/internal/parser"
 )
 
 // ErrClosed rejects configuration publication after the owning runtime has stopped.

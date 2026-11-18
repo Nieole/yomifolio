@@ -12,10 +12,10 @@ import (
 	"strconv"
 	"strings"
 
-	"manga-manager/internal/application/diskjobs"
-	"manga-manager/internal/database"
-	"manga-manager/internal/parser"
-	"manga-manager/internal/seriesmeta"
+	"yomifolio/internal/application/diskjobs"
+	"yomifolio/internal/database"
+	"yomifolio/internal/parser"
+	"yomifolio/internal/seriesmeta"
 
 	"github.com/go-chi/chi/v5"
 )

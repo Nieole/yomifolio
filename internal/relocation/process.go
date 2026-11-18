@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 // CommitOutcome reports durable facts independently of later configuration or effects failures.

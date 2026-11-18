@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/seriesmeta"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/seriesmeta"
 )
 
 // ApplyMode 决定一条提案里哪些字段参与本次应用。

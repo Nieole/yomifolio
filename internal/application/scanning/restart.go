@@ -3,7 +3,7 @@ package scanning
 import (
 	"context"
 	"fmt"
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // RestartDefinition declares retry and unattended replay for a scanning use case.

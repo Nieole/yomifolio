@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 const (

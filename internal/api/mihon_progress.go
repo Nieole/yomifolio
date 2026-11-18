@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
 )
 
 const mihonFutureTolerance = 5 * time.Minute

@@ -77,7 +77,7 @@ func Init(logDir, level string) error {
 			return fmt.Errorf("failed to create log directory %q: %w", logDir, err)
 		}
 
-		logFile = filepath.Join(logDir, "manga_manager.log")
+		logFile = filepath.Join(logDir, "yomifolio.log")
 
 		// 引入 Lumberjack 自动滚动截断记录器
 		sink = &fileSink{writer: &lumberjack.Logger{

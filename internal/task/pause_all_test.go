@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/taskcontrol"
 )
 
 // TestPauseAllPressesEveryGate 守全部暂停按下的是每条运行自己的闸门，而不是别处一个开关：

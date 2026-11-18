@@ -93,7 +93,7 @@ describe('library actions viewport placement', () => {
         Object.defineProperty(window, 'innerWidth', { configurable: true, value: viewportWidth });
         const { popup } = openPopover();
         expectBounds(popup, 72, left, 324, width);
-        expect(popup.style.maxWidth).toBe('calc(100vw - 16px)');
+        expect(popup.style.maxWidth).toBe('calc(-16px + 100vw)');
     });
 
     it.each([

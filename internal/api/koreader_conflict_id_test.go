@@ -14,7 +14,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func TestKOReaderConflictIDsAreNotBareProgressPrimaryKeys(t *testing.T) {

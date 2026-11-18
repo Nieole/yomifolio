@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"manga-manager/internal/config"
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/config"
+	"yomifolio/internal/runhandle"
 )
 
 // commitPaths owns the SQLite write reservation, record revalidation and atomic path publication.

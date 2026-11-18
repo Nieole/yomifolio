@@ -20,8 +20,8 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/database"
+	"yomifolio/internal/parser"
 )
 
 // readerPagePNG 造一张带高频花纹的页图。平滑渐变经不同插值核可能落到同一批像素上，

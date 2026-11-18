@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 // newProfileScanTestConfig 配出一台按 profile 档位扫描、缩略图落在临时目录的扫描器配置。

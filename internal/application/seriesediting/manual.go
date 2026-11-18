@@ -7,8 +7,8 @@ import (
 	"errors"
 	"strings"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/seriesmeta"
+	"yomifolio/internal/database"
+	"yomifolio/internal/seriesmeta"
 )
 
 // Transaction exposes only the metadata save and its required derived statistics.

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"manga-manager/internal/testfixture"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -13,9 +12,10 @@ import (
 	"strconv"
 	"testing"
 	"time"
+	"yomifolio/internal/testfixture"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/database"
+	"yomifolio/internal/parser"
 )
 
 func TestRelocationCommitPreservesSeededMetadataAndUserAssociations(t *testing.T) {

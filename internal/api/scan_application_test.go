@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/application/scanning"
+	"yomifolio/internal/application/scanning"
 )
 
 // assembleScanUseCases binds application effects before opening scan inputs.

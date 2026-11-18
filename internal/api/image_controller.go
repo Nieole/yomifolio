@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/bookcontent"
-	"manga-manager/internal/config"
+	"yomifolio/internal/bookcontent"
+	"yomifolio/internal/config"
 
 	"github.com/go-chi/chi/v5"
 )

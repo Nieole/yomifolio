@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"manga-manager/internal/application/diskjobs"
-	"manga-manager/internal/external"
+	"yomifolio/internal/application/diskjobs"
+	"yomifolio/internal/external"
 
 	"github.com/go-chi/chi/v5"
 )

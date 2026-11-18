@@ -18,9 +18,9 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/task"
-	"manga-manager/internal/taskstore"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskstore"
 )
 
 // fakeClock 让节流的时序断言可控。固定 sleep 的用例既慢，又杀不掉

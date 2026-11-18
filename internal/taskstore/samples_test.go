@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // appendSampleSeries 落 count 个点，第 n 个的计数是 n，时刻按 step 递增。

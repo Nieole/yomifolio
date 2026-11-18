@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
 	"testing"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
 )
 
 func TestAIGroupingApplyCollectionOwnsIdentityAndAdjudication(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"testing"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 // floodFinishedRuns 灌入 n 条已完成的运行，把历史堆到比任务中心一页还多。

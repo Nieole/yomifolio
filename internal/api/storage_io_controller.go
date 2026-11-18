@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/storageio"
+	"yomifolio/internal/config"
+	"yomifolio/internal/storageio"
 )
 
 type StorageIODiagnosticsResponse struct {

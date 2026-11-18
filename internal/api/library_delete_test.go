@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/database"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 func TestDeleteLibraryHTTPReportsSharedCoverageWithoutCancellingWork(t *testing.T) {

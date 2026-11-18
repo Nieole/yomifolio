@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/xml"
 	"fmt"
-	"manga-manager/internal/testfixture"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,10 +13,11 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"yomifolio/internal/testfixture"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -54,7 +54,7 @@ func TestOPDSFeeds(t *testing.T) {
 		if err := xml.Unmarshal(rec.Body.Bytes(), &feed); err != nil {
 			t.Fatalf("decode root feed failed: %v", err)
 		}
-		if feed.Title != "Manga Manager OPDS Catalog" || len(feed.Entries) != 5 {
+		if feed.Title != "Yomifolio OPDS Catalog" || len(feed.Entries) != 5 {
 			t.Fatalf("unexpected root feed payload: %+v", feed)
 		}
 		if feed.Entries[1].ID != "urn:manga-manager:opds:recent" {
@@ -89,7 +89,7 @@ func TestOPDSFeeds(t *testing.T) {
 		if err := xml.Unmarshal(rec.Body.Bytes(), &descriptor); err != nil {
 			t.Fatalf("decode open search descriptor failed: %v", err)
 		}
-		if descriptor.ShortName != "Manga Manager" || len(descriptor.URLs) != 1 {
+		if descriptor.ShortName != "Yomifolio" || len(descriptor.URLs) != 1 {
 			t.Fatalf("unexpected open search descriptor: %+v", descriptor)
 		}
 		if descriptor.URLs[0].Template != "/opds/v1.2/search?q={searchTerms}&page={startPage?}&limit={count?}" {

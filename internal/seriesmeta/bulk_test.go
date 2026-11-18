@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/seriesmeta"
+	"yomifolio/internal/database"
+	"yomifolio/internal/seriesmeta"
 )
 
 func TestSelectionPreservesRawScalarsAndRemovesAfterAdding(t *testing.T) {

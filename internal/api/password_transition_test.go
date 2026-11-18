@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"manga-manager/internal/accounts"
-	"manga-manager/internal/database"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
 	"time"
+	"yomifolio/internal/accounts"
+	"yomifolio/internal/database"
 )
 
 type pausedCredentialRead struct {

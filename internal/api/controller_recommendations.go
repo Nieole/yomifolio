@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 type AIRecommendationResponse struct {

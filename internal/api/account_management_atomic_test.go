@@ -4,14 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"manga-manager/internal/accounts"
-	"manga-manager/internal/database"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"sync"
 	"testing"
 	"time"
+	"yomifolio/internal/accounts"
+	"yomifolio/internal/database"
 )
 
 type adminCountBarrier struct {

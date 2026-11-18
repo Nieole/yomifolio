@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/proposal"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/proposal"
 )
 
 func TestSeriesMetadataSourcesComposeWithoutChangingIdentity(t *testing.T) {

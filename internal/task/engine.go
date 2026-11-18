@@ -10,8 +10,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/taskcontrol"
 )
 
 // DefaultSlots 是运行槽位的默认值：全局同时运行数的上限。

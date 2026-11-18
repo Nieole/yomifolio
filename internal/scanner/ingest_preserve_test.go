@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
+	"yomifolio/internal/config"
 )
 
 func TestFastScanPreservesPageCountAndCoverAcrossRename(t *testing.T) {

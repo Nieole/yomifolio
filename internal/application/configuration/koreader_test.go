@@ -2,10 +2,10 @@ package configuration_test
 
 import (
 	"errors"
-	"manga-manager/internal/application/configuration"
-	"manga-manager/internal/config"
 	"path/filepath"
 	"testing"
+	"yomifolio/internal/application/configuration"
+	"yomifolio/internal/config"
 )
 
 func TestKOReaderSettingsSaveOwnsValidationVersionAndSection(t *testing.T) {

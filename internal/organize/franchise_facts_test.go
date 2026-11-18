@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/application/seriesediting"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/seriesmeta"
+	"yomifolio/internal/application/seriesediting"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/seriesmeta"
 )
 
 func newFranchiseFacts(t *testing.T) (database.Store, *organize.Relations, string) {

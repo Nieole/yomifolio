@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/taskcontrol"
 )
 
 // TransferResult preserves physical commits even when later copying or projection fails.

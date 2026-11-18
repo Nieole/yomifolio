@@ -3,12 +3,12 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"manga-manager/internal/seriescontext"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"yomifolio/internal/seriescontext"
 
-	"manga-manager/internal/organize"
+	"yomifolio/internal/organize"
 )
 
 func TestFranchiseStateHTTPSeparatesUnavailableStaleFailedAndRepaired(t *testing.T) {

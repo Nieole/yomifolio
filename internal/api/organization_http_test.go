@@ -1,13 +1,13 @@
 package api
 
 import (
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
 
 	"github.com/go-chi/chi/v5"
 )

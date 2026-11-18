@@ -4,11 +4,11 @@ package intelligence
 
 import (
 	"context"
-	"manga-manager/internal/application"
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/proposal"
+	"yomifolio/internal/application"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/proposal"
 )
 
 // Store supplies candidate discovery and current series facts.

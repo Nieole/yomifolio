@@ -3,14 +3,14 @@ package scanning_test
 import (
 	"context"
 	"github.com/fsnotify/fsnotify"
-	"manga-manager/internal/config"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/scanner"
-	"manga-manager/internal/task"
 	"os"
 	"sync"
 	"testing"
 	"time"
+	"yomifolio/internal/config"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/scanner"
+	"yomifolio/internal/task"
 )
 
 type watcherInput struct {

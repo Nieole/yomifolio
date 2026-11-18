@@ -9,8 +9,33 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"testing"
 )
+
+func TestYomifolioLogPathPreservesLegacyFiles(t *testing.T) {
+	restoreLoggerGlobals(t)
+	dir := t.TempDir()
+	legacy := []string{"manga_manager.log", "manga_manager-2026-01-01T00-00-00.000.log.gz"}
+	for _, name := range legacy {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte("legacy"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := Init(dir, "info"); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = Close() })
+	if got, want := LogFilePath(), filepath.Join(dir, "yomifolio.log"); got != want {
+		t.Fatalf("log path = %q, want %q", got, want)
+	}
+	for _, name := range legacy {
+		data, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil || string(data) != "legacy" {
+			t.Fatalf("legacy log %q modified: %q, %v", name, data, err)
+		}
+	}
+}
 
 func TestSetLevelAndCurrentLevel(t *testing.T) {
 	levels := []string{"debug", "info", "warn", "error"}

@@ -10,7 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // TestCollectionViewsCarrySmartFilterConditions 覆盖左栏列表项的形状：

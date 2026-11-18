@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"manga-manager/internal/application/runtime"
-	"manga-manager/internal/config"
-	"manga-manager/internal/task"
+	"yomifolio/internal/application/runtime"
+	"yomifolio/internal/config"
+	"yomifolio/internal/task"
 )
 
 const (

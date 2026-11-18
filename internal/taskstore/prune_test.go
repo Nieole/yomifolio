@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 func TestPruneKeepsLatestTerminalRunsPerTask(t *testing.T) {

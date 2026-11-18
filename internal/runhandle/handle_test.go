@@ -16,10 +16,10 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/storageio"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/config"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/storageio"
+	"yomifolio/internal/taskcontrol"
 )
 
 // stubConfig 造一个只有全局存储策略的配置函数：custom 档不会被归一化改写，正值原样生效。
@@ -307,8 +307,8 @@ func TestHandleDiskGateBlocksBeforeToken(t *testing.T) {
 	}()
 
 	select {
-	case <-done:
-		t.Fatal("expected Disk to block on the paused gate")
+	case err := <-done:
+		t.Fatalf("expected Disk to block on the paused gate, got %v", err)
 	case <-ran:
 		t.Fatal("closure ran while the task was paused")
 	case <-time.After(80 * time.Millisecond):

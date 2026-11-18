@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/taskcontrol"
 )
 
 // heldCoverBatches 是一个「接手但先不跑」的封面运行发起方：用例据此在扫描返回的那一刻

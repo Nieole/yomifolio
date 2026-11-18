@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/taskcontrol"
 )
 
 func TestStatusPredicates(t *testing.T) {

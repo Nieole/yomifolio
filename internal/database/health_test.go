@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/task"
-	"manga-manager/internal/taskstore"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskstore"
 )
 
 func TestGetHealthReport(t *testing.T) {

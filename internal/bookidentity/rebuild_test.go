@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/bookidentity"
-	"manga-manager/internal/database"
-	"manga-manager/internal/diskwork"
+	"yomifolio/internal/bookidentity"
+	"yomifolio/internal/database"
+	"yomifolio/internal/diskwork"
 )
 
 type workHandle struct{ reads int }

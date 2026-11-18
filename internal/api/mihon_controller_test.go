@@ -8,16 +8,16 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"manga-manager/internal/testfixture"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
+	"yomifolio/internal/testfixture"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
 
 	"github.com/go-chi/chi/v5"
 )

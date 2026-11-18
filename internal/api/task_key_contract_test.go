@@ -11,8 +11,8 @@ import (
 	"sync"
 	"testing"
 
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // TestPublishedRunSnapshotCarriesNoTaskKey 断言看的是**原始载荷**而不是解出来的结构体：

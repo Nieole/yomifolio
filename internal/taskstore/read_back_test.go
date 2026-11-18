@@ -6,13 +6,13 @@ package taskstore
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/runhandle"
 	"slices"
 	"strings"
 	"testing"
 	"time"
+	"yomifolio/internal/runhandle"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // seedRun 落一条带作用域显示名与状态的运行，用例只关心其中几项时其余取默认值。

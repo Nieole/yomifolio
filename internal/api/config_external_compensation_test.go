@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"manga-manager/internal/config"
+	"yomifolio/internal/config"
 
 	"gopkg.in/yaml.v3"
 )

@@ -19,11 +19,11 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/application/libraries"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/scanner"
-	"manga-manager/internal/task"
+	"yomifolio/internal/application/libraries"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/scanner"
+	"yomifolio/internal/task"
 )
 
 // blockingScanStore 让一次扫描停在「加载已入库文件快照」那一步，直到用例放行或 ctx 被取消。

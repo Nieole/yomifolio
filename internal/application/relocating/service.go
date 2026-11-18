@@ -5,10 +5,10 @@ package relocating
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/application"
-	"manga-manager/internal/database"
-	"manga-manager/internal/relocation"
-	"manga-manager/internal/task"
+	"yomifolio/internal/application"
+	"yomifolio/internal/database"
+	"yomifolio/internal/relocation"
+	"yomifolio/internal/task"
 )
 
 // Store supplies current libraries and their persisted automatic-processing protection.

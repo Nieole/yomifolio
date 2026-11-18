@@ -2,10 +2,10 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/application/maintenance"
-	"manga-manager/internal/bookidentity"
-	"manga-manager/internal/runhandle"
 	"time"
+	"yomifolio/internal/application/maintenance"
+	"yomifolio/internal/bookidentity"
+	"yomifolio/internal/runhandle"
 )
 
 func (c *apiFixture) runRebuildFileIdentities(ctx context.Context, limit int, h bookidentity.TaskHandle) (int, int, error) {

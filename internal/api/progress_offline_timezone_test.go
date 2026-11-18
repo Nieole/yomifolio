@@ -10,14 +10,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"manga-manager/internal/testfixture"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
+	"yomifolio/internal/testfixture"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // pinLocalZone 把进程时区钉在给定偏移上，用例结束还原。

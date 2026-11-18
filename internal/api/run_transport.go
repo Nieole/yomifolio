@@ -5,7 +5,7 @@ package api
 import (
 	"encoding/json"
 	"log/slog"
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // runLiveSummaryFrom 把领域的**实况汇总**搬成对外形状。序号不搬：它属于推送信封（见 RunPush），

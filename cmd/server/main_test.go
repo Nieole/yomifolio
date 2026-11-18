@@ -5,6 +5,7 @@
 package main
 
 import (
+	"flag"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -97,6 +98,38 @@ func TestEnvOrDefault(t *testing.T) {
 	t.Setenv(key, "  from-env  ")
 	if got := envOrDefault(key, "fallback"); got != "from-env" {
 		t.Fatalf("non-empty env should win (trimmed), got %q", got)
+	}
+}
+
+func TestPathFlagPrecedence(t *testing.T) {
+	for _, tc := range []struct {
+		name, modern, legacy, cli, wantConfig, wantData string
+	}{
+		{"defaults", "", "", "", "config.yaml", "data"},
+		{"legacy", "", " legacy ", "", "legacy", "legacy"},
+		{"blank modern", " \t ", " legacy ", "", "legacy", "legacy"},
+		{"modern", " modern ", "legacy", "", "modern", "modern"},
+		{"cli", "modern", "legacy", "cli", "cli", "cli"},
+		{"blank both", " \t", " \t", "", "config.yaml", "data"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, suffix := range []string{"CONFIG", "DATA_DIR"} {
+				t.Setenv("YOMIFOLIO_"+suffix, tc.modern)
+				t.Setenv("MANGA_MANAGER_"+suffix, tc.legacy)
+			}
+			fs := flag.NewFlagSet("yomifolio", flag.ContinueOnError)
+			configPath, dataDir := registerPathFlags(fs)
+			var args []string
+			if tc.cli != "" {
+				args = []string{"-config", tc.cli, "-data-dir", tc.cli}
+			}
+			if err := fs.Parse(args); err != nil {
+				t.Fatal(err)
+			}
+			if *configPath != tc.wantConfig || *dataDir != tc.wantData {
+				t.Fatalf("paths = %q, %q; want %q, %q", *configPath, *dataDir, tc.wantConfig, tc.wantData)
+			}
+		})
 	}
 }
 

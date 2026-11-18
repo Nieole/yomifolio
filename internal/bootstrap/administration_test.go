@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	appruntime "manga-manager/internal/application/runtime"
-	"manga-manager/internal/bootstrap"
-	"manga-manager/internal/config"
+	appruntime "yomifolio/internal/application/runtime"
+	"yomifolio/internal/bootstrap"
+	"yomifolio/internal/config"
 )
 
 // Standalone and combined routes must share the same publication and auth contracts.

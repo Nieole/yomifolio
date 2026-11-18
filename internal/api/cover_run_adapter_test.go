@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/scanner"
-	"manga-manager/internal/task"
+	"yomifolio/internal/scanner"
+	"yomifolio/internal/task"
 )
 
 // dispatchCoverBatch hands scan batches to application-owned cover runs.

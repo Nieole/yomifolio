@@ -6,7 +6,7 @@ status: active
 parent: manga-manager
 ---
 
-# manga_manager
+# Yomifolio
 
 自托管的漫画/轻小说库管理服务：扫描本地归档、刮削元数据、供阅读与同步。本文件只记录本项目特有的领域词汇，不记录实现方式。
 

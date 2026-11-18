@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
 	"testing"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
 )
 
 func TestSmartShelfSavedConditionsDriveMembersAndCount(t *testing.T) {

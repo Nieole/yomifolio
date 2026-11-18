@@ -13,8 +13,8 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
 )
 
 // aiGroupingCountingStore 统计两条会退化成 N+1 的查询各被调用了几次。

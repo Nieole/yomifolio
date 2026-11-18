@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 	"io"
-	"manga-manager/internal/config"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+	"yomifolio/internal/config"
 
-	"manga-manager/internal/bookcontent"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/bookcontent"
+	"yomifolio/internal/parser"
 )
 
 func TestPublicationRetainsCommittedFactWhenFactStoreFails(t *testing.T) {

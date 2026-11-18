@@ -18,11 +18,11 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/bookcontent"
-	"manga-manager/internal/config"
-	"manga-manager/internal/images"
-	"manga-manager/internal/logger"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/bookcontent"
+	"yomifolio/internal/config"
+	"yomifolio/internal/images"
+	"yomifolio/internal/logger"
+	"yomifolio/internal/parser"
 )
 
 // TestApplyRebuildsRuntimeResources 验证 Apply 按配置重建全部三类派生资源，且再次以不同值调用会重建

@@ -5,8 +5,8 @@ import (
 	"context"
 	"log/slog"
 
-	"manga-manager/internal/logger"
-	"manga-manager/internal/task"
+	"yomifolio/internal/logger"
+	"yomifolio/internal/task"
 )
 
 // Runs is the application launch boundary. It never owns a second scheduler.

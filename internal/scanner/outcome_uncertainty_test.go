@@ -3,13 +3,13 @@ package scanner
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/storageio"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/storageio"
 )
 
 type unavailableSeriesBookSnapshot struct{ database.Store }

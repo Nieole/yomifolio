@@ -2,8 +2,8 @@ package seriesmeta
 
 import (
 	"context"
-	"manga-manager/internal/database"
 	"strings"
+	"yomifolio/internal/database"
 )
 
 // SelectionQueries supplies transaction-bound set SQL without transaction ownership.

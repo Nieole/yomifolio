@@ -18,9 +18,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/database"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // sseProbeEvent 用于确认连接已进入 broker 的订阅表，sseSentinelEvent 用于收口一轮断言。

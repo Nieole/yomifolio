@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/reading"
-	"manga-manager/internal/seriescontext"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/reading"
+	"yomifolio/internal/seriescontext"
 )
 
 func (c *ReaderHTTP) getBooksBySeries(w http.ResponseWriter, r *http.Request) {

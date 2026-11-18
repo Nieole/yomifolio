@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // launchCleanupRunHistoryTask submits retention work in the isolated fixture.

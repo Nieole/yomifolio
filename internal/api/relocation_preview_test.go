@@ -15,11 +15,11 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/relocation"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/relocation"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 
 	"github.com/go-chi/chi/v5"
 )

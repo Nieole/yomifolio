@@ -5,15 +5,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"manga-manager/internal/bookidentity"
-	"manga-manager/internal/testfixture"
 	"strings"
 	"testing"
 	"time"
+	"yomifolio/internal/bookidentity"
+	"yomifolio/internal/testfixture"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
 )
 
 func matchedPositionFixture(t *testing.T) (*Service, database.Store, Credentials, database.Book, int64) {

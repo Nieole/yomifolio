@@ -3,9 +3,9 @@ package database_test
 import (
 	"context"
 	"database/sql"
-	"manga-manager/internal/database"
 	"path/filepath"
 	"testing"
+	"yomifolio/internal/database"
 )
 
 func TestCollectionTransactionCapabilitiesDoNotExposeSQLOrUnrelatedEdits(t *testing.T) {

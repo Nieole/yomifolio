@@ -1,26 +1,26 @@
 package api
 
 import (
-	"manga-manager/internal/application/configuration"
-	"manga-manager/internal/application/diskjobs"
-	"manga-manager/internal/application/intelligence"
-	"manga-manager/internal/application/libraries"
-	"manga-manager/internal/application/maintenance"
-	"manga-manager/internal/application/relocating"
-	appruntime "manga-manager/internal/application/runtime"
-	"manga-manager/internal/application/scanning"
-	"manga-manager/internal/bookcontent"
-	"manga-manager/internal/config"
-	"manga-manager/internal/dashboard"
-	"manga-manager/internal/database"
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/external"
-	"manga-manager/internal/koreader"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/proposal"
-	"manga-manager/internal/recommendation"
-	"manga-manager/internal/relocation"
-	"manga-manager/internal/scanner"
+	"yomifolio/internal/application/configuration"
+	"yomifolio/internal/application/diskjobs"
+	"yomifolio/internal/application/intelligence"
+	"yomifolio/internal/application/libraries"
+	"yomifolio/internal/application/maintenance"
+	"yomifolio/internal/application/relocating"
+	appruntime "yomifolio/internal/application/runtime"
+	"yomifolio/internal/application/scanning"
+	"yomifolio/internal/bookcontent"
+	"yomifolio/internal/config"
+	"yomifolio/internal/dashboard"
+	"yomifolio/internal/database"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/external"
+	"yomifolio/internal/koreader"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/proposal"
+	"yomifolio/internal/recommendation"
+	"yomifolio/internal/relocation"
+	"yomifolio/internal/scanner"
 )
 
 // apiFixture retains explicit SQLite/application resources for assertions and independently bound adapters.
@@ -30,7 +30,7 @@ type apiFixture struct {
 	admin          *administrationHTTP
 	media          *contentHTTP
 	store          database.Store
-	imageCache     *imageMemoryCache
+	imageCache     *bookcontent.MemoryCache
 	content        *bookcontent.Service
 	stats          *dashboard.Service
 	scanner        *scanner.Scanner

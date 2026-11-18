@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/booksort"
-	"manga-manager/internal/database"
+	"yomifolio/internal/booksort"
+	"yomifolio/internal/database"
 
 	"github.com/go-chi/chi/v5"
 )

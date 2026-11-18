@@ -16,10 +16,10 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/parser"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/parser"
+	"yomifolio/internal/taskcontrol"
 )
 
 var testPNG1x1 = []byte{

@@ -2,10 +2,10 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/application"
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/task"
 	"time"
+	"yomifolio/internal/application"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/task"
 )
 
 func newTaskEngine(cfg taskEngineConfig) *taskEngine {

@@ -15,11 +15,11 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/external"
-	"manga-manager/internal/storageio"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/external"
+	"yomifolio/internal/storageio"
 )
 
 // externalTaskStore 同时充当两个角色：Controller 的 database.Store（只有 GetLibrary 会被调到）

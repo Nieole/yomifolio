@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 // cleanupRunSpec 是清理运行的声明：系统作用域、**串联**发起。

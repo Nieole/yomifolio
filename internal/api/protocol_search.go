@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func (c *ReaderHTTP) searchProtocolSeries(ctx context.Context, query string, page, limit int) ([]database.ProtocolSeriesRow, int, bool, error) {

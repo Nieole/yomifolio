@@ -3,9 +3,9 @@ package organize_test
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/reading"
 	"testing"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/reading"
 )
 
 func TestSmartSnapshotCommandsRequireExplicitSubject(t *testing.T) {

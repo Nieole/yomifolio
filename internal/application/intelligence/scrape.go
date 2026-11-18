@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/proposal"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
 	"strconv"
 	"time"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/proposal"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 const scrapeRateLimitDelay = 500 * time.Millisecond

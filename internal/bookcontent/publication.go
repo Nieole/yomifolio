@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"manga-manager/internal/parser"
+	"yomifolio/internal/parser"
 )
 
 // Publication separates original-file commit from subsequent fact persistence failure.

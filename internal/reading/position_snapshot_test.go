@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/reading"
+	"yomifolio/internal/reading"
 )
 
 func TestPositionAuthoritativeSnapshots(t *testing.T) {

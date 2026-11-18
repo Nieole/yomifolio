@@ -1,10 +1,10 @@
 package application_test
 
 import (
-	"manga-manager/internal/application"
-	"manga-manager/internal/config"
-	"manga-manager/internal/task"
 	"testing"
+	"yomifolio/internal/application"
+	"yomifolio/internal/config"
+	"yomifolio/internal/task"
 )
 
 // 配置那份默认与领域那份兜底必须相等：错开一次，默认部署删数据的口径就与默认引擎不是一回事。

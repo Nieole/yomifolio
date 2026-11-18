@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 
-	"manga-manager/internal/parser"
+	"yomifolio/internal/parser"
 )
 
 // ErrPageNotFound identifies an out-of-range page, independently of a transport protocol.

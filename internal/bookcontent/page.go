@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/images"
-	"manga-manager/internal/storageio"
+	"yomifolio/internal/config"
+	"yomifolio/internal/images"
+	"yomifolio/internal/storageio"
 )
 
 // ErrSourceMissing, ErrInvalidDimensions and ErrBusy classify content failures for adapters.

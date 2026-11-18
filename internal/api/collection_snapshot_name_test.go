@@ -13,8 +13,8 @@ import (
 	"sync"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
 )
 
 // preemptingSnapshotStore 在开事务之前抢先建出一个同名合集，精确复现「查到不存在、真正写入时

@@ -3,11 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"manga-manager/internal/database"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"yomifolio/internal/database"
 
 	"github.com/go-chi/chi/v5"
 )

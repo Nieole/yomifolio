@@ -8,7 +8,7 @@ import (
 	"errors"
 	"testing"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 func TestBodyErrorDecidesTerminalState(t *testing.T) {

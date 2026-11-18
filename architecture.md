@@ -9,7 +9,7 @@ references: [mm-domain-language, mm-adr-0001, mm-adr-0003, mm-adr-0004, mm-adr-0
 
 ## 系统形状
 
-单进程 Go 服务使用 chi 接收 HTTP，在 SQLite 中保存索引及用户状态，并内嵌 React/Vite 前端。归档文件仍是藏书内容来源，封面和页图缓存是派生数据；可选元数据源、LLM 与超分引擎在各自适配边界外。
+Yomifolio 的 Go 模块为 `yomifolio`。单进程 Go 服务使用 chi 接收 HTTP，在 SQLite 中保存索引及用户状态，并内嵌 React/Vite 前端。归档文件仍是藏书内容来源，封面和页图缓存是派生数据；可选元数据源、LLM 与超分引擎在各自适配边界外。
 
 `cmd/server` 持有配置加载、数据库迁移、HTTP 中间件、静态资源与进程信号，调用 `bootstrap.Open` 完成生产装配。`bootstrap` 创建共享资源与 HTTP 技术 leaves，持有唯一的 `application/runtime.New` 调用，绑定 HTTP leaf effects 后才恢复状态并开放后台输入。`internal/api` 适配 Web、OPDS、Mihon、KOReader 与 SSE；`Host` 只保存已绑定的 HTTP 适配器，不构造应用、不持有 Runtime 或复制全量服务图。装配次序与取舍见 [ADR 0014](docs/adr/0014-use-cases-queries-and-host-assembly.md)。
 

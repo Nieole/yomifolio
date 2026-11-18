@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
 	"strconv"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // GroupLibrary generates collection suggestions for explicit later adjudication.

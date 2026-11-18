@@ -82,7 +82,7 @@ describe('book card anchored actions', () => {
     expect(trigger.closest('.aspect-3\\/4')?.classList.contains('overflow-hidden')).toBe(true);
     expect(menu.classList.contains('overflow-y-auto')).toBe(true);
     expect(menu.classList.contains('overscroll-contain')).toBe(true);
-    expect(menu.style.maxWidth).toBe('calc(100vw - 16px)');
+    expect(menu.style.maxWidth).toBe('calc(-16px + 100vw)');
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'series.book.exportComicInfo' }));
     expectNoNavigation();

@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/proposal"
-	"manga-manager/internal/task"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/proposal"
+	"yomifolio/internal/task"
 )
 
 // 以下 helper 用常量格式串按 locale 生成带占位的刮削响应文案（默认中文，en-US 输出英文），

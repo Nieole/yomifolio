@@ -3,7 +3,7 @@ package relocation
 import (
 	"context"
 	"fmt"
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // sqliteRecords supplies current identity facts without exposing SQL to mapping decisions.

@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/config"
+	"yomifolio/internal/parser"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"golang.org/x/sync/singleflight"

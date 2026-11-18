@@ -12,7 +12,7 @@ import (
 	"errors"
 	"testing"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 // TestTerminalStateAdvanceCount 钉住经引擎收尾的三种终态：完成补齐，已取消与失败保留实数。

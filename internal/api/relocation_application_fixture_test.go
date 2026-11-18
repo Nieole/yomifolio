@@ -1,8 +1,8 @@
 package api
 
 import (
-	"manga-manager/internal/application/relocating"
-	"manga-manager/internal/runtimecfg"
+	"yomifolio/internal/application/relocating"
+	"yomifolio/internal/runtimecfg"
 )
 
 // assembleRelocationUseCases binds application effects to the existing domain and engine.

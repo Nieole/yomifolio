@@ -10,8 +10,8 @@ import (
 	"errors"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
 )
 
 // seedTags 给系列挂上标签，摆出「系列上已有的比刮削源多」这个前提。

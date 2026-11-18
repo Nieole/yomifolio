@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"manga-manager/internal/reading"
+	"yomifolio/internal/reading"
 )
 
 type BulkUpdateBookProgressRequest struct {

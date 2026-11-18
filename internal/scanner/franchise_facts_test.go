@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"manga-manager/internal/application/seriesediting"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/seriesmeta"
+	"yomifolio/internal/application/seriesediting"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/seriesmeta"
 )
 
 func TestScannerIngestionAndCleanupPersistFranchiseFactChanges(t *testing.T) {

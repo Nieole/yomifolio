@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/scanner"
-	"manga-manager/internal/task"
+	"yomifolio/internal/config"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/scanner"
+	"yomifolio/internal/task"
 )
 
 func TestQueuedWatchCleanupRechecksInputAndChangeQualification(t *testing.T) {

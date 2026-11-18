@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"manga-manager/internal/reading"
+	"yomifolio/internal/reading"
 )
 
 func TestReaderCommandsRejectMissingSubjectWithoutWriting(t *testing.T) {

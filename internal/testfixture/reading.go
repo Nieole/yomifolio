@@ -8,7 +8,7 @@ import (
 	"errors"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // BookProgress seeds the global persisted projection and its cached aggregate.

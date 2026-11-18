@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // seedTaggedSmartCollection 造一个带 n 个同标签系列的资料库，并返回筛选规则 ID。

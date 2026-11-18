@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
 )
 
 func TestFranchiseRepairResponsibilitySurvivesWithoutBackgroundNotification(t *testing.T) {

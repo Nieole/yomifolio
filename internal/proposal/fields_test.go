@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
 )
 
 // TestDefaultConfidenceByKeyAndDisplayName 钉住兜底置信度对两种 provider 写法一视同仁。

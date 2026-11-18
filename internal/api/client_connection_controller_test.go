@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func TestGetClientConnections(t *testing.T) {

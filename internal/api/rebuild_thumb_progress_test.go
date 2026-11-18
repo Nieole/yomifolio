@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/application/maintenance"
-	"manga-manager/internal/database"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/scanner"
+	"yomifolio/internal/application/maintenance"
+	"yomifolio/internal/database"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/scanner"
 )
 
 // newRebuildThumbTestController 手工拼装出这条链路需要的两个组件：任务引擎与聚合器。

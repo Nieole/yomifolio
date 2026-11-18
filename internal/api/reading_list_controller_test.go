@@ -5,18 +5,18 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/reading"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/reading"
 
 	"github.com/go-chi/chi/v5"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func TestReadingListLifecycle(t *testing.T) {

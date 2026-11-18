@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 func TestLibraryDrainCancelsOnlyEligibleIdentityAndActualCoverage(t *testing.T) {

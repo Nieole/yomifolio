@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
 )
 
 // summaryResult 是一份只提案 summary 的刮削结果：入队只落一个字段行，

@@ -1,8 +1,8 @@
 package metadata
 
 import (
-	"manga-manager/internal/config"
 	"strings"
+	"yomifolio/internal/config"
 )
 
 // NewConfiguredProvider resolves the source key using the current runtime configuration.

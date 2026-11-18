@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // TestTerminalTaskDerivedFieldsFollowFinalCount 钉住经引擎收尾的三种终态：percent 与终帧计数

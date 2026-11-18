@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // writeSideData 把六样侧数据各写一份到这条运行上。

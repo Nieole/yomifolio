@@ -13,7 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // newUsernameCaseFixture 建两个仅大小写不同的账户，并返回一个「指定来源 IP 登录」的函数。

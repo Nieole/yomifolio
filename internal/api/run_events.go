@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // maxRunEventsPerRequest 是一次取回的**运行事件**条数上限。

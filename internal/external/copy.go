@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"sync"
 
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/storageio"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/storageio"
+	"yomifolio/internal/taskcontrol"
 )
 
 const transferCopyBufferSize = 1024 * 1024

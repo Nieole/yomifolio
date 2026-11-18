@@ -1,9 +1,9 @@
 package api
 
 import (
-	"manga-manager/internal/application/libraries"
 	"strings"
 	"testing"
+	"yomifolio/internal/application/libraries"
 )
 
 // TestAPITextLocalization 验证后端 HTTP 响应文案表 apiText 的 locale 选择与回退语义，

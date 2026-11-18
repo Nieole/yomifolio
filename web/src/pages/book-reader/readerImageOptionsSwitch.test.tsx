@@ -14,6 +14,7 @@ import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { ToastProvider } from '../../components/ToastProvider';
 import { messages as zhCN } from '../../i18n/locales/zh-CN';
 import BookReader from '../BookReader';
+import { PREFERENCE_KEYS } from '../../utils/browserPreferences';
 
 const mocks = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
 
@@ -185,7 +186,7 @@ describe('拖窗口跨档之后的当前页', () => {
   });
 
   it('档位进了请求地址时旧图作废，但当前页要被重新取回来', async () => {
-    localStorage.setItem('manga_image_filter', JSON.stringify('lanczos3'));
+    localStorage.setItem(PREFERENCE_KEYS.imageFilter, JSON.stringify('lanczos3'));
     await openReaderAtFirstPage();
 
     await resizeAcrossStep();

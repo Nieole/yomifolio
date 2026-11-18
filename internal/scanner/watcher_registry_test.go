@@ -190,7 +190,10 @@ func TestStopCancelsAnInFlightRecursiveRegistration(t *testing.T) {
 	}
 	watcher.Stop()
 	select {
-	case <-watched:
+	case err := <-watched:
+		if err != nil {
+			t.Fatalf("in-flight registration failed: %v", err)
+		}
 	case <-time.After(time.Second):
 		t.Fatal("recursive registration did not exit")
 	}

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // Store 是 task.Store 的 SQLite 实现。它不持有任何领域状态：准入、序号与「第几次」的判据

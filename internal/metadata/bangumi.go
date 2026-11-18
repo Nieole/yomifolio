@@ -196,7 +196,7 @@ func (b *BangumiProvider) SearchMetadata(ctx context.Context, title string, limi
 			return nil, 0, fmt.Errorf("bangumi: failed to create request: %w", err)
 		}
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("User-Agent", "MangaManager/1.0 (https://github.com/manga-manager)")
+		req.Header.Set("User-Agent", "Yomifolio/1.0 (https://github.com/Nieole/yomifolio)")
 
 		resp, err := b.httpClient.Do(req)
 		if err != nil {

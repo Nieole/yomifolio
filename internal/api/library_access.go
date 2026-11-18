@@ -6,8 +6,8 @@ import (
 	"errors"
 	"net/http"
 
-	"manga-manager/internal/bookcontent"
-	"manga-manager/internal/task"
+	"yomifolio/internal/bookcontent"
+	"yomifolio/internal/task"
 )
 
 var errLibraryUnavailable = task.ErrLibraryUnavailable

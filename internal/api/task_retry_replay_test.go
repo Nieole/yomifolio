@@ -13,8 +13,8 @@ import (
 	"net/http"
 	"testing"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 // seedScanLibrary 建一个真的能查回来的资料库：扫描的**重启函数**要读它的名字与存储画像，

@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/scanner"
+	"yomifolio/internal/database"
+	"yomifolio/internal/scanner"
 )
 
 func TestRelocationKeepsIndependentNestedLibraryWatching(t *testing.T) {

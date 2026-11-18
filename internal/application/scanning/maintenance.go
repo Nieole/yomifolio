@@ -3,10 +3,10 @@ package scanning
 import (
 	"context"
 	"log/slog"
-	"manga-manager/internal/database"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/scanner"
 	"sync"
+	"yomifolio/internal/database"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/scanner"
 )
 
 // ReindexLibraries waits for all forced scans inside an already admitted maintenance run.

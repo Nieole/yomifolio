@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/config"
+	"yomifolio/internal/config"
 )
 
 // newHashRebuildRetryRig 拼出重试哈希重建所需的那几样：维护任务的装配 + 重试注册表 + 打开的

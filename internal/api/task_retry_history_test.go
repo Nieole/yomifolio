@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"testing"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // runsForKey 取这个**任务键**名下的全部运行，由新到旧。

@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"gopkg.in/yaml.v3"
-	"manga-manager/internal/application/configuration"
-	"manga-manager/internal/config"
 	"time"
+	"yomifolio/internal/application/configuration"
+	"yomifolio/internal/config"
 )
 
 func initialConfig(t *testing.T) config.Config {

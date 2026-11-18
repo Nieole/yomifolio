@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"manga-manager/internal/reading"
+	"yomifolio/internal/reading"
 )
 
 func (c *ReaderHTTP) getNextBook(w http.ResponseWriter, r *http.Request) {

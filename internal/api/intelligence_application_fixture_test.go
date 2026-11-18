@@ -1,9 +1,9 @@
 package api
 
 import (
-	"manga-manager/internal/application/intelligence"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/organize"
+	"yomifolio/internal/application/intelligence"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/organize"
 )
 
 // assembleIntelligenceUseCases binds external clients and module capabilities before launch inputs open.

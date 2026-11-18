@@ -14,9 +14,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/proposal"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/proposal"
 )
 
 // queueSummaryProposal 入队一条只提案 summary 的提案：一次应用写了什么，读系列的简介就知道。

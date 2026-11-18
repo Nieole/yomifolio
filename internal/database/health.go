@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"manga-manager/internal/task"
-	"manga-manager/internal/taskstore"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskstore"
 )
 
 type HealthIssueSummary struct {

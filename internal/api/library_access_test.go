@@ -10,11 +10,11 @@ import (
 	"sync"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/external"
-	"manga-manager/internal/parser"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/database"
+	"yomifolio/internal/external"
+	"yomifolio/internal/parser"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 func TestLibraryExclusiveAccessPausesDownloads(t *testing.T) {

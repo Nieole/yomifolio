@@ -1,7 +1,7 @@
 {
-  "name": "Manga Manager",
-  "short_name": "MangaMgr",
-  "description": "私域漫画管理中心 - 扫描、阅读、组织你的漫画收藏",
+  "name": "Yomifolio",
+  "short_name": "Yomifolio",
+  "description": "Self-hosted manga and comic server — organize your local collection and read in your browser.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f0f17",

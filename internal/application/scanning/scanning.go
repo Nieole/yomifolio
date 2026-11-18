@@ -7,15 +7,15 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"manga-manager/internal/application"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/logger"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/scanner"
-	"manga-manager/internal/task"
 	"strconv"
 	"strings"
+	"yomifolio/internal/application"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/logger"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/scanner"
+	"yomifolio/internal/task"
 )
 
 // Store is the scan planning and automatic-processing protection read boundary.

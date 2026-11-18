@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	"manga-manager/internal/config"
+	"yomifolio/internal/config"
 
 	"github.com/fsnotify/fsnotify"
 )

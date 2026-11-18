@@ -14,6 +14,7 @@ function syncRequestHeaders(): HeadersInit {
   return headers;
 }
 
+// 离线存储名称是稳定数据身份，与 Service Worker 共用；品牌更名不迁移这些数据。
 const OFFLINE_BOOK_CACHE = 'manga-manager-offline-books-v1';
 const OFFLINE_BOOKS_KEY = 'manga-manager:offline-books';
 const OFFLINE_PROGRESS_KEY = 'manga-manager:offline-progress';

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"net/http"
 
-	"manga-manager/internal/relocation"
+	"yomifolio/internal/relocation"
 )
 
 type RestorationRequest = relocation.RestorationRequest

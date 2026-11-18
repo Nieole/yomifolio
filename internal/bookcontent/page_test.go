@@ -11,9 +11,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"manga-manager/internal/bookcontent"
-	"manga-manager/internal/config"
-	"manga-manager/internal/parser"
+	"yomifolio/internal/bookcontent"
+	"yomifolio/internal/config"
+	"yomifolio/internal/parser"
 )
 
 func archive(t *testing.T, path string, shade uint8) []byte {

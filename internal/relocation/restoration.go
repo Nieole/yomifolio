@@ -5,8 +5,8 @@ import (
 	"errors"
 	"reflect"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/config"
+	"yomifolio/internal/runhandle"
 )
 
 // RestorationRequest names a server-created check and the administrator's decision.

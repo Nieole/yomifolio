@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func BenchmarkServePageImage_RawConsecutivePages(b *testing.B) {

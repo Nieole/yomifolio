@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func TestUnknownReadMarksRemainCompletedWithoutPagesInSeriesResponses(t *testing.T) {

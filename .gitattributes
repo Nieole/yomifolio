@@ -3,3 +3,8 @@
 # 导致查询名被截断、生成失败。在 core.autocrlf=true 的 Windows 检出上尤其明显。
 # 强制 LF 可让 sqlc generate 在任何环境下稳定工作。
 *.sql text eol=lf
+
+# Keep legal texts byte-exact for the notice inventory's SHA-256 checks.
+LICENSE -text
+NOTICE -text
+LICENSES/** -text

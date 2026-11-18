@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"testing"
 
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/taskcontrol"
 )
 
 func TestStopAllRuntimesReachesTheTaskBody(t *testing.T) {

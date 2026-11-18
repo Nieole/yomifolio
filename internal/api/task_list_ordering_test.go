@@ -13,8 +13,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/scanner"
+	"yomifolio/internal/database"
+	"yomifolio/internal/scanner"
 )
 
 // taskCenterPageSize 与前端 BackgroundTasks 页固定发出的 limit 一致。

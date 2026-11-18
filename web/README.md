@@ -1,31 +1,16 @@
-# 前端依赖审计例外（npm audit）
+# 前端依赖与审计
 
-`npm audit` 目前会报出两条 high，二者都**无法**通过升级消除，且都已确认对本项目不可达。
-新增依赖后请复核这份清单是否仍然成立。
+使用 `.node-version` 指定的 Node LTS 与 `npm ci` 安装锁文件；升级后须通过 lint、Vitest 和生产构建，并复核[第三方通知](../THIRD_PARTY_NOTICES.md)。CI 与发布使用相同工具链，不用 `npm audit fix --force` 绕过兼容性检查或降级依赖。
 
-## 1. react-router — GHSA-qwww-vcr4-c8h2（RSC Mode CSRF Bypass）
+## 兼容边界
 
-- **不适用**：该漏洞只存在于 React Server Components 模式。本项目用的是纯客户端路由
-  （`BrowserRouter` + `Routes/Route`），全量使用的 API 仅有 `BrowserRouter / Link /
-  Navigate / Outlet / Route / Routes / UNSAFE_NavigationContext / useLocation /
-  useNavigate / useOutletContext / useParams / useSearchParams`，
-  没有 data router（`createBrowserRouter` / `loader` / `action` / `useFetcher`），
-  也没有任何 server action，漏洞代码路径不可达。
-- `npm audit fix --force` 给出的「修复」是把 react-router-dom **降级**到 7.11.0，
-  等于为了一条不适用的告警回退 7 个小版本的修复与特性。
-- 真正的修复在 react-router 8.3.0+，属于跨大版本升级，需要单独评估。
+TypeScript 保留在 6.0.3：最新稳定 `typescript-eslint@8.72.2` 的 peer 范围为 `>=4.8.4 <6.1.0`，尚不支持 TypeScript 7。升级编译器前先确认解析器支持，不禁用 ESLint 或抑制版本警告。
 
-## 2. brace-expansion — GHSA-mh99-v99m-4gvg（DoS via unbounded expansion）
+Rolldown 的稳定版可选 WASM 绑定精确依赖 `@emnapi/core/runtime@2.0.0-beta.2`；这是获准保留的上游传递依赖例外，不代表本项目主动采用预发布工具链。当前 Windows 验证使用原生绑定；三个发布平台也提供原生绑定。不要强换 1.x 破坏其精确依赖契约；WASM 后备路径未在本机验证。
 
-- **仅构建期**：链路是 `eslint → @eslint/config-array/eslintrc → minimatch →
-  brace-expansion`，只存在于 devDependencies，不会进入产物；且展开的 glob 是我们自己
-  写在 `eslint.config.js` 里的模式，不接受外部输入。
-- **上游阻塞**：唯一打过补丁的版本是 `brace-expansion@5.0.8`，它改变了导出形态，
-  当前 `minimatch` 调用 `expand(...)` 会直接抛 `TypeError: expand is not a function`
-  （已实测）。要等 eslint/minimatch 侧跟进后才能解。
+## 安全覆盖项
 
-## 已处理的部分
+- `esbuild` 由 override 约束到带安全修复的 `^0.28.2`；Vite 的内部打包器不代表其他工具不会拉入 esbuild。
+- `@typescript-eslint/typescript-estree` 的 `minimatch` 定向覆盖为 `^11.0.8`。其原依赖 10.x 落在 GHSA-g3hv-75wg-m249 的受影响范围（<11.0.1）；调用方只使用具名 `minimatch(filePath, pattern, { dot: true })`，升级后须验证 project-service 的 `allowDefaultProject` 匹配和完整 lint。覆盖不扩展到无关包，不单独强升 brace-expansion 破坏调用契约。
 
-`axios` 1.16.1→1.18.1、`react-router-dom` 7.16.0→7.18.1，以及 `postcss` / `js-yaml` /
-`form-data` 的传递依赖均已升到修复版本；`esbuild` 经 `overrides` 升到 0.28.1
-（GHSA-g7r4-m6w7-qqqr，Windows 开发服务器任意文件读，low）。
+当前锁文件在 2026-11-16 的 `npm audit`（含开发依赖）结果为 **0 vulnerabilities**；这不是无漏洞保证。旧路由与 brace-expansion 例外不再适用于当前锁文件；每次升级重新审计，不沿用旧版本的可达性结论。

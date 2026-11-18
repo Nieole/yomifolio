@@ -3,18 +3,18 @@ package runtime_test
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/application/runtime"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/parser"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/runtimecfg"
-	"manga-manager/internal/task"
-	"manga-manager/internal/taskstore"
 	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
+	"yomifolio/internal/application/runtime"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/parser"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/runtimecfg"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskstore"
 )
 
 func TestAssemblyRegistersRestartCapabilitiesBeforeAnyLaunch(t *testing.T) {

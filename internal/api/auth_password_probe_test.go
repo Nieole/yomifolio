@@ -15,7 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"golang.org/x/crypto/bcrypt"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // passwordCompareRecorder 记录每次口令比对拿到的哈希，用来回答「这条分支跑了几次 KDF、cost 多少」。

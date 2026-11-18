@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/runhandle"
 )
 
 // failingBody 是必定失败的任务体，用来把一个任务推向连败。

@@ -11,7 +11,7 @@ import (
 	"sort"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // seedFranchiseSeries 造 n 个同库系列，返回其 id（升序）。

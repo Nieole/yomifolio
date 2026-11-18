@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/task"
+	"yomifolio/internal/config"
+	"yomifolio/internal/task"
 )
 
 // taskSummaries 打一次任务清单接口。

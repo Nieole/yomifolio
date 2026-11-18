@@ -7,8 +7,8 @@ import (
 	"context"
 	"testing"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 // TestSaveProgressClampsPercentage 复用 newTestService，验证 SaveProgress 把越界百分比夹取到 [0,1]。

@@ -5,11 +5,11 @@ package scanner
 
 import (
 	"context"
-	"manga-manager/internal/config"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"yomifolio/internal/config"
 )
 
 // stubWatcherHooks 是监听器派生工作的三个空出口。用例要观察哪一个就直接换掉对应的字段

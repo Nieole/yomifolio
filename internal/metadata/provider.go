@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"manga-manager/internal/config"
+	"yomifolio/internal/config"
 )
 
 // Fetcher consumes single-series metadata enrichment.

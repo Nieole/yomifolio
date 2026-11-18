@@ -1,6 +1,6 @@
 package api
 
-import "manga-manager/internal/application/seriesediting"
+import "yomifolio/internal/application/seriesediting"
 
 type bulkEditSeriesResponse struct {
 	Updated          int     `json:"updated"`

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/organize"
+	"yomifolio/internal/organize"
 )
 
 // ============================================

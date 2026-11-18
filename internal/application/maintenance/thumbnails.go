@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"sync"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/scanner"
+	"yomifolio/internal/database"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/scanner"
 )
 
 // ThumbnailProgress 聚合「重建缩略图」任务在多个资料库之间的进度。

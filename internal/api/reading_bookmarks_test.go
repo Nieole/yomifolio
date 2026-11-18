@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func TestBookmarkHTTPUsesAuthenticatedReaderDespitePayloadIdentity(t *testing.T) {

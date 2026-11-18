@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/application/configuration"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	ksvc "manga-manager/internal/koreader"
-	"manga-manager/internal/task"
+	"yomifolio/internal/application/configuration"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	ksvc "yomifolio/internal/koreader"
+	"yomifolio/internal/task"
 
 	"github.com/go-chi/chi/v5"
 )

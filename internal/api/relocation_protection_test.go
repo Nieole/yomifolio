@@ -4,12 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/relocation"
-	"manga-manager/internal/scanner"
-	"manga-manager/internal/task"
-	"manga-manager/internal/testfixture"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -18,6 +12,12 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/relocation"
+	"yomifolio/internal/scanner"
+	"yomifolio/internal/task"
+	"yomifolio/internal/testfixture"
 )
 
 type previewReadBarrierKey struct{}

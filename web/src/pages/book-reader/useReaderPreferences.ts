@@ -1,21 +1,22 @@
 import { useStickyState } from './useStickyState';
+import { PREFERENCE_KEYS } from '../../utils/browserPreferences';
 import type { ImageFilter, ReaderImageFormat, ReadDirection, ReadMode, ScaleMode, ReaderTheme } from './types';
 
 export function useReaderPreferences() {
-  const [readerTheme, setReaderTheme] = useStickyState<ReaderTheme>('base', 'manga_reader_theme');
-  const [readMode, setReadMode] = useStickyState<ReadMode>('webtoon', 'manga_read_mode');
-  const [readDirection, setReadDirection] = useStickyState<ReadDirection>('ltr', 'manga_read_direction');
-  const [doublePage, setDoublePage] = useStickyState<boolean>(false, 'manga_double_page');
-  const [scaleMode, setScaleMode] = useStickyState<ScaleMode>('fit-screen', 'manga_scale_mode');
-  const [imageFilter, setImageFilter] = useStickyState<ImageFilter>('bilinear', 'manga_image_filter');
-  const [autoCrop, setAutoCrop] = useStickyState<boolean>(false, 'manga_auto_crop');
-  const [preloadCount, setPreloadCount] = useStickyState<number>(3, 'manga_preload_count');
-  const [readerImageFormat, setReaderImageFormat] = useStickyState<ReaderImageFormat>('original', 'manga_reader_image_format');
-  const [readerImageQuality, setReaderImageQuality] = useStickyState<number>(82, 'manga_reader_image_quality');
-  const [eyeProtection, setEyeProtection] = useStickyState<boolean>(false, 'manga_eye_protection');
-  const [w2xScale, setW2xScale] = useStickyState<number>(2, 'manga_waifu2x_scale');
-  const [w2xNoise, setW2xNoise] = useStickyState<number>(0, 'manga_waifu2x_noise');
-  const [w2xFormat, setW2xFormat] = useStickyState<string>('webp', 'manga_waifu2x_format');
+  const [readerTheme, setReaderTheme] = useStickyState<ReaderTheme>('base', PREFERENCE_KEYS.readerTheme);
+  const [readMode, setReadMode] = useStickyState<ReadMode>('webtoon', PREFERENCE_KEYS.readMode);
+  const [readDirection, setReadDirection] = useStickyState<ReadDirection>('ltr', PREFERENCE_KEYS.readDirection);
+  const [doublePage, setDoublePage] = useStickyState<boolean>(false, PREFERENCE_KEYS.doublePage);
+  const [scaleMode, setScaleMode] = useStickyState<ScaleMode>('fit-screen', PREFERENCE_KEYS.scaleMode);
+  const [imageFilter, setImageFilter] = useStickyState<ImageFilter>('bilinear', PREFERENCE_KEYS.imageFilter);
+  const [autoCrop, setAutoCrop] = useStickyState<boolean>(false, PREFERENCE_KEYS.autoCrop);
+  const [preloadCount, setPreloadCount] = useStickyState<number>(3, PREFERENCE_KEYS.preloadCount);
+  const [readerImageFormat, setReaderImageFormat] = useStickyState<ReaderImageFormat>('original', PREFERENCE_KEYS.readerImageFormat);
+  const [readerImageQuality, setReaderImageQuality] = useStickyState<number>(82, PREFERENCE_KEYS.readerImageQuality);
+  const [eyeProtection, setEyeProtection] = useStickyState<boolean>(false, PREFERENCE_KEYS.eyeProtection);
+  const [w2xScale, setW2xScale] = useStickyState<number>(2, PREFERENCE_KEYS.w2xScale);
+  const [w2xNoise, setW2xNoise] = useStickyState<number>(0, PREFERENCE_KEYS.w2xNoise);
+  const [w2xFormat, setW2xFormat] = useStickyState<string>('webp', PREFERENCE_KEYS.w2xFormat);
 
   return {
     readerTheme,

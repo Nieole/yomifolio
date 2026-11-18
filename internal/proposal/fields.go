@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
 )
 
 // fieldDraft 是一条尚未落库的字段提案。

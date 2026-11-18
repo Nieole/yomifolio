@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/database"
+	"yomifolio/internal/taskcontrol"
 )
 
 // Store supplies registered boundaries and batched source projections.

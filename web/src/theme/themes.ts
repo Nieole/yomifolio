@@ -1,4 +1,6 @@
-export const THEME_STORAGE_KEY = 'manga_manager_theme';
+import { PREFERENCE_KEYS, readPreference } from '../utils/browserPreferences';
+
+export const THEME_STORAGE_KEY = PREFERENCE_KEYS.theme;
 
 export interface AppThemeDefinition {
   id: string;
@@ -128,7 +130,7 @@ export function getStoredThemeId(): AppThemeId {
     return DEFAULT_THEME_ID;
   }
 
-  const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+  const stored = readPreference(THEME_STORAGE_KEY);
   return getThemeById(stored).id;
 }
 

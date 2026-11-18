@@ -15,8 +15,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/database"
+	"yomifolio/internal/runhandle"
 )
 
 // interruptRecoveredTask 起一条活动态运行、模拟一次进程重启，再从任务列表接口读回它。

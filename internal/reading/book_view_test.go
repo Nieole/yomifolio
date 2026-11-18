@@ -3,11 +3,11 @@ package reading_test
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/database"
 	"testing"
 	"time"
+	"yomifolio/internal/database"
 
-	"manga-manager/internal/reading"
+	"yomifolio/internal/reading"
 )
 
 func TestBookViewRequiresExplicitValidSubject(t *testing.T) {

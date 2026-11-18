@@ -14,8 +14,8 @@ import (
 	"strconv"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
 )
 
 func seedAIGroupingReviewFixture(t *testing.T) (*apiFixture, database.Store, database.Library, database.Series, database.Series) {

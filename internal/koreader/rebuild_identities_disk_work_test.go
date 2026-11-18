@@ -10,14 +10,14 @@ package koreader
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/bookidentity"
 	"os"
 	"testing"
 	"time"
+	"yomifolio/internal/bookidentity"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/storageio"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/storageio"
 )
 
 // seedHashableBook 落一本内容已写盘、缺**指纹**的书。

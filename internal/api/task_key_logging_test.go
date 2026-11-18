@@ -18,12 +18,12 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/logger"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/scanner"
-	"manga-manager/internal/task"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/logger"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/scanner"
+	"yomifolio/internal/task"
 )
 
 // scanFailingStore 让资料库扫描在「加载已入库文件快照」那一步失败。
@@ -71,7 +71,7 @@ func newScanFailureRig(t *testing.T) (*apiFixture, string) {
 	)
 
 	controller.assembleScanUseCases()
-	logPath := filepath.Join(filepath.Dir(controller.currentConfig().Database.Path), "manga_manager.log")
+	logPath := filepath.Join(filepath.Dir(controller.currentConfig().Database.Path), "yomifolio.log")
 	captureLogsInto(t, logPath)
 
 	return controller, logPath

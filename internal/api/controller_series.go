@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
-	"manga-manager/internal/seriescontext"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
+	"yomifolio/internal/seriescontext"
 )
 
 // parseReadState 归一化阅读状态查询参数，未识别值按“不筛选”处理。

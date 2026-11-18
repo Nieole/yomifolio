@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/taskstore"
+	"yomifolio/internal/taskstore"
 )
 
 // Migrate 供启动时执行迁移

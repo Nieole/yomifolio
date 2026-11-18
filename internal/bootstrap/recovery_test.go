@@ -9,11 +9,11 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	"manga-manager/internal/bootstrap"
-	"manga-manager/internal/database"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
-	"manga-manager/internal/taskstore"
+	"yomifolio/internal/bootstrap"
+	"yomifolio/internal/database"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskstore"
 )
 
 // Keep real SQLite restart evidence at the sole production composition seam. The

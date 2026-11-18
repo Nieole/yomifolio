@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"manga-manager/internal/bookidentity"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"yomifolio/internal/bookidentity"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/koreader"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/koreader"
 )
 
 func TestMatchedKOReaderProtocolUpdatesPositionAndInvalidatesDashboard(t *testing.T) {

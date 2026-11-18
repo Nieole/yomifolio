@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // FranchiseState describes the durable global projection, independently of notification delivery.

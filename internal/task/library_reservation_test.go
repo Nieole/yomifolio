@@ -3,8 +3,8 @@ package task
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/runhandle"
 	"testing"
+	"yomifolio/internal/runhandle"
 )
 
 func coveredLibrarySpec(id int64) RunSpec {

@@ -11,7 +11,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/metadata"
 )
 
 func TestReviewInboxSummaryAggregatesCounts(t *testing.T) {

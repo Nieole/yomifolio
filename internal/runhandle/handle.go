@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/storageio"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/storageio"
+	"yomifolio/internal/taskcontrol"
 )
 
 // Frame 是一次上报的载体：只有被显式设置的字段会写进任务。

@@ -7,10 +7,10 @@ package koreader
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/bookidentity"
 	"os"
 	"path/filepath"
 	"testing"
+	"yomifolio/internal/bookidentity"
 )
 
 func TestFingerprintQuickFileChangesWithTailContent(t *testing.T) {

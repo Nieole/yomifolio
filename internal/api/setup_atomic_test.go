@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"manga-manager/internal/accounts"
-	"manga-manager/internal/database"
 	"net/http"
 	"net/http/httptest"
 	"sync"
 	"testing"
+	"yomifolio/internal/accounts"
+	"yomifolio/internal/database"
 )
 
 type concurrentSetupCount struct {

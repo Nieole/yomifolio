@@ -17,17 +17,17 @@ import (
 	"sync/atomic"
 	"time"
 
-	"manga-manager/internal/bookcontent"
+	"yomifolio/internal/bookcontent"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/images"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/images"
 
-	"manga-manager/internal/parser"
+	"yomifolio/internal/parser"
 
-	"manga-manager/internal/storageio"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/storageio"
+	"yomifolio/internal/taskcontrol"
 )
 
 type Scanner struct {

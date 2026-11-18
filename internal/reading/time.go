@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // TimeReport is a best-effort increment of active seconds, without historical date evidence.

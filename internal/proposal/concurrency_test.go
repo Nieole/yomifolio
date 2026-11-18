@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // transactionBarrier lets a competing SQLite commit finish before the waiting command takes its write lock.

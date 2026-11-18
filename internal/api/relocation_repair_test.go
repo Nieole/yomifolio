@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"manga-manager/internal/testfixture"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -12,8 +11,9 @@ import (
 	"strconv"
 	"testing"
 	"time"
+	"yomifolio/internal/testfixture"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 func TestRelocationRepairEditedRootRequiresExplicitSourceAndPreservesReading(t *testing.T) {

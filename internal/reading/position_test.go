@@ -3,13 +3,13 @@ package reading_test
 import (
 	"context"
 	"errors"
-	"manga-manager/internal/testfixture"
 	"path/filepath"
 	"testing"
 	"time"
+	"yomifolio/internal/testfixture"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
 )
 
 func positionFixture(t *testing.T) (database.Store, int64, int64) {

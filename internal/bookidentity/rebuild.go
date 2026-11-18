@@ -3,11 +3,11 @@ package bookidentity
 import (
 	"context"
 	"log/slog"
-	"manga-manager/internal/database"
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/storageio"
 	"strings"
 	"time"
+	"yomifolio/internal/database"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/storageio"
 )
 
 const ContentMode = "binary_hash"

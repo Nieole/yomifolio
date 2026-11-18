@@ -2,10 +2,10 @@ package seriesmeta
 
 import (
 	"database/sql"
-	"manga-manager/internal/database"
-	"manga-manager/internal/parser"
 	"strconv"
 	"strings"
+	"yomifolio/internal/database"
+	"yomifolio/internal/parser"
 )
 
 // BuildComicInfoForBook projects known book and series facts, leaving unknown archive fields unset.

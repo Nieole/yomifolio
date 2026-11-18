@@ -11,7 +11,7 @@ import (
 	"context"
 	"database/sql"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 // Field 是一条提案里的一个字段。

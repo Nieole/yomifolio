@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"manga-manager/internal/database"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+	"yomifolio/internal/database"
 )
 
 func TestTransferCancellationKeepsCommittedBooksAndRemovesCurrentStaging(t *testing.T) {

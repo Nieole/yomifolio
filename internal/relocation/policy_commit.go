@@ -5,7 +5,7 @@ import (
 	"errors"
 	"reflect"
 
-	"manga-manager/internal/config"
+	"yomifolio/internal/config"
 )
 
 var errPolicyRecoveryConflict = errors.New("relocation_policy_recovery_conflict")

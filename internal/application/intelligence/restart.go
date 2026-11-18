@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/task"
 	"strings"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/task"
 )
 
 // ErrAutomaticResumeUnsupported protects paid generation from unattended replay.

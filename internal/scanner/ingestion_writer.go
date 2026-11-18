@@ -3,10 +3,10 @@ package scanner
 import (
 	"context"
 	"log/slog"
-	"manga-manager/internal/database"
-	"manga-manager/internal/seriesmeta"
-	"manga-manager/internal/taskcontrol"
 	"time"
+	"yomifolio/internal/database"
+	"yomifolio/internal/seriesmeta"
+	"yomifolio/internal/taskcontrol"
 )
 
 type ingestionStore interface {

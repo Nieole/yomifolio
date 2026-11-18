@@ -2,13 +2,13 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/application/seriesediting"
-	"manga-manager/internal/database"
-	"manga-manager/internal/organize"
-	"manga-manager/internal/proposal"
-	"manga-manager/internal/reading"
-	"manga-manager/internal/seriesmeta"
 	"net/http"
+	"yomifolio/internal/application/seriesediting"
+	"yomifolio/internal/database"
+	"yomifolio/internal/organize"
+	"yomifolio/internal/proposal"
+	"yomifolio/internal/reading"
+	"yomifolio/internal/seriesmeta"
 
 	"github.com/go-chi/chi/v5"
 )

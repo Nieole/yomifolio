@@ -15,7 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"golang.org/x/crypto/bcrypt"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 )
 
 const (

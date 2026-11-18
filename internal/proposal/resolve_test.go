@@ -12,8 +12,8 @@ import (
 	"sync"
 	"testing"
 
-	"manga-manager/internal/database"
-	"manga-manager/internal/metadata"
+	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
 )
 
 // preemptingDB 在开事务之前抢先把提案推进到终态，精确复现「事务外读到待裁决、真正写入时

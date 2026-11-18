@@ -2,8 +2,8 @@ package proposal
 
 import (
 	"context"
-	"manga-manager/internal/database"
 	"testing"
+	"yomifolio/internal/database"
 )
 
 func provenanceByField(t *testing.T, store database.Store, seriesID int64) map[string]database.SeriesMetadataProvenance {

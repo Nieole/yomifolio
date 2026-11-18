@@ -2,9 +2,9 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
 	"strings"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 // RunSpec 是一份运行声明：「这一次运行怎么跑、怎么显示」的完整描述，与身份一起一次性交给引擎。

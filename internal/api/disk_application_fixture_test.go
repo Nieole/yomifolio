@@ -1,6 +1,6 @@
 package api
 
-import "manga-manager/internal/application/diskjobs"
+import "yomifolio/internal/application/diskjobs"
 
 // assembleDiskUseCases binds the shared run entry and external session manager.
 func (c *apiFixture) assembleDiskUseCases() {

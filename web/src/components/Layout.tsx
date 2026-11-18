@@ -19,6 +19,7 @@ import { useTaskBubbles } from '../features/task-observation/useTaskBubbles';
 import { useLayoutShortcuts } from './layout/useLayoutShortcuts';
 
 import { DeleteLibraryDialog } from '../features/libraries/DeleteLibraryDialog';
+import { PREFERENCE_KEYS, readPreference, writePreference } from '../utils/browserPreferences';
 
 const LibraryFormModal = lazy(() => import('../features/libraries/LibraryFormModal').then((module) => ({ default: module.LibraryFormModal })));
 const SearchModal = lazy(() => import('./layout/SearchModal').then((module) => ({ default: module.SearchModal })));
@@ -45,7 +46,7 @@ export default function Layout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(() => {
         try {
-            return localStorage.getItem('manga_manager_sidebar_collapsed') === 'true';
+            return readPreference(PREFERENCE_KEYS.sidebarCollapsed) === 'true';
         } catch { return false; }
     });
     const [openLibraryMenu, setOpenLibraryMenu] = useState<{ library: Library; anchor: HTMLButtonElement } | null>(null);
@@ -55,7 +56,7 @@ export default function Layout() {
     const [isSystemExpanded, setIsSystemExpanded] = useState(true);
     const [isLibrariesExpanded, setIsLibrariesExpanded] = useState(() => {
         try {
-            const stored = localStorage.getItem('manga_manager_libraries_expanded');
+            const stored = readPreference(PREFERENCE_KEYS.librariesExpanded);
             return stored == null ? true : stored === 'true';
         } catch { return true; }
     });
@@ -64,7 +65,7 @@ export default function Layout() {
         setIsLibrariesExpanded((prev) => {
             const next = !prev;
             try {
-                localStorage.setItem('manga_manager_libraries_expanded', String(next));
+                writePreference(PREFERENCE_KEYS.librariesExpanded, String(next));
             } catch { /* ignore */ }
             return next;
         });
@@ -73,7 +74,7 @@ export default function Layout() {
     const toggleDesktopSidebar = () => {
         setIsDesktopSidebarCollapsed(prev => {
             const next = !prev;
-            localStorage.setItem('manga_manager_sidebar_collapsed', String(next));
+            writePreference(PREFERENCE_KEYS.sidebarCollapsed, String(next));
             return next;
         });
     };
@@ -162,12 +163,12 @@ export default function Layout() {
                 openEditLibraryModal(customEvent.detail.libraryId);
             }
         };
-        window.addEventListener('manga-manager:open-add-library', openAddLibrary);
-        window.addEventListener('manga-manager:open-edit-library', openEditLibrary as EventListener);
+        window.addEventListener('yomifolio:open-add-library', openAddLibrary);
+        window.addEventListener('yomifolio:open-edit-library', openEditLibrary as EventListener);
 
         return () => {
-            window.removeEventListener('manga-manager:open-add-library', openAddLibrary);
-            window.removeEventListener('manga-manager:open-edit-library', openEditLibrary as EventListener);
+            window.removeEventListener('yomifolio:open-add-library', openAddLibrary);
+            window.removeEventListener('yomifolio:open-edit-library', openEditLibrary as EventListener);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [openEditLibraryModal]);

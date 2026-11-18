@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
-	"manga-manager/internal/database"
-	"manga-manager/internal/external"
+	"yomifolio/internal/database"
+	"yomifolio/internal/external"
 )
 
 // launchExternalLibraryScanTask bridges existing task fixtures to the application use case.

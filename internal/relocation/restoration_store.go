@@ -3,8 +3,8 @@ package relocation
 import (
 	"context"
 	"encoding/json"
-	"manga-manager/internal/config"
-	"manga-manager/internal/runhandle"
+	"yomifolio/internal/config"
+	"yomifolio/internal/runhandle"
 )
 
 // persistRestorationCheck commits the checked protection generation before effects run.

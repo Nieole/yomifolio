@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/task"
+	"yomifolio/internal/config"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/task"
 )
 
 const (

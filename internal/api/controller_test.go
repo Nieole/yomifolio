@@ -12,10 +12,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"manga-manager/internal/application/maintenance"
-	"manga-manager/internal/bookidentity"
-	"manga-manager/internal/recommendation"
-	"manga-manager/internal/testfixture"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -24,18 +20,23 @@ import (
 	"strconv"
 	"testing"
 	"time"
+	"yomifolio/internal/application/maintenance"
+	"yomifolio/internal/application/scanning"
+	"yomifolio/internal/bookidentity"
+	"yomifolio/internal/recommendation"
+	"yomifolio/internal/testfixture"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/external"
-	"manga-manager/internal/koreader"
-	"manga-manager/internal/metadata"
-	"manga-manager/internal/parser"
-	"manga-manager/internal/proposal"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/scanner"
-	"manga-manager/internal/task"
-	"manga-manager/internal/taskcontrol"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/external"
+	"yomifolio/internal/koreader"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/parser"
+	"yomifolio/internal/proposal"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/scanner"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskcontrol"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -911,7 +912,7 @@ func TestScannerMetricsUpdateRunMetrics(t *testing.T) {
 	// 写这条扫描任务的资格来自任务体交出的**扫描观察者**，不是拼出来的任务键——
 	// 报文不带身份，交给谁就写给谁。
 	progress := seedTask(t, controller.taskEngine, taskSeed{Key: taskKey, Identity: libraryTask("scan_library", 42, variantSole), Total: 1})
-	newTaskScanObserver(progress).Metrics(scanner.ScanMetricsReport{
+	scanning.NewObserver(progress).Metrics(scanner.ScanMetricsReport{
 		StorageProfile:         config.StorageProfileHDDExternal,
 		VolumeKey:              "e:",
 		ArchiveOpenConcurrency: 1,
@@ -967,7 +968,7 @@ func TestScannerMetricsAggregateIntoRebuildThumbnailsTask(t *testing.T) {
 
 	// 存储 IO 面板的扫描速率读的是扫描任务自己的指标，与重建任务各写各的。
 	scanProgress := seedTask(t, controller.taskEngine, taskSeed{Key: "scan_library_42", Identity: libraryTask("scan_library", 42, variantSole), Total: 1})
-	newTaskScanObserver(scanProgress).Metrics(reportA)
+	scanning.NewObserver(scanProgress).Metrics(reportA)
 
 	task := currentTask(t, controller.taskEngine, "rebuild_thumbnails")
 	if task.Metrics["opened_archives"] != 5 || task.Metrics["io_wait_ms"] != 150 || task.Metrics["paused_ms"] != 100 {
@@ -989,7 +990,7 @@ func TestStorageIOCoverRateComesFromTheCoverRun(t *testing.T) {
 	scanProgress := seedTask(t, controller.taskEngine, taskSeed{
 		Key: "scan_library_42", Identity: libraryTask("scan_library", 42, variantSole), Total: 1,
 	})
-	newTaskScanObserver(scanProgress).Metrics(scanner.ScanMetricsReport{
+	scanning.NewObserver(scanProgress).Metrics(scanner.ScanMetricsReport{
 		OpenedArchives: 3, DurationMillis: 60000,
 	})
 

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"manga-manager/internal/config"
-	"manga-manager/internal/task"
 	"time"
+	"yomifolio/internal/config"
+	"yomifolio/internal/task"
 )
 
 // SampleInterval normalizes the shared sampling cadence used by engine and background ticker.

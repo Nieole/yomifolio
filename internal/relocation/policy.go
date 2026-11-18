@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"manga-manager/internal/config"
+	"yomifolio/internal/config"
 )
 
 type PolicyFacts struct {

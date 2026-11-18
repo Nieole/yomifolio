@@ -13,7 +13,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"manga-manager/internal/logger"
+	"yomifolio/internal/logger"
 )
 
 // maxLogQueryLimit 限制单次日志查询返回条数上限，避免 ?limit=极大值 时按该值预分配打爆内存。
@@ -55,7 +55,7 @@ type LogsResponse struct {
 }
 
 // getSystemLogs 提供分页或者只取最新的错误日志
-// 此处我们实现一个基本逻辑：从 data/manga_manager.log 倒序读取包含 level=ERROR 的行
+// 此处我们实现一个基本逻辑：从 data/yomifolio.log 倒序读取包含 level=ERROR 的行
 func (c *administrationHTTP) getSystemLogs(w http.ResponseWriter, r *http.Request) {
 	limitStr := r.URL.Query().Get("limit")
 	limit := 100 // 默认返回最新的 100 条错误
@@ -81,7 +81,7 @@ func (c *administrationHTTP) getSystemLogs(w http.ResponseWriter, r *http.Reques
 	// 仅当 logger 未初始化文件日志（如测试环境）时，回退到按数据目录推导。
 	logFilePath := logger.LogFilePath()
 	if logFilePath == "" {
-		logFilePath = filepath.Join(filepath.Dir(c.configuration.DatabasePath()), "manga_manager.log")
+		logFilePath = filepath.Join(filepath.Dir(c.configuration.DatabasePath()), "yomifolio.log")
 	}
 
 	file, err := os.Open(logFilePath)

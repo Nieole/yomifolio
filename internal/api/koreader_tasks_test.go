@@ -16,12 +16,12 @@ import (
 	"testing"
 	"time"
 
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
-	"manga-manager/internal/diskwork"
-	ksvc "manga-manager/internal/koreader"
-	"manga-manager/internal/storageio"
-	"manga-manager/internal/task"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
+	"yomifolio/internal/diskwork"
+	ksvc "yomifolio/internal/koreader"
+	"yomifolio/internal/storageio"
+	"yomifolio/internal/task"
 )
 
 // koreaderTaskStore 只实现三个 KOReader 任务体真正会调到的那几个方法。其余方法留给内嵌的

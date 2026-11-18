@@ -9,7 +9,7 @@ package api
 import (
 	"testing"
 
-	"manga-manager/internal/task"
+	"yomifolio/internal/task"
 )
 
 // newCleanupRig 造一台任务体同步执行的 Controller：清理跑完了，启动调用才返回，

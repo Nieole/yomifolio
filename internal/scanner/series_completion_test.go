@@ -2,12 +2,12 @@ package scanner
 
 import (
 	"context"
-	"manga-manager/internal/config"
-	"manga-manager/internal/database"
 	"os"
 	"path/filepath"
 	"sync/atomic"
 	"testing"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 func TestSeriesIngestionAlsoBlocksLibraryCleanupQualification(t *testing.T) {

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"manga-manager/internal/database"
+	"yomifolio/internal/database"
 
 	_ "modernc.org/sqlite"
 )

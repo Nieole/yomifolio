@@ -5,16 +5,16 @@ import (
 	"net/http"
 	"time"
 
-	"manga-manager/internal/bookcontent"
-	"manga-manager/internal/catalogsearch"
-	"manga-manager/internal/config"
-	"manga-manager/internal/dashboard"
-	"manga-manager/internal/database"
-	"manga-manager/internal/reading"
-	"manga-manager/internal/recommendation"
-	"manga-manager/internal/seriescontext"
-	"manga-manager/internal/seriesreview"
-	"manga-manager/internal/task"
+	"yomifolio/internal/bookcontent"
+	"yomifolio/internal/catalogsearch"
+	"yomifolio/internal/config"
+	"yomifolio/internal/dashboard"
+	"yomifolio/internal/database"
+	"yomifolio/internal/reading"
+	"yomifolio/internal/recommendation"
+	"yomifolio/internal/seriescontext"
+	"yomifolio/internal/seriesreview"
+	"yomifolio/internal/task"
 )
 
 // ReaderStore is the assembly input for reader use cases, not a handler dependency.

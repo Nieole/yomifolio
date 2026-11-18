@@ -14,10 +14,10 @@ import (
 	"runtime"
 	"strings"
 
-	"manga-manager/internal/diskwork"
-	"manga-manager/internal/runhandle"
-	"manga-manager/internal/storageio"
-	"manga-manager/internal/task"
+	"yomifolio/internal/diskwork"
+	"yomifolio/internal/runhandle"
+	"yomifolio/internal/storageio"
+	"yomifolio/internal/task"
 )
 
 // MapPath preserves the native relative path and rejects paths outside source.
