@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] 按本 effort 正式规格的搜索会话行为，区分空输入提示、防抖等待、请求中、成功有结果、成功无结果及失败。只有当前请求成功且为空才显示“未找到”；首批失败可以对当前查询立即重试。
 - [ ] 保留约 300ms 输入防抖；重试不重复等待防抖。新关键词或 target 立即清除旧结果与可选择资格，不仅在请求完成后才替换。

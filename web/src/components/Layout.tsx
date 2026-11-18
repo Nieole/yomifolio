@@ -99,6 +99,8 @@ export default function Layout() {
         searchQuery,
         setSearchQuery,
         searchResults,
+        searchStatus,
+        retrySearch,
         isSearchModalOpen,
         setIsSearchModalOpen,
         selectedIndex,
@@ -118,6 +120,7 @@ export default function Layout() {
     };
 
     const handleSelectResult = (hit: SearchHit) => {
+        if (!searchResults.includes(hit)) return;
         setIsSearchModalOpen(false);
         resetSearch();
 
@@ -779,6 +782,8 @@ export default function Layout() {
                         open={isSearchModalOpen}
                         searchQuery={searchQuery}
                         searchResults={searchResults}
+                        searchStatus={searchStatus}
+                        onRetrySearch={retrySearch}
                         selectedIndex={selectedIndex}
                         searchTarget={searchTarget}
                         onClose={() => setIsSearchModalOpen(false)}
