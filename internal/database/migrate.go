@@ -13,13 +13,14 @@ import (
 
 // Migrate 供启动时执行迁移
 // currentSchemaVersion 是当前 schema 的迁移版本号，存入 SQLite 的 PRAGMA user_version。
-// 昂贵的一次性全量回填（series_stats、name_initial、tag_series_count、provenance、FTS 索引重建）
-// 仅在库版本低于此值时执行一次，之后每次启动跳过——这些操作成本随库规模线性增长，运行期已由触发器与
-// RefreshSeriesStats 增量维护。新增需要全量回填的 schema 变更时，把该值 +1。
+// 昂贵的一次性回填按各自引入的版本门控，避免系列搜索升级重算书和其他派生数据。
+// 这些操作成本随库规模线性增长，运行期由触发器与 RefreshSeriesStats 增量维护。
+// 新增需要回填的 schema 变更时，把该值 +1，并为对应回填记录版本门槛。
 //
 //	注意 user_version 是在回填**成功之后**才写的，所以回填中途被杀不会留下「已完成」的假象，
 //	下次启动会整份重来——这正是我们要的语义，别改成「表非空就算已回填」那种探针。
-const currentSchemaVersion = 4
+const currentSchemaVersion = 5
+const normalizedSeriesSearchVersion = 5
 
 func Migrate(dbPath string) error {
 	db, err := sql.Open("sqlite", sqliteDSN(dbPath))
@@ -174,18 +175,6 @@ func Migrate(dbPath string) error {
 		`CREATE INDEX IF NOT EXISTS idx_series_relations_target ON series_relations(target_series_id)`,
 		`CREATE TRIGGER IF NOT EXISTS trg_series_tags_ai AFTER INSERT ON series_tags BEGIN UPDATE tags SET series_count = series_count + 1 WHERE id = NEW.tag_id; END`,
 		`CREATE TRIGGER IF NOT EXISTS trg_series_tags_ad AFTER DELETE ON series_tags BEGIN UPDATE tags SET series_count = series_count - 1 WHERE id = OLD.tag_id; END`,
-		`CREATE TRIGGER IF NOT EXISTS trg_series_search_fts_ai AFTER INSERT ON series BEGIN
-			INSERT INTO series_search_fts(rowid, library_id, name, title)
-			VALUES (NEW.id, NEW.library_id, NEW.name, COALESCE(NEW.title, ''));
-		END`,
-		`CREATE TRIGGER IF NOT EXISTS trg_series_search_fts_ad AFTER DELETE ON series BEGIN
-			DELETE FROM series_search_fts WHERE rowid = OLD.id;
-		END`,
-		`CREATE TRIGGER IF NOT EXISTS trg_series_search_fts_au AFTER UPDATE OF library_id, name, title ON series BEGIN
-			DELETE FROM series_search_fts WHERE rowid = OLD.id;
-			INSERT INTO series_search_fts(rowid, library_id, name, title)
-			VALUES (NEW.id, NEW.library_id, NEW.name, COALESCE(NEW.title, ''));
-		END`,
 		`CREATE TRIGGER IF NOT EXISTS trg_book_search_fts_ai AFTER INSERT ON books BEGIN
 			INSERT INTO book_search_fts(rowid, series_id, library_id, name, title)
 			VALUES (NEW.id, NEW.series_id, NEW.library_id, NEW.name, COALESCE(NEW.title, ''));
@@ -198,32 +187,7 @@ func Migrate(dbPath string) error {
 			INSERT INTO book_search_fts(rowid, series_id, library_id, name, title)
 			VALUES (NEW.id, NEW.series_id, NEW.library_id, NEW.name, COALESCE(NEW.title, ''));
 		END`,
-		// ---- 短关键字的 2-gram 辅助索引 ----
-		//
-		// 触发列表与上面 6 条 trg_*_search_fts_* **完全一致**：两张索引必须同生同灭，
-		// 否则短关键字与长关键字会看到两份不同的数据。
-		//
-		// gram 文本用 SQL 的 lower() 而不是 Go 侧的 strings.ToLower：SQLite 无 ICU 时 lower()
-		// 只折叠 ASCII A-Z，而 Go 按 Unicode 折叠——索引侧与查询侧必须用同一套折叠规则，
-		// 用 Go 拼 MATCH 会和索引对不上。这也与既有 instr(lower(a), lower(b)) 的语义逐字对齐。
-		//
-		// length()/substr() 在 TEXT 上按字符计数；i 走到 length(t) 让最后一个单字也留一个 gram，
-		// 1 字关键字才能靠前缀 MATCH 命中。
-		//
-		// 写放大实测约 17.6µs/行。扫描侧有 mtime+size 增量拦截，未变更的文件根本走不到这里；
-		// 新增/变更的书每本都要开归档读数页（毫秒级起步），这点开销是噪声。
-		`CREATE TRIGGER IF NOT EXISTS trg_series_gram_fts_ai AFTER INSERT ON series BEGIN
-			INSERT INTO series_gram_fts(rowid, library_id, name, title)
-			VALUES (NEW.id, NEW.library_id, (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(NEW.name), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x), (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(COALESCE(NEW.title, '')), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x));
-		END`,
-		`CREATE TRIGGER IF NOT EXISTS trg_series_gram_fts_ad AFTER DELETE ON series BEGIN
-			DELETE FROM series_gram_fts WHERE rowid = OLD.id;
-		END`,
-		`CREATE TRIGGER IF NOT EXISTS trg_series_gram_fts_au AFTER UPDATE OF library_id, name, title ON series BEGIN
-			DELETE FROM series_gram_fts WHERE rowid = OLD.id;
-			INSERT INTO series_gram_fts(rowid, library_id, name, title)
-			VALUES (NEW.id, NEW.library_id, (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(NEW.name), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x), (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(COALESCE(NEW.title, '')), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x));
-		END`,
+		// Book grams retain the existing ASCII lower() semantics.
 		`CREATE TRIGGER IF NOT EXISTS trg_book_gram_fts_ai AFTER INSERT ON books BEGIN
 			INSERT INTO book_gram_fts(rowid, series_id, library_id, name, title)
 			VALUES (NEW.id, NEW.series_id, NEW.library_id, (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(NEW.name), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x), (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(COALESCE(NEW.title, '')), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x));
@@ -326,7 +290,7 @@ func Migrate(dbPath string) error {
 			}
 		}
 	}
-	needFullBackfill := userVersion < currentSchemaVersion
+	needFullBackfill := userVersion < 4
 	if needFullBackfill {
 		if err := backfillSeriesInitials(db); err != nil {
 			return err
@@ -344,11 +308,16 @@ func Migrate(dbPath string) error {
 		}
 	}
 
-	// FTS 索引重建：版本升级、或 migrateFTSTables 刚 DROP 重建了空表时，都必须回填一次。
-	if needFullBackfill || ftsRebuilt {
+	// Series-only upgrades do not rerun book or unrelated derived backfills.
+	if err := execMigrationStatements(db, seriesSearchTriggerStatements(userVersion < normalizedSeriesSearchVersion || ftsRebuilt)); err != nil {
+		return err
+	}
+	if userVersion < normalizedSeriesSearchVersion || ftsRebuilt {
 		if err := rebuildSeriesSearchIndex(db); err != nil {
 			return err
 		}
+	}
+	if needFullBackfill || ftsRebuilt {
 		if err := rebuildBookSearchIndex(db); err != nil {
 			return err
 		}
@@ -391,7 +360,7 @@ func Migrate(dbPath string) error {
 	}
 
 	// 记录本次已迁移到的 schema 版本，使下次启动跳过昂贵的全量回填。
-	if needFullBackfill {
+	if userVersion < currentSchemaVersion {
 		if _, err := db.Exec(fmt.Sprintf(`PRAGMA user_version = %d`, currentSchemaVersion)); err != nil {
 			return err
 		}
@@ -737,32 +706,6 @@ func rebuildSeriesSearchIndex(db *sql.DB) error {
 
 func rebuildBookSearchIndex(db *sql.DB) error {
 	return rebuildBookSearchIndexContext(context.Background(), db)
-}
-
-// rebuildSeriesSearchIndexContext 重建系列的两张搜索索引。
-//
-// 两张一起重建而不是各给一个函数：它们的数据必须始终同源，分开就迟早会有调用方只重建一张。
-// Migrate 与维护任务 rebuild_index 都走这里，因而都自动覆盖。
-func rebuildSeriesSearchIndexContext(ctx context.Context, db *sql.DB) error {
-	if _, err := db.ExecContext(ctx, `DELETE FROM series_search_fts`); err != nil {
-		return err
-	}
-	if _, err := db.ExecContext(ctx, `
-		INSERT INTO series_search_fts(rowid, library_id, name, title)
-		SELECT id, library_id, name, COALESCE(title, '')
-		FROM series
-	`); err != nil {
-		return err
-	}
-	if _, err := db.ExecContext(ctx, `DELETE FROM series_gram_fts`); err != nil {
-		return err
-	}
-	_, err := db.ExecContext(ctx, `
-		INSERT INTO series_gram_fts(rowid, library_id, name, title)
-		SELECT s.id, s.library_id, (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(s.name), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x), (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(COALESCE(s.title, '')), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x)
-		FROM series s
-	`)
-	return err
 }
 
 func rebuildBookSearchIndexContext(ctx context.Context, db *sql.DB) error {

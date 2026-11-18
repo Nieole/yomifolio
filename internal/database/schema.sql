@@ -537,3 +537,11 @@ CREATE TABLE IF NOT EXISTS franchise_rebuild_state (
     next_retry_at_ms INTEGER NOT NULL DEFAULT 0,
     last_error TEXT NOT NULL DEFAULT ''
 );
+
+-- Durable normalized series fields used to verify indexed candidates.
+CREATE TABLE IF NOT EXISTS series_search_text (
+    series_id INTEGER PRIMARY KEY,
+    library_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    title TEXT NOT NULL
+);
