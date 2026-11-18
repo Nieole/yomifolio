@@ -14,7 +14,7 @@ function setup(locale: 'zh-CN' | 'en-US', overrides: Partial<ComponentProps<type
   const props: ComponentProps<typeof SearchModal> = {
     open: true, searchQuery: 'ScienceFictionAndFantasyCompleteCollection',
     searchResults: [{ id: 's_7', fields: { type: 'series', title: 'Science fiction' }, score: 0.8 }],
-    selectedIndex: 0, searchTarget: 'all',
+    selectedIndex: 0, searchTarget: 'all', searchStatus: 'success', onRetrySearch: vi.fn(),
     onClose: vi.fn(), onSearchQueryChange: vi.fn(), onSearchKeyDown: vi.fn(),
     onResetSearch: vi.fn(), onSearchTargetChange: vi.fn(), onSelectResult: vi.fn(), onHighlightIndex: vi.fn(),
     ...overrides,
@@ -58,8 +58,19 @@ it.each(['zh-CN', 'en-US'] as const)('preserves typing, keyboard navigation, res
   expect(props.onClose).toHaveBeenCalledTimes(1);
 });
 
+it.each(['zh-CN', 'en-US'] as const)('localizes waiting, error and retry states (%s)', (locale) => {
+  const { messages } = setup(locale, { searchStatus: 'debouncing', searchResults: [] });
+  expect(screen.getByRole('status').textContent).toBe(messages['searchModal.waiting']);
+  expect(screen.queryByText(messages['searchModal.empty'])).toBeNull();
+  cleanup();
+  const { props } = setup(locale, { searchStatus: 'error', searchResults: [] });
+  expect(screen.getByRole('alert').textContent).toBe(messages['searchModal.error']);
+  fireEvent.click(screen.getByRole('button', { name: messages['searchModal.retry'] }));
+  expect(props.onRetrySearch).toHaveBeenCalledTimes(1);
+});
+
 it('omits clear for an empty query without removing search input', () => {
-  setup('en-US', { searchQuery: '' });
+  setup('en-US', { searchQuery: '', searchResults: [], searchStatus: 'idle' });
   const input = screen.getByRole('textbox');
   expect(within(input.parentElement!).queryByRole('button')).toBeNull();
 });
