@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] 数据库 module 集中同一确定性归一化规则：宽度折叠、NFC、无语言环境 Unicode case folding、删除 Unicode 空白和 Punctuation、再次 NFC；符号保留，不以完整 NFKC 代替宽度折叠。
 - [ ] 系列名称与元数据标题独立进行归一化连续子串匹配，不跨字段拼接，不做拆词。覆盖大小写、全半角、标点、空白、单字/双字/长词及归一化后长度变化；C++ 不变为 C，圈号不额外变为普通数字。

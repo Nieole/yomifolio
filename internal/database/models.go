@@ -306,6 +306,13 @@ type SeriesSearchFt struct {
 	Title     string `json:"title"`
 }
 
+type SeriesSearchText struct {
+	SeriesID  int64  `json:"series_id"`
+	LibraryID int64  `json:"library_id"`
+	Name      string `json:"name"`
+	Title     string `json:"title"`
+}
+
 type SeriesStat struct {
 	SeriesID           int64        `json:"series_id"`
 	CoverPath          string       `json:"cover_path"`

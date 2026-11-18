@@ -1,5 +1,5 @@
 // 本文件由 store.go 拆分而来，属于 SQLite 数据访问层的「系列搜索与分页」子域。
-// 它承载 FTS5 与子串回退双路径、offset/cursor 双分页、筛选条件拼装与游标编解码。
+// 它承载索引候选与精确字段匹配、offset/cursor 双分页、筛选条件拼装与游标编解码。
 // 维护时应保证 SQL 全部参数化、排序字段走白名单，并让新增排序同时覆盖 offset 与 cursor 两条路径。
 
 package database
@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -191,20 +190,12 @@ func (s *SqlStore) SearchSeriesCursor(ctx context.Context, libraryID int64, f Se
 }
 
 func (s *SqlStore) SearchGlobalSeries(ctx context.Context, keyword string, limit int32) ([]SeriesSearchHit, error) {
-	keyword = strings.TrimSpace(keyword)
+	keyword = NormalizeSearchText(keyword)
 	if keyword == "" {
 		return []SeriesSearchHit{}, nil
 	}
 	if limit <= 0 {
 		limit = 20
-	}
-
-	if seriesSearchFTSEligible(keyword) {
-		items, err := s.searchGlobalSeriesFTS(ctx, keyword, limit)
-		if err == nil {
-			return items, nil
-		}
-		slog.Warn("Series FTS search failed, falling back to substring scan", "error", err)
 	}
 	return s.searchGlobalSeriesSubstring(ctx, keyword, limit)
 }
@@ -218,18 +209,11 @@ func (s *SqlStore) SearchGlobalBooks(ctx context.Context, keyword string, limit 
 		limit = 20
 	}
 
-	if seriesSearchFTSEligible(keyword) {
-		items, err := s.searchGlobalBooksFTS(ctx, keyword, limit)
-		if err == nil {
-			return items, nil
-		}
-		slog.Warn("Book FTS search failed, falling back to substring scan", "error", err)
-	}
 	return s.searchGlobalBooksSubstring(ctx, keyword, limit)
 }
 
 func (s *SqlStore) SearchProtocolSeries(ctx context.Context, keyword string, limit, offset int32) ([]ProtocolSeriesRow, int, error) {
-	keyword = strings.TrimSpace(keyword)
+	keyword = NormalizeSearchText(keyword)
 	if keyword == "" {
 		return []ProtocolSeriesRow{}, 0, nil
 	}
@@ -239,72 +223,25 @@ func (s *SqlStore) SearchProtocolSeries(ctx context.Context, keyword string, lim
 	if offset < 0 {
 		offset = 0
 	}
-	if seriesSearchFTSEligible(keyword) {
-		rows, total, err := s.searchProtocolSeriesFTS(ctx, keyword, limit, offset)
-		if err == nil {
-			return rows, total, nil
-		}
-		slog.Warn("Protocol series FTS search failed, falling back to substring scan", "error", err)
-	}
 	return s.searchProtocolSeriesSubstring(ctx, keyword, limit, offset)
 }
 
-func (s *SqlStore) searchProtocolSeriesFTS(ctx context.Context, keyword string, limit, offset int32) ([]ProtocolSeriesRow, int, error) {
-	match := fts5PhraseQuery(keyword)
-	var total int
-	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM series_search_fts WHERE series_search_fts MATCH ?`, match).Scan(&total); err != nil {
-		return nil, 0, err
-	}
-	rows, err := s.db.QueryContext(ctx, `
-		SELECT
-			s.id,
-			s.library_id,
-			s.name,
-			COALESCE(s.title, '') AS title,
-			COALESCE(s.summary, '') AS summary,
-			COALESCE(s.status, '') AS status,
-			s.book_count,
-			s.total_pages,
-			COALESCE(ss.cover_path, '') AS cover_path,
-			COALESCE(ss.cover_book_id, 0) AS cover_book_id,
-			s.created_at,
-			s.updated_at
-		FROM (
-			SELECT rowid, bm25(series_search_fts, 2.0, 3.0) AS rank
-			FROM series_search_fts
-			WHERE series_search_fts MATCH ?
-		) m
-		JOIN series s ON s.id = m.rowid
-		LEFT JOIN series_stats ss ON ss.series_id = s.id
-		ORDER BY
-			CASE
-				WHEN lower(s.name) = lower(?) OR lower(COALESCE(s.title, '')) = lower(?) THEN 0
-				WHEN instr(lower(s.name), lower(?)) > 0 OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0 THEN 1
-				ELSE 2
-			END,
-			m.rank ASC,
-			COALESCE(NULLIF(s.title, ''), s.name) COLLATE NOCASE ASC,
-			s.id ASC
-		LIMIT ? OFFSET ?
-	`, match, keyword, keyword, keyword, keyword, limit, offset)
-	if err != nil {
-		return nil, 0, err
-	}
-	items, err := scanProtocolSeriesRows(rows)
-	return items, total, err
-}
-
 func (s *SqlStore) searchProtocolSeriesSubstring(ctx context.Context, keyword string, limit, offset int32) ([]ProtocolSeriesRow, int, error) {
+	filter, args := normalizedSeriesFilter(keyword)
 	var total int
-	if err := s.db.QueryRowContext(ctx, `
-		SELECT COUNT(*)
-		FROM series s
-		WHERE instr(lower(s.name), lower(?)) > 0
-		   OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0
-		   OR instr(lower(s.path), lower(?)) > 0
-	`, keyword, keyword, keyword).Scan(&total); err != nil {
+	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM series s WHERE `+filter, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
+	rankJoin, rankOrder := "", ""
+	queryArgs := []interface{}{}
+	if len([]rune(keyword)) >= 3 {
+		rankJoin = `LEFT JOIN (SELECT rowid, bm25(series_search_fts, 2.0, 3.0) AS rank FROM series_search_fts WHERE series_search_fts MATCH ?) m ON m.rowid = s.id`
+		rankOrder = "m.rank ASC, "
+		queryArgs = append(queryArgs, fts5PhraseQuery(keyword))
+	}
+	queryArgs = append(queryArgs, args...)
+	queryArgs = append(queryArgs, keyword, keyword, keyword, keyword, limit, offset)
+
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT
 			s.id,
@@ -320,20 +257,20 @@ func (s *SqlStore) searchProtocolSeriesSubstring(ctx context.Context, keyword st
 			s.created_at,
 			s.updated_at
 		FROM series s
+		JOIN series_search_text st ON st.series_id = s.id
 		LEFT JOIN series_stats ss ON ss.series_id = s.id
-		WHERE instr(lower(s.name), lower(?)) > 0
-		   OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0
-		   OR instr(lower(s.path), lower(?)) > 0
+		`+rankJoin+`
+		WHERE `+filter+`
 		ORDER BY
 			CASE
-				WHEN lower(s.name) = lower(?) OR lower(COALESCE(s.title, '')) = lower(?) THEN 0
-				WHEN instr(lower(s.name), lower(?)) > 0 OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0 THEN 1
+				WHEN st.name = search_normalize(?) OR st.title = search_normalize(?) THEN 0
+				WHEN instr(st.name, search_normalize(?)) > 0 OR instr(st.title, search_normalize(?)) > 0 THEN 1
 				ELSE 2
 			END,
-			COALESCE(NULLIF(s.title, ''), s.name) COLLATE NOCASE ASC,
+			`+rankOrder+`COALESCE(NULLIF(s.title, ''), s.name) COLLATE NOCASE ASC,
 			s.id ASC
 		LIMIT ? OFFSET ?
-	`, keyword, keyword, keyword, keyword, keyword, keyword, keyword, limit, offset)
+	`, queryArgs...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -341,69 +278,21 @@ func (s *SqlStore) searchProtocolSeriesSubstring(ctx context.Context, keyword st
 	return items, total, err
 }
 
-func (s *SqlStore) searchGlobalBooksFTS(ctx context.Context, keyword string, limit int32) ([]BookSearchHit, error) {
-	match := fts5PhraseQuery(keyword)
-	rows, err := s.db.QueryContext(ctx, `
-		SELECT
-			b.id, b.series_id, b.library_id, b.name, b.path, b.size, b.file_modified_at, b.volume, b.title, b.summary, b.number, b.sort_number, b.page_count, b.cover_path, b.last_read_page, b.last_read_at, b.is_read, b.file_hash, b.quick_hash, b.path_fingerprint, b.path_fingerprint_no_ext, b.filename_fingerprint, b.created_at, b.updated_at,
-			s.name AS series_name,
-			s.title AS series_title,
-			(
-				CASE
-					WHEN lower(b.name) = lower(?) OR lower(COALESCE(b.title, '')) = lower(?) THEN 3.5
-					WHEN lower(s.name) = lower(?) OR lower(COALESCE(s.title, '')) = lower(?) THEN 3.0
-					WHEN instr(lower(b.name), lower(?)) > 0 OR instr(lower(COALESCE(b.title, '')), lower(?)) > 0 THEN 2.5
-					WHEN instr(lower(s.name), lower(?)) > 0 OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0 THEN 2.0
-					ELSE 1.0
-				END
-				+ (1.0 / (1.0 + ABS(m.rank)))
-			) AS score
-		FROM (
-			SELECT rowid, bm25(book_search_fts, 2.5, 3.0) AS rank
-			FROM book_search_fts
-			WHERE book_search_fts MATCH ?
-			UNION
-			SELECT b2.id AS rowid, 1.5 AS rank
-			FROM series_search_fts sf
-			JOIN books b2 ON b2.series_id = sf.rowid
-			WHERE series_search_fts MATCH ?
-		) m
-		JOIN books b ON b.id = m.rowid
-		JOIN series s ON s.id = b.series_id
-		GROUP BY b.id
-		ORDER BY
-			CASE
-				WHEN lower(b.name) = lower(?) OR lower(COALESCE(b.title, '')) = lower(?) THEN 0
-				WHEN lower(s.name) = lower(?) OR lower(COALESCE(s.title, '')) = lower(?) THEN 1
-				WHEN instr(lower(b.name), lower(?)) > 0 OR instr(lower(COALESCE(b.title, '')), lower(?)) > 0 THEN 2
-				WHEN instr(lower(s.name), lower(?)) > 0 OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0 THEN 3
-				ELSE 4
-			END,
-			MIN(m.rank) ASC,
-			s.name COLLATE NOCASE ASC,
-			b.volume ASC,
-			b.sort_number ASC,
-			b.name COLLATE NOCASE ASC
-		LIMIT ?
-	`, keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword, match, match, keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword, limit)
-	if err != nil {
-		return nil, err
-	}
-	return scanBookSearchHits(rows)
-}
-
-// searchGlobalBooksSubstring 见 searchGlobalSeriesSubstring 的说明。
-// books 侧才是短关键字搜索的大头：2 字关键字在 20 万本书上实测 204ms，占一次全局搜索耗时的 96%。
+// searchGlobalBooksSubstring keeps book-owned raw indexes separate from normalized series candidates.
 func (s *SqlStore) searchGlobalBooksSubstring(ctx context.Context, keyword string, limit int32) ([]BookSearchHit, error) {
-	whereClause := `instr(lower(b.name), lower(?)) > 0
-		   OR instr(lower(COALESCE(b.title, '')), lower(?)) > 0
-		   OR instr(lower(s.name), lower(?)) > 0
-		   OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0
-		   OR instr(lower(b.path), lower(?)) > 0`
-	whereArgs := []interface{}{keyword, keyword, keyword, keyword, keyword}
+	seriesFilter, seriesArgs := normalizedSeriesFilter(keyword)
+	bookTable, bookMatch := "book_search_fts", fts5PhraseQuery(keyword)
 	if expr, ok := gramMatchExpr(keyword); ok {
-		whereClause = bookGramFilter
-		whereArgs = []interface{}{expr, expr}
+		bookTable, bookMatch = "book_gram_fts", expr
+	}
+	whereClause := `b.id IN (SELECT rowid FROM ` + bookTable + ` WHERE ` + bookTable + ` MATCH ? UNION SELECT b2.id FROM series s JOIN books b2 ON b2.series_id=s.id WHERE ` + seriesFilter + `)`
+	whereArgs := append([]interface{}{bookMatch}, seriesArgs...)
+	rankJoin, rankOrder, scoreAdjustment := "", "", ""
+	if len([]rune(keyword)) >= 3 {
+		rankJoin = `LEFT JOIN (SELECT rowid, bm25(book_search_fts, 2.5, 3.0) AS rank FROM book_search_fts WHERE book_search_fts MATCH ?) m ON m.rowid = b.id`
+		rankOrder = "COALESCE(m.rank, 1.5) ASC, "
+		scoreAdjustment = ` - 0.5 + (1.0 / (1.0 + ABS(COALESCE(m.rank, 1.5))))`
+		whereArgs = append([]interface{}{bookMatch}, whereArgs...)
 	}
 
 	args := []interface{}{keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword}
@@ -417,23 +306,25 @@ func (s *SqlStore) searchGlobalBooksSubstring(ctx context.Context, keyword strin
 			s.title AS series_title,
 			CASE
 				WHEN lower(b.name) = lower(?) OR lower(COALESCE(b.title, '')) = lower(?) THEN 4.0
-				WHEN lower(s.name) = lower(?) OR lower(COALESCE(s.title, '')) = lower(?) THEN 3.5
+				WHEN st.name = search_normalize(?) OR st.title = search_normalize(?) THEN 3.5
 				WHEN instr(lower(b.name), lower(?)) > 0 OR instr(lower(COALESCE(b.title, '')), lower(?)) > 0 THEN 3.0
-				WHEN instr(lower(s.name), lower(?)) > 0 OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0 THEN 2.5
+				WHEN instr(st.name, search_normalize(?)) > 0 OR instr(st.title, search_normalize(?)) > 0 THEN 2.5
 				ELSE 1.0
-			END AS score
+			END `+scoreAdjustment+` AS score
 		FROM books b
 		JOIN series s ON s.id = b.series_id
+		JOIN series_search_text st ON st.series_id = s.id
+		`+rankJoin+`
 		WHERE `+whereClause+`
 		ORDER BY
 			CASE
 				WHEN lower(b.name) = lower(?) OR lower(COALESCE(b.title, '')) = lower(?) THEN 0
-				WHEN lower(s.name) = lower(?) OR lower(COALESCE(s.title, '')) = lower(?) THEN 1
+				WHEN st.name = search_normalize(?) OR st.title = search_normalize(?) THEN 1
 				WHEN instr(lower(b.name), lower(?)) > 0 OR instr(lower(COALESCE(b.title, '')), lower(?)) > 0 THEN 2
-				WHEN instr(lower(s.name), lower(?)) > 0 OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0 THEN 3
+				WHEN instr(st.name, search_normalize(?)) > 0 OR instr(st.title, search_normalize(?)) > 0 THEN 3
 				ELSE 4
 			END,
-			s.name COLLATE NOCASE ASC,
+			`+rankOrder+`s.name COLLATE NOCASE ASC,
 			b.volume ASC,
 			b.sort_number ASC,
 			b.name COLLATE NOCASE ASC
@@ -445,63 +336,15 @@ func (s *SqlStore) searchGlobalBooksSubstring(ctx context.Context, keyword strin
 	return scanBookSearchHits(rows)
 }
 
-func (s *SqlStore) searchGlobalSeriesFTS(ctx context.Context, keyword string, limit int32) ([]SeriesSearchHit, error) {
-	rows, err := s.db.QueryContext(ctx, `
-		SELECT
-			s.id, s.library_id, s.name, s.title, s.summary, s.publisher, s.status, s.rating, s.language, s.locked_fields, s.name_initial, s.path, s.created_at, s.updated_at, s.is_favorite, s.volume_count, s.book_count, s.total_pages,
-			ss.cover_path,
-			COALESCE(ss.tag_names_cache, '') as tags_string,
-			COALESCE(ss.read_pages, 0) as read_count,
-			ss.last_read_at,
-			NULLIF(ss.last_read_book_id, 0) AS last_read_book_id,
-			(SELECT b2.last_read_page FROM books b2 WHERE b2.id = ss.last_read_book_id) AS last_read_page,
-			(
-				CASE
-					WHEN lower(s.name) = lower(?) OR lower(COALESCE(s.title, '')) = lower(?) THEN 3.0
-					WHEN instr(lower(s.name), lower(?)) > 0 OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0 THEN 2.0
-					ELSE 1.0
-				END
-				+ (1.0 / (1.0 + ABS(m.rank)))
-			) AS score
-		FROM (
-			SELECT rowid, bm25(series_search_fts, 2.0, 3.0) AS rank
-			FROM series_search_fts
-			WHERE series_search_fts MATCH ?
-		) m
-		JOIN series s ON s.id = m.rowid
-		LEFT JOIN series_stats ss ON ss.series_id = s.id
-		ORDER BY
-			CASE
-				WHEN lower(s.name) = lower(?) OR lower(COALESCE(s.title, '')) = lower(?) THEN 0
-				WHEN instr(lower(s.name), lower(?)) > 0 OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0 THEN 1
-				ELSE 2
-			END,
-			m.rank ASC,
-			COALESCE(NULLIF(s.title, ''), s.name) COLLATE NOCASE ASC
-		LIMIT ?
-	`, keyword, keyword, keyword, keyword, fts5PhraseQuery(keyword), keyword, keyword, keyword, keyword, limit)
-	if err != nil {
-		return nil, err
-	}
-	return scanSeriesSearchHits(rows)
-}
-
-// searchGlobalSeriesSubstring 是 FTS 之外的兜底搜索。
-//
-// 关键字为 1-2 字时改走 series_gram_fts（见 gram_search.go）：trigram 分词器对 <3 字符不产生 token，
-// 否则这里就是一次全表 instr 扫描。注意 gram 索引只覆盖 name/title，不覆盖 path——
-// 这与 >=3 字走的 FTS 路径一致（那张表也只索引 name/title），而 2 个字符去子串匹配整条文件路径
-// 本来就基本等于全匹配，不是有意义的检索。
-//
-// SELECT 与 ORDER BY 里的 instr 只作用于 WHERE 已经筛出来的行，用于排序打分，不影响扫描量。
+// searchGlobalSeriesSubstring checks exact normalized fields after indexed candidate selection.
 func (s *SqlStore) searchGlobalSeriesSubstring(ctx context.Context, keyword string, limit int32) ([]SeriesSearchHit, error) {
-	whereClause := `instr(lower(s.name), lower(?)) > 0
-		   OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0
-		   OR instr(lower(s.path), lower(?)) > 0`
-	whereArgs := []interface{}{keyword, keyword, keyword}
-	if expr, ok := gramMatchExpr(keyword); ok {
-		whereClause = seriesGramFilter
-		whereArgs = []interface{}{expr}
+	whereClause, whereArgs := normalizedSeriesFilter(keyword)
+	rankJoin, rankOrder, scoreAdjustment := "", "", ""
+	if len([]rune(keyword)) >= 3 {
+		rankJoin = `LEFT JOIN (SELECT rowid, bm25(series_search_fts, 2.0, 3.0) AS rank FROM series_search_fts WHERE series_search_fts MATCH ?) m ON m.rowid = s.id`
+		rankOrder = "m.rank ASC, "
+		scoreAdjustment = ` - 1.0 + (1.0 / (1.0 + ABS(m.rank)))`
+		whereArgs = append([]interface{}{fts5PhraseQuery(keyword)}, whereArgs...)
 	}
 
 	args := []interface{}{keyword, keyword, keyword, keyword}
@@ -518,30 +361,28 @@ func (s *SqlStore) searchGlobalSeriesSubstring(ctx context.Context, keyword stri
 			NULLIF(ss.last_read_book_id, 0) AS last_read_book_id,
 			(SELECT b2.last_read_page FROM books b2 WHERE b2.id = ss.last_read_book_id) AS last_read_page,
 			CASE
-				WHEN lower(s.name) = lower(?) OR lower(COALESCE(s.title, '')) = lower(?) THEN 4.0
-				WHEN instr(lower(s.name), lower(?)) > 0 OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0 THEN 3.0
+				WHEN st.name = search_normalize(?) OR st.title = search_normalize(?) THEN 4.0
+				WHEN instr(st.name, search_normalize(?)) > 0 OR instr(st.title, search_normalize(?)) > 0 THEN 3.0
 				ELSE 1.0
-			END AS score
+			END `+scoreAdjustment+` AS score
 		FROM series s
+		JOIN series_search_text st ON st.series_id = s.id
 		LEFT JOIN series_stats ss ON ss.series_id = s.id
+		`+rankJoin+`
 		WHERE `+whereClause+`
 		ORDER BY
 			CASE
-				WHEN lower(s.name) = lower(?) OR lower(COALESCE(s.title, '')) = lower(?) THEN 0
-				WHEN instr(lower(s.name), lower(?)) > 0 OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0 THEN 1
+				WHEN st.name = search_normalize(?) OR st.title = search_normalize(?) THEN 0
+				WHEN instr(st.name, search_normalize(?)) > 0 OR instr(st.title, search_normalize(?)) > 0 THEN 1
 				ELSE 2
 			END,
-			COALESCE(NULLIF(s.title, ''), s.name) COLLATE NOCASE ASC
+			`+rankOrder+`COALESCE(NULLIF(s.title, ''), s.name) COLLATE NOCASE ASC
 		LIMIT ?
 	`, args...)
 	if err != nil {
 		return nil, err
 	}
 	return scanSeriesSearchHits(rows)
-}
-
-func seriesSearchFTSEligible(keyword string) bool {
-	return len([]rune(strings.TrimSpace(keyword))) >= 3
 }
 
 func fts5PhraseQuery(keyword string) string {
@@ -619,16 +460,9 @@ func buildSeriesSearchQuery(libraryID int64, f SeriesListFilters) (baseQuery, pr
 	}
 
 	if f.Keyword != "" {
-		// 关键字 >=3 rune 时走 series_search_fts(trigram)：MATCH 取匹配 rowid 集，语义与 instr 子串匹配
-		// 等价(trigram 子串、大小写不敏感、覆盖 name+title)，但用索引一次求出匹配集，取代对 100k 系列逐行
-		// lower()+instr 的双重全表扫(行查询 + 计数各一次)。<3 rune(CJK 常态)保留 instr 回退。
-		if seriesSearchFTSEligible(f.Keyword) {
-			filters = append(filters, `s.id IN (SELECT rowid FROM series_search_fts WHERE series_search_fts MATCH ?)`)
-			args = append(args, fts5PhraseQuery(f.Keyword))
-		} else {
-			filters = append(filters, `(instr(lower(s.name), lower(?)) > 0 OR instr(lower(COALESCE(s.title, '')), lower(?)) > 0)`)
-			args = append(args, f.Keyword, f.Keyword)
-		}
+		filter, filterArgs := normalizedSeriesFilter(f.Keyword)
+		filters = append(filters, filter)
+		args = append(args, filterArgs...)
 	}
 
 	if f.Status != "" {

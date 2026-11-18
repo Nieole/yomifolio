@@ -13,7 +13,7 @@ import (
 )
 
 // gramSearchMaxRunes 是走 gram 索引的关键字长度上限。
-// >= 3 rune 由 trigram FTS 处理（seriesSearchFTSEligible），两者互补、不重叠。
+// >= 3 rune 由 trigram FTS 处理，两者互补、不重叠。
 const gramSearchMaxRunes = 2
 
 // gramMatchExpr 把关键字编码成 FTS5 的 MATCH 表达式。
@@ -65,10 +65,35 @@ const seriesGramFilter = `s.id IN (SELECT rowid FROM series_gram_fts WHERE serie
 // 尤其明显。UNION 形态能让外层退化成主键点查（SEARCH b USING INTEGER PRIMARY KEY），
 // 选择性与非选择性关键字都不会退化。
 //
-// 这个形态与既有的 searchGlobalBooksFTS 结构完全同构，一致性也更好。
+// 全局书搜索同样使用子查询内 UNION，分别选择书与所属系列候选。
 const bookGramFilter = `b.id IN (
 	SELECT rowid FROM book_gram_fts WHERE book_gram_fts MATCH ?
 	UNION
 	SELECT b2.id FROM series_gram_fts sg JOIN books b2 ON b2.series_id = sg.rowid
 	 WHERE series_gram_fts MATCH ?
 )`
+
+// normalizedSeriesFilter selects indexed candidates, then checks each durable
+// field independently: trigram tokenization can fold accents beyond our contract.
+// keyword is normalized once by this helper, never per catalog row.
+func normalizedSeriesFilter(keyword string) (string, []interface{}) {
+	keyword = NormalizeSearchText(keyword)
+	if keyword == "" {
+		return "0", nil
+	}
+	table, match := "series_search_fts", fts5PhraseQuery(keyword)
+	if len([]rune(keyword)) <= gramSearchMaxRunes {
+		table = "series_gram_fts"
+		match = normalizedSeriesGramMatch(keyword)
+	}
+	return `s.id IN (SELECT st.series_id FROM ` + table + ` JOIN series_search_text st ON st.series_id = ` + table + `.rowid WHERE ` + table + ` MATCH ? AND (instr(st.name, ?) > 0 OR instr(st.title, ?) > 0))`, []interface{}{match, keyword, keyword}
+}
+
+// Unlike book grams, these tokens encode fully normalized Unicode text.
+func normalizedSeriesGramMatch(keyword string) string {
+	token := strings.ToUpper(hex.EncodeToString([]byte(keyword)))
+	if len([]rune(keyword)) == 1 {
+		return `"` + token + `"*`
+	}
+	return `"` + token + `"`
+}

@@ -292,8 +292,19 @@ FROM series s
 WHERE (CAST(?1 AS INTEGER) = 0 OR s.library_id = CAST(?1 AS INTEGER))
   AND (
     CAST(?2 AS TEXT) = ''
-    OR instr(lower(s.name), lower(CAST(?2 AS TEXT))) > 0
-    OR instr(lower(COALESCE(s.title, '')), lower(CAST(?2 AS TEXT))) > 0
+    OR s.id IN (
+      SELECT st.series_id FROM series_search_text st
+      WHERE st.series_id IN (
+        SELECT rowid FROM series_gram_fts
+        WHERE length(search_normalize(CAST(?2 AS TEXT))) BETWEEN 1 AND 2
+          AND series_gram_fts MATCH ('"' || hex(search_normalize(CAST(?2 AS TEXT))) || '"' || CASE WHEN length(search_normalize(CAST(?2 AS TEXT))) = 1 THEN '*' ELSE '' END)
+        UNION
+        SELECT rowid FROM series_search_fts
+        WHERE length(search_normalize(CAST(?2 AS TEXT))) >= 3
+          AND series_search_fts MATCH ('"' || replace(search_normalize(CAST(?2 AS TEXT)), '"', '""') || '"')
+      )
+      AND search_normalize(CAST(?2 AS TEXT)) != '' AND (instr(st.name, search_normalize(CAST(?2 AS TEXT))) > 0 OR instr(st.title, search_normalize(CAST(?2 AS TEXT))) > 0)
+    )
   )
 `
 
@@ -4027,8 +4038,19 @@ FROM series s
 WHERE (CAST(?1 AS INTEGER) = 0 OR s.library_id = CAST(?1 AS INTEGER))
   AND (
     CAST(?2 AS TEXT) = ''
-    OR instr(lower(s.name), lower(CAST(?2 AS TEXT))) > 0
-    OR instr(lower(COALESCE(s.title, '')), lower(CAST(?2 AS TEXT))) > 0
+    OR s.id IN (
+      SELECT st.series_id FROM series_search_text st
+      WHERE st.series_id IN (
+        SELECT rowid FROM series_gram_fts
+        WHERE length(search_normalize(CAST(?2 AS TEXT))) BETWEEN 1 AND 2
+          AND series_gram_fts MATCH ('"' || hex(search_normalize(CAST(?2 AS TEXT))) || '"' || CASE WHEN length(search_normalize(CAST(?2 AS TEXT))) = 1 THEN '*' ELSE '' END)
+        UNION
+        SELECT rowid FROM series_search_fts
+        WHERE length(search_normalize(CAST(?2 AS TEXT))) >= 3
+          AND series_search_fts MATCH ('"' || replace(search_normalize(CAST(?2 AS TEXT)), '"', '""') || '"')
+      )
+      AND search_normalize(CAST(?2 AS TEXT)) != '' AND (instr(st.name, search_normalize(CAST(?2 AS TEXT))) > 0 OR instr(st.title, search_normalize(CAST(?2 AS TEXT))) > 0)
+    )
   )
 ORDER BY COALESCE(NULLIF(s.title, ''), s.name) COLLATE NOCASE ASC, s.id ASC
 LIMIT ?4 OFFSET ?3
@@ -4115,8 +4137,19 @@ FROM series s
 WHERE (CAST(?1 AS INTEGER) = 0 OR s.library_id = CAST(?1 AS INTEGER))
   AND (
     CAST(?2 AS TEXT) = ''
-    OR instr(lower(s.name), lower(CAST(?2 AS TEXT))) > 0
-    OR instr(lower(COALESCE(s.title, '')), lower(CAST(?2 AS TEXT))) > 0
+    OR s.id IN (
+      SELECT st.series_id FROM series_search_text st
+      WHERE st.series_id IN (
+        SELECT rowid FROM series_gram_fts
+        WHERE length(search_normalize(CAST(?2 AS TEXT))) BETWEEN 1 AND 2
+          AND series_gram_fts MATCH ('"' || hex(search_normalize(CAST(?2 AS TEXT))) || '"' || CASE WHEN length(search_normalize(CAST(?2 AS TEXT))) = 1 THEN '*' ELSE '' END)
+        UNION
+        SELECT rowid FROM series_search_fts
+        WHERE length(search_normalize(CAST(?2 AS TEXT))) >= 3
+          AND series_search_fts MATCH ('"' || replace(search_normalize(CAST(?2 AS TEXT)), '"', '""') || '"')
+      )
+      AND search_normalize(CAST(?2 AS TEXT)) != '' AND (instr(st.name, search_normalize(CAST(?2 AS TEXT))) > 0 OR instr(st.title, search_normalize(CAST(?2 AS TEXT))) > 0)
+    )
   )
 ORDER BY s.book_count DESC, COALESCE(NULLIF(s.title, ''), s.name) COLLATE NOCASE ASC, s.id ASC
 LIMIT ?4 OFFSET ?3
@@ -4203,8 +4236,19 @@ FROM series s
 WHERE (CAST(?1 AS INTEGER) = 0 OR s.library_id = CAST(?1 AS INTEGER))
   AND (
     CAST(?2 AS TEXT) = ''
-    OR instr(lower(s.name), lower(CAST(?2 AS TEXT))) > 0
-    OR instr(lower(COALESCE(s.title, '')), lower(CAST(?2 AS TEXT))) > 0
+    OR s.id IN (
+      SELECT st.series_id FROM series_search_text st
+      WHERE st.series_id IN (
+        SELECT rowid FROM series_gram_fts
+        WHERE length(search_normalize(CAST(?2 AS TEXT))) BETWEEN 1 AND 2
+          AND series_gram_fts MATCH ('"' || hex(search_normalize(CAST(?2 AS TEXT))) || '"' || CASE WHEN length(search_normalize(CAST(?2 AS TEXT))) = 1 THEN '*' ELSE '' END)
+        UNION
+        SELECT rowid FROM series_search_fts
+        WHERE length(search_normalize(CAST(?2 AS TEXT))) >= 3
+          AND series_search_fts MATCH ('"' || replace(search_normalize(CAST(?2 AS TEXT)), '"', '""') || '"')
+      )
+      AND search_normalize(CAST(?2 AS TEXT)) != '' AND (instr(st.name, search_normalize(CAST(?2 AS TEXT))) > 0 OR instr(st.title, search_normalize(CAST(?2 AS TEXT))) > 0)
+    )
   )
 ORDER BY s.updated_at DESC, COALESCE(NULLIF(s.title, ''), s.name) COLLATE NOCASE ASC, s.id ASC
 LIMIT ?4 OFFSET ?3

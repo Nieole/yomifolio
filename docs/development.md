@@ -63,6 +63,12 @@ GOCACHE="$(pwd)/.gocache" GOTMPDIR="$(pwd)/.tmp" go test ./...
 
 Use a worktree-specific `GOLANGCI_LINT_CACHE` when linting parallel worktrees to avoid cached absolute-path diagnostics; Go's content-addressed build cache can be shared safely.
 
+### Direct database tooling
+
+Prefer the server's write APIs and maintenance rebuild task over external SQLite writes. Series triggers require the deterministic SQL function `search_normalize(TEXT)` on **every writing connection**, with exactly the `database.NormalizeSearchText` semantics documented in [the database contract](../internal/database/SPEC.md). Importing that Go package registers it on the default modernc driver, including pooled and maintenance connections. A plain SQLite CLI or another driver does not provide it; read-only inspection is fine, but do not bypass/drop triggers or swallow missing-function errors to make writes succeed. Such bypasses leave stale indexes and silently lose search hits. External tools must either use a supported connection or implement the identical function before writing.
+
+After a failed upgrade, fix the reported error and rerun startup migration; its completion marker is only written after successful backfill. The entire migration is **not atomic**: earlier DDL/backfills may already have committed. The series search rebuild itself transactionally replaces its projection and both indexes, not the whole migration or all maintenance work. Use the normal backup/restore procedure before upgrades or external maintenance.
+
 ### Generated code
 
 - SQL query/schema changes: run `sqlc generate` (CI uses sqlc v1.31.1), verify generated files under `internal/database`, and include them with the source change. On Windows run sqlc in PowerShell/cmd rather than a Git Bash shim, which can report a false failure. SQL sources in `sql/query.sql` must remain ASCII; follow [AGENTS.md](../AGENTS.md) for sqlc caveats.
