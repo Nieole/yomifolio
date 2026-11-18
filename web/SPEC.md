@@ -22,13 +22,15 @@ locale 与 theme 提供表现偏好，不混入业务事实或用户在线会话
 
 核对入口：`src/App.tsx`、`src/session/ApplicationRoutes.test.tsx`、任务观察 hooks 与页面切换竞态测试。
 
-## 全局搜索首批会话
+## 全局搜索会话
 
-`components/layout/useGlobalSearch` 持有输入、范围、打开状态、首批请求及有效条目；`Layout` 与 `SearchModal` 消费该会话，不从非空输入推断查询已成功。空白输入为 idle，非空输入先等待约 300ms 防抖再请求；成功零条与请求失败分别呈现，失败可对当前输入和范围立即重试，不再等待防抖。状态与错误使用 locale 文案及可访问的异步通知。
+`components/layout/useGlobalSearch` 持有输入、范围、打开状态、首批、追加请求、游标及有效条目；`Layout` 与 `SearchModal` 消费该会话，不从非空输入推断查询已成功。空白输入为 idle，非空输入先等待约 300ms 防抖再请求；成功零条与请求失败分别呈现，失败可对当前输入和范围立即重试，不再等待防抖。状态与错误使用 locale 文案及可访问的异步通知。
 
 会话对象与 application query scope 共同标识响应归属，每次 effect 生命周期是独立请求代际；关键词、范围、打开状态或现有有效读者/连接作用域替换时取消请求并隔离迟到响应。取消仅节约资源，不能代替归属与代际检查。新输入或范围在渲染时立即使旧列表失效；关闭与重置不能被在途请求回填，重开对保留输入重新请求。复用已有 `apiClient`，不建立第二种 transport。此处连接作用域沿用 `session` 生命周期，不把普通 SSE 重连扩成新的搜索身份。
 
-只有当前成功结果可被鼠标或键盘选中；上下键保持索引边界，空列表回车无动作。系列进入 `/series/:id`，书进入 `/reader/:id`。首批契约、服务端排序、权限及检索字段保持不变；本会话尚不提供分页或继续加载。
+只有当前成功结果可被鼠标或键盘选中；上下键保持索引边界，空列表回车无动作。系列进入 `/series/:id`，书进入 `/reader/:id`。服务端总序、权限及导航身份保持有效，消费 tsgen 生成的 SearchResult 与 SearchHit；不在前端重排。
+
+继续加载立即执行，同代际同步守卫至多一个追加请求；只有成功接受响应后推进游标。按身份去重累积数量，并显示是否还有更多；追加时保留仍有效的选择。普通追加失败保留列表、选择和未消费游标，可立即重试；invalid_search_cursor 保留列表供查看，禁用继续追加并呈现显式“重新搜索”，该动作建立新代际、从首批开始，不静默混接。新查询、范围、身份/连接作用域、关闭或重置都使旧追加响应失效。跨批不是快照，去重不保证并发修改后的完整性。结果 listbox 的选中项与加载状态、可访问的异步通知和中英文文案一致。
 
 核对入口：`src/components/layout/useGlobalSearch.test.tsx`、`src/components/layout/searchSession.test.tsx` 与 `src/components/layout/SearchModal.session.test.tsx`。组合测试通过真实 HTTP 客户端的可控 adapter 制造取消无效、乱序完成及失败，不以静态 hits 替代会话验收。
 

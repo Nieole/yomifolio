@@ -85,6 +85,22 @@ func TestGlobalRankHTTPIndependentPrefix(t *testing.T) {
 		normalizedEqual(t, hit.Score, score)
 	}
 	normalizedEqual(t, ids, want[:20])
+	for _, limit := range []int{1, 7, 20, 100} {
+		walked := []string{}
+		cursor := ""
+		for page := 0; page < 100; page++ {
+			batch := cursorPage(t, f, "needle", "all", limit, cursor)
+			for _, hit := range batch.Hits {
+				walked = append(walked, hit.ID)
+			}
+			if !batch.HasMore {
+				break
+			}
+			cursor = batch.NextCursor
+		}
+		normalizedEqual(t, walked, want)
+	}
+
 	normalizedEqual(t, result.Total, uint64(20))
 	normalizedEqual(t, result.MaxScore, float64(1))
 	for _, target := range []string{"book", "title"} {
@@ -124,7 +140,7 @@ func TestBookNormalizedHTTPLifecycleRepairAndLongMetadata(t *testing.T) {
 	r := rankedHTTP(t, f, "needle", "book")
 	normalizedEqual(t, len(r.Hits), 1)
 	normalizedEqual(t, r.Hits[0].Score, 0.5)
-	normalizedEqual(t, r.Hits[0].Fields["title"], params.Title.String)
+	normalizedEqual(t, r.Hits[0].Fields.Title, params.Title.String)
 	normalizedEqual(t, f.global(t, params.Title.String, "book"), []string{id})
 	for _, table := range []string{"book_search_fts", "book_gram_fts"} {
 		normalizedExec(t, store, "DELETE FROM "+table)

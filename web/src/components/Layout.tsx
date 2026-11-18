@@ -101,6 +101,7 @@ export default function Layout() {
         searchResults,
         searchStatus,
         retrySearch,
+        hasMore, appendStatus, loadMore,
         isSearchModalOpen,
         setIsSearchModalOpen,
         selectedIndex,
@@ -784,6 +785,9 @@ export default function Layout() {
                         searchResults={searchResults}
                         searchStatus={searchStatus}
                         onRetrySearch={retrySearch}
+                        hasMore={hasMore}
+                        appendStatus={appendStatus}
+                        onLoadMore={loadMore}
                         selectedIndex={selectedIndex}
                         searchTarget={searchTarget}
                         onClose={() => setIsSearchModalOpen(false)}

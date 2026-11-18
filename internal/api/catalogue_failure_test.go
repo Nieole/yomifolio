@@ -15,8 +15,8 @@ import (
 
 type failedSeriesSearch struct{ database.Store }
 
-func (failedSeriesSearch) SearchGlobalSeries(context.Context, string, int32) ([]database.SeriesSearchHit, error) {
-	return nil, errors.New("unavailable")
+func (failedSeriesSearch) SearchGlobalBatch(context.Context, string, string, int32, *database.GlobalSearchKey) ([]database.BookSearchHit, []database.SeriesSearchHit, error) {
+	return nil, nil, errors.New("unavailable")
 }
 func TestCatalogueSearchFailureIsNotEmptySuccess(t *testing.T) {
 	c, store, _, _ := newTestController(t)

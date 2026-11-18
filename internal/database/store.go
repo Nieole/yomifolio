@@ -27,6 +27,7 @@ var schemaHandwrittenSQL string
 var schemaSQL = schemaCoreSQL + "\n" + schemaHandwrittenSQL
 
 type Store interface {
+	SearchGlobalBatch(context.Context, string, string, int32, *GlobalSearchKey) ([]BookSearchHit, []SeriesSearchHit, error)
 	WithAccountPassword(context.Context, func(AccountPasswordWrite) error) error
 	WithAccountManagement(context.Context, func(AccountManagementWrite) error) error
 	WithScanIngestion(context.Context, func(ScanIngestionWrite) error) error

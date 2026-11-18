@@ -4,6 +4,28 @@
  * 重新生成：`go run ./cmd/tsgen`；CI 会校验其与源一致。
  */
 
+export interface SearchResult {
+  hits: SearchHit[];
+  total_hits: number;
+  max_score: number;
+  has_more: boolean;
+  next_cursor: string;
+}
+
+export interface SearchHit {
+  id: string;
+  score: number;
+  fields?: SearchHitFields;
+}
+
+export interface SearchHitFields {
+  id: string;
+  title: string;
+  series_name: string;
+  type: string;
+  cover_path: string;
+}
+
 export interface RunLimits {
   scan_profile?: string;
   scanner_workers_configured?: number;

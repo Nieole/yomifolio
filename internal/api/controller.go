@@ -47,15 +47,25 @@ type SystemConfigResponse struct {
 }
 
 type SearchResult struct {
-	Hits     []*SearchHit `json:"hits"`
-	Total    uint64       `json:"total_hits"`
-	MaxScore float64      `json:"max_score"`
+	Hits       []*SearchHit `json:"hits"`
+	Total      uint64       `json:"total_hits"`
+	MaxScore   float64      `json:"max_score"`
+	HasMore    bool         `json:"has_more"`
+	NextCursor string       `json:"next_cursor"`
 }
 
 type SearchHit struct {
-	ID     string                 `json:"id"`
-	Score  float64                `json:"score"`
-	Fields map[string]interface{} `json:"fields,omitempty"`
+	ID     string          `json:"id"`
+	Score  float64         `json:"score"`
+	Fields SearchHitFields `json:"fields,omitempty"`
+}
+
+type SearchHitFields struct {
+	ID         string `json:"id"`
+	Title      string `json:"title"`
+	SeriesName string `json:"series_name"`
+	Type       string `json:"type"`
+	CoverPath  string `json:"cover_path"`
 }
 
 func constantTimeTokenMatch(provided, expected string) bool {

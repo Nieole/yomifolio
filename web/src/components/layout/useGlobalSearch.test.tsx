@@ -10,12 +10,12 @@ const original = apiClient.defaults.adapter;
 afterEach(() => { cleanup(); apiClient.defaults.adapter = original; vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 function requests() {
-  const pending: { url: string; finish: (title: string) => void; fail: () => void }[] = [];
+  const pending: { url: string; finish: (title: string, more?: boolean, cursor?: string) => void; fail: () => void }[] = [];
   apiClient.defaults.adapter = config => new Promise((resolve, reject) => {
     // Simulate a transport that cannot cancel: also bypass axios's post-adapter cancellation check.
     config.signal = undefined;
-    pending.push({ url: config.url!, finish: title => resolve({
-      data: { hits: title ? [{ id: 's_1', fields: { title, type: 'series' } }] : [] },
+    pending.push({ url: config.url!, finish: (title, more = false, cursor = '') => resolve({
+      data: { hits: title ? [{ id: 's_1', fields: { title, type: 'series' } }] : [], has_more: more, next_cursor: cursor },
       status: 200, statusText: 'OK', headers: {}, config,
     }), fail: () => reject(new Error('offline')) });
   });
@@ -84,5 +84,17 @@ it('drops requests and results when the effective application identity/connectio
   rerender();
   await act(async () => pending[0].finish('Private old hit'));
   expect(result.current.searchResults).toEqual([]);
+  expect(result.current.isSearchModalOpen).toBe(false);
+  act(() => { result.current.setIsSearchModalOpen(true); result.current.setSearchQuery('private'); });
+  await tick();
+  await act(async () => pending[1].finish('Accepted second reader', true, 'reader-two-cursor'));
+  await act(async () => { result.current.loadMore(); result.current.loadMore(); });
+  expect(pending).toHaveLength(3);
+  expect(pending[2].url).toContain('cursor=reader-two-cursor');
+  identity = 'reader-3';
+  rerender();
+  await act(async () => pending[2].finish('Private old append', true, 'obsolete'));
+  expect(result.current.searchResults).toEqual([]);
+  expect(result.current.hasMore).toBe(false);
   expect(result.current.isSearchModalOpen).toBe(false);
 });

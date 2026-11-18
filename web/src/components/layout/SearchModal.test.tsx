@@ -13,7 +13,7 @@ function setup(locale: 'zh-CN' | 'en-US', overrides: Partial<ComponentProps<type
   const messages = locale === 'zh-CN' ? chinese : english;
   const props: ComponentProps<typeof SearchModal> = {
     open: true, searchQuery: 'ScienceFictionAndFantasyCompleteCollection',
-    searchResults: [{ id: 's_7', fields: { type: 'series', title: 'Science fiction' }, score: 0.8 }],
+    searchResults: [{ id: 's_7', fields: { id: 's_7', cover_path: '', series_name: '', type: 'series', title: 'Science fiction' }, score: 0.8 }],
     selectedIndex: 0, searchTarget: 'all', searchStatus: 'success', onRetrySearch: vi.fn(),
     onClose: vi.fn(), onSearchQueryChange: vi.fn(), onSearchKeyDown: vi.fn(),
     onResetSearch: vi.fn(), onSearchTargetChange: vi.fn(), onSelectResult: vi.fn(), onHighlightIndex: vi.fn(),
