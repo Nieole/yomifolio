@@ -79,3 +79,10 @@ it('does not mount a closed modal', () => {
   setup('en-US', { open: false });
   expect(screen.queryByRole('dialog')).toBeNull();
 });
+
+it.each(['zh-CN', 'en-US'] as const)('hides compatibility scores while preserving result identity (%s)', (locale) => {
+  const { messages } = setup(locale);
+  expect(screen.queryByText(messages['searchModal.score'])).toBeNull();
+  expect(screen.queryByText('0.80')).toBeNull();
+  expect(screen.getByText('Science fiction')).toBeTruthy();
+});

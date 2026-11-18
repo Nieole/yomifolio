@@ -1,11 +1,11 @@
-// Package catalogsearch owns complete FTS catalogue searches and score normalization.
+// Package catalogsearch owns catalogue result ranking, identity and mixed batches.
 package catalogsearch
 
 import (
 	"context"
 	"errors"
+	"sort"
 	"strconv"
-	"strings"
 	"yomifolio/internal/database"
 	"yomifolio/internal/reading"
 )
@@ -27,6 +27,31 @@ type Hit struct {
 	ID                                 string
 	Score                              float64
 	Title, SeriesName, Kind, CoverPath string
+	Key                                SortKey
+}
+
+// SortKey is the complete total order. Kind is 0 for book and 1 for series;
+// it breaks ties only, never groups results. No unbounded text enters the key.
+type SortKey struct {
+	database.SearchMatchRank
+	Kind uint8
+	ID   int64
+}
+
+func (k SortKey) Less(other SortKey) bool {
+	if k.Tier != other.Tier {
+		return k.Tier < other.Tier
+	}
+	if k.Position != other.Position {
+		return k.Position < other.Position
+	}
+	if k.Extra != other.Extra {
+		return k.Extra < other.Extra
+	}
+	if k.Kind != other.Kind {
+		return k.Kind < other.Kind
+	}
+	return k.ID < other.ID
 }
 
 var ErrTarget = errors.New("invalid search target")
@@ -35,163 +60,57 @@ func (c *Search) Query(ctx context.Context, subject reading.Subject, query, targ
 	if _, err := subject.UserID(); err != nil {
 		return nil, err
 	}
-	var result *Result
-	var err error
-	switch target {
-	case "series":
-		result, err = c.searchSeriesWithSQLite(ctx, query, limit)
-	case "book", "all", "title":
-		result, err = c.searchBooksWithSQLite(ctx, query, target, limit)
-	default:
+	if target == "title" {
+		target = "book"
+	}
+	if target != "all" && target != "book" && target != "series" {
 		return nil, ErrTarget
 	}
-	if err != nil {
-		return nil, err
+	if limit <= 0 {
+		limit = 20
 	}
-	normalizeSearchScores(result)
-	return result, nil
-}
-func (c *Search) searchSeriesWithSQLite(ctx context.Context, query string, limit int32) (*Result, error) {
-	res := &Result{}
-	if err := c.mergeSeriesSearchFallback(ctx, res, query, "series", limit); err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
-func (c *Search) searchBooksWithSQLite(ctx context.Context, query, target string, limit int32) (*Result, error) {
-	res := &Result{}
-	if target == "all" {
-		if err := c.mergeBookHits(ctx, res, query, limit); err != nil {
+	res := &Result{Hits: make([]*Hit, 0)}
+	if target != "series" {
+		rows, err := c.store.SearchGlobalBooks(ctx, query, limit)
+		if err != nil {
 			return nil, err
 		}
-		if err := c.mergeSeriesSearchFallback(ctx, res, query, "all", limit); err != nil {
-			return nil, err
-		}
-		return res, nil
-	}
-	if err := c.mergeBookHits(ctx, res, query, limit); err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
-func (c *Search) mergeBookHits(ctx context.Context, res *Result, query string, limit int32) error {
-	if res == nil || strings.TrimSpace(query) == "" {
-		return nil
-	}
-	rows, err := c.store.SearchGlobalBooks(ctx, query, limit)
-	if err != nil {
-		return err
-	}
-	for _, hit := range rows {
-		title := hit.Name
-		if hit.Title.Valid && hit.Title.String != "" {
-			title = hit.Title.String
-		}
-		seriesName := hit.SeriesName
-		if hit.SeriesTitle.Valid && hit.SeriesTitle.String != "" {
-			seriesName = hit.SeriesTitle.String
-		}
-		coverPath := ""
-		if hit.CoverPath.Valid {
-			coverPath = hit.CoverPath.String
-		}
-		score := hit.Score
-		if score <= 0 {
-			score = 1
-		}
-		docID := "b_" + strconv.FormatInt(hit.ID, 10)
-		res.Hits = append(res.Hits, &Hit{
-			ID:    docID,
-			Score: score,
-			Title: title, SeriesName: seriesName, Kind: "book", CoverPath: coverPath,
-		})
-		if score > res.MaxScore {
-			res.MaxScore = score
-		}
-	}
-	if uint64(len(res.Hits)) > res.Total {
-		res.Total = uint64(len(res.Hits))
-	}
-	return nil
-}
-
-// mergeSeriesSearchFallback uses SQLite FTS5 (trigram) series search. Series metadata lives
-// in SQLite, and the FTS triggers keep name/title indexed with substring semantics that match
-// manga titles well (this replaced the former Bleve-based full-text engine).
-func (c *Search) mergeSeriesSearchFallback(ctx context.Context, res *Result, query, target string, limit int32) error {
-	if res == nil || strings.TrimSpace(query) == "" || (target != "all" && target != "series") {
-		return nil
-	}
-
-	seen := make(map[string]struct{}, len(res.Hits))
-	for _, hit := range res.Hits {
-		seen[hit.ID] = struct{}{}
-	}
-
-	rows, err := c.store.SearchGlobalSeries(ctx, query, limit)
-	if err != nil {
-		return err
-	}
-
-	added := 0
-	for _, hit := range rows {
-		row := hit.SearchSeriesPagedRow
-		docID := "s_" + strconv.FormatInt(row.ID, 10)
-		if _, ok := seen[docID]; ok {
-			continue
-		}
-		title := row.Name
-		if row.Title.Valid && row.Title.String != "" {
-			title = row.Title.String
-		}
-		coverPath := ""
-		if row.CoverPath.Valid {
-			coverPath = row.CoverPath.String
-		}
-		score := hit.Score
-		if score <= 0 {
-			score = 1
-		}
-		res.Hits = append(res.Hits, &Hit{
-			ID:    docID,
-			Score: score,
-			Title: title, SeriesName: row.Name, Kind: "series", CoverPath: coverPath,
-		})
-		if score > res.MaxScore {
-			res.MaxScore = score
-		}
-		seen[docID] = struct{}{}
-		added++
-		if target == "series" && len(res.Hits) >= int(limit) {
-			break
-		}
-		if target == "all" && added >= int(limit) {
-			break
-		}
-	}
-
-	if uint64(len(res.Hits)) > res.Total {
-		res.Total = uint64(len(res.Hits))
-	}
-	if res.MaxScore <= 0 && len(res.Hits) > 0 {
-		res.MaxScore = 1
-		for _, hit := range res.Hits {
-			if hit.Score <= 0 {
-				hit.Score = 1
+		for _, r := range rows {
+			title := r.Name
+			if r.Title.Valid && r.Title.String != "" {
+				title = r.Title.String
 			}
+			series := r.SeriesName
+			if r.SeriesTitle.Valid && r.SeriesTitle.String != "" {
+				series = r.SeriesTitle.String
+			}
+			res.Hits = append(res.Hits, &Hit{ID: "b_" + strconv.FormatInt(r.ID, 10), Score: r.Rank.Score(), Title: title, SeriesName: series, Kind: "book", CoverPath: r.CoverPath.String, Key: SortKey{SearchMatchRank: r.Rank, Kind: 0, ID: r.ID}})
 		}
 	}
-	return nil
-}
-
-// normalizeSearchScores 将命中得分按本次结果的最高分缩放到 [0,1]，最佳匹配为 1.0。
-func normalizeSearchScores(res *Result) {
-	if res == nil || len(res.Hits) == 0 || res.MaxScore <= 0 {
-		return
+	if target != "book" {
+		rows, err := c.store.SearchGlobalSeries(ctx, query, limit)
+		if err != nil {
+			return nil, err
+		}
+		for _, r := range rows {
+			title := r.Name
+			if r.Title.Valid && r.Title.String != "" {
+				title = r.Title.String
+			}
+			res.Hits = append(res.Hits, &Hit{ID: "s_" + strconv.FormatInt(r.ID, 10), Score: r.Rank.Score(), Title: title, SeriesName: r.Name, Kind: "series", CoverPath: r.CoverPath.String, Key: SortKey{SearchMatchRank: r.Rank, Kind: 1, ID: r.ID}})
+		}
 	}
+	sort.Slice(res.Hits, func(i, j int) bool { return res.Hits[i].Key.Less(res.Hits[j].Key) })
+	// Stores reduce duplicate field/source matches before their ordered LIMIT.
+	// Each type's top N therefore contains every possible mixed top-N member.
+	if len(res.Hits) > int(limit) {
+		res.Hits = res.Hits[:limit]
+	}
+	res.Total = uint64(len(res.Hits))
 	for _, hit := range res.Hits {
-		hit.Score = hit.Score / res.MaxScore
+		if hit.Score > res.MaxScore {
+			res.MaxScore = hit.Score
+		}
 	}
+	return res, nil
 }

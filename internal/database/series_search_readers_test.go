@@ -142,7 +142,7 @@ func TestNormalizedSeriesEligibilityBeforePagination(t *testing.T) {
 	}
 }
 
-func TestBookOwnSearchKeepsRawASCIIGramSemantics(t *testing.T) {
+func TestBookOwnSearchUsesNormalizedFields(t *testing.T) {
 	store := newExecTxTestStore(t)
 	ctx := context.Background()
 	lib, err := store.CreateLibrary(ctx, CreateLibraryParams{Name: "own", Path: t.TempDir(), ScanMode: "none", ScanInterval: 60})
@@ -161,7 +161,7 @@ func TestBookOwnSearchKeepsRawASCIIGramSemantics(t *testing.T) {
 	for _, tc := range []struct {
 		q    string
 		want int
-	}{{"É", 1}, {"é", 0}, {"AB", 0}, {"A-B", 1}, {"STRASSE", 0}, {"ＡＢ", 1}} {
+	}{{"É", 1}, {"é", 1}, {"AB", 2}, {"A-B", 2}, {"STRASSE", 1}, {"ＡＢ", 2}} {
 		hits, err := store.SearchGlobalBooks(ctx, tc.q, 100)
 		if err != nil {
 			t.Fatal(err)

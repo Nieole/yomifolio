@@ -1070,8 +1070,8 @@ func TestSearchBooksHandler(t *testing.T) {
 	})
 }
 
-// TestSearchNormalizesScores 验证搜索响应里命中得分被归一化到 (0,1]，最佳匹配为 1.0。
-func TestSearchNormalizesScores(t *testing.T) {
+// TestSearchKeepsFixedTierScores 验证自身子串命中固定为 0.5，不按本批最高分缩放。
+func TestSearchKeepsFixedTierScores(t *testing.T) {
 	controller, store, _, rootDir := newTestController(t)
 
 	lib, series, _ := seedBookFixture(t, store, rootDir, "Library A", "Naruto", "Naruto Volume 01.cbz", 10)
@@ -1118,8 +1118,8 @@ func TestSearchNormalizesScores(t *testing.T) {
 			maxScore = hit.Score
 		}
 	}
-	if maxScore < 0.9999999 {
-		t.Fatalf("expected top hit normalized to 1.0, got max=%f", maxScore)
+	if maxScore != 0.5 {
+		t.Fatalf("expected substring tier score 0.5, got max=%f", maxScore)
 	}
 }
 

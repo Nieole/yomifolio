@@ -97,3 +97,10 @@ func normalizedSeriesGramMatch(keyword string) string {
 	}
 	return `"` + token + `"`
 }
+
+func normalizedBookGramExpr(keyword string) (string, bool) {
+	if len([]rune(keyword)) > gramSearchMaxRunes {
+		return "", false
+	}
+	return normalizedSeriesGramMatch(keyword), true
+}

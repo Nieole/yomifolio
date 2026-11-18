@@ -33,7 +33,7 @@ function mount() {
   </AuthProvider></ToastProvider></LocaleProvider></MemoryRouter>);
   return pending;
 }
-const hit = (id: string, title: string): SearchHit => ({ id, fields: { title, type: id.startsWith('s_') ? 'series' : 'book' } });
+const hit = (id: string, title: string): SearchHit => ({ id, score: 0.5, fields: { title, type: id.startsWith('s_') ? 'series' : 'book' } });
 async function open() {
   fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
   return await screen.findByPlaceholderText('输入关键字搜索...');
@@ -81,6 +81,8 @@ it('real layout only navigates current hits, clamps keys and keeps series/book d
   await act(async () => pending[1].finish([hit('s_9', 'Stale target')]));
   expect(screen.queryByText('Stale target')).toBeNull();
   await act(async () => pending[2].finish([hit('s_3', 'Current series')]));
+  expect(screen.queryByText('0.50')).toBeNull();
+  expect(screen.queryByText('相关度')).toBeNull();
   key(input, 'ArrowDown'); key(input, 'ArrowDown'); key(input, 'Enter');
   expect(screen.getByTestId('path').textContent).toBe('/series/3');
   input = await open();
