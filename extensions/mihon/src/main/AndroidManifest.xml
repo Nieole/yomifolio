@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-feature android:name="tachiyomi.extension" android:required="false" />
+    <application android:label="Tachiyomi: Manga Manager" android:allowBackup="false" android:supportsRtl="true" android:usesCleartextTraffic="true">
+        <meta-data android:name="tachiyomi.extension.class" android:value=".MangaManagerFactory" />
+        <meta-data android:name="tachiyomi.extension.nsfw" android:value="0" />
+    </application>
+</manifest>

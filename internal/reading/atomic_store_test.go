@@ -13,6 +13,7 @@ import (
 type atomicReadingWrites interface {
 	ResolveReadingOperationTime(context.Context, int64, string, time.Time) (time.Time, error)
 	MutateReadingPositions(context.Context, int64, []int64, string, func(int64, database.ReadingPositionState) database.ReadingPositionMutation) (map[int64]database.ReadingPositionMutation, error)
+	GetReadingPosition(context.Context, int64, int64) (database.ReadingPositionState, error)
 	MutateReadingPosition(context.Context, int64, int64, string, func(database.ReadingPositionState) database.ReadingPositionMutation) (database.ReadingPositionMutation, error)
 	ListBooksBySeries(context.Context, int64) ([]database.Book, error)
 	LogReadingActivity(context.Context, database.LogReadingActivityParams) error

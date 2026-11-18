@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"manga-manager/internal/bookcontent"
 	"manga-manager/internal/catalogsearch"
@@ -46,6 +47,7 @@ func NewReaderCapabilities(store ReaderStore, relations seriescontext.Relations,
 // ReaderHTTP owns reader and catalogue protocol parsing. Leaf transport effects
 // share the host's authentication, content access and organization query adapters.
 type ReaderHTTP struct {
+	mihonClock func() time.Time
 	*ReaderCapabilities
 	store                                                               ReaderQueryStore
 	stats                                                               *dashboard.Service

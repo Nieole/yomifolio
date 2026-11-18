@@ -58,6 +58,17 @@ type MihonSeriesResponse struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+type MihonSeriesAuthorResponse struct {
+	Name string `json:"name"`
+	Role string `json:"role"`
+}
+
+type MihonSeriesDetailResponse struct {
+	MihonSeriesResponse
+	Authors []MihonSeriesAuthorResponse `json:"authors"`
+	Tags    []string                    `json:"tags"`
+}
+
 type MihonContinueItemResponse struct {
 	SeriesID     int64     `json:"series_id"`
 	SeriesName   string    `json:"series_name"`
@@ -118,7 +129,10 @@ func (c *ReaderHTTP) setupMihonRoutes(r chi.Router) {
 		r.Get("/series/{seriesId}/books", c.mihonSeriesBooks)
 		r.Get("/books/{bookId}/pages", c.mihonBookPages)
 		r.Get("/books/{bookId}/pages/{pageNumber}", c.servePageImage)
-		r.Post("/books/{bookId}/progress", c.updateBookProgress)
+		r.Get("/capabilities", c.mihonCapabilities)
+		r.Get("/time", c.mihonTime)
+		r.Get("/books/{bookId}/progress", c.mihonGetProgress)
+		r.Post("/books/{bookId}/progress", c.mihonUpdateProgress)
 		// 协议内的资源路由，理由同 OPDS：响应里下发的封面/缩略图/整卷下载链接不能指向 /api，
 		// 那边由 authGate 守卫、只认 session cookie，而 Mihon 客户端带的是 HTTP Basic 凭据。
 		r.Get("/books/{bookId}/file", c.serveBookFile)
@@ -411,10 +425,9 @@ func (c *ReaderHTTP) mihonSeries(w http.ResponseWriter, r *http.Request) {
 	status := strings.TrimSpace(r.URL.Query().Get("status"))
 	sortBy := strings.TrimSpace(r.URL.Query().Get("sort"))
 
-	// FTS 快路径仅用于「跨库搜索」（libraryID==0）。若叠加了 libraryID 过滤，FTS 返回的是
-	// 跨库分页结果，再按库做内存过滤会丢结果、把 total 算成当前页过滤后的条数，导致分页彻底失效。
-	// 因此库内搜索直接回落到 SearchSeriesPaged —— 它原生支持 libraryID + 关键字 + 正确的 LIMIT/OFFSET。
-	if query != "" && libraryID == 0 && len(tags) == 0 && len(authors) == 0 && status == "" {
+	// Relevance search is only for unfiltered cross-library queries without an explicit sort.
+	// Combined filters and explicit ordering must be applied before SQL pagination.
+	if query != "" && libraryID == 0 && len(tags) == 0 && len(authors) == 0 && status == "" && sortBy == "" {
 		if rows, searchTotal, usedEngine, err := c.searchProtocolSeries(r.Context(), query, page, limit); usedEngine {
 			if err != nil {
 				jsonError(w, http.StatusInternalServerError, "Failed to search series")
@@ -503,7 +516,28 @@ func (c *ReaderHTTP) mihonSeriesDetail(w http.ResponseWriter, r *http.Request) {
 		jsonError(w, http.StatusInternalServerError, "Failed to fetch series")
 		return
 	}
-	jsonResponse(w, http.StatusOK, mihonSeriesFromDetailRow(row))
+	authors, err := c.store.GetAuthorsForSeries(r.Context(), seriesID)
+	if err != nil {
+		jsonError(w, http.StatusInternalServerError, "Failed to fetch series authors")
+		return
+	}
+	tags, err := c.store.GetTagsForSeries(r.Context(), seriesID)
+	if err != nil {
+		jsonError(w, http.StatusInternalServerError, "Failed to fetch series tags")
+		return
+	}
+	detail := MihonSeriesDetailResponse{
+		MihonSeriesResponse: mihonSeriesFromDetailRow(row),
+		Authors:             make([]MihonSeriesAuthorResponse, 0, len(authors)),
+		Tags:                make([]string, 0, len(tags)),
+	}
+	for _, author := range authors {
+		detail.Authors = append(detail.Authors, MihonSeriesAuthorResponse{Name: author.Name, Role: author.Role})
+	}
+	for _, tag := range tags {
+		detail.Tags = append(detail.Tags, tag.Name)
+	}
+	jsonResponse(w, http.StatusOK, detail)
 }
 
 func (c *ReaderHTTP) mihonSeriesBooks(w http.ResponseWriter, r *http.Request) {

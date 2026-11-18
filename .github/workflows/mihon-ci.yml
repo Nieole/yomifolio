@@ -1,0 +1,51 @@
+name: Mihon extension CI
+
+on:
+  pull_request:
+    paths:
+      - 'extensions/mihon/**'
+      - '.github/workflows/mihon-*.yml'
+      - 'web/public/icons/icon-192.png'
+  push:
+    branches: [main]
+    paths:
+      - 'extensions/mihon/**'
+      - '.github/workflows/mihon-*.yml'
+      - 'web/public/icons/icon-192.png'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mihon-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      # Same immutable action revisions as the existing server workflows.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Select pinned build toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_21_X64/bin" >> "$GITHUB_PATH"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Python repository tests
+        run: python3 -m unittest discover -s extensions/mihon/tools -v
+      - name: Protocol tests, debug APK and lint (no signing secrets)
+        working-directory: extensions/mihon
+        run: bash ./gradlew --no-daemon :protocol-tests:test assembleDebug lint
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mihon-debug-NOT-FOR-PUBLICATION
+          path: |
+            extensions/mihon/build/outputs/apk/debug/*.apk
+            extensions/mihon/build/reports/lint-results-*
+            extensions/mihon/protocol-tests/build/reports/tests/
+          if-no-files-found: error
+          retention-days: 7

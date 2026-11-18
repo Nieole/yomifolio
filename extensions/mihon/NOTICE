@@ -1,0 +1,26 @@
+Gradle wrapper
+--------------
+The Gradle wrapper scripts and JAR are Gradle components, licensed under
+Apache License 2.0; see gradle/LICENSE and the scripts' copyright notices.
+Reference: Gradle v8.11.1, commit 481cb05a490e0ef9f8620f7873b83bd8a72e7c39
+https://github.com/gradle/gradle/tree/481cb05a490e0ef9f8620f7873b83bd8a72e7c39
+Wrapper JAR SHA-256:
+2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046
+The downloaded Gradle distribution is pinned by distributionSha256Sum in
+gradle/wrapper/gradle-wrapper.properties.
+
+Compatibility references (not bundled host implementations)
+----------------------------------------------------------
+Mihon v0.21.3, commit feadad5e1e2bf638be6e2ca317d11657b09d4596:
+https://github.com/mihonapp/mihon/tree/feadad5e1e2bf638be6e2ca317d11657b09d4596
+Apache License 2.0.
+
+Keiyoushi extensions-source, commit f1bd88dacd89dfe644369c397efedf79965bf4c0:
+https://github.com/keiyoushi/extensions-source/tree/f1bd88dacd89dfe644369c397efedf79965bf4c0
+Apache License 2.0. Komga's multi-instance source is an API/configuration
+reference; Manga Manager does not use its shared-cookie authentication model.
+
+Compile-only host APIs: Keiyoushi extensions-lib v1.4.2.1, AndroidX Preference,
+OkHttp, Kotlin stdlib, RxJava 1 and Injekt. They are supplied by the host and
+must not be redistributed as duplicate classes in this APK. org.json is
+provided by Android; the JVM tests use a separate test dependency.

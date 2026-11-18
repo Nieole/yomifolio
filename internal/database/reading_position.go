@@ -9,15 +9,22 @@ import (
 
 // ReadingPositionState is the durable state locked for one reader and book.
 type ReadingPositionState struct {
-	PageCount   int64
-	Page        int64
-	LastReadAt  sql.NullTime
-	ChangedAtNS int64
-	Duplicate   bool
+	BasisPresent bool
+	IsRead       bool
+	Present      bool
+	Cleared      bool
+	FactID       string
+	PageCount    int64
+	Page         int64
+	LastReadAt   sql.NullTime
+	ChangedAtNS  int64
+	Duplicate    bool
 }
 
 // ReadingPositionMutation is the decision applied within the locked transaction.
 type ReadingPositionMutation struct {
+	Snapshot   ReadingPositionState
+	Duplicate  bool
 	IsRead     bool
 	Apply      bool
 	Clear      bool
@@ -57,6 +64,8 @@ func (s *SqlStore) MutateReadingPositions(ctx context.Context, userID int64, boo
 				return err
 			}
 			mutation := decide(bookID, state)
+			mutation.Duplicate = state.Duplicate
+			mutation.Snapshot = state
 			results[bookID] = mutation
 			if !mutation.Apply {
 				continue
@@ -64,6 +73,12 @@ func (s *SqlStore) MutateReadingPositions(ctx context.Context, userID int64, boo
 			if err := persistReadingPosition(ctx, q, userID, bookID, factID, mutation); err != nil {
 				return err
 			}
+			snapshot, err := loadReadingPositionSnapshot(ctx, q.db, userID, bookID)
+			if err != nil {
+				return err
+			}
+			mutation.Snapshot = snapshot
+			results[bookID] = mutation
 			affected[book.SeriesID] = struct{}{}
 		}
 		for seriesID := range affected {
@@ -86,14 +101,9 @@ func (s *SqlStore) MutateReadingPositions(ctx context.Context, userID int64, boo
 }
 
 func loadReadingPosition(ctx context.Context, q *Queries, userID int64, book Book, factID string) (ReadingPositionState, error) {
-	state := ReadingPositionState{PageCount: book.PageCount, Page: book.LastReadPage.Int64, LastReadAt: book.LastReadAt}
-	if userID > 0 {
-		state.Page = 0
-		state.LastReadAt = sql.NullTime{}
-		err := q.db.QueryRowContext(ctx, `SELECT COALESCE(last_read_page,0),last_read_at FROM user_book_progress WHERE user_id=? AND book_id=?`, userID, book.ID).Scan(&state.Page, &state.LastReadAt)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return state, err
-		}
+	state, err := loadReadingPositionSnapshot(ctx, q.db, userID, book.ID)
+	if err != nil {
+		return state, err
 	}
 	if factID != "" {
 		var exists int
@@ -103,11 +113,44 @@ func loadReadingPosition(ctx context.Context, q *Queries, userID int64, book Boo
 		}
 		state.Duplicate = err == nil
 	}
-	err := q.db.QueryRowContext(ctx, `SELECT changed_at_ns FROM reading_position_basis WHERE user_id=? AND book_id=?`, userID, book.ID).Scan(&state.ChangedAtNS)
-	if errors.Is(err, sql.ErrNoRows) {
-		err = nil
+	return state, nil
+}
+
+// GetReadingPosition returns one consistent reader/book snapshot, including clear tombstones.
+func (s *SqlStore) GetReadingPosition(ctx context.Context, userID, bookID int64) (ReadingPositionState, error) {
+	return loadReadingPositionSnapshot(ctx, s.db, userID, bookID)
+}
+
+func loadReadingPositionSnapshot(ctx context.Context, db DBTX, userID, bookID int64) (ReadingPositionState, error) {
+	var state ReadingPositionState
+	var basis sql.NullInt64
+	var fact sql.NullString
+	var present bool
+	var bookAt, userAt sql.NullTime
+	err := db.QueryRowContext(ctx, `SELECT b.page_count,
+ CASE WHEN ? > 0 THEN COALESCE(p.last_read_page,0) ELSE COALESCE(b.last_read_page,0) END,
+ b.last_read_at, p.last_read_at,
+ CASE WHEN ? > 0 THEN COALESCE(p.is_read,0) ELSE b.is_read END,
+ CASE WHEN ? > 0 THEN p.book_id IS NOT NULL ELSE (b.last_read_at IS NOT NULL OR COALESCE(b.last_read_page,0)>0 OR b.is_read) END,
+ x.changed_at_ns,x.fact_id
+ FROM books b LEFT JOIN user_book_progress p ON p.book_id=b.id AND p.user_id=?
+ LEFT JOIN reading_position_basis x ON x.book_id=b.id AND x.user_id=? WHERE b.id=?`, userID, userID, userID, userID, userID, bookID).Scan(&state.PageCount, &state.Page, &bookAt, &userAt, &state.IsRead, &present, &basis, &fact)
+	if err != nil {
+		return state, err
 	}
-	return state, err
+	state.LastReadAt = bookAt
+	if userID > 0 {
+		state.LastReadAt = userAt
+	}
+	state.BasisPresent = basis.Valid
+	state.Present = present || basis.Valid
+	state.Cleared = basis.Valid && !present
+	state.ChangedAtNS = basis.Int64
+	state.FactID = fact.String
+	if basis.Valid && present {
+		state.LastReadAt = sql.NullTime{Time: time.Unix(0, basis.Int64).UTC(), Valid: true}
+	}
+	return state, nil
 }
 
 func persistReadingPosition(ctx context.Context, q *Queries, userID, bookID int64, factID string, m ReadingPositionMutation) error {

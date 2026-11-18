@@ -28,10 +28,12 @@ var ErrConflictingPositionTimes = errors.New("position occurrence and receipt ti
 
 // Result distinguishes a committed position from best-effort activity warnings.
 type Result struct {
-	Applied  bool
-	Stale    bool
-	Page     int64
-	Warnings []error
+	Snapshot  database.ReadingPositionState
+	Duplicate bool
+	Applied   bool
+	Stale     bool
+	Page      int64
+	Warnings  []error
 }
 
 // Store exposes the atomic position operation and the independent activity projections.
@@ -40,6 +42,7 @@ type Store interface {
 	ResolveReadingOperationTime(context.Context, int64, string, time.Time) (time.Time, error)
 	MutateReadingPositions(context.Context, int64, []int64, string, func(int64, database.ReadingPositionState) database.ReadingPositionMutation) (map[int64]database.ReadingPositionMutation, error)
 	ListBooksBySeries(context.Context, int64) ([]database.Book, error)
+	GetReadingPosition(context.Context, int64, int64) (database.ReadingPositionState, error)
 	MutateReadingPosition(context.Context, int64, int64, string, func(database.ReadingPositionState) database.ReadingPositionMutation) (database.ReadingPositionMutation, error)
 	LogReadingActivity(context.Context, database.LogReadingActivityParams) error
 	LogUserReadingActivityAt(context.Context, int64, int64, int64, time.Time) error
@@ -116,7 +119,7 @@ func (s *Service) RecordPosition(ctx context.Context, p Position) (Result, error
 		}
 		return database.ReadingPositionMutation{Apply: true, Page: page, OccurredAt: at}
 	})
-	result := Result{Applied: saved.Apply, Stale: stale, Page: saved.Page}
+	result := Result{Snapshot: saved.Snapshot, Duplicate: saved.Duplicate, Applied: saved.Apply, Stale: stale, Page: saved.Page}
 	if err != nil || !saved.Apply {
 		return result, err
 	}
@@ -131,4 +134,9 @@ func (s *Service) RecordPosition(ctx context.Context, p Position) (Result, error
 // facts carrying occurrence evidence remain subject to strict replay rejection.
 func staleOccurrence(at time.Time, changedAtNS int64, freshLegacy bool) bool {
 	return at.UnixNano() < changedAtNS || (at.UnixNano() == changedAtNS && !freshLegacy)
+}
+
+// GetPosition reads authoritative state for the explicitly authorized reader.
+func (s *Service) GetPosition(ctx context.Context, userID, bookID int64) (database.ReadingPositionState, error) {
+	return s.store.GetReadingPosition(ctx, userID, bookID)
 }

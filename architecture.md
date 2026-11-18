@@ -40,6 +40,12 @@ references: [mm-domain-language, mm-adr-0001, mm-adr-0003, mm-adr-0004, mm-adr-0
 
 客户端只消费 API 与推送契约，不承担后端规则。生成契约由 `cmd/tsgen` 维护，SQL 绑定由 sqlc 维护；生成方式与验证命令仍归 `AGENTS.md`。
 
+## Mihon 客户端边界
+
+`extensions/mihon` 是运行在官方 Mihon 中的独立 Android 源 APK，不编入 Go 服务。它通过 `mm-api` 的 Mihon 协议读取目录和内容；服务器与账户绑定、资源地址校验及本机配置归 `mm-mihon-extension`，用户阅读事实仍归 `reading`。
+
+源扩展不能获得实际翻页事件，不能用取图流量代替阅读；跨端页级同步不在独立插件交付范围。不修改或分发 Mihon 客户端及其阅读器库改动。源扩展与服务端分别构建，服务端不依赖 Android 工具链；公开发布签名不随源码或测试 APK 分发。
+
 ## 决策与规格状态
 
 领域概念只在 `mm-domain-language` 定义；任务身份、准入、寻址、重启、存储分包、用户名和迁移的理由归本节点引用的 ADR，不另复制论证。

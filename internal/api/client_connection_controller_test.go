@@ -9,8 +9,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
+
+	"manga-manager/internal/database"
 )
 
 func TestGetClientConnections(t *testing.T) {
@@ -168,5 +171,43 @@ func TestRequestBaseURL(t *testing.T) {
 
 	if got := requestBaseURL(req); got != "https://public.example.com" {
 		t.Fatalf("unexpected forwarded base URL: %s", got)
+	}
+}
+
+func TestGetClientConnectionsProtocolAuthNotes(t *testing.T) {
+	controller, store, _, _ := newTestController(t)
+	cfg := controller.currentConfig()
+	cfg.Protocols.OPDS.Enabled = true
+	cfg.Protocols.Mihon.Enabled = true
+	controller.config.Replace(&cfg)
+	for _, accountsExist := range []bool{false, true} {
+		if accountsExist {
+			if _, err := store.CreateUser(context.Background(), database.CreateUserParams{Username: "reader", PasswordHash: "unused", Role: database.RoleRegular}); err != nil {
+				t.Fatal(err)
+			}
+		}
+		rec := httptest.NewRecorder()
+		controller.admin.getClientConnections(rec, httptest.NewRequest(http.MethodGet, "/api/system/client-connections", nil))
+		if rec.Code != http.StatusOK {
+			t.Fatalf("%d: %s", rec.Code, rec.Body.String())
+		}
+		var resp ClientConnectionsResponse
+		if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+			t.Fatal(err)
+		}
+		if len(resp.Endpoints) != 10 {
+			t.Fatalf("unexpected endpoints: %+v", resp.Endpoints)
+		}
+		for _, endpoint := range resp.Endpoints {
+			note := endpoint.AuthNote
+			for _, required := range []string{"HTTP Basic", "site account", "password change", "web UI"} {
+				if !strings.Contains(note, required) {
+					t.Fatalf("%s note missing %q: %s", endpoint.Key, required, note)
+				}
+			}
+			if strings.Contains(note, "anonymous bootstrap access is allowed") == accountsExist {
+				t.Fatalf("incorrect bootstrap note: %s", note)
+			}
+		}
 	}
 }

@@ -19,4 +19,20 @@ references: [mm-adr-0003, mm-adr-0007]
 
 `NewTransport` 创建认证、事件 broker、运行投影及缓存/内容效果等技术 leaves；`Transport.Bind` 接受显式家庭能力与窄查询，在共享鉴权子树下组合 `Host`。`Host` 不构造应用、不持有 Runtime 或全量 Store，生产资源创建与恢复启动归 `bootstrap.Open`；底层服务不回调 HTTP 请求处理器。响应契约与前端生成类型须一致，协议差异在各适配器内消化。
 
-核对入口：`host.go`、`auth_username_case_test.go`、`collection_authorization_test.go` 与协议控制器测试。生产装配顺序另经 `bootstrap` 的 HTTP 与恢复回归核对。
+## Mihon 目录契约
+
+`/api/mihon/v1` 与 OPDS 保留独立协议开关和站点账户 HTTP Basic 鉴权；要求改密的账户须先在网页完成改密，无站点账户时仅允许首启匿名访问。连接信息必须准确反映此条件，不能把会话入口放行解释成资源免认证。
+
+系列搜索未指定 `sort` 且无其他筛选时使用跨库相关性搜索；显式排序与资料库、作者、标签、状态筛选必须在分页前共同执行，不能先跨库分页再过滤。系列详情在原有字段之外返回本系列的 `authors`（名称与角色）和 `tags`，无元数据时为数组；目录列表不为详情元数据引入逐项查询。
+
+## Mihon 页级同步契约
+
+同一协议鉴权子树内，`GET /capabilities` 声明 `sync_revision: 1`、一基页码、服务端同步能力、按校准发生时间合并、同刻保留现有胜者、未来容差秒数和无批量入口；它不宣称官方 Mihon 客户端具备翻页同步能力。`GET /time` 返回 UTC 高精度 `received_at` 与 `sent_at`，客户端以往返测量建立时钟锚点，不能把重连时刻当作离线阅读发生时刻。
+
+`GET /books/{bookId}/progress` 返回当前授权用户的 `page`、`is_read`、`state`（`absent`、`position`、`cleared`）、`occurred_at`、胜出 `fact_id` 及 `server_time`。清除证据不因进度行删除而消失；无精确事实依据的旧位置保留页码但 `occurred_at` 为 null，不把历史本地墙上时间伪标成 UTC 事实时间。已有进度行可能仅包含已读标记，返回 `state: position`、`page: 0`；此时仅同步 `is_read`，保留客户端已有页码，不能伪造第一页或解释为清除。
+
+原有单书 POST 保留 `page`、`updated_at`、`fact_id` 和原 `status`，新增 `outcome`（`applied`、`duplicate`、`stale`、`unchanged`）、提交的 `fact_id`、事务内 `authoritative` 快照与 `server_time`。ACK 只证明本次事务结束时的状态，后续并发事实仍可能覆盖；客户端不得以提交页码替代 ACK 中的裁决页码。
+
+显式 `sync_revision: 1` 要求非空、最多 128 个可打印非空白 ASCII 字符的事实 ID，以及可由持久纳秒基准表达的非零 RFC3339 时间。超前服务端五分钟以上返回 422 `clock_error`，非法输入与未知版本返回 400 `invalid_sync`／`unsupported_revision`；不静默夹到接收时间。缺失或零版本保持旧写入兼容。同步数据和错误响应 `Cache-Control: no-store`；客户端持久保留事实 ID 与原校准时间、按原值重试，时钟错误保留待处理事实。校时不能证明任意失准设备离线事件的物理先后。
+
+核对入口：`host.go`、`auth_username_case_test.go`、`collection_authorization_test.go`、`mihon_progress_test.go` 与协议控制器测试。生产装配顺序另经 `bootstrap` 的 HTTP 与恢复回归核对。
