@@ -199,7 +199,7 @@ func (s *SqlStore) SearchGlobalSeries(ctx context.Context, keyword string, limit
 	if limit <= 0 {
 		limit = 20
 	}
-	return s.searchGlobalSeriesSubstring(ctx, keyword, limit)
+	return s.searchGlobalSeriesSubstring(ctx, s.db, keyword, limit, nil)
 }
 
 func (s *SqlStore) SearchGlobalBooks(ctx context.Context, keyword string, limit int32) ([]BookSearchHit, error) {
@@ -211,7 +211,7 @@ func (s *SqlStore) SearchGlobalBooks(ctx context.Context, keyword string, limit 
 		limit = 20
 	}
 
-	return s.searchGlobalBooksSubstring(ctx, keyword, limit)
+	return s.searchGlobalBooksSubstring(ctx, s.db, keyword, limit, nil)
 }
 
 func (s *SqlStore) SearchProtocolSeries(ctx context.Context, keyword string, limit, offset int32) ([]ProtocolSeriesRow, int, error) {
@@ -283,7 +283,7 @@ func (s *SqlStore) searchProtocolSeriesSubstring(ctx context.Context, keyword st
 // Global candidates are reduced by identity only after choosing the best field.
 // Each type is ordered by the same key before LIMIT: its top N is a sufficient
 // superset of its contribution to the mixed top N (no raw-source truncation).
-func (s *SqlStore) searchGlobalBooksSubstring(ctx context.Context, keyword string, limit int32) ([]BookSearchHit, error) {
+func (s *SqlStore) searchGlobalBooksSubstring(ctx context.Context, db globalSearchReader, keyword string, limit int32, after *GlobalSearchKey) ([]BookSearchHit, error) {
 	seriesFilter, seriesArgs := normalizedSeriesFilter(keyword)
 	table, match := "book_search_fts", fts5PhraseQuery(keyword)
 	if expr, ok := normalizedBookGramExpr(keyword); ok {
@@ -296,30 +296,36 @@ func (s *SqlStore) searchGlobalBooksSubstring(ctx context.Context, keyword strin
  UNION ALL SELECT c.id, bt.title, 0 FROM candidates c JOIN book_search_text bt ON bt.book_id=c.id
  UNION ALL SELECT c.id, st.name, 1 FROM candidates c JOIN books b ON b.id=c.id JOIN series_search_text st ON st.series_id=b.series_id
  UNION ALL SELECT c.id, st.title, 1 FROM candidates c JOIN books b ON b.id=c.id JOIN series_search_text st ON st.series_id=b.series_id`
-	args = append(args, keyword, keyword, keyword, keyword, limit)
-	rows, err := s.db.QueryContext(ctx, globalRankCTE(candidates, fields)+`
+	args = append(args, keyword, keyword, keyword, keyword)
+	seek, seekArgs := globalSearchSeek(after, 0)
+	args = append(args, seekArgs...)
+	args = append(args, limit)
+	rows, err := db.QueryContext(ctx, globalRankCTE(candidates, fields)+`
  SELECT b.id, b.series_id, b.library_id, b.name, b.path, b.size, b.file_modified_at, b.volume, b.title, b.summary, b.number, b.sort_number, b.page_count, b.cover_path, b.last_read_page, b.last_read_at, b.is_read, b.file_hash, b.quick_hash, b.path_fingerprint, b.path_fingerprint_no_ext, b.filename_fingerprint, b.created_at, b.updated_at,
  s.name, s.title, r.tier, r.position, r.extra
  FROM ranked r JOIN books b ON b.id=r.id JOIN series s ON s.id=b.series_id
- WHERE r.choice=1 ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?`, args...)
+ WHERE r.choice=1 `+seek+` ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?`, args...)
 	if err != nil {
 		return nil, err
 	}
 	return scanBookSearchHits(rows)
 }
 
-func (s *SqlStore) searchGlobalSeriesSubstring(ctx context.Context, keyword string, limit int32) ([]SeriesSearchHit, error) {
+func (s *SqlStore) searchGlobalSeriesSubstring(ctx context.Context, db globalSearchReader, keyword string, limit int32, after *GlobalSearchKey) ([]SeriesSearchHit, error) {
 	filter, args := normalizedSeriesFilter(keyword)
 	candidates := `SELECT s.id FROM series s WHERE ` + filter
 	fields := `SELECT c.id, st.name AS field, 0 AS inherited FROM candidates c JOIN series_search_text st ON st.series_id=c.id
  UNION ALL SELECT c.id, st.title, 0 FROM candidates c JOIN series_search_text st ON st.series_id=c.id`
-	args = append(args, keyword, keyword, keyword, keyword, limit)
-	rows, err := s.db.QueryContext(ctx, globalRankCTE(candidates, fields)+`
+	args = append(args, keyword, keyword, keyword, keyword)
+	seek, seekArgs := globalSearchSeek(after, 1)
+	args = append(args, seekArgs...)
+	args = append(args, limit)
+	rows, err := db.QueryContext(ctx, globalRankCTE(candidates, fields)+`
  SELECT s.id, s.library_id, s.name, s.title, s.summary, s.publisher, s.status, s.rating, s.language, s.locked_fields, s.name_initial, s.path, s.created_at, s.updated_at, s.is_favorite, s.volume_count, s.book_count, s.total_pages,
  ss.cover_path, COALESCE(ss.tag_names_cache, ''), COALESCE(ss.read_pages, 0),ss.last_read_at,NULLIF(ss.last_read_book_id,0),
  (SELECT b2.last_read_page FROM books b2 WHERE b2.id=ss.last_read_book_id), r.tier,r.position,r.extra
  FROM ranked r JOIN series s ON s.id=r.id LEFT JOIN series_stats ss ON ss.series_id=s.id
- WHERE r.choice=1 ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?`, args...)
+ WHERE r.choice=1 `+seek+` ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?`, args...)
 	if err != nil {
 		return nil, err
 	}

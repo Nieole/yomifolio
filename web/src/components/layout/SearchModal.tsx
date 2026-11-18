@@ -1,6 +1,6 @@
 import { Image as ImageIcon, Search, X } from 'lucide-react';
 import type { SearchHit } from './types';
-import type { SearchStatus } from './useGlobalSearch';
+import type { AppendStatus, SearchStatus } from './useGlobalSearch';
 import { ModalShell } from '../ui/ModalShell';
 import { useI18n } from '../../i18n/LocaleProvider';
 
@@ -10,6 +10,9 @@ interface SearchModalProps {
   searchResults: SearchHit[];
   searchStatus: SearchStatus;
   onRetrySearch: () => void;
+  hasMore?: boolean;
+  appendStatus?: AppendStatus;
+  onLoadMore?: () => void;
   selectedIndex: number;
   searchTarget: string;
   onClose: () => void;
@@ -27,6 +30,9 @@ export function SearchModal({
   searchResults,
   searchStatus,
   onRetrySearch,
+  hasMore = false,
+  appendStatus = 'idle',
+  onLoadMore,
   selectedIndex,
   searchTarget,
   onClose,
@@ -49,10 +55,10 @@ export function SearchModal({
       icon={<Search className="h-5 w-5" />}
       size="standard"
       placement="top"
-      bodyClassName="overflow-hidden p-0"
+      bodyClassName="flex min-h-0 flex-col overflow-hidden p-0"
       panelClassName="max-h-[78vh]"
     >
-      <div className="flex h-full flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex items-center border-b border-gray-800 px-4 shrink-0">
           <Search className="w-5 h-5 shrink-0 text-gray-400" />
           <input
@@ -95,10 +101,10 @@ export function SearchModal({
         </div>
 
         <div className="overflow-y-auto flex-1 p-2">
-          <div role="status" aria-live="polite" aria-atomic="true" className={searchStatus === 'success' && searchResults.length ? 'sr-only' : 'text-center text-gray-500 text-sm'}>
+          <div role="status" aria-live="polite" aria-atomic="true" className="text-center text-gray-500 text-sm">
             {searchStatus === 'debouncing' ? <p className="py-14">{t('searchModal.waiting')}</p>
               : searchStatus === 'loading' ? <p className="py-14">{t('searchModal.loading')}</p>
-              : searchStatus === 'success' ? (searchResults.length ? t('searchModal.results', { count: searchResults.length }) : <p className="py-14">{t('searchModal.empty')}</p>) : null}
+              : searchStatus === 'success' ? (searchResults.length ? <p className="py-3">{t('searchModal.loaded', { count: searchResults.length })} · {t(hasMore ? 'searchModal.more' : 'searchModal.end')}{appendStatus === 'loading' ? ` · ${t('searchModal.loadingMore')}` : ''}</p> : <p className="py-14">{t('searchModal.empty')}</p>) : null}
           </div>
           {searchStatus === 'error' && (
             <div className="py-14 text-center text-sm">
@@ -107,13 +113,15 @@ export function SearchModal({
             </div>
           )}
           {searchStatus === 'success' && searchResults.length > 0 ? (
-            searchResults.map((hit, index: number) => {
+            <div role="listbox" aria-label={t('searchModal.title')} aria-busy={appendStatus === 'loading'}>{searchResults.map((hit, index: number) => {
               const isSeries = hit.fields?.type === 'series' || hit.id.startsWith('s_');
               const coverPath = hit.fields?.cover_path;
 
               return (
                 <div
                   key={hit.id}
+                  role="option"
+                  aria-selected={index === selectedIndex}
                   onClick={() => onSelectResult(hit)}
                   onMouseEnter={() => onHighlightIndex(index)}
                   className={`flex items-center gap-4 px-4 py-3 cursor-pointer rounded-lg transition-all ${index === selectedIndex ? 'bg-komgaPrimary/10 border-l-4 border-komgaPrimary shadow-md' : 'hover:bg-gray-800/50 border-l-4 border-transparent'}`}
@@ -166,14 +174,27 @@ export function SearchModal({
                   </div>
                 </div>
               );
-            })
+            })}</div>
           ) : searchStatus === 'idle' ? (
             <div className="py-8 text-center text-gray-600 text-sm flex flex-col items-center">
               <Search className="w-8 h-8 mb-3 opacity-20" />
               {t('searchModal.hint')}
             </div>
           ) : null}
+          {searchStatus === 'success' && appendStatus === 'error' && <p role="alert" className="py-2 text-center text-sm text-red-400">{t('searchModal.appendError')}</p>}
+          {searchStatus === 'success' && appendStatus === 'invalid' && <p role="alert" className="py-2 text-center text-sm text-red-400">{t('searchModal.cursorInvalid')}</p>}
         </div>
+        {searchStatus === 'success' && (hasMore || appendStatus === 'invalid') && (
+          <div className="shrink-0 border-t border-gray-800 p-3 text-center">
+            <button
+              onClick={appendStatus === 'invalid' ? onRetrySearch : onLoadMore}
+              disabled={appendStatus === 'loading'}
+              className="rounded-lg bg-komgaPrimary px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"
+            >
+              {t(appendStatus === 'invalid' ? 'searchModal.restart' : appendStatus === 'loading' ? 'searchModal.loadingMore' : appendStatus === 'error' ? 'searchModal.retryMore' : 'searchModal.loadMore')}
+            </button>
+          </div>
+        )}
       </div>
     </ModalShell>
   );

@@ -11,17 +11,18 @@ import (
 )
 
 type Store interface {
-	SearchGlobalSeries(context.Context, string, int32) ([]database.SeriesSearchHit, error)
-	SearchGlobalBooks(context.Context, string, int32) ([]database.BookSearchHit, error)
+	SearchGlobalBatch(context.Context, string, string, int32, *database.GlobalSearchKey) ([]database.BookSearchHit, []database.SeriesSearchHit, error)
 }
 type Search struct{ store Store }
 
 func New(store Store) *Search { return &Search{store: store} }
 
 type Result struct {
-	Hits     []*Hit
-	Total    uint64
-	MaxScore float64
+	Hits       []*Hit
+	Total      uint64
+	MaxScore   float64
+	HasMore    bool
+	NextCursor string
 }
 type Hit struct {
 	ID                                 string
@@ -32,11 +33,7 @@ type Hit struct {
 
 // SortKey is the complete total order. Kind is 0 for book and 1 for series;
 // it breaks ties only, never groups results. No unbounded text enters the key.
-type SortKey struct {
-	database.SearchMatchRank
-	Kind uint8
-	ID   int64
-}
+type SortKey database.GlobalSearchKey
 
 func (k SortKey) Less(other SortKey) bool {
 	if k.Tier != other.Tier {
@@ -56,9 +53,13 @@ func (k SortKey) Less(other SortKey) bool {
 
 var ErrTarget = errors.New("invalid search target")
 
-func (c *Search) Query(ctx context.Context, subject reading.Subject, query, target string, limit int32) (*Result, error) {
-	if _, err := subject.UserID(); err != nil {
+func (c *Search) Query(ctx context.Context, subject reading.Subject, query, target string, limit int32, cursor, authority string) (*Result, error) {
+	reader, err := subject.UserID()
+	if err != nil {
 		return nil, err
+	}
+	if target == "" {
+		target = "all"
 	}
 	if target == "title" {
 		target = "book"
@@ -66,16 +67,27 @@ func (c *Search) Query(ctx context.Context, subject reading.Subject, query, targ
 	if target != "all" && target != "book" && target != "series" {
 		return nil, ErrTarget
 	}
-	if limit <= 0 {
+	if limit == 0 {
 		limit = 20
 	}
-	res := &Result{Hits: make([]*Hit, 0)}
-	if target != "series" {
-		rows, err := c.store.SearchGlobalBooks(ctx, query, limit)
+	if limit < 1 || limit > 100 {
+		return nil, ErrLimit
+	}
+	prefix := cursorPrefix(query, target, reader, authority)
+	var after *SortKey
+	if cursor != "" {
+		after, err = decodeCursor(cursor, prefix)
 		if err != nil {
 			return nil, err
 		}
-		for _, r := range rows {
+	}
+	books, series, err := c.store.SearchGlobalBatch(ctx, query, target, limit+1, (*database.GlobalSearchKey)(after))
+	if err != nil {
+		return nil, err
+	}
+	res := &Result{Hits: make([]*Hit, 0)}
+	if target != "series" {
+		for _, r := range books {
 			title := r.Name
 			if r.Title.Valid && r.Title.String != "" {
 				title = r.Title.String
@@ -88,11 +100,7 @@ func (c *Search) Query(ctx context.Context, subject reading.Subject, query, targ
 		}
 	}
 	if target != "book" {
-		rows, err := c.store.SearchGlobalSeries(ctx, query, limit)
-		if err != nil {
-			return nil, err
-		}
-		for _, r := range rows {
+		for _, r := range series {
 			title := r.Name
 			if r.Title.Valid && r.Title.String != "" {
 				title = r.Title.String
@@ -104,7 +112,9 @@ func (c *Search) Query(ctx context.Context, subject reading.Subject, query, targ
 	// Stores reduce duplicate field/source matches before their ordered LIMIT.
 	// Each type's top N therefore contains every possible mixed top-N member.
 	if len(res.Hits) > int(limit) {
+		res.HasMore = true
 		res.Hits = res.Hits[:limit]
+		res.NextCursor = encodeCursor(prefix, res.Hits[len(res.Hits)-1].Key)
 	}
 	res.Total = uint64(len(res.Hits))
 	for _, hit := range res.Hits {

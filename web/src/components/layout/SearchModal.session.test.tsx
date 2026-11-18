@@ -15,12 +15,12 @@ afterEach(() => { cleanup(); apiClient.defaults.adapter = original; vi.unstubAll
 function Path() { return <output data-testid="path">{useLocation().pathname}</output>; }
 function mount() {
   vi.stubGlobal('EventSource', class { close() {} });
-  const pending: { signal: AbortSignal | undefined; finish: (hits: SearchHit[]) => void; fail: () => void }[] = [];
+  const pending: { signal: AbortSignal | undefined; url: string; finish: (hits: SearchHit[], more?: boolean, cursor?: string) => void; fail: (code?: string) => void }[] = [];
   apiClient.defaults.adapter = config => {
     if (config.url?.startsWith('/api/search?')) return new Promise((resolve, reject) => {
       const signal = config.signal as AbortSignal | undefined;
       config.signal = undefined; // The real axios client, with a deliberately uncancellable HTTP adapter.
-      pending.push({ signal, finish: hits => resolve({ data: { hits }, status: 200, statusText: 'OK', headers: {}, config }), fail: () => reject(new Error('offline')) });
+      pending.push({ signal, url: config.url!, finish: (hits, more = false, cursor = '') => resolve({ data: { hits, has_more: more, next_cursor: cursor }, status: 200, statusText: 'OK', headers: {}, config }), fail: code => reject(Object.assign(new Error('offline'), { response: { data: { code } } })) });
     });
     const data = config.url === '/api/auth/status'
       ? { authenticated: true, setup_required: false, user: { id: 1, username: 'reader', role: 'regular' } } : [];
@@ -33,7 +33,7 @@ function mount() {
   </AuthProvider></ToastProvider></LocaleProvider></MemoryRouter>);
   return pending;
 }
-const hit = (id: string, title: string): SearchHit => ({ id, score: 0.5, fields: { title, type: id.startsWith('s_') ? 'series' : 'book' } });
+const hit = (id: string, title: string): SearchHit => ({ id, score: 0.5, fields: { id, cover_path: '', series_name: '', title, type: id.startsWith('s_') ? 'series' : 'book' } });
 async function open() {
   fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
   return await screen.findByPlaceholderText('输入关键字搜索...');
@@ -122,3 +122,74 @@ it('modal close/reopen, rapid typing and reset cannot be backfilled by late resp
   expect(screen.getByTestId('path').textContent).toBe('/');
   expect(screen.getByText('支持全局模糊检索、键盘上下方向键导航')).toBeTruthy();
 });
+
+
+it('continues one batch at a time, keeps selection/cursor on failure, deduplicates and restarts invalid cursors explicitly', async () => {
+  const pending = mount();
+  const input = await open();
+  change(input, 'needle');
+  await waitFor(() => expect(pending).toHaveLength(1));
+  await act(async () => pending[0].finish([hit('s_1', 'First'), hit('s_2', 'Selected')], true, 'cursor-one'));
+  expect(within(screen.getByRole('dialog')).getByRole('status').textContent).toContain('已加载 2 条');
+  expect(within(screen.getByRole('dialog')).getByRole('status').textContent).toContain('还有更多');
+  key(input, 'ArrowDown');
+  const more = screen.getByRole('button', { name: '继续加载' });
+  await act(async () => { fireEvent.click(more); fireEvent.click(more); });
+  expect(pending).toHaveLength(2);
+  expect(pending[1].url).toContain('cursor=cursor-one');
+  expect(screen.getByText('Selected')).toBeTruthy();
+  await act(async () => pending[1].fail());
+  expect(screen.getByRole('alert').textContent).toContain('加载失败');
+  expect(screen.getByText('Selected').closest('[role=option]')?.getAttribute('aria-selected')).toBe('true');
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: '重试加载' })));
+  expect(pending).toHaveLength(3);
+  expect(pending[2].url).toContain('cursor=cursor-one');
+  await act(async () => pending[2].finish([hit('s_2', 'Selected'), hit('b_3', 'Third')], true, 'cursor-two'));
+  expect(screen.getAllByText('Selected')).toHaveLength(1);
+  expect(within(screen.getByRole('dialog')).getByRole('status').textContent).toContain('已加载 3 条');
+  expect(screen.getByText('Selected').closest('[role=option]')?.getAttribute('aria-selected')).toBe('true');
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: '继续加载' })));
+  expect(pending[3].url).toContain('cursor=cursor-two');
+  await act(async () => pending[3].fail('invalid_search_cursor'));
+  expect(screen.getByText('Selected')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: '继续加载' })).toBeNull();
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: '重新搜索' })));
+  expect(pending).toHaveLength(5);
+  expect(pending[4].url).not.toContain('cursor=');
+  expect(screen.queryByText('Selected')).toBeNull();
+  await act(async () => pending[4].finish([hit('s_4', 'Restarted')]));
+  expect(within(screen.getByRole('dialog')).getByRole('status').textContent).toContain('已加载 1 条');
+  expect(within(screen.getByRole('dialog')).getByRole('status').textContent).toContain('没有更多');
+  expect(screen.queryByRole('button', { name: '继续加载' })).toBeNull();
+});
+
+
+for (const action of ['query', 'target', 'close', 'reset'] as const) {
+  it(`isolates an uncancellable old append after ${action}`, async () => {
+    const pending = mount();
+    let input = await open();
+    change(input, 'first');
+    await waitFor(() => expect(pending).toHaveLength(1));
+    await act(async () => pending[0].finish([hit('s_1', 'Accepted')], true, 'old-cursor'));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: '继续加载' })));
+    expect(pending).toHaveLength(2);
+    if (action === 'query') change(input, 'new');
+    if (action === 'target') fireEvent.click(screen.getByRole('button', { name: '仅册文件' }));
+    if (action === 'close') { key(input, 'Escape'); input = await open(); }
+    if (action === 'reset') fireEvent.click(screen.getByRole('button', { name: '清空搜索' }));
+    expect(pending[1].signal?.aborted).toBe(true);
+    expect(screen.queryByText('Accepted')).toBeNull();
+    await act(async () => pending[1].finish([hit('s_9', 'Stale append')], true, 'stale-cursor'));
+    expect(screen.queryByText('Stale append')).toBeNull();
+    expect(screen.queryByRole('button', { name: '继续加载' })).toBeNull();
+    key(input, 'ArrowDown'); key(input, 'Enter');
+    expect(screen.getByTestId('path').textContent).toBe('/');
+    if (action !== 'reset') {
+      await waitFor(() => expect(pending).toHaveLength(3));
+      expect(pending[2].url).not.toContain('cursor=');
+      await act(async () => pending[2].finish([hit('b_2', 'Current')]));
+      key(input, 'ArrowDown'); key(input, 'ArrowUp'); key(input, 'Enter');
+      expect(screen.getByTestId('path').textContent).toBe('/reader/2');
+    }
+  });
+}
