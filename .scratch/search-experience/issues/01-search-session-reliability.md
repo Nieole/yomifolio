@@ -26,11 +26,12 @@
 
 验证（工作目录 `web`；PATH 使用本机 Zed 携带的 Node v24.22.1，未改依赖或锁文件）：
 
-- `npm.cmd test` → 119 files、1134 tests 全部通过。首次全量运行暴露两个旧弹窗测试缺少新增状态 props，补齐夹具后全量重跑通过。
+- `npm.cmd test` → 本轮曾完整通过 119 files、1134 tests（10:53 运行，85.35s）。首次全量运行暴露两个旧弹窗测试缺少新增状态 props，补齐夹具后重跑通过。但全量门禁并非稳定可复验：独立 review 连续两次运行均在既有 `RelocationEntry.test.tsx` 历史计划测试找不到 `relocation.checkedHint`，各为 118 files / 1133 tests 通过、1 test 失败。该入口懒加载 RelocationModal，测试使用默认 findBy 等待；单文件通过而全量失败符合负载相关超时，但未取得足够证据确认根因，不声称已修复。
+- review 后复验：`npm.cmd test -- src/components/layout/RelocationEntry.test.tsx src/components/layout/SearchModal.session.test.tsx` → 2 files / 8 tests 通过（15.89s）。继续完整复验时，默认 `npm.cmd test` 超过 180s 被 harness 终止；`npm.cmd test -- --maxWorkers=2` 超过 360s 并出现多处 `[vitest-pool]: Timeout terminating forks worker`；`npm.cmd test -- --pool=threads --maxWorkers=2` 超过 300s 被终止。没有将这些超时当成通过，也未通过修改不相关测试或全局放宽超时掩盖问题。全量稳定性仍是交付限制，建议在 CI 标准 Node 26 环境复核。
 - `npm.cmd run build` → TypeScript 与 Vite 构建通过，本树实际重建 `web/dist`。
 - `npm.cmd run lint` → 通过，无输出错误。
 - `git diff --check` → 通过；`spec_validate` → 无问题。
 - 开始前及交付验证前 `git merge search-experience-integration` → Already up to date；`git merge-base --is-ancestor search-experience-integration HEAD` → 0，当前集成 tip 为 `86c510d6`，无冲突。
-- 前两个独立计划步骤 request_review 均 approve；最终文档步骤另行复核。
+- 前两个独立计划步骤 request_review 均 approve；最终文档步骤指出全量测试不稳定，已调查并如实记录复验、超时与未确认根因，随后再次复核。
 
-限制：未运行真实浏览器或读屏器人工验收；jsdom 通知断言不代替读屏器验收。验证使用 Node 24 而非 CI 文档所列 Node 26.13.1。未改 Go/SQL/API 响应契约，因此未执行 Go 测试、Go lint 或生成器；未将前端 adapter 测试称作真实后端 HTTP 回归。分页、排名、归一化与大库性能留后续票，01 不依赖这些能力。未创建 PR，工作树保留供协调者集成。
+限制：全量测试曾通过但后续复验不稳定，不能据此宣称稳定全绿；未修改与本票无关的 Relocation 生产行为或测试。未运行真实浏览器或读屏器人工验收；jsdom 通知断言不代替读屏器验收。验证使用 Node 24 而非 CI 文档所列 Node 26.13.1。未改 Go/SQL/API 响应契约，因此未执行 Go 测试、Go lint 或生成器；未将前端 adapter 测试称作真实后端 HTTP 回归。分页、排名、归一化与大库性能留后续票，01 不依赖这些能力。未创建 PR，工作树保留供协调者集成。
