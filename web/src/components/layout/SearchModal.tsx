@@ -164,12 +164,6 @@ export function SearchModal({
                       )}
                     </div>
                   </div>
-                  <div className="hidden sm:flex flex-col items-end shrink-0 ml-2">
-                    <span className="text-[10px] text-gray-600 font-mono">{t('searchModal.score')}</span>
-                    <span className={`text-xs font-bold ${(hit.score ?? 0) > 0.5 ? 'text-komgaPrimary' : 'text-gray-500'}`}>
-                      {hit.score?.toFixed(2) ?? '0.00'}
-                    </span>
-                  </div>
                 </div>
               );
             })

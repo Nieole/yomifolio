@@ -12,7 +12,7 @@ import (
 	"modernc.org/sqlite"
 )
 
-// NormalizeSearchText defines the locale-independent series search representation.
+// NormalizeSearchText defines the locale-independent catalogue search representation.
 // The case transformer belongs to this call; transformers are not shared by callers.
 func NormalizeSearchText(text string) string {
 	text = cases.Fold().String(norm.NFC.String(width.Fold.String(text)))
@@ -28,7 +28,7 @@ func NormalizeSearchText(text string) string {
 func init() {
 	// Registration on the default driver covers every subsequently opened connection,
 	// including migration, maintenance and pooled Store connections. External writers
-	// must provide this same function before modifying series.
+	// must provide this same function before modifying series or books.
 	if err := sqlite.RegisterDeterministicScalarFunction("search_normalize", 1,
 		func(_ *sqlite.FunctionContext, args []driver.Value) (driver.Value, error) {
 			if args[0] == nil {

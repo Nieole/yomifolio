@@ -19,7 +19,8 @@ import (
 //
 //	注意 user_version 是在回填**成功之后**才写的，所以回填中途被杀不会留下「已完成」的假象，
 //	下次启动会整份重来——这正是我们要的语义，别改成「表非空就算已回填」那种探针。
-const currentSchemaVersion = 5
+const currentSchemaVersion = 6
+const normalizedBookSearchVersion = 6
 const normalizedSeriesSearchVersion = 5
 
 func Migrate(dbPath string) error {
@@ -175,31 +176,6 @@ func Migrate(dbPath string) error {
 		`CREATE INDEX IF NOT EXISTS idx_series_relations_target ON series_relations(target_series_id)`,
 		`CREATE TRIGGER IF NOT EXISTS trg_series_tags_ai AFTER INSERT ON series_tags BEGIN UPDATE tags SET series_count = series_count + 1 WHERE id = NEW.tag_id; END`,
 		`CREATE TRIGGER IF NOT EXISTS trg_series_tags_ad AFTER DELETE ON series_tags BEGIN UPDATE tags SET series_count = series_count - 1 WHERE id = OLD.tag_id; END`,
-		`CREATE TRIGGER IF NOT EXISTS trg_book_search_fts_ai AFTER INSERT ON books BEGIN
-			INSERT INTO book_search_fts(rowid, series_id, library_id, name, title)
-			VALUES (NEW.id, NEW.series_id, NEW.library_id, NEW.name, COALESCE(NEW.title, ''));
-		END`,
-		`CREATE TRIGGER IF NOT EXISTS trg_book_search_fts_ad AFTER DELETE ON books BEGIN
-			DELETE FROM book_search_fts WHERE rowid = OLD.id;
-		END`,
-		`CREATE TRIGGER IF NOT EXISTS trg_book_search_fts_au AFTER UPDATE OF series_id, library_id, name, title ON books BEGIN
-			DELETE FROM book_search_fts WHERE rowid = OLD.id;
-			INSERT INTO book_search_fts(rowid, series_id, library_id, name, title)
-			VALUES (NEW.id, NEW.series_id, NEW.library_id, NEW.name, COALESCE(NEW.title, ''));
-		END`,
-		// Book grams retain the existing ASCII lower() semantics.
-		`CREATE TRIGGER IF NOT EXISTS trg_book_gram_fts_ai AFTER INSERT ON books BEGIN
-			INSERT INTO book_gram_fts(rowid, series_id, library_id, name, title)
-			VALUES (NEW.id, NEW.series_id, NEW.library_id, (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(NEW.name), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x), (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(COALESCE(NEW.title, '')), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x));
-		END`,
-		`CREATE TRIGGER IF NOT EXISTS trg_book_gram_fts_ad AFTER DELETE ON books BEGIN
-			DELETE FROM book_gram_fts WHERE rowid = OLD.id;
-		END`,
-		`CREATE TRIGGER IF NOT EXISTS trg_book_gram_fts_au AFTER UPDATE OF series_id, library_id, name, title ON books BEGIN
-			DELETE FROM book_gram_fts WHERE rowid = OLD.id;
-			INSERT INTO book_gram_fts(rowid, series_id, library_id, name, title)
-			VALUES (NEW.id, NEW.series_id, NEW.library_id, (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(NEW.name), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x), (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(COALESCE(NEW.title, '')), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x));
-		END`,
 		// 删号级联：reading_bookmarks.user_id 与 koreader_accounts.user_id 都挂不了指向 users 的外键，
 		// 因为两列的 0 都是有效哨兵（前者「尚未启用多用户」的历史书签，后者**未归属**的设备账号），
 		// 而 users 里不存在 id=0 的行——真外键会当场拒收这些值。触发器给出外键式的自动级联而不与哨兵冲突：
@@ -308,7 +284,7 @@ func Migrate(dbPath string) error {
 		}
 	}
 
-	// Series-only upgrades do not rerun book or unrelated derived backfills.
+	// Each search projection has its own version gate; unrelated backfills stay skipped.
 	if err := execMigrationStatements(db, seriesSearchTriggerStatements(userVersion < normalizedSeriesSearchVersion || ftsRebuilt)); err != nil {
 		return err
 	}
@@ -317,7 +293,10 @@ func Migrate(dbPath string) error {
 			return err
 		}
 	}
-	if needFullBackfill || ftsRebuilt {
+	if err := execMigrationStatements(db, bookSearchTriggerStatements(userVersion < normalizedBookSearchVersion || ftsRebuilt)); err != nil {
+		return err
+	}
+	if userVersion < normalizedBookSearchVersion || ftsRebuilt {
 		if err := rebuildBookSearchIndex(db); err != nil {
 			return err
 		}
@@ -706,28 +685,6 @@ func rebuildSeriesSearchIndex(db *sql.DB) error {
 
 func rebuildBookSearchIndex(db *sql.DB) error {
 	return rebuildBookSearchIndexContext(context.Background(), db)
-}
-
-func rebuildBookSearchIndexContext(ctx context.Context, db *sql.DB) error {
-	if _, err := db.ExecContext(ctx, `DELETE FROM book_search_fts`); err != nil {
-		return err
-	}
-	if _, err := db.ExecContext(ctx, `
-		INSERT INTO book_search_fts(rowid, series_id, library_id, name, title)
-		SELECT id, series_id, library_id, name, COALESCE(title, '')
-		FROM books
-	`); err != nil {
-		return err
-	}
-	if _, err := db.ExecContext(ctx, `DELETE FROM book_gram_fts`); err != nil {
-		return err
-	}
-	_, err := db.ExecContext(ctx, `
-		INSERT INTO book_gram_fts(rowid, series_id, library_id, name, title)
-		SELECT b.id, b.series_id, b.library_id, (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(b.name), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x), (SELECT group_concat(hex(substr(x.t, x.i, 2)), ' ') FROM (WITH RECURSIVE g(t,i) AS (SELECT lower(COALESCE(b.title, '')), 1 UNION ALL SELECT t, i+1 FROM g WHERE i < length(t)) SELECT t,i FROM g) x)
-		FROM books b
-	`)
-	return err
 }
 
 // backfillSeriesInitials 回填 series.name_initial。

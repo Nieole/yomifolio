@@ -38,6 +38,7 @@ type SearchSeriesPagedRow struct {
 type SeriesSearchHit struct {
 	SearchSeriesPagedRow
 	Score float64
+	Rank  SearchMatchRank
 }
 
 type BookSearchHit struct {
@@ -45,6 +46,7 @@ type BookSearchHit struct {
 	SeriesName  string
 	SeriesTitle sql.NullString
 	Score       float64
+	Rank        SearchMatchRank
 }
 
 type seriesSearchSort struct {
@@ -201,7 +203,7 @@ func (s *SqlStore) SearchGlobalSeries(ctx context.Context, keyword string, limit
 }
 
 func (s *SqlStore) SearchGlobalBooks(ctx context.Context, keyword string, limit int32) ([]BookSearchHit, error) {
-	keyword = strings.TrimSpace(keyword)
+	keyword = NormalizeSearchText(keyword)
 	if keyword == "" {
 		return []BookSearchHit{}, nil
 	}
@@ -278,111 +280,77 @@ func (s *SqlStore) searchProtocolSeriesSubstring(ctx context.Context, keyword st
 	return items, total, err
 }
 
-// searchGlobalBooksSubstring keeps book-owned raw indexes separate from normalized series candidates.
+// Global candidates are reduced by identity only after choosing the best field.
+// Each type is ordered by the same key before LIMIT: its top N is a sufficient
+// superset of its contribution to the mixed top N (no raw-source truncation).
 func (s *SqlStore) searchGlobalBooksSubstring(ctx context.Context, keyword string, limit int32) ([]BookSearchHit, error) {
 	seriesFilter, seriesArgs := normalizedSeriesFilter(keyword)
-	bookTable, bookMatch := "book_search_fts", fts5PhraseQuery(keyword)
-	if expr, ok := gramMatchExpr(keyword); ok {
-		bookTable, bookMatch = "book_gram_fts", expr
+	table, match := "book_search_fts", fts5PhraseQuery(keyword)
+	if expr, ok := normalizedBookGramExpr(keyword); ok {
+		table, match = "book_gram_fts", expr
 	}
-	whereClause := `b.id IN (SELECT rowid FROM ` + bookTable + ` WHERE ` + bookTable + ` MATCH ? UNION SELECT b2.id FROM series s JOIN books b2 ON b2.series_id=s.id WHERE ` + seriesFilter + `)`
-	whereArgs := append([]interface{}{bookMatch}, seriesArgs...)
-	rankJoin, rankOrder, scoreAdjustment := "", "", ""
-	if len([]rune(keyword)) >= 3 {
-		rankJoin = `LEFT JOIN (SELECT rowid, bm25(book_search_fts, 2.5, 3.0) AS rank FROM book_search_fts WHERE book_search_fts MATCH ?) m ON m.rowid = b.id`
-		rankOrder = "COALESCE(m.rank, 1.5) ASC, "
-		scoreAdjustment = ` - 0.5 + (1.0 / (1.0 + ABS(COALESCE(m.rank, 1.5))))`
-		whereArgs = append([]interface{}{bookMatch}, whereArgs...)
-	}
-
-	args := []interface{}{keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword}
-	args = append(args, whereArgs...)
-	args = append(args, keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword, limit)
-
-	rows, err := s.db.QueryContext(ctx, `
-		SELECT
-			b.id, b.series_id, b.library_id, b.name, b.path, b.size, b.file_modified_at, b.volume, b.title, b.summary, b.number, b.sort_number, b.page_count, b.cover_path, b.last_read_page, b.last_read_at, b.is_read, b.file_hash, b.quick_hash, b.path_fingerprint, b.path_fingerprint_no_ext, b.filename_fingerprint, b.created_at, b.updated_at,
-			s.name AS series_name,
-			s.title AS series_title,
-			CASE
-				WHEN lower(b.name) = lower(?) OR lower(COALESCE(b.title, '')) = lower(?) THEN 4.0
-				WHEN st.name = search_normalize(?) OR st.title = search_normalize(?) THEN 3.5
-				WHEN instr(lower(b.name), lower(?)) > 0 OR instr(lower(COALESCE(b.title, '')), lower(?)) > 0 THEN 3.0
-				WHEN instr(st.name, search_normalize(?)) > 0 OR instr(st.title, search_normalize(?)) > 0 THEN 2.5
-				ELSE 1.0
-			END `+scoreAdjustment+` AS score
-		FROM books b
-		JOIN series s ON s.id = b.series_id
-		JOIN series_search_text st ON st.series_id = s.id
-		`+rankJoin+`
-		WHERE `+whereClause+`
-		ORDER BY
-			CASE
-				WHEN lower(b.name) = lower(?) OR lower(COALESCE(b.title, '')) = lower(?) THEN 0
-				WHEN st.name = search_normalize(?) OR st.title = search_normalize(?) THEN 1
-				WHEN instr(lower(b.name), lower(?)) > 0 OR instr(lower(COALESCE(b.title, '')), lower(?)) > 0 THEN 2
-				WHEN instr(st.name, search_normalize(?)) > 0 OR instr(st.title, search_normalize(?)) > 0 THEN 3
-				ELSE 4
-			END,
-			`+rankOrder+`s.name COLLATE NOCASE ASC,
-			b.volume ASC,
-			b.sort_number ASC,
-			b.name COLLATE NOCASE ASC
-		LIMIT ?
-	`, args...)
+	candidates := `SELECT rowid AS id FROM ` + table + ` WHERE ` + table + ` MATCH ?
+ UNION SELECT b2.id FROM series s JOIN books b2 ON b2.series_id=s.id WHERE ` + seriesFilter
+	args := append([]interface{}{match}, seriesArgs...)
+	fields := `SELECT c.id, bt.name AS field, 0 AS inherited FROM candidates c JOIN book_search_text bt ON bt.book_id=c.id
+ UNION ALL SELECT c.id, bt.title, 0 FROM candidates c JOIN book_search_text bt ON bt.book_id=c.id
+ UNION ALL SELECT c.id, st.name, 1 FROM candidates c JOIN books b ON b.id=c.id JOIN series_search_text st ON st.series_id=b.series_id
+ UNION ALL SELECT c.id, st.title, 1 FROM candidates c JOIN books b ON b.id=c.id JOIN series_search_text st ON st.series_id=b.series_id`
+	args = append(args, keyword, keyword, keyword, keyword, limit)
+	rows, err := s.db.QueryContext(ctx, globalRankCTE(candidates, fields)+`
+ SELECT b.id, b.series_id, b.library_id, b.name, b.path, b.size, b.file_modified_at, b.volume, b.title, b.summary, b.number, b.sort_number, b.page_count, b.cover_path, b.last_read_page, b.last_read_at, b.is_read, b.file_hash, b.quick_hash, b.path_fingerprint, b.path_fingerprint_no_ext, b.filename_fingerprint, b.created_at, b.updated_at,
+ s.name, s.title, r.tier, r.position, r.extra
+ FROM ranked r JOIN books b ON b.id=r.id JOIN series s ON s.id=b.series_id
+ WHERE r.choice=1 ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?`, args...)
 	if err != nil {
 		return nil, err
 	}
 	return scanBookSearchHits(rows)
 }
 
-// searchGlobalSeriesSubstring checks exact normalized fields after indexed candidate selection.
 func (s *SqlStore) searchGlobalSeriesSubstring(ctx context.Context, keyword string, limit int32) ([]SeriesSearchHit, error) {
-	whereClause, whereArgs := normalizedSeriesFilter(keyword)
-	rankJoin, rankOrder, scoreAdjustment := "", "", ""
-	if len([]rune(keyword)) >= 3 {
-		rankJoin = `LEFT JOIN (SELECT rowid, bm25(series_search_fts, 2.0, 3.0) AS rank FROM series_search_fts WHERE series_search_fts MATCH ?) m ON m.rowid = s.id`
-		rankOrder = "m.rank ASC, "
-		scoreAdjustment = ` - 1.0 + (1.0 / (1.0 + ABS(m.rank)))`
-		whereArgs = append([]interface{}{fts5PhraseQuery(keyword)}, whereArgs...)
-	}
-
-	args := []interface{}{keyword, keyword, keyword, keyword}
-	args = append(args, whereArgs...)
+	filter, args := normalizedSeriesFilter(keyword)
+	candidates := `SELECT s.id FROM series s WHERE ` + filter
+	fields := `SELECT c.id, st.name AS field, 0 AS inherited FROM candidates c JOIN series_search_text st ON st.series_id=c.id
+ UNION ALL SELECT c.id, st.title, 0 FROM candidates c JOIN series_search_text st ON st.series_id=c.id`
 	args = append(args, keyword, keyword, keyword, keyword, limit)
-
-	rows, err := s.db.QueryContext(ctx, `
-		SELECT
-			s.id, s.library_id, s.name, s.title, s.summary, s.publisher, s.status, s.rating, s.language, s.locked_fields, s.name_initial, s.path, s.created_at, s.updated_at, s.is_favorite, s.volume_count, s.book_count, s.total_pages,
-			ss.cover_path,
-			COALESCE(ss.tag_names_cache, '') as tags_string,
-			COALESCE(ss.read_pages, 0) as read_count,
-			ss.last_read_at,
-			NULLIF(ss.last_read_book_id, 0) AS last_read_book_id,
-			(SELECT b2.last_read_page FROM books b2 WHERE b2.id = ss.last_read_book_id) AS last_read_page,
-			CASE
-				WHEN st.name = search_normalize(?) OR st.title = search_normalize(?) THEN 4.0
-				WHEN instr(st.name, search_normalize(?)) > 0 OR instr(st.title, search_normalize(?)) > 0 THEN 3.0
-				ELSE 1.0
-			END `+scoreAdjustment+` AS score
-		FROM series s
-		JOIN series_search_text st ON st.series_id = s.id
-		LEFT JOIN series_stats ss ON ss.series_id = s.id
-		`+rankJoin+`
-		WHERE `+whereClause+`
-		ORDER BY
-			CASE
-				WHEN st.name = search_normalize(?) OR st.title = search_normalize(?) THEN 0
-				WHEN instr(st.name, search_normalize(?)) > 0 OR instr(st.title, search_normalize(?)) > 0 THEN 1
-				ELSE 2
-			END,
-			`+rankOrder+`COALESCE(NULLIF(s.title, ''), s.name) COLLATE NOCASE ASC
-		LIMIT ?
-	`, args...)
+	rows, err := s.db.QueryContext(ctx, globalRankCTE(candidates, fields)+`
+ SELECT s.id, s.library_id, s.name, s.title, s.summary, s.publisher, s.status, s.rating, s.language, s.locked_fields, s.name_initial, s.path, s.created_at, s.updated_at, s.is_favorite, s.volume_count, s.book_count, s.total_pages,
+ ss.cover_path, COALESCE(ss.tag_names_cache, ''), COALESCE(ss.read_pages, 0),ss.last_read_at,NULLIF(ss.last_read_book_id,0),
+ (SELECT b2.last_read_page FROM books b2 WHERE b2.id=ss.last_read_book_id), r.tier,r.position,r.extra
+ FROM ranked r JOIN series s ON s.id=r.id LEFT JOIN series_stats ss ON ss.series_id=s.id
+ WHERE r.choice=1 ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?`, args...)
 	if err != nil {
 		return nil, err
 	}
 	return scanSeriesSearchHits(rows)
+}
+
+// SearchMatchRank contains no text. SQLite's maximum TEXT length is below 2^31
+// bytes, so character positions and excess lengths fit uint32 without saturation
+// or truncation. Identity and kind complete this key in catalogsearch.
+type SearchMatchRank struct {
+	Tier     uint8
+	Position uint32
+	Extra    uint32
+}
+
+func (r SearchMatchRank) Score() float64 {
+	switch r.Tier {
+	case 0:
+		return 1
+	case 1:
+		return 0.5
+	default:
+		return 0.25
+	}
+}
+
+func globalRankCTE(candidates, fields string) string {
+	return `WITH candidates AS (` + candidates + `), fields AS (` + fields + `),
+ matches AS (SELECT id, CASE WHEN inherited=1 THEN 2 WHEN field=? THEN 0 ELSE 1 END AS tier,
+ instr(field,?)-1 AS position, length(field)-length(?) AS extra FROM fields WHERE instr(field,?)>0),
+ ranked AS (SELECT *, row_number() OVER (PARTITION BY id ORDER BY tier,position,extra, id ASC) AS choice FROM matches)`
 }
 
 func fts5PhraseQuery(keyword string) string {
@@ -640,11 +608,14 @@ func scanSeriesSearchHits(rows *sql.Rows) ([]SeriesSearchHit, error) {
 			&i.LastReadAt,
 			&i.LastReadBookID,
 			&i.LastReadPage,
-			&i.Score,
+			&i.Rank.Tier,
+			&i.Rank.Position,
+			&i.Rank.Extra,
 		); err != nil {
 			return nil, err
 		}
 		i.ActualBookCount = int(i.BookCount)
+		i.Score = i.Rank.Score()
 		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
@@ -686,10 +657,13 @@ func scanBookSearchHits(rows *sql.Rows) ([]BookSearchHit, error) {
 			&i.UpdatedAt,
 			&i.SeriesName,
 			&i.SeriesTitle,
-			&i.Score,
+			&i.Rank.Tier,
+			&i.Rank.Position,
+			&i.Rank.Extra,
 		); err != nil {
 			return nil, err
 		}
+		i.Score = i.Rank.Score()
 		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {

@@ -89,7 +89,7 @@ func TestSeriesNormalizedUpgradeFromV4RetriesAfterFailure(t *testing.T) {
 	mustSearchExec(t, db, seriesSearchV4Triggers)
 	mustSearchExec(t, db, `PRAGMA user_version=4`)
 	mustSearchExec(t, db, `INSERT INTO series(id,library_id,name,title,path) VALUES(1,1,'Ａ—Straße','É！','/one/series')`)
-	// Unrelated derived data must not be rebackfilled for a series-only upgrade.
+	// Unrelated derived data must not be rebackfilled for a search-only upgrade.
 	mustSearchExec(t, db, `INSERT INTO tags(id,name,series_count) VALUES(1,'sentinel',73)`)
 	mustSearchExec(t, db, `INSERT INTO books(id,series_id,library_id,name,path,size,file_modified_at) VALUES(1,1,1,'Old Book','/one/series/book.cbz',1,CURRENT_TIMESTAMP)`)
 	mustSearchExec(t, db, `DELETE FROM book_search_fts`)
@@ -142,8 +142,8 @@ func TestSeriesNormalizedUpgradeFromV4RetriesAfterFailure(t *testing.T) {
 	if err := db.QueryRow(`SELECT count(*) FROM book_search_fts`).Scan(&count); err != nil {
 		t.Fatal(err)
 	}
-	if count != 0 {
-		t.Fatal("unrelated book rebuild ran")
+	if count != 1 {
+		t.Fatal("book normalization upgrade did not rebuild book index")
 	}
 	// All six replaced definitions must handle deletion after the upgrade.
 	mustSearchExec(t, db, `DELETE FROM series WHERE id=1`)
