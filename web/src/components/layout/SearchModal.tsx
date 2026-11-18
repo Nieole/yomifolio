@@ -1,5 +1,6 @@
 import { Image as ImageIcon, Search, X } from 'lucide-react';
 import type { SearchHit } from './types';
+import type { SearchStatus } from './useGlobalSearch';
 import { ModalShell } from '../ui/ModalShell';
 import { useI18n } from '../../i18n/LocaleProvider';
 
@@ -7,6 +8,8 @@ interface SearchModalProps {
   open: boolean;
   searchQuery: string;
   searchResults: SearchHit[];
+  searchStatus: SearchStatus;
+  onRetrySearch: () => void;
   selectedIndex: number;
   searchTarget: string;
   onClose: () => void;
@@ -22,6 +25,8 @@ export function SearchModal({
   open,
   searchQuery,
   searchResults,
+  searchStatus,
+  onRetrySearch,
   selectedIndex,
   searchTarget,
   onClose,
@@ -55,12 +60,13 @@ export function SearchModal({
             type="text"
             placeholder={t('searchModal.placeholder')}
             value={searchQuery}
+            aria-busy={searchStatus === 'loading' || searchStatus === 'debouncing'}
             onChange={(e) => onSearchQueryChange(e.target.value)}
             onKeyDown={onSearchKeyDown}
             className="min-w-0 flex-1 bg-transparent border-none py-4 px-4 text-white focus:outline-hidden focus:ring-0 text-lg placeholder-gray-500"
           />
           {searchQuery && (
-            <button onClick={onResetSearch} className="shrink-0 p-1 text-gray-500 hover:text-white rounded-md transition-colors">
+            <button onClick={onResetSearch} aria-label={t('searchModal.clear')} className="shrink-0 p-1 text-gray-500 hover:text-white rounded-md transition-colors">
               <X className="w-5 h-5" />
             </button>
           )}
@@ -89,7 +95,18 @@ export function SearchModal({
         </div>
 
         <div className="overflow-y-auto flex-1 p-2">
-          {searchResults.length > 0 && searchQuery.trim() !== '' ? (
+          <div role="status" aria-live="polite" aria-atomic="true" className={searchStatus === 'success' && searchResults.length ? 'sr-only' : 'text-center text-gray-500 text-sm'}>
+            {searchStatus === 'debouncing' ? <p className="py-14">{t('searchModal.waiting')}</p>
+              : searchStatus === 'loading' ? <p className="py-14">{t('searchModal.loading')}</p>
+              : searchStatus === 'success' ? (searchResults.length ? t('searchModal.results', { count: searchResults.length }) : <p className="py-14">{t('searchModal.empty')}</p>) : null}
+          </div>
+          {searchStatus === 'error' && (
+            <div className="py-14 text-center text-sm">
+              <p role="alert" className="text-gray-400">{t('searchModal.error')}</p>
+              <button onClick={onRetrySearch} className="mt-4 rounded-lg bg-komgaPrimary px-4 py-2 text-white hover:opacity-90">{t('searchModal.retry')}</button>
+            </div>
+          )}
+          {searchStatus === 'success' && searchResults.length > 0 ? (
             searchResults.map((hit, index: number) => {
               const isSeries = hit.fields?.type === 'series' || hit.id.startsWith('s_');
               const coverPath = hit.fields?.cover_path;
@@ -156,14 +173,12 @@ export function SearchModal({
                 </div>
               );
             })
-          ) : searchQuery.trim() !== '' ? (
-            <div className="py-14 text-center text-gray-500 text-sm">{t('searchModal.empty')}</div>
-          ) : (
+          ) : searchStatus === 'idle' ? (
             <div className="py-8 text-center text-gray-600 text-sm flex flex-col items-center">
               <Search className="w-8 h-8 mb-3 opacity-20" />
               {t('searchModal.hint')}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </ModalShell>
