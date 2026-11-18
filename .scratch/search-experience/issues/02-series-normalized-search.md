@@ -41,3 +41,7 @@
 系列重建使用自己的事务，不能由此声称整个旧库迁移天然原子；升级前须备份。默认 Go SQLite 驱动所有连接注册 `search_normalize`，外部直接写库或重建须同样支持该函数，缺失时报错而不是返回零命中。未改源名称/标题/路径/身份；书自身归一化、全局新排名/分页属于03，本票未实施，也未测量大库性能预算。
 
 本机长临时路径全量重跑曾遇 Windows 目录重命名 `Access is denied` 和 watcher 超时；独立排查未发现本票改动相关性，短 TEMP/TMP 路径全量复验已通过。未为绕开此问题改动无关测试。前端未改动；忽略的 dist 仅用于 Go embed，不提交构建产物。未创建 PR、未删除工作树。本票无遗留功能项。
+
+### 集成审查补充
+
+Mihon 保留原始 q 区分真正空查询的浏览与非空但归一化为空的搜索。新增跨资料库及指定资料库的 ASCII/Unicode 空白 HTTP 回归，真正空输入仍返回浏览结果。新增测试先失败（`got 6; independent oracle wants 0`），修复后 `go test ./internal/api -run 'Test.*(Search|Mihon)' -count=1` 通过，`git diff --check` 通过。集成树 API 整包复验遇到原有 relocation 测试的 Windows rename `Access is denied`，搜索/迁移针对性复验通过，未将整包复验标为通过。

@@ -409,7 +409,7 @@ func (c *ReaderHTTP) mihonSeries(w http.ResponseWriter, r *http.Request) {
 	page := positiveQueryInt(r, "page", 1, 0)
 	limit := positiveQueryInt(r, "limit", 30, 100)
 	libraryID := int64(positiveQueryInt(r, "libraryId", 0, 0))
-	query := strings.TrimSpace(r.URL.Query().Get("q"))
+	query := r.URL.Query().Get("q")
 	offset := pageOffset(page, limit)
 
 	var tags []string

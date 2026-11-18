@@ -426,6 +426,25 @@ func TestSeriesNormalizedSearchHTTPProtocols(t *testing.T) {
 		normalizedEqual(t, scoped.Total, int64(3))
 		normalizedEqual(t, scoped.HasNext, page == 0)
 	}
+	for _, scope := range []string{"", "&libraryId=1"} {
+		for _, query := range []string{"", "  ", "\u3000\t"} {
+			var response MihonSeriesPageResponse
+			path := "/api/mihon/v1/series?q=" + url.QueryEscape(query) + scope
+			if err := json.Unmarshal(f.request(t, "GET", path), &response); err != nil {
+				t.Fatal(err)
+			}
+			want := int64(0)
+			if query == "" {
+				want = 6
+				if scope != "" {
+					want = 4
+				}
+			}
+			normalizedEqual(t, response.Total, want)
+			normalizedEqual(t, len(response.Items), int(want))
+			normalizedEqual(t, response.HasNext, false)
+		}
+	}
 	var capped MihonSeriesPageResponse
 	if err := json.Unmarshal(f.request(t, "GET", "/api/mihon/v1/series?q=ass&limit=999"), &capped); err != nil {
 		t.Fatal(err)
