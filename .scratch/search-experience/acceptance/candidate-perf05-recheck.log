@@ -1,0 +1,33 @@
+=== RUN   TestSearchAcceptanceMeasure
+    search_acceptance_test.go:351: 海 series first matches=19980 p50=38.280ms p95=48.191ms
+    search_acceptance_test.go:351: 海 series middle matches=19980 p50=42.119ms p95=53.320ms
+    search_acceptance_test.go:351: 海 series near_end matches=19980 p50=37.552ms p95=49.322ms
+    search_acceptance_test.go:351: 海 book first matches=199980 p50=528.270ms p95=598.542ms
+    search_acceptance_test.go:351: 海 book middle matches=199980 p50=530.098ms p95=577.864ms
+    search_acceptance_test.go:351: 海 book near_end matches=199980 p50=542.033ms p95=588.320ms
+    search_acceptance_test.go:351: 海贼 series first matches=19980 p50=28.015ms p95=33.364ms
+    search_acceptance_test.go:351: 海贼 series middle matches=19980 p50=30.591ms p95=38.666ms
+    search_acceptance_test.go:351: 海贼 series near_end matches=19980 p50=24.663ms p95=32.525ms
+    search_acceptance_test.go:351: 海贼 book first matches=199980 p50=469.712ms p95=540.611ms
+    search_acceptance_test.go:351: 海贼 book middle matches=199980 p50=464.750ms p95=517.754ms
+    search_acceptance_test.go:351: 海贼 book near_end matches=199980 p50=457.046ms p95=516.406ms
+    search_acceptance_test.go:351: 海贼王 series first matches=19980 p50=25.627ms p95=32.345ms
+    search_acceptance_test.go:351: 海贼王 series middle matches=19980 p50=27.001ms p95=33.681ms
+    search_acceptance_test.go:351: 海贼王 series near_end matches=19980 p50=23.669ms p95=31.012ms
+    search_acceptance_test.go:351: 海贼王 book first matches=199980 p50=431.053ms p95=486.771ms
+    search_acceptance_test.go:351: 海贼王 book middle matches=199980 p50=425.482ms p95=465.291ms
+    search_acceptance_test.go:351: 海贼王 book near_end matches=199980 p50=419.101ms p95=470.958ms
+    search_acceptance_test.go:351: 星 series first matches=20 p50=2.500ms p95=4.987ms
+    search_acceptance_test.go:351: 星 book first matches=380 p50=3.925ms p95=13.627ms
+    search_acceptance_test.go:351: 星 book near_end matches=380 p50=3.627ms p95=12.529ms
+    search_acceptance_test.go:351: 孤星 series first matches=20 p50=2.308ms p95=10.089ms
+    search_acceptance_test.go:351: 孤星 book first matches=380 p50=3.942ms p95=16.169ms
+    search_acceptance_test.go:351: 孤星 book near_end matches=380 p50=3.522ms p95=14.889ms
+    search_acceptance_test.go:351: 孤星Atlas series first matches=20 p50=2.508ms p95=11.087ms
+    search_acceptance_test.go:351: 孤星Atlas book first matches=380 p50=4.034ms p95=12.980ms
+    search_acceptance_test.go:351: 孤星Atlas book near_end matches=380 p50=4.130ms p95=20.559ms
+    search_acceptance_test.go:351: 孤—星 Ａｔｌａｓ series first matches=20 p50=2.992ms p95=9.216ms
+    search_acceptance_test.go:351: 孤—星 Ａｔｌａｓ book first matches=380 p50=4.358ms p95=11.107ms
+    search_acceptance_test.go:351: 孤—星 Ａｔｌａｓ book near_end matches=380 p50=4.234ms p95=12.420ms
+--- PASS: TestSearchAcceptanceMeasure (567.72s)
+PASS

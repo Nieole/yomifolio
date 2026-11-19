@@ -1,0 +1,4 @@
+=== RUN   TestSearchAcceptanceMeasure
+    search_acceptance_test.go:269: 海 series first matches=19980 p50=116.656ms p95=167.925ms
+--- PASS: TestSearchAcceptanceMeasure (77.08s)
+PASS

@@ -1,0 +1,49 @@
+File: candidate-perf05.test.exe
+Build ID: C:\Users\saber\.thinkrail\search-experience-research\acceptance-05\candidate-perf05.test.exe2026-11-18 21:24:11.775391 +0800 CST
+Type: cpu
+Time: 2026-11-18 21:53:23 CST
+Duration: 250.05s, Total samples = 494.84s (197.90%)
+Showing nodes accounting for 398.53s, 80.54% of 494.84s total
+Dropped 1354 nodes (cum <= 2.47s)
+Showing top 40 nodes out of 158
+      flat  flat%   sum%        cum   cum%
+   231.50s 46.78% 46.78%    231.52s 46.79%  runtime.cgocall
+    56.39s 11.40% 58.18%    139.01s 28.09%  modernc.org/sqlite/lib._sqlite3VdbeExec
+    10.37s  2.10% 60.27%     10.37s  2.10%  runtime.asyncPreempt
+     7.74s  1.56% 61.84%     12.84s  2.59%  runtime.preemptM
+     6.88s  1.39% 63.23%      6.88s  1.39%  runtime.osyield.func1
+     6.57s  1.33% 64.56%      7.19s  1.45%  modernc.org/sqlite/lib.mutexEnter
+     5.60s  1.13% 65.69%      6.84s  1.38%  modernc.org/sqlite/lib._btreeParseCellPtr
+     5.24s  1.06% 66.75%      9.56s  1.93%  runtime.mallocgcSmallScanNoHeaderSC2
+     4.86s  0.98% 67.73%      4.86s  0.98%  runtime.semasleep
+     4.55s  0.92% 68.65%     10.12s  2.05%  database/sql.convertAssignRows
+     4.54s  0.92% 69.57%     10.07s  2.04%  modernc.org/sqlite/lib.mutexLeave
+     3.60s  0.73% 70.29%      3.86s  0.78%  internal/sync.(*Mutex).Unlock (inline)
+     3.11s  0.63% 70.92%      3.53s  0.71%  modernc.org/sqlite/lib._btreeInitPage
+     2.72s  0.55% 71.47%      4.61s  0.93%  runtime.tryDeferToSpanScan
+     2.70s  0.55% 72.02%     13.08s  2.64%  database/sql.(*Rows).scanLocked
+     2.65s  0.54% 72.55%      9.72s  1.96%  modernc.org/sqlite/lib._columnMem
+     2.36s  0.48% 73.03%    194.71s 39.35%  yomifolio/internal/database.collectBookRanks
+     2.27s  0.46% 73.49%    154.77s 31.28%  modernc.org/sqlite.(*rows).Next
+     2.24s  0.45% 73.94%      7.32s  1.48%  modernc.org/sqlite/lib._sqlite3BtreeIndexMoveto
+     2.23s  0.45% 74.39%      3.64s  0.74%  runtime.mallocgcTinySC2
+     1.93s  0.39% 74.78%      3.56s  0.72%  unicode/utf8.RuneCountInString (inline)
+     1.84s  0.37% 75.15%      9.56s  1.93%  modernc.org/sqlite/lib._btreeParseCell
+     1.77s  0.36% 75.51%    156.97s 31.72%  database/sql.(*Rows).nextLocked
+     1.76s  0.36% 75.87%     10.20s  2.06%  runtime.mallocgc
+     1.73s  0.35% 76.22%     17.24s  3.48%  modernc.org/sqlite/lib._sqlite3BtreeTableMoveto
+     1.72s  0.35% 76.56%     11.39s  2.30%  modernc.org/sqlite/lib._getCellInfo
+     1.70s  0.34% 76.91%      7.46s  1.51%  modernc.org/sqlite/lib._fts5MultiIterNext
+     1.67s  0.34% 77.25%      7.49s  1.51%  modernc.org/sqlite/lib._instrFunc
+     1.62s  0.33% 77.57%     12.04s  2.43%  modernc.org/sqlite/lib._columnMallocFailure
+     1.60s  0.32% 77.90%      5.60s  1.13%  sync.(*Mutex).Unlock (inline)
+     1.58s  0.32% 78.22%      7.86s  1.59%  yomifolio/internal/database.normalizedFieldRank
+     1.56s  0.32% 78.53%      2.84s  0.57%  modernc.org/libc.Xmemcpy (inline)
+     1.50s   0.3% 78.83%      5.80s  1.17%  modernc.org/sqlite/lib._sqlite3BtreeNext
+     1.46s   0.3% 79.13%      3.70s  0.75%  database/sql.(*closingMutex).RUnlock
+     1.39s  0.28% 79.41%      2.59s  0.52%  internal/stringslite.Index
+     1.34s  0.27% 79.68%      2.95s   0.6%  modernc.org/sqlite/lib._sqlite3VdbeRecordCompareWithSkip
+     1.18s  0.24% 79.92%      6.30s  1.27%  runtime.scanObject
+     1.10s  0.22% 80.14%     17.91s  3.62%  modernc.org/sqlite.(*conn).columnText
+     1.05s  0.21% 80.35%      7.78s  1.57%  modernc.org/sqlite/lib._fts5ExprNodeNext_TERM
+     0.91s  0.18% 80.54%      2.83s  0.57%  reflect.Value.Set

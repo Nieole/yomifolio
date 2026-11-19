@@ -1,0 +1,8 @@
+=== RUN   TestRestorationConsentExpiresWithRelevantFacts
+=== RUN   TestRestorationConsentExpiresWithRelevantFacts/generation
+2026/11/18 19:29:55 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 19:29:55 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 19:29:55 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+--- PASS: TestRestorationConsentExpiresWithRelevantFacts (1.22s)
+    --- PASS: TestRestorationConsentExpiresWithRelevantFacts/generation (1.15s)
+PASS

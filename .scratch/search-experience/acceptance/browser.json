@@ -1,0 +1,32 @@
+{
+  "browser": "157.0.4341.60",
+  "fixture": "real SQLite API routes + rebuilt web/dist",
+  "faults": "network route interception only",
+  "calls": 12,
+  "evidence": [
+    {
+      "passed": "real HTTP search and first mixed batch"
+    },
+    {
+      "passed": "append failure preserves results and retry restores next batch"
+    },
+    {
+      "passed": "invalid cursor offers explicit restart"
+    },
+    {
+      "passed": "slow query invalidates old options immediately; first failure retry"
+    },
+    {
+      "passed": "scope change and complete series pagination"
+    },
+    {
+      "passed": "keyboard selection and close/reopen fresh generation"
+    }
+  ],
+  "notExecuted": [
+    "headed visual review",
+    "English locale",
+    "long-title visual boundary",
+    "reader-account browser navigation"
+  ]
+}

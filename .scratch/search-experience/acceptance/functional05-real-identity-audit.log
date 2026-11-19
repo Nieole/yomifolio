@@ -1,0 +1,8 @@
+=== RUN   TestSearchRealArchiveIdentityAudit
+    search_real_identity_acceptance_test.go:48: audited series: 20000 stable IDs, library and accessible exact paths
+    search_real_identity_acceptance_test.go:48: audited books: 200000 stable IDs, library and accessible exact paths
+    search_real_identity_acceptance_test.go:53: all 200000 book-to-series identities preserved; db=C:/tmp/search-functional05-real-fast/catalogue.db
+--- PASS: TestSearchRealArchiveIdentityAudit (247.17s)
+PASS
+ok  	yomifolio/internal/api	247.502s
+EXIT=0

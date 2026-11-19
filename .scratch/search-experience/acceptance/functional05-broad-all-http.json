@@ -1,0 +1,18 @@
+{
+  "label": "functional05-broad-all-http",
+  "go": "go1.27.4",
+  "cpus": 16,
+  "sqlite": "3.54.1",
+  "settings": {
+    "cache_size": "-128000",
+    "journal_mode": "wal",
+    "mmap_size": "268435456",
+    "page_size": "4096",
+    "synchronous": "1",
+    "temp_store": "2",
+    "user_version": "6"
+  },
+  "migrate_ns": 1967752800,
+  "search_rebuild_ns": 52395917900,
+  "samples": null
+}

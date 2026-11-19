@@ -1,0 +1,2 @@
+Own duplicate Go/lint launches terminated to serialize checks under severe host load; no external process touched.
+Metadata-profile full maintenance interrupted by implementer after ~32 minutes under severe host load; NOT a successful maintenance. All 200000 real archive paths were prepared. New fast-profile run will reuse these files and record that profile difference explicitly.

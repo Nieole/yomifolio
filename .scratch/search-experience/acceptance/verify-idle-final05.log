@@ -1,0 +1,5 @@
+first 270.2347
+middle 254.5034
+near_end 609.9937
+Evidence verification PASS: 102 scenarios / 10200 timed samples; source and artifact hashes unchanged.
+Initial evidence-check command used Windows default GBK and failed to decode JSON before assertions; retry explicitly UTF-8. No product/test failure.

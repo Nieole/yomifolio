@@ -1,0 +1,6 @@
+=== RUN   TestSearchMaintenanceMissingLibraryFailsHTTP
+    search_maintenance_acceptance_test.go:24: unlinkat C:/tmp\TestSearchMaintenanceMissingLibraryFailsHTTP2275861623\001\test.db: The process cannot access the file because it is being used by another process.
+--- FAIL: TestSearchMaintenanceMissingLibraryFailsHTTP (0.92s)
+FAIL
+FAIL	yomifolio/internal/api	2.064s
+FAIL

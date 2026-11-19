@@ -1,0 +1,143 @@
+{
+  "baseline-idle-final05": {
+    "start_utc": "2026-11-19T01:27:34.414649+00:00",
+    "end_utc": "2026-11-19T01:33:45.364649+00:00",
+    "duration_seconds": 370.95,
+    "samples": 61,
+    "cpu_min": 9,
+    "cpu_median": 18,
+    "cpu_p95": 38,
+    "cpu_max": 45,
+    "external_chdman": []
+  },
+  "candidate-idle-final05": {
+    "start_utc": "2026-11-19T01:33:57.847474+00:00",
+    "end_utc": "2026-11-19T01:41:24.687474+00:00",
+    "duration_seconds": 446.84,
+    "samples": 75,
+    "cpu_min": 8,
+    "cpu_median": 16,
+    "cpu_p95": 33,
+    "cpu_max": 42,
+    "external_chdman": []
+  },
+  "candidate-idle-final05-repeat": {
+    "start_utc": "2026-11-19T01:41:40.326857+00:00",
+    "end_utc": "2026-11-19T01:47:27.526857+00:00",
+    "duration_seconds": 347.2,
+    "samples": 57,
+    "cpu_min": 9,
+    "cpu_median": 18,
+    "cpu_p95": 38,
+    "cpu_max": 100,
+    "external_chdman": [
+      {
+        "time": "2026-11-19T01:46:53.7140941Z",
+        "cpu": 38,
+        "freeKB": 8663844,
+        "processes": [
+          {
+            "Name": "System",
+            "IDProcess": 4,
+            "PercentProcessorTime": 114
+          },
+          {
+            "Name": "WmiPrvSE#2",
+            "IDProcess": 48396,
+            "PercentProcessorTime": 23
+          },
+          {
+            "Name": "candidate-finalperf05.test",
+            "IDProcess": 6488,
+            "PercentProcessorTime": 95
+          },
+          {
+            "Name": "chdman",
+            "IDProcess": 17676,
+            "PercentProcessorTime": 100
+          },
+          {
+            "Name": "dwm",
+            "IDProcess": 1284,
+            "PercentProcessorTime": 52
+          }
+        ]
+      },
+      {
+        "time": "2026-11-19T01:46:59.8644231Z",
+        "cpu": 54,
+        "freeKB": 8712608,
+        "processes": [
+          {
+            "Name": "candidate-finalperf05.test",
+            "IDProcess": 6488,
+            "PercentProcessorTime": 60
+          },
+          {
+            "Name": "chdman",
+            "IDProcess": 22700,
+            "PercentProcessorTime": 1346
+          },
+          {
+            "Name": "dwm",
+            "IDProcess": 1284,
+            "PercentProcessorTime": 30
+          },
+          {
+            "Name": "msedgewebview2#11",
+            "IDProcess": 26244,
+            "PercentProcessorTime": 25
+          }
+        ]
+      },
+      {
+        "time": "2026-11-19T01:47:05.9759382Z",
+        "cpu": 100,
+        "freeKB": 8685576,
+        "processes": [
+          {
+            "Name": "ChatGPT",
+            "IDProcess": 33388,
+            "PercentProcessorTime": 41
+          },
+          {
+            "Name": "MsMpEng",
+            "IDProcess": 5620,
+            "PercentProcessorTime": 26
+          },
+          {
+            "Name": "candidate-finalperf05.test",
+            "IDProcess": 6488,
+            "PercentProcessorTime": 52
+          },
+          {
+            "Name": "chdman",
+            "IDProcess": 22700,
+            "PercentProcessorTime": 1145
+          },
+          {
+            "Name": "msedgewebview2#8",
+            "IDProcess": 7816,
+            "PercentProcessorTime": 26
+          },
+          {
+            "Name": "msedgewebview2#11",
+            "IDProcess": 26244,
+            "PercentProcessorTime": 41
+          }
+        ]
+      }
+    ]
+  },
+  "candidate-idle-final05-confirm": {
+    "start_utc": "2026-11-19T01:48:51.256725+00:00",
+    "end_utc": "2026-11-19T01:55:55.696725+00:00",
+    "duration_seconds": 424.44,
+    "samples": 71,
+    "cpu_min": 7,
+    "cpu_median": 15,
+    "cpu_p95": 34,
+    "cpu_max": 53,
+    "external_chdman": []
+  }
+}

@@ -1,0 +1,9 @@
+=== RUN   TestSearchMaintenanceMissingLibraryFailsHTTP
+2026/11/18 22:15:08 WARN Error accessing path path=C:\tmp\TestSearchMaintenanceMissingLibraryFailsHTTP2100670601\001\missing-library error="GetFileAttributesEx C:\\tmp\\TestSearchMaintenanceMissingLibraryFailsHTTP2100670601\\001\\missing-library: The system cannot find the file specified."
+2026/11/18 22:15:08 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=0 skipped_archives=0 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=62 library_id=1
+2026/11/18 22:15:08 ERROR Global scan of library failed library_id=1 path=C:\tmp\TestSearchMaintenanceMissingLibraryFailsHTTP2100670601\001\missing-library error="scanner: ingestion did not complete safely"
+    search_maintenance_acceptance_test.go:38: missing library must fail maintenance, got {RunID:1 TaskID:1 Type:rebuild_index Scope:system ScopeID:<nil> Variant: ScopeName: Trigger:manual Status:completed Message: MessageCode:task.msg.rebuild_index.complete MessageParams:map[] Error: Current:1 Total:1 Percent:0x310d3951bb50 RatePerMinute:923.0769230769231 EtaSeconds:<nil> CanCancel:false CanPause:false CanResume:false Retryable:true PausedAt:<nil> PauseReason: ControlPausedMillis:0 CoalescedCount:0 Phase: CurrentItem: EffectiveLimit:<nil> Metrics:map[] Labels:map[] Params:map[] StartedAt:2026-11-18 14:15:08.024 +0000 UTC UpdatedAt:2026-11-18 14:15:08.089 +0000 UTC FinishedAt:2026-11-18 14:15:08.089 +0000 UTC Sequence:0}
+--- FAIL: TestSearchMaintenanceMissingLibraryFailsHTTP (0.94s)
+FAIL
+FAIL	yomifolio/internal/api	1.583s
+FAIL

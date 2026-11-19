@@ -1,0 +1,15 @@
+{
+  "browser": "157.0.4341.60",
+  "locale": "en-US",
+  "evidence": [
+    "English locale and 3000-character metadata title: dialog within 1280x900 viewport, no horizontal overflow",
+    "admin series search result navigates to actual series route",
+    "same browser switched to ordinary reader and navigated from search to series",
+    "ordinary reader book search navigates to actual reader with accessible valid CBZ"
+  ],
+  "errors": [],
+  "notExecuted": [
+    "headed human visual review",
+    "identity switch while an old search response is in flight"
+  ]
+}

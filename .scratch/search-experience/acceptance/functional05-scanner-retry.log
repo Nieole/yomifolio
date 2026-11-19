@@ -1,0 +1,14 @@
+=== RUN   TestCoverBuildReleasesTokenOnFailure
+=== RUN   TestCoverBuildReleasesTokenOnFailure/封面构建时归档打不开
+2026/11/18 22:34:54 INFO Successfully ingested batch book_count=3
+2026/11/18 22:34:54 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=hdd_external volume_key=c: archive_open_concurrency=1 cover_concurrency=1 discovered_archives=3 skipped_archives=0 processed_archives=3 opened_archives=3 hashed_files=0 queued_covers=3 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=63 library_id=1
+2026/11/18 22:34:54 WARN Failed to generate queued thumbnail book_id=2 path="C:\\tmp\\TestCoverBuildReleasesTokenOnFailure封面构建时归档打不4120244815\\001\\library\\Series Alpha\\Beta 02.cbz" error="archive vanished before cover build"
+=== RUN   TestCoverBuildReleasesTokenOnFailure/封面那一页读不出
+2026/11/18 22:34:54 INFO Successfully ingested batch book_count=3
+2026/11/18 22:34:54 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=hdd_external volume_key=c: archive_open_concurrency=1 cover_concurrency=1 discovered_archives=3 skipped_archives=0 processed_archives=3 opened_archives=3 hashed_files=0 queued_covers=3 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=10 library_id=1
+2026/11/18 22:34:54 WARN Failed to generate queued thumbnail book_id=2 path="C:\\tmp\\TestCoverBuildReleasesTokenOnFailure封面那一页读不出3498846451\\001\\library\\Series Alpha\\Beta 02.cbz" error="cover page unreadable"
+--- PASS: TestCoverBuildReleasesTokenOnFailure (0.95s)
+    --- PASS: TestCoverBuildReleasesTokenOnFailure/封面构建时归档打不开 (0.49s)
+    --- PASS: TestCoverBuildReleasesTokenOnFailure/封面那一页读不出 (0.46s)
+PASS
+ok  	yomifolio/internal/scanner	5.649s

@@ -1,0 +1,902 @@
+?   	yomifolio/cmd/queryplan	[no test files]
+?   	yomifolio/cmd/sampledata	[no test files]
+ok  	yomifolio/cmd/server	2.933s
+?   	yomifolio/cmd/storageiobench	[no test files]
+?   	yomifolio/cmd/tsgen	[no test files]
+?   	yomifolio/internal/accounts	[no test files]
+2026/11/18 22:18:46 WARN Error accessing path path=/one error="GetFileAttributesEx /one: The system cannot find the file specified."
+2026/11/18 22:18:46 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=0 skipped_archives=0 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=0 library_id=1
+2026/11/18 22:18:46 ERROR Global scan of library failed library_id=1 path=/one error="scanner: ingestion did not complete safely"
+--- FAIL: TestBookNormalizedHTTPLifecycleRepairAndLongMetadata (7.31s)
+    book_rank_search_test.go:151: rebuild terminated: {RunID:1 TaskID:1 Type:rebuild_index Scope:system ScopeID:<nil> Variant: ScopeName: Trigger:manual Status:failed Message: MessageCode:task.msg.rebuild_index.failed MessageParams:map[] Error:library 1 (/one): scanner: ingestion did not complete safely Current:0 Total:1 Percent:0x3f402c34df10 RatePerMinute:0 EtaSeconds:<nil> CanCancel:false CanPause:false CanResume:false Retryable:true PausedAt:<nil> PauseReason: ControlPausedMillis:0 CoalescedCount:0 Phase: CurrentItem: EffectiveLimit:<nil> Metrics:map[] Labels:map[] Params:map[] StartedAt:2026-11-18 14:18:44.363 +0000 UTC UpdatedAt:2026-11-18 14:18:46.609 +0000 UTC FinishedAt:2026-11-18 14:18:46.609 +0000 UTC Sequence:0}
+2026/11/18 22:18:48 WARN Error accessing path path=/one error="GetFileAttributesEx /one: The system cannot find the file specified."
+2026/11/18 22:18:48 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=0 skipped_archives=0 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=30 library_id=1
+2026/11/18 22:18:48 ERROR Global scan of library failed library_id=1 path=/one error="scanner: ingestion did not complete safely"
+2026/11/18 22:18:50 WARN Error accessing path path=/one error="GetFileAttributesEx /one: The system cannot find the file specified."
+2026/11/18 22:18:50 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=0 skipped_archives=0 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=0 library_id=1
+2026/11/18 22:18:50 ERROR Global scan of library failed library_id=1 path=/one error="scanner: ingestion did not complete safely"
+--- FAIL: TestBookNormalizedHTTPUpgradeV4AndV5 (2.69s)
+    --- FAIL: TestBookNormalizedHTTPUpgradeV4AndV5/4 (1.12s)
+        book_rank_search_test.go:228: rebuild terminated: {RunID:1 TaskID:1 Type:rebuild_index Scope:system ScopeID:<nil> Variant: ScopeName: Trigger:manual Status:failed Message: MessageCode:task.msg.rebuild_index.failed MessageParams:map[] Error:library 1 (/one): scanner: ingestion did not complete safely Current:0 Total:1 Percent:0x3f402d88e728 RatePerMinute:0 EtaSeconds:<nil> CanCancel:false CanPause:false CanResume:false Retryable:true PausedAt:<nil> PauseReason: ControlPausedMillis:0 CoalescedCount:0 Phase: CurrentItem: EffectiveLimit:<nil> Metrics:map[] Labels:map[] Params:map[] StartedAt:2026-11-18 14:18:48.562 +0000 UTC UpdatedAt:2026-11-18 14:18:48.595 +0000 UTC FinishedAt:2026-11-18 14:18:48.595 +0000 UTC Sequence:0}
+    --- FAIL: TestBookNormalizedHTTPUpgradeV4AndV5/5 (1.57s)
+        book_rank_search_test.go:228: rebuild terminated: {RunID:1 TaskID:1 Type:rebuild_index Scope:system ScopeID:<nil> Variant: ScopeName: Trigger:manual Status:failed Message: MessageCode:task.msg.rebuild_index.failed MessageParams:map[] Error:library 1 (/one): scanner: ingestion did not complete safely Current:0 Total:1 Percent:0x3f402c927d88 RatePerMinute:0 EtaSeconds:<nil> CanCancel:false CanPause:false CanResume:false Retryable:true PausedAt:<nil> PauseReason: ControlPausedMillis:0 CoalescedCount:0 Phase: CurrentItem: EffectiveLimit:<nil> Metrics:map[] Labels:map[] Params:map[] StartedAt:2026-11-18 14:18:50.038 +0000 UTC UpdatedAt:2026-11-18 14:18:50.096 +0000 UTC FinishedAt:2026-11-18 14:18:50.096 +0000 UTC Sequence:0}
+2026/11/18 22:18:50 ERROR Failed to bulk edit series count=502 error="constraint failed: rejected (1811)"
+2026/11/18 22:18:50 WARN refresh series stats after bulk edit failed series_id=1 error="constraint failed: rejected (1811)"
+2026/11/18 22:18:50 WARN refresh series stats after bulk edit failed series_id=2 error="constraint failed: rejected (1811)"
+2026/11/18 22:18:57 INFO Successfully rebuilt franchise collections franchise_count=0
+2026/11/18 22:18:57 INFO Successfully rebuilt franchise collections franchise_count=0
+2026/11/18 22:19:09 ERROR write ComicInfo into archive failed book_id=3 path=C:\tmp\TestWriteComicInfoCompletionCountsGoToParams1325613892\003\vol03.cbz error="open C:\\tmp\\TestWriteComicInfoCompletionCountsGoToParams1325613892\\003\\vol03.cbz: The system cannot find the file specified."
+2026/11/18 22:19:09 INFO Logger level updated level=info
+2026/11/18 22:19:09 INFO Logger level updated level=info
+2026/11/18 22:19:09 INFO Logger level updated level=info
+2026/11/18 22:19:09 INFO Logger level updated level=info
+2026/11/18 22:19:09 INFO Logger level updated level=info
+2026/11/18 22:19:09 INFO Logger level updated level=info
+2026/11/18 22:19:10 INFO Logger level updated level=info
+2026/11/18 22:19:10 INFO Logger level updated level=info
+2026/11/18 22:19:10 INFO Logger level updated level=info
+2026/11/18 22:19:10 INFO Logger level updated level=info
+2026/11/18 22:19:10 INFO Logger level updated level=info
+2026/11/18 22:19:10 INFO Logger level updated level=info
+2026/11/18 22:19:10 INFO Logger level updated level=info
+2026/11/18 22:19:11 INFO Logger level updated level=debug
+2026/11/18 22:19:11 INFO Logger level updated level=info
+2026/11/18 22:19:11 INFO Logger level updated level=debug
+2026/11/18 22:19:11 INFO Logger level updated level=info
+2026/11/18 22:19:11 INFO Logger level updated level=info
+2026/11/18 22:19:11 INFO KOReader auth request received username=reader client_key_prefix=48aec629 client_ip=192.0.2.1 user_agent="" accept=""
+2026/11/18 22:19:11 INFO KOReader authenticate attempt username=reader client_key_prefix=48aec629
+2026/11/18 22:19:11 INFO KOReader authenticate succeeded username=reader account_id=1 client_key_prefix=48aec629
+2026/11/18 22:19:11 INFO Logger level updated level=info
+2026/11/18 22:19:11 INFO KOReader auth request received username=reader client_key_prefix=4d5df2c9 client_ip=192.0.2.1 user_agent="" accept=""
+2026/11/18 22:19:11 INFO KOReader authenticate attempt username=reader client_key_prefix=4d5df2c9
+2026/11/18 22:19:11 INFO KOReader authenticate succeeded username=reader account_id=1 client_key_prefix=4d5df2c9
+2026/11/18 22:19:11 INFO KOReader progress push request received username=reader client_key_prefix=4d5df2c9 document=c7a7338fe8fb3a8f11012f689c6b04d9 device=Boox device_id=DEVICE-1 client_ip=192.0.2.1
+2026/11/18 22:19:11 INFO KOReader authenticate attempt username=reader client_key_prefix=4d5df2c9
+2026/11/18 22:19:11 INFO KOReader authenticate succeeded username=reader account_id=1 client_key_prefix=4d5df2c9
+2026/11/18 22:19:11 INFO KOReader progress pull request received username=reader client_key_prefix=4d5df2c9 document=c7a7338fe8fb3a8f11012f689c6b04d9 client_ip=192.0.2.1 user_agent=""
+2026/11/18 22:19:11 INFO KOReader authenticate attempt username=reader client_key_prefix=4d5df2c9
+2026/11/18 22:19:11 INFO KOReader authenticate succeeded username=reader account_id=1 client_key_prefix=4d5df2c9
+2026/11/18 22:19:11 INFO Logger level updated level=info
+2026/11/18 22:19:12 INFO KOReader auth request received username=reader client_key_prefix=6d349936 client_ip=192.0.2.1 user_agent="" accept=application/vnd.koreader.v1+json
+2026/11/18 22:19:12 INFO KOReader authenticate attempt username=reader client_key_prefix=6d349936
+2026/11/18 22:19:12 INFO KOReader authenticate succeeded username=reader account_id=1 client_key_prefix=6d349936
+2026/11/18 22:19:12 INFO Logger level updated level=info
+2026/11/18 22:19:12 INFO KOReader progress push request received username=reader client_key_prefix=7aea5fd6 document=/mnt/other/Series/Volume/Book.cbz device=Boox device_id=DEVICE-2 client_ip=192.0.2.1
+2026/11/18 22:19:12 INFO KOReader authenticate attempt username=reader client_key_prefix=7aea5fd6
+2026/11/18 22:19:12 INFO KOReader authenticate succeeded username=reader account_id=1 client_key_prefix=7aea5fd6
+2026/11/18 22:19:12 INFO Logger level updated level=info
+2026/11/18 22:19:12 INFO KOReader progress push request received username=reader client_key_prefix=802b3517 document=/different/root/Series/Volume/Book.zip device=Boox device_id=DEVICE-3 client_ip=192.0.2.1
+2026/11/18 22:19:12 INFO KOReader authenticate attempt username=reader client_key_prefix=802b3517
+2026/11/18 22:19:12 INFO KOReader authenticate succeeded username=reader account_id=1 client_key_prefix=802b3517
+2026/11/18 22:19:12 INFO Logger level updated level=info
+2026/11/18 22:19:15 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=0 skipped_archives=0 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=3 library_id=1
+2026/11/18 22:19:16 ERROR OpenSeriesDirectory Failed series_id=1 path="C:\\tmp\\TestOpenSeriesDirectory4291798199\\001\\Library A\\Series Alpha" error="permission denied"
+2026/11/18 22:19:19 ERROR Book storage read failed op=list_pages reason=file_missing status=404 book_id=1 library_id=1 library_name="Library A" library_path="C:\\tmp\\TestBulkUpdateSeriesAndGetPagesByBook1114691324\\001\\Library A" path="C:\\tmp\\TestBulkUpdateSeriesAndGetPagesByBook1114691324\\001\\Library A\\Series Alpha\\Alpha 01.cbz" error="GetFileAttributesEx C:\\tmp\\TestBulkUpdateSeriesAndGetPagesByBook1114691324\\001\\Library A\\Series Alpha\\Alpha 01.cbz: The system cannot find the file specified."
+2026/11/18 22:19:20 INFO Removing missing book book_id=1 path="C:\\tmp\\TestDuplicateLaunchQueuesAndBadIDsAreRejected817635073\\001\\Library A\\Series Alpha\\Alpha 01.cbz"
+2026/11/18 22:19:20 INFO Library cleanup completed library_id=1 removed_series=0
+2026/11/18 22:19:25 INFO Scraping library series metadata provider=TestProvider progress=1/2 series_name=Alpha
+2026/11/18 22:19:25 INFO Queued metadata review provider=TestProvider series_title="Alpha scraped"
+2026/11/18 22:19:25 INFO Scraping library series metadata provider=TestProvider progress=2/2 series_name=Beta
+2026/11/18 22:19:25 INFO Queued metadata review provider=TestProvider series_title="Beta scraped"
+2026/11/18 22:19:26 INFO Scrape task completed provider=TestProvider success_count=2 total_count=2
+2026/11/18 22:19:27 ERROR ScanSeries Failed seriesId=999 error="failed to get series: sql: no rows in result set"
+2026/11/18 22:19:27 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:19:27 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:19:33 INFO Logger level updated level=info
+2026/11/18 22:19:33 INFO KOReader self-registration succeeded username=kobo client_ip=192.0.2.1
+2026/11/18 22:19:33 INFO KOReader auth request received username=kobo client_key_prefix=6bd33053 client_ip=192.0.2.1 user_agent="" accept=""
+2026/11/18 22:19:33 INFO KOReader authenticate attempt username=kobo client_key_prefix=6bd33053
+2026/11/18 22:19:33 INFO KOReader authenticate succeeded username=kobo account_id=1 client_key_prefix=6bd33053
+2026/11/18 22:19:33 INFO Logger level updated level=info
+2026/11/18 22:19:33 ERROR Task retry failed task_id=7 run_id=4 task_type=scan_library error="sql: no rows in result set"
+2026/11/18 22:19:34 INFO Successfully ingested batch book_count=1
+2026/11/18 22:19:34 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=25 library_id=1
+2026/11/18 22:19:34 WARN Failed to generate queued thumbnail book_id=1 path="C:\\tmp\\TestScanningALibraryLaunchesItsCoverRun2473715446\\001\\Cover Library\\Series Alpha\\Alpha 01.cbz" error="context canceled"
+2026/11/18 22:19:47 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:47 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:47 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:47 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:47 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:47 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:47 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:47 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:48 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:48 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:49 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:49 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:49 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:49 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:49 ERROR Failed to rebuild franchise collections error="constraint failed: member failed (1811)"
+2026/11/18 22:19:49 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:50 INFO Successfully rebuilt franchise collections franchise_count=2
+2026/11/18 22:19:50 INFO Successfully rebuilt franchise collections franchise_count=2
+2026/11/18 22:19:50 INFO Successfully rebuilt franchise collections franchise_count=2
+2026/11/18 22:19:50 INFO Successfully rebuilt franchise collections franchise_count=2
+2026/11/18 22:19:51 INFO Successfully rebuilt franchise collections franchise_count=2
+2026/11/18 22:19:51 INFO Successfully rebuilt franchise collections franchise_count=2
+2026/11/18 22:19:51 INFO Successfully rebuilt franchise collections franchise_count=2
+2026/11/18 22:19:51 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:51 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:51 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:51 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:52 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:52 INFO Successfully rebuilt franchise collections franchise_count=0
+2026/11/18 22:19:53 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:53 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:53 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:19:53 WARN Failed to quick-fingerprint book book_id=2 path=C:\tmp\TestHashBackfillSkipsUnreadableBookAndAdvancesCursor快速哈1933219637\002\missing.cbz error="GetFileAttributesEx C:\\tmp\\TestHashBackfillSkipsUnreadableBookAndAdvancesCursor快速哈1933219637\\002\\missing.cbz: The system cannot find the file specified."
+2026/11/18 22:19:53 WARN Failed to fingerprint book book_id=2 path=C:\tmp\TestHashBackfillSkipsUnreadableBookAndAdvancesCursor全量哈491977417\002\missing.cbz error="open C:\\tmp\\TestHashBackfillSkipsUnreadableBookAndAdvancesCursor全量哈491977417\\002\\missing.cbz: The system cannot find the file specified."
+2026/11/18 22:20:01 ERROR Book storage read failed op=page_image reason=file_missing status=404 book_id=1 library_id=1 library_name="Library A" library_path="C:\\tmp\\TestServePageImage777593665\\001\\Library A" path="C:\\tmp\\TestServePageImage777593665\\001\\Library A\\Series Alpha\\Alpha 01.cbz" error="GetFileAttributesEx C:\\tmp\\TestServePageImage777593665\\001\\Library A\\Series Alpha\\Alpha 01.cbz: The system cannot find the file specified."
+2026/11/18 22:20:01 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=15 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:01 ERROR Book storage read failed op=page_image reason=file_missing status=404 book_id=1 library_id=1 library_name="Library A" library_path="C:\\tmp\\TestServePageImage777593665\\001\\Library A" path="C:\\tmp\\TestServePageImage777593665\\001\\Library A\\Series Alpha\\Alpha 01.cbz" error="GetFileAttributesEx C:\\tmp\\TestServePageImage777593665\\001\\Library A\\Series Alpha\\Alpha 01.cbz: The system cannot find the file specified."
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=71 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=63 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:03 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=600 duration_ms=70 format=jpeg filter="" auto_crop=false
+2026/11/18 22:20:04 INFO KOReader progress push request received username=device client_key_prefix=5ebe2294 document=Series/Book.cbz device=reader device_id=one client_ip=192.0.2.1
+2026/11/18 22:20:04 INFO KOReader authenticate attempt username=device client_key_prefix=5ebe2294
+2026/11/18 22:20:04 INFO KOReader authenticate succeeded username=device account_id=1 client_key_prefix=5ebe2294
+2026/11/18 22:20:04 INFO KOReader progress push request received username=device client_key_prefix=5ebe2294 document=Series/Book.cbz device=reader device_id=one client_ip=192.0.2.1
+2026/11/18 22:20:04 INFO KOReader authenticate attempt username=device client_key_prefix=5ebe2294
+2026/11/18 22:20:04 INFO KOReader authenticate succeeded username=device account_id=1 client_key_prefix=5ebe2294
+2026/11/18 22:20:13 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:13 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN SSE broker channel full, dropping event event_prefix=run_snapshot
+2026/11/18 22:20:14 WARN SSE broker channel full, dropping event event_prefix=run_live
+2026/11/18 22:20:14 WARN SSE broker channel full, dropping event event_prefix=run_snapshot
+2026/11/18 22:20:14 WARN SSE broker channel full, dropping event event_prefix=run_live
+2026/11/18 22:20:14 WARN SSE broker channel full, dropping event event_prefix=run_snapshot
+2026/11/18 22:20:14 WARN SSE broker channel full, dropping event event_prefix=run_snapshot
+2026/11/18 22:20:14 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN SSE broker channel full, dropping event event_prefix=run_snapshot
+2026/11/18 22:20:14 WARN SSE broker channel full, dropping event event_prefix=run_live
+2026/11/18 22:20:14 WARN SSE broker channel full, dropping event event_prefix=run_snapshot
+2026/11/18 22:20:14 WARN SSE broker channel full, dropping event event_prefix=run_live
+2026/11/18 22:20:14 WARN SSE broker channel full, dropping event event_prefix=run_snapshot
+2026/11/18 22:20:14 WARN SSE broker channel full, dropping event event_prefix=run_snapshot
+2026/11/18 22:20:14 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:14 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:20:15 WARN SSE broker channel full, dropping event event_prefix=run_snapshot
+2026/11/18 22:20:15 WARN SSE broker channel full, dropping event event_prefix=run_live
+2026/11/18 22:20:20 WARN Failed to open archive (may be corrupted) path=C:\tmp\TestExclusiveBlocksAllLibraryDispatchesAndKeepsOtherLibraryUsabl1212716495\001\Available\Series\1.cbz error="failed to open zip C:\\tmp\\TestExclusiveBlocksAllLibraryDispatchesAndKeepsOtherLibraryUsabl1212716495\\001\\Available\\Series\\1.cbz: zip: not a valid zip file"
+2026/11/18 22:20:20 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=1 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=13 library_id=2
+2026/11/18 22:20:39 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:20:39 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:21:32 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=4692 duration_ms=39 format=jpeg filter="" auto_crop=false
+2026/11/18 22:21:35 INFO Page cache budget enforced removed_files=21 freed_bytes=21504 remaining_bytes=9216
+2026/11/18 22:21:37 INFO Served page image book_id=1 page=1 source=processed content_type=image/png bytes=230590 duration_ms=248 format="" filter=lanczos3 auto_crop=false
+2026/11/18 22:21:37 INFO Served page image book_id=1 page=1 source=processed content_type=image/png bytes=230964 duration_ms=82 format="" filter=bicubic auto_crop=false
+2026/11/18 22:21:37 INFO Served page image book_id=1 page=1 source=processed content_type=image/png bytes=218885 duration_ms=141 format="" filter=mitchell auto_crop=false
+2026/11/18 22:21:39 INFO Served page image book_id=1 page=1 source=processed content_type=image/png bytes=226560 duration_ms=1051 format="" filter=lanczos2 auto_crop=false
+2026/11/18 22:21:39 INFO Served page image book_id=1 page=1 source=processed content_type=image/png bytes=151331 duration_ms=40 format="" filter=bspline auto_crop=false
+2026/11/18 22:21:39 INFO Served page image book_id=1 page=1 source=processed content_type=image/png bytes=232205 duration_ms=165 format="" filter=catmullrom auto_crop=false
+2026/11/18 22:21:45 INFO Served page image book_id=1 page=1 source=processed content_type=image/png bytes=2084711 duration_ms=3981 format="" filter=lanczos3 auto_crop=false
+2026/11/18 22:21:47 INFO Served page image book_id=1 page=1 source=processed content_type=image/png bytes=2084711 duration_ms=2027 format="" filter=lanczos3 auto_crop=false
+2026/11/18 22:21:49 INFO Served page image book_id=1 page=1 source=processed content_type=image/png bytes=2084711 duration_ms=2119 format="" filter=lanczos3 auto_crop=false
+2026/11/18 22:21:53 INFO Served page image book_id=1 page=1 source=processed content_type=image/png bytes=4139046 duration_ms=3890 format="" filter=lanczos3 auto_crop=false
+2026/11/18 22:21:57 INFO Served page image book_id=1 page=1 source=processed content_type=image/png bytes=13406408 duration_ms=4700 format="" filter=lanczos3 auto_crop=false
+2026/11/18 22:22:12 INFO Served page image book_id=1 page=1 source=processed content_type=image/png bytes=519024 duration_ms=1026 format="" filter=lanczos3 auto_crop=false
+2026/11/18 22:22:24 INFO Served page image book_id=1 page=1 source=raw content_type=image/jpeg bytes=96613 duration_ms=881 format="" filter=lanczos3 auto_crop=false
+2026/11/18 22:22:24 INFO Served page image book_id=1 page=1 source=raw content_type=image/jpeg bytes=96613 duration_ms=515 format="" filter=lanczos3 auto_crop=false
+2026/11/18 22:22:25 INFO Served page image book_id=1 page=1 source=raw content_type=image/jpeg bytes=96613 duration_ms=448 format="" filter=lanczos3 auto_crop=false
+2026/11/18 22:22:25 INFO Served page image book_id=1 page=1 source=raw content_type=image/jpeg bytes=96613 duration_ms=425 format="" filter=bicubic auto_crop=false
+2026/11/18 22:22:26 INFO Served page image book_id=1 page=1 source=raw content_type=image/jpeg bytes=96613 duration_ms=285 format="" filter=bicubic auto_crop=false
+2026/11/18 22:22:26 INFO Served page image book_id=1 page=1 source=raw content_type=image/jpeg bytes=96613 duration_ms=481 format="" filter=lanczos2 auto_crop=false
+2026/11/18 22:22:27 INFO Served page image book_id=1 page=1 source=raw content_type=image/jpeg bytes=96613 duration_ms=779 format="" filter=lanczos2 auto_crop=false
+2026/11/18 22:22:28 INFO Served page image book_id=1 page=1 source=raw content_type=image/jpeg bytes=96613 duration_ms=656 format="" filter=lanczos2 auto_crop=false
+2026/11/18 22:22:28 INFO Served page image book_id=1 page=1 source=raw content_type=image/jpeg bytes=96613 duration_ms=464 format="" filter=bspline auto_crop=false
+2026/11/18 22:22:28 INFO Served page image book_id=1 page=1 source=processed content_type=image/jpeg bytes=49625 duration_ms=100 format="" filter=lanczos3 auto_crop=false
+2026/11/18 22:22:46 INFO Logger level updated level=info
+2026/11/18 22:22:59 WARN Failed to record reading time user_id=1 book_id=1 error="sql: database is closed"
+2026/11/18 22:23:05 INFO KOReader auth request received username=pending-device client_key_prefix=0835cbd4 client_ip=127.0.0.1 user_agent=Go-http-client/1.1 accept=""
+2026/11/18 22:23:05 INFO KOReader authenticate attempt username=pending-device client_key_prefix=0835cbd4
+2026/11/18 22:23:05 WARN KOReader authenticate rejected: bound site user must change its password username=pending-device account_id=1
+2026/11/18 22:23:05 WARN KOReader auth-related request failed username=pending-device document="" status=auth_failed_password_change_required message=该账户绑定的站点账号尚未完成首登改密，其同步已暂停 client_key_prefix=0835cbd4
+2026/11/18 22:23:05 INFO KOReader progress push request received username=pending-device client_key_prefix=0835cbd4 document=abc device=kindle device_id="" client_ip=127.0.0.1
+2026/11/18 22:23:05 INFO KOReader authenticate attempt username=pending-device client_key_prefix=0835cbd4
+2026/11/18 22:23:05 WARN KOReader authenticate rejected: bound site user must change its password username=pending-device account_id=1
+2026/11/18 22:23:05 WARN KOReader auth-related request failed username=pending-device document=abc status=auth_failed_password_change_required message=该账户绑定的站点账号尚未完成首登改密，其同步已暂停 client_key_prefix=0835cbd4
+2026/11/18 22:23:05 INFO KOReader auth request received username=settled-device client_key_prefix=c0cffbce client_ip=127.0.0.1 user_agent=Go-http-client/1.1 accept=""
+2026/11/18 22:23:05 INFO KOReader authenticate attempt username=settled-device client_key_prefix=c0cffbce
+2026/11/18 22:23:05 INFO KOReader authenticate succeeded username=settled-device account_id=2 client_key_prefix=c0cffbce
+2026/11/18 22:23:06 INFO KOReader auth request received username=pending-device client_key_prefix=0835cbd4 client_ip=127.0.0.1 user_agent=Go-http-client/1.1 accept=""
+2026/11/18 22:23:06 INFO KOReader authenticate attempt username=pending-device client_key_prefix=0835cbd4
+2026/11/18 22:23:06 INFO KOReader authenticate succeeded username=pending-device account_id=1 client_key_prefix=0835cbd4
+2026/11/18 22:23:28 INFO Logger level updated level=info
+2026/11/18 22:23:28 INFO Library relocation preview checked plan_id=1 books=2 blockers=0 anomalies=1
+2026/11/18 22:23:28 INFO Logger level updated level=info
+2026/11/18 22:23:28 INFO Library relocation preview checked plan_id=1 books=2 blockers=0 anomalies=0
+2026/11/18 22:23:28 INFO Logger level updated level=info
+2026/11/18 22:23:29 INFO Library relocation preview checked plan_id=2 books=2 blockers=0 anomalies=1
+2026/11/18 22:23:29 INFO Library relocation preview checked plan_id=2 books=2 blockers=0 anomalies=1
+2026/11/18 22:23:29 INFO Library relocation preview checked plan_id=2 books=2 blockers=0 anomalies=1
+2026/11/18 22:23:29 INFO Removing missing series series_id=2 path=C:\tmp\TestRelocationCombinedLegacyRepairProtectionAndPolicyRecoveryru3029988679\001\new\absent-series
+2026/11/18 22:23:29 INFO Removing missing book book_id=2 path=C:\tmp\TestRelocationCombinedLegacyRepairProtectionAndPolicyRecoveryru3029988679\001\new\series\missing.cbz
+2026/11/18 22:23:29 INFO Library cleanup completed library_id=1 removed_series=1
+2026/11/18 22:23:30 INFO Logger level updated level=info
+2026/11/18 22:23:30 INFO Library relocation preview checked plan_id=1 books=2 blockers=0 anomalies=1
+2026/11/18 22:23:30 INFO Logger level updated level=info
+2026/11/18 22:23:30 INFO Library relocation preview checked plan_id=1 books=2 blockers=0 anomalies=0
+2026/11/18 22:23:31 INFO Logger level updated level=info
+2026/11/18 22:23:32 INFO Library relocation preview checked plan_id=2 books=2 blockers=0 anomalies=1
+2026/11/18 22:23:32 INFO Library relocation preview checked plan_id=2 books=2 blockers=0 anomalies=1
+2026/11/18 22:23:32 INFO Library relocation preview checked plan_id=2 books=2 blockers=0 anomalies=1
+2026/11/18 22:23:32 INFO Removing missing series series_id=2 path=C:\tmp\TestRelocationCombinedLegacyRepairProtectionAndPolicyRecoveryru276659272\001\new\absent-series
+2026/11/18 22:23:32 INFO Removing missing book book_id=2 path=C:\tmp\TestRelocationCombinedLegacyRepairProtectionAndPolicyRecoveryru276659272\001\new\series\missing.cbz
+2026/11/18 22:23:32 INFO Library cleanup completed library_id=1 removed_series=1
+2026/11/18 22:23:33 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:33 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:34 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:34 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:34 INFO Logger level updated level=info
+2026/11/18 22:23:35 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:37 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:37 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:37 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:37 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:37 INFO Logger level updated level=info
+2026/11/18 22:23:38 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:38 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:39 INFO Library relocation preview checked plan_id=1 books=1 blockers=1 anomalies=0
+2026/11/18 22:23:39 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:40 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:40 INFO File watcher started for library library_id=1 path=C:\tmp\TestRelocationWatchRecoveryKeepsLibraryBlockedWhenTargetCannotBe2408600946\001\target watched=2 symlink_dirs=0
+2026/11/18 22:23:40 INFO Logger level updated level=info
+2026/11/18 22:23:40 WARN File watcher registered only part of the library library_id=1 path=C:\tmp\TestRelocationWatchRecoveryKeepsLibraryBlockedWhenTargetCannotBe2408600946\001\target total=1 watched=0 failed=1 unreadable_dirs=0 error="GetFileAttributesEx C:\\tmp\\TestRelocationWatchRecoveryKeepsLibraryBlockedWhenTargetCannotBe2408600946\\001\\target: The system cannot find the file specified."
+2026/11/18 22:23:40 INFO Logger level updated level=info
+2026/11/18 22:23:40 INFO File watcher started for library library_id=1 path=C:\tmp\TestRelocationWatchRecoveryKeepsLibraryBlockedWhenTargetCannotBe2408600946\001\target watched=2 symlink_dirs=0
+2026/11/18 22:23:40 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:40 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:41 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:41 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:41 INFO Logger level updated level=info
+2026/11/18 22:23:42 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:42 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:42 INFO Logger level updated level=info
+2026/11/18 22:23:42 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:42 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:42 INFO Logger level updated level=info
+2026/11/18 22:23:43 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:43 INFO Library relocation preview checked plan_id=1 books=1 blockers=1 anomalies=0
+2026/11/18 22:23:43 INFO Logger level updated level=info
+2026/11/18 22:23:44 INFO Logger level updated level=info
+2026/11/18 22:23:44 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:44 INFO Logger level updated level=info
+2026/11/18 22:23:44 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:44 INFO Logger level updated level=info
+2026/11/18 22:23:45 INFO Logger level updated level=info
+2026/11/18 22:23:45 INFO Library relocation preview checked plan_id=1 books=1 blockers=1 anomalies=0
+2026/11/18 22:23:46 INFO Logger level updated level=info
+2026/11/18 22:23:46 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:46 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:47 INFO Logger level updated level=info
+2026/11/18 22:23:48 INFO Logger level updated level=info
+2026/11/18 22:23:48 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:48 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:49 INFO Logger level updated level=info
+2026/11/18 22:23:49 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:49 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:49 INFO Logger level updated level=info
+2026/11/18 22:23:50 INFO Logger level updated level=info
+2026/11/18 22:23:50 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:50 INFO Logger level updated level=info
+2026/11/18 22:23:51 INFO Logger level updated level=info
+2026/11/18 22:23:51 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:51 INFO Logger level updated level=info
+2026/11/18 22:23:51 INFO Logger level updated level=info
+2026/11/18 22:23:51 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:52 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:52 INFO Logger level updated level=info
+2026/11/18 22:23:52 INFO Logger level updated level=info
+2026/11/18 22:23:52 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:52 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:53 INFO Logger level updated level=info
+2026/11/18 22:23:54 INFO Logger level updated level=info
+2026/11/18 22:23:54 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:54 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:54 INFO Logger level updated level=info
+2026/11/18 22:23:56 INFO Logger level updated level=info
+2026/11/18 22:23:56 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:56 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:56 INFO Logger level updated level=info
+2026/11/18 22:23:57 INFO Logger level updated level=info
+2026/11/18 22:23:57 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:57 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:58 INFO Logger level updated level=info
+2026/11/18 22:23:58 INFO Logger level updated level=info
+2026/11/18 22:23:58 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:59 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:23:59 INFO Logger level updated level=info
+2026/11/18 22:23:59 INFO Logger level updated level=info
+2026/11/18 22:23:59 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:00 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:00 INFO Logger level updated level=info
+2026/11/18 22:24:00 INFO Logger level updated level=info
+2026/11/18 22:24:00 INFO Logger level updated level=info
+2026/11/18 22:24:00 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:00 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:00 INFO Logger level updated level=info
+2026/11/18 22:24:01 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:02 INFO Logger level updated level=info
+2026/11/18 22:24:02 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:03 INFO Logger level updated level=info
+2026/11/18 22:24:04 INFO Logger level updated level=info
+2026/11/18 22:24:04 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:05 INFO Logger level updated level=info
+2026/11/18 22:24:05 INFO Logger level updated level=info
+2026/11/18 22:24:05 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:07 INFO Logger level updated level=info
+2026/11/18 22:24:07 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:07 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:08 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:08 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:08 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:12 INFO Library relocation preview checked plan_id=1 books=1 blockers=2 anomalies=1
+2026/11/18 22:24:12 INFO Library relocation preview checked plan_id=1 books=4 blockers=0 anomalies=4
+2026/11/18 22:24:13 INFO Library relocation preview checked plan_id=1 books=1 blockers=1 anomalies=1
+2026/11/18 22:24:13 INFO Library relocation preview checked plan_id=1 books=1 blockers=1 anomalies=1
+2026/11/18 22:24:14 INFO Library relocation preview checked plan_id=1 books=1 blockers=1 anomalies=1
+2026/11/18 22:24:14 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:14 INFO Library relocation preview checked plan_id=1 books=1 blockers=1 anomalies=1
+2026/11/18 22:24:15 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:15 INFO Library relocation preview checked plan_id=1 books=1 blockers=1 anomalies=1
+2026/11/18 22:24:15 INFO Library relocation preview checked plan_id=1 books=1 blockers=2 anomalies=1
+2026/11/18 22:24:15 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:24:15 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:24:16 INFO Library relocation preview checked plan_id=1 books=125 blockers=0 anomalies=125
+2026/11/18 22:24:16 INFO Library relocation preview checked plan_id=1 books=2 blockers=3 anomalies=2
+2026/11/18 22:24:16 INFO Library relocation preview checked plan_id=1 books=1 blockers=1 anomalies=1
+2026/11/18 22:24:16 INFO Library relocation preview checked plan_id=1 books=1 blockers=1 anomalies=1
+2026/11/18 22:24:16 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:17 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:17 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:17 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:17 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:17 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:17 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:17 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:17 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=0 skipped_archives=0 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=2 library_id=1
+2026/11/18 22:24:17 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:18 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:18 INFO Logger level updated level=info
+2026/11/18 22:24:18 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:18 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:18 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:18 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:18 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:18 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:18 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:18 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:18 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:18 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:18 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:18 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:19 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:19 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:19 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:19 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:20 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:20 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:21 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:21 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:21 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:21 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:22 INFO Logger level updated level=info
+2026/11/18 22:24:22 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:22 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:22 INFO Logger level updated level=info
+2026/11/18 22:24:23 INFO Library relocation preview checked plan_id=1 books=1 blockers=2 anomalies=0
+2026/11/18 22:24:23 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:23 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:25 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:25 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:27 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:27 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:28 INFO Library relocation preview checked plan_id=1 books=1 blockers=1 anomalies=0
+2026/11/18 22:24:29 INFO Library relocation preview checked plan_id=1 books=1 blockers=1 anomalies=0
+2026/11/18 22:24:29 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:29 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:30 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:30 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:30 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:30 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:30 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:31 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:31 ERROR Protected library restoration failed error=relocation_stale_plan
+2026/11/18 22:24:32 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:32 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:32 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:32 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:32 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:32 WARN File watcher registered only part of the library library_id=1 path=C:\tmp\TestRestorationWatcherFailureKeepsProtectionThroughFreshStartup816068718\001\target total=1 watched=0 failed=1 unreadable_dirs=0 error="GetFileAttributesEx C:\\tmp\\TestRestorationWatcherFailureKeepsProtectionThroughFreshStartup816068718\\001\\target: The system cannot find the file specified."
+2026/11/18 22:24:32 ERROR Protected library restoration failed error="GetFileAttributesEx C:\\tmp\\TestRestorationWatcherFailureKeepsProtectionThroughFreshStartup816068718\\001\\target: The system cannot find the file specified."
+2026/11/18 22:24:34 WARN File watcher registered only part of the library library_id=1 path=C:\tmp\TestRestorationWatcherFailureKeepsProtectionThroughFreshStartup816068718\001\target total=1 watched=0 failed=1 unreadable_dirs=0 error="GetFileAttributesEx C:\\tmp\\TestRestorationWatcherFailureKeepsProtectionThroughFreshStartup816068718\\001\\target: The system cannot find the file specified."
+2026/11/18 22:24:34 INFO File watcher started for library library_id=1 path=C:\tmp\TestRestorationWatcherFailureKeepsProtectionThroughFreshStartup816068718\001\target watched=2 symlink_dirs=0
+2026/11/18 22:24:35 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:35 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:35 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:35 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:35 ERROR Protected library restoration failed error=relocation_stale_plan
+2026/11/18 22:24:35 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:35 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:35 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:35 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:35 ERROR Protected library restoration failed error=relocation_stale_plan
+2026/11/18 22:24:36 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:36 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:36 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:36 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:36 ERROR Protected library restoration failed error=relocation_stale_plan
+2026/11/18 22:24:37 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:37 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:37 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:37 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:37 ERROR Protected library restoration failed error=relocation_stale_plan
+2026/11/18 22:24:37 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:37 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:37 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:37 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:37 ERROR Protected library restoration failed error=relocation_stale_plan
+2026/11/18 22:24:38 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:38 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:38 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:38 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:38 ERROR Protected library restoration failed error=relocation_stale_plan
+2026/11/18 22:24:39 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:39 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:39 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:40 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:40 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:40 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:40 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:40 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:41 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:41 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:41 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:41 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:41 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:41 ERROR Protected library restoration failed error="constraint failed: decision unavailable (1811)"
+2026/11/18 22:24:41 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:41 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:41 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:41 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:41 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:41 ERROR Protected library restoration failed error="constraint failed: settings unavailable (1811)"
+2026/11/18 22:24:42 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:42 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:42 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:42 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:42 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:42 ERROR Protected library restoration failed error="constraint failed: protection unavailable (1811)"
+2026/11/18 22:24:43 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:43 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:43 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:43 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:43 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:43 ERROR Protected library restoration failed error="constraint failed: result unavailable (1811)"
+2026/11/18 22:24:45 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:45 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:46 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:46 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:47 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:48 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:49 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:49 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:49 INFO Library relocation preview checked plan_id=3 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:49 INFO Library relocation preview checked plan_id=3 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:49 INFO Library relocation preview checked plan_id=3 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:50 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:50 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:51 INFO Library relocation preview checked plan_id=2 books=105 blockers=0 anomalies=105
+2026/11/18 22:24:52 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:52 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:52 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:53 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:53 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:53 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:54 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:54 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:24:55 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:55 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:24:55 INFO Library relocation preview checked plan_id=2 books=1 blockers=0 anomalies=1
+2026/11/18 22:25:00 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:25:00 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:25:00 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:25:00 INFO Logger level updated level=info
+2026/11/18 22:25:03 INFO File watcher started for library library_id=2 path=C:\tmp\TestRelocationKeepsIndependentNestedLibraryWatchingsourcenone1840214598\001\source\independent watched=1 symlink_dirs=0
+2026/11/18 22:25:03 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:25:03 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:25:09 INFO Hot reload triggered by file watcher library_id=2 forced_by_cleanup=false
+2026/11/18 22:25:11 INFO File watcher started for library library_id=1 path=C:/tmp/TestRelocationKeepsIndependentNestedLibraryWatchingsourcewatch1606739279/001/SOURCE watched=3 symlink_dirs=0
+2026/11/18 22:25:11 INFO File watcher started for library library_id=2 path=C:\tmp\TestRelocationKeepsIndependentNestedLibraryWatchingsourcewatch1606739279\001\source\independent watched=1 symlink_dirs=0
+2026/11/18 22:25:11 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:25:11 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:25:11 INFO File watcher started for library library_id=1 path=C:\tmp\TestRelocationKeepsIndependentNestedLibraryWatchingsourcewatch1606739279\001\target watched=2 symlink_dirs=0
+2026/11/18 22:25:17 INFO Hot reload triggered by file watcher library_id=2 forced_by_cleanup=false
+2026/11/18 22:25:18 INFO File watcher started for library library_id=2 path=C:\tmp\TestRelocationKeepsIndependentNestedLibraryWatchingtargetnone1159215389\001\target\independent watched=1 symlink_dirs=0
+2026/11/18 22:25:18 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:25:18 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:25:24 INFO Hot reload triggered by file watcher library_id=2 forced_by_cleanup=false
+2026/11/18 22:25:26 INFO File watcher started for library library_id=1 path=C:/tmp/TestRelocationKeepsIndependentNestedLibraryWatchingtargetwatch2894906035/001/SOURCE watched=2 symlink_dirs=0
+2026/11/18 22:25:26 INFO File watcher started for library library_id=2 path=C:\tmp\TestRelocationKeepsIndependentNestedLibraryWatchingtargetwatch2894906035\001\target\independent watched=1 symlink_dirs=0
+2026/11/18 22:25:26 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:25:26 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 22:25:26 INFO File watcher started for library library_id=1 path=C:\tmp\TestRelocationKeepsIndependentNestedLibraryWatchingtargetwatch2894906035\001\target watched=2 symlink_dirs=0
+2026/11/18 22:25:32 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:25:32 INFO Hot reload triggered by file watcher library_id=2 forced_by_cleanup=false
+--- FAIL: TestSeriesNormalizedSearchHTTPLifecycleAndRepair (1.51s)
+    series_normalized_search_test.go:258: rebuild terminated: {RunID:1 TaskID:1 Type:rebuild_index Scope:system ScopeID:<nil> Variant: ScopeName: Trigger:manual Status:failed Message: MessageCode:task.msg.rebuild_index.failed MessageParams:map[] Error:library 2 (/two): scanner: ingestion did not complete safely
+        library 1 (/one): scanner: ingestion did not complete safely Current:0 Total:1 Percent:0x3f402c548d38 RatePerMinute:0 EtaSeconds:<nil> CanCancel:false CanPause:false CanResume:false Retryable:true PausedAt:<nil> PauseReason: ControlPausedMillis:0 CoalescedCount:0 Phase: CurrentItem: EffectiveLimit:<nil> Metrics:map[] Labels:map[] Params:map[] StartedAt:2026-11-18 14:26:40.388 +0000 UTC UpdatedAt:2026-11-18 14:26:40.39 +0000 UTC FinishedAt:2026-11-18 14:26:40.39 +0000 UTC Sequence:0}
+--- FAIL: TestSeriesNormalizedSearchHTTPUpgradeV4 (1.45s)
+    series_normalized_search_test.go:354: rebuild terminated: {RunID:1 TaskID:1 Type:rebuild_index Scope:system ScopeID:<nil> Variant: ScopeName: Trigger:manual Status:failed Message: MessageCode:task.msg.rebuild_index.failed MessageParams:map[] Error:library 1 (/one): scanner: ingestion did not complete safely Current:0 Total:1 Percent:0x3f402d028108 RatePerMinute:0 EtaSeconds:<nil> CanCancel:false CanPause:false CanResume:false Retryable:true PausedAt:<nil> PauseReason: ControlPausedMillis:0 CoalescedCount:0 Phase: CurrentItem: EffectiveLimit:<nil> Metrics:map[] Labels:map[] Params:map[] StartedAt:2026-11-18 14:26:43.908 +0000 UTC UpdatedAt:2026-11-18 14:26:43.911 +0000 UTC FinishedAt:2026-11-18 14:26:43.911 +0000 UTC Sequence:0}
+FAIL
+FAIL	yomifolio/internal/api	596.386s
+ok  	yomifolio/internal/application	9.369s
+ok  	yomifolio/internal/application/configuration	5.148s
+ok  	yomifolio/internal/application/diskjobs	8.099s
+ok  	yomifolio/internal/application/intelligence	1.625s
+ok  	yomifolio/internal/application/libraries	8.725s
+ok  	yomifolio/internal/application/maintenance	7.589s
+ok  	yomifolio/internal/application/relocating	3.697s
+ok  	yomifolio/internal/application/runtime	7.637s
+ok  	yomifolio/internal/application/scanning	42.384s
+ok  	yomifolio/internal/application/seriesediting	3.254s
+ok  	yomifolio/internal/bookcontent	6.770s
+ok  	yomifolio/internal/bookidentity	6.014s
+ok  	yomifolio/internal/booksort	6.367s
+ok  	yomifolio/internal/bootstrap	14.052s
+?   	yomifolio/internal/catalogsearch	[no test files]
+ok  	yomifolio/internal/config	4.460s
+?   	yomifolio/internal/dashboard	[no test files]
+ok  	yomifolio/internal/database	63.911s
+ok  	yomifolio/internal/diskwork	4.629s
+ok  	yomifolio/internal/external	13.161s
+ok  	yomifolio/internal/images	10.573s
+ok  	yomifolio/internal/koreader	20.546s
+ok  	yomifolio/internal/logger	3.419s
+ok  	yomifolio/internal/metadata	17.917s
+ok  	yomifolio/internal/organize	5.649s
+ok  	yomifolio/internal/parser	10.954s
+ok  	yomifolio/internal/proposal	16.311s
+ok  	yomifolio/internal/reading	31.062s
+?   	yomifolio/internal/recommendation	[no test files]
+?   	yomifolio/internal/relocation	[no test files]
+ok  	yomifolio/internal/runhandle	7.701s
+ok  	yomifolio/internal/runtimecfg	4.968s
+2026/11/18 22:29:22 WARN Failed to open archive (may be corrupted) path="C:\\tmp\\TestScanAccountsArchiveFailuresAndKeepsScanning归档打不开3594181070\\001\\library\\Series Alpha\\Beta 02.cbz" error="failed to open zip C:\\tmp\\TestScanAccountsArchiveFailuresAndKeepsScanning归档打不开3594181070\\001\\library\\Series Alpha\\Beta 02.cbz: zip: not a valid zip file"
+2026/11/18 22:29:22 INFO Successfully ingested batch book_count=2
+2026/11/18 22:29:22 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=hdd_external volume_key=c: archive_open_concurrency=1 cover_concurrency=1 discovered_archives=3 skipped_archives=0 processed_archives=3 opened_archives=2 hashed_files=0 queued_covers=2 failed_archives=1 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=51 library_id=1
+2026/11/18 22:29:22 WARN Failed to scan pages inside archive path="C:\\tmp\\TestScanAccountsArchiveFailuresAndKeepsScanning归档打开后1277799620\\001\\library\\Series Alpha\\Beta 02.cbz" error="page directory unreadable"
+2026/11/18 22:29:22 INFO Successfully ingested batch book_count=2
+2026/11/18 22:29:22 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=hdd_external volume_key=c: archive_open_concurrency=1 cover_concurrency=1 discovered_archives=3 skipped_archives=0 processed_archives=3 opened_archives=3 hashed_files=0 queued_covers=2 failed_archives=1 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=5 library_id=1
+2026/11/18 22:29:22 INFO Successfully ingested batch book_count=2
+2026/11/18 22:29:22 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=21 library_id=1
+2026/11/18 22:29:22 INFO Successfully ingested batch book_count=4
+2026/11/18 22:29:22 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=4 skipped_archives=0 processed_archives=4 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=14 library_id=1
+2026/11/18 22:29:22 INFO Successfully ingested batch book_count=4
+2026/11/18 22:29:22 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=4 skipped_archives=0 processed_archives=4 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=14 library_id=1
+2026/11/18 22:29:22 INFO Removing missing series series_id=1 path=C:\tmp\TestCleanupStillRemovesMinorityMissingSeries2164248451\001\library\SeriesA
+2026/11/18 22:29:22 INFO Library cleanup completed library_id=1 removed_series=1
+2026/11/18 22:29:22 INFO File watcher started for library library_id=7 path=C:/tmp\TestWatcherEventLoopSchedulesScanOnNewFile1624342148\001 watched=1 symlink_dirs=0
+2026/11/18 22:29:22 INFO File watcher started for library library_id=8 path=C:/tmp\TestWatcherEventLoopIgnoresFilteredFormat252639063\001 watched=1 symlink_dirs=0
+2026/11/18 22:29:23 INFO Successfully ingested batch book_count=2
+2026/11/18 22:29:23 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=hdd_external volume_key=c: archive_open_concurrency=1 cover_concurrency=1 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=2 hashed_files=0 queued_covers=2 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=20 library_id=1
+2026/11/18 22:29:24 INFO Successfully ingested batch book_count=3
+2026/11/18 22:29:24 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=hdd_external volume_key=c: archive_open_concurrency=1 cover_concurrency=1 discovered_archives=3 skipped_archives=0 processed_archives=3 opened_archives=3 hashed_files=0 queued_covers=3 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=475 library_id=1
+2026/11/18 22:29:24 WARN Failed to generate queued thumbnail book_id=2 path="C:\\tmp\\TestCoverBuildReleasesTokenOnFailure封面构建时归档打不963200844\\001\\library\\Series Alpha\\Beta 02.cbz" error="archive vanished before cover build"
+2026/11/18 22:29:42 INFO Successfully ingested batch book_count=3
+2026/11/18 22:29:42 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=hdd_external volume_key=c: archive_open_concurrency=1 cover_concurrency=1 discovered_archives=3 skipped_archives=0 processed_archives=3 opened_archives=3 hashed_files=0 queued_covers=3 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=7916 library_id=1
+2026/11/18 22:29:45 INFO Queued thumbnail cache write completed path="C:\\tmp\\TestCoverBuildReleasesTokenOnFailure封面那一页读不出3285388450\\001\\library\\Series Alpha\\Alpha 01.cbz" thumbnail_path=C:\tmp\TestCoverBuildReleasesTokenOnFailure封面那一页读不出3285388450\002\thumbs\b2\b29562702f78c0096796afc58fa1693ee5bb298f.webp storage_profile=hdd_external volume_key=c: io_wait_ms=0 paused_ms=0 thumbnail_write_ms=1460
+2026/11/18 22:29:45 WARN Failed to update queued thumbnail cover path book_id=1 error="sql: database is closed"
+2026/11/18 22:29:46 WARN Failed to generate queued thumbnail book_id=2 path="C:\\tmp\\TestCoverBuildReleasesTokenOnFailure封面那一页读不出3285388450\\001\\library\\Series Alpha\\Beta 02.cbz" error="cover page unreadable"
+2026/11/18 22:29:49 INFO Queued thumbnail cache write completed path="C:\\tmp\\TestCoverBuildReleasesTokenOnFailure封面那一页读不出3285388450\\001\\library\\Series Alpha\\Gamma 03.cbz" thumbnail_path=C:\tmp\TestCoverBuildReleasesTokenOnFailure封面那一页读不出3285388450\002\thumbs\f7\f7c9971a7a7e6ac19402b3c3de3e9603775e7fbd.webp storage_profile=hdd_external volume_key=c: io_wait_ms=0 paused_ms=0 thumbnail_write_ms=958
+2026/11/18 22:29:49 WARN Failed to update queued thumbnail cover path book_id=3 error="sql: database is closed"
+--- FAIL: TestCoverBuildReleasesTokenOnFailure (29.62s)
+    --- FAIL: TestCoverBuildReleasesTokenOnFailure/封面那一页读不出 (28.20s)
+        cover_build_test.go:93: 封面队列没能收尾（漏掉的令牌会让后一本永远等下去）: context deadline exceeded
+2026/11/18 22:30:11 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:11 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=6243 library_id=1
+2026/11/18 22:30:14 INFO Queued thumbnail cache write completed path="C:\\tmp\\TestCustomCoverSurvivesRescan强制整库扫描后自定义封3511456914\\001\\library\\Series Alpha\\Vol 01.cbz" thumbnail_path=C:\tmp\TestCustomCoverSurvivesRescan强制整库扫描后自定义封3511456914\002\thumbs\fd\fd84f540d5dd87cdfa1377d1fd3df693809f29b6.webp storage_profile=auto volume_key=c: io_wait_ms=0 paused_ms=0 thumbnail_write_ms=1317
+2026/11/18 22:30:20 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:20 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=4549 library_id=1
+2026/11/18 22:30:42 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:42 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=4268 library_id=1
+2026/11/18 22:30:44 INFO Queued thumbnail cache write completed path="C:\\tmp\\TestCustomCoverSurvivesRescan单系列重扫force=true后3764271224\\001\\library\\Series Alpha\\Vol 01.cbz" thumbnail_path="C:\\tmp\\TestCustomCoverSurvivesRescan单系列重扫force=true后3764271224\\002\\thumbs\\05\\05a57d9a0cc7b0e4cb9116f0cab4161c533670fe.webp" storage_profile=auto volume_key=c: io_wait_ms=0 paused_ms=0 thumbnail_write_ms=1186
+2026/11/18 22:30:45 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:45 INFO Scan completed scope=series scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=73 series_id=1
+2026/11/18 22:30:45 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:45 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=7 library_id=1
+2026/11/18 22:30:45 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:45 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=4 library_id=1
+2026/11/18 22:30:45 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:45 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=5 library_id=1
+2026/11/18 22:30:45 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:45 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=8 library_id=1
+2026/11/18 22:30:45 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:45 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=13 library_id=1
+2026/11/18 22:30:46 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:46 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=6 library_id=1
+2026/11/18 22:30:46 INFO Successfully ingested batch book_count=2
+2026/11/18 22:30:46 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=2 hashed_files=0 queued_covers=2 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=19 library_id=1
+2026/11/18 22:30:46 INFO Successfully ingested batch book_count=2
+2026/11/18 22:30:46 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=2 hashed_files=0 queued_covers=2 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=8 library_id=1
+2026/11/18 22:30:46 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:46 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=4 library_id=2
+2026/11/18 22:30:46 INFO Successfully ingested batch book_count=2
+2026/11/18 22:30:46 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=2 hashed_files=0 queued_covers=2 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=15 library_id=1
+2026/11/18 22:30:46 INFO Successfully ingested batch book_count=2
+2026/11/18 22:30:46 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=2 hashed_files=0 queued_covers=2 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=24 library_id=1
+2026/11/18 22:30:46 INFO Successfully ingested batch book_count=2
+2026/11/18 22:30:46 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=2 hashed_files=0 queued_covers=2 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=7 library_id=1
+2026/11/18 22:30:46 INFO Successfully ingested batch book_count=2
+2026/11/18 22:30:46 ERROR Scan finished with stale series statistics stale_series=1 hint="these series keep outdated book_count/total_pages until they are scanned again"
+2026/11/18 22:30:46 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=1 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=9 library_id=1
+2026/11/18 22:30:46 INFO Successfully ingested batch book_count=2
+2026/11/18 22:30:46 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=4 library_id=1
+2026/11/18 22:30:47 INFO Successfully ingested batch book_count=6
+2026/11/18 22:30:47 WARN Scan completed with errors scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=6 skipped_archives=0 processed_archives=6 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=11 library_id=1 error="context canceled"
+2026/11/18 22:30:47 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:47 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=15 library_id=1
+2026/11/18 22:30:47 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:30:47 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:47 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=8 library_id=1
+2026/11/18 22:30:47 INFO Successfully rebuilt franchise collections franchise_count=1
+2026/11/18 22:30:47 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:47 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=6 library_id=1
+2026/11/18 22:30:47 INFO Removing missing series series_id=2 path="C:\\tmp\\TestScannerIngestionAndCleanupPersistFranchiseFactChanges180897004\\001\\library\\Missing companion"
+2026/11/18 22:30:47 INFO Library cleanup completed library_id=1 removed_series=1
+2026/11/18 22:30:47 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:47 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=12 library_id=1
+2026/11/18 22:30:47 INFO Rehomed renamed book book_id=1 old_path="C:\\tmp\\TestFastScanPreservesPageCountAndCoverAcrossRename162888829\\001\\library\\Series Alpha\\Vol 01.cbz" new_path="C:\\tmp\\TestFastScanPreservesPageCountAndCoverAcrossRename162888829\\001\\library\\Series Alpha\\Volume 001.cbz" match=size_mtime
+2026/11/18 22:30:47 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:47 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=1 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=7 library_id=1
+2026/11/18 22:30:47 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=1 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=2 library_id=1
+2026/11/18 22:30:47 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:47 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=9 library_id=1
+2026/11/18 22:30:47 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:47 INFO Scan completed scope=library scan_profile=fast_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=4 library_id=1
+2026/11/18 22:30:47 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:47 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=7 library_id=1
+2026/11/18 22:30:47 WARN No pages found in archive to extract cover path="C:\\tmp\\TestScanZeroesPageCountWhenArchiveTrulyHasNoPages1661842014\\001\\library\\Series Alpha\\Vol 01.cbz"
+2026/11/18 22:30:47 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:47 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=16 library_id=1
+2026/11/18 22:30:48 ERROR Batch ingest transaction failed, dropping batch book_count=100 error="constraint failed: FOREIGN KEY constraint failed (787)"
+2026/11/18 22:30:48 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:48 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=101 skipped_archives=0 processed_archives=101 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=100 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=166 library_id=1
+2026/11/18 22:30:48 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:48 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=15 library_id=1
+2026/11/18 22:30:48 ERROR Batch ingest transaction failed, dropping batch book_count=1 error="constraint failed: FOREIGN KEY constraint failed (787)"
+2026/11/18 22:30:48 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=1 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=2 library_id=1
+2026/11/18 22:30:48 INFO Successfully ingested batch book_count=2
+2026/11/18 22:30:48 INFO Scan completed scope=library scan_profile=fast_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=7 library_id=1
+2026/11/18 22:30:48 INFO Scan completed scope=series scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=0 skipped_archives=0 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=1 series_id=1
+2026/11/18 22:30:49 WARN Failed to compute book binary fingerprint path=C:\tmp\TestLostFingerprintSourceCannotQualifyCleanup3005447790\001\library\Series\old.cbz error="open C:\\tmp\\TestLostFingerprintSourceCannotQualifyCleanup3005447790\\001\\library\\Series\\old.cbz: The system cannot find the file specified." scan_profile=identity_scan
+2026/11/18 22:30:49 WARN Failed to compute quick book fingerprint path=C:\tmp\TestLostFingerprintSourceCannotQualifyCleanup3005447790\001\library\Series\old.cbz error="GetFileAttributesEx C:\\tmp\\TestLostFingerprintSourceCannotQualifyCleanup3005447790\\001\\library\\Series\\old.cbz: The system cannot find the file specified." scan_profile=identity_scan
+2026/11/18 22:30:49 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:49 INFO Scan completed scope=library scan_profile=identity_scan force=false storage_profile=custom volume_key=c: archive_open_concurrency=2 cover_concurrency=2 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=2 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=1 paused_ms=0 duration_ms=23 library_id=1
+2026/11/18 22:30:49 WARN Failed to generate queued thumbnail book_id=1 path=C:\tmp\TestLostFingerprintSourceCannotQualifyCleanup3005447790\001\library\Series\old.cbz error="failed to open zip C:\\tmp\\TestLostFingerprintSourceCannotQualifyCleanup3005447790\\001\\library\\Series\\old.cbz: open C:\\tmp\\TestLostFingerprintSourceCannotQualifyCleanup3005447790\\001\\library\\Series\\old.cbz: The system cannot find the file specified."
+2026/11/18 22:30:49 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:49 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=7 library_id=1
+2026/11/18 22:30:49 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:49 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=27 library_id=1
+2026/11/18 22:30:49 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:49 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=5 library_id=1
+2026/11/18 22:30:49 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=1 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=1 library_id=1
+2026/11/18 22:30:49 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:49 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=4 library_id=1
+2026/11/18 22:30:49 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:49 INFO Scan completed scope=series scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=18 series_id=1
+2026/11/18 22:30:49 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:49 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=7 library_id=1
+2026/11/18 22:30:49 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=1 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=1 library_id=1
+2026/11/18 22:30:49 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:49 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=6 library_id=1
+2026/11/18 22:30:49 INFO Rehomed renamed book book_id=1 old_path="C:\\tmp\\TestRenamedBookKeepsIdentityAndProgress2688025153\\001\\library\\Series Alpha\\Vol 01.cbz" new_path="C:\\tmp\\TestRenamedBookKeepsIdentityAndProgress2688025153\\001\\library\\Series Alpha\\Volume 001.cbz" match=size_mtime
+2026/11/18 22:30:49 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:49 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=1 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=4 library_id=1
+2026/11/18 22:30:49 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:49 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=6 library_id=1
+2026/11/18 22:30:49 INFO Rehomed renamed book book_id=1 old_path="C:\\tmp\\TestRenamedBookSurvivesCleanup2487902484\\001\\library\\Series Alpha\\Vol 01.cbz" new_path="C:\\tmp\\TestRenamedBookSurvivesCleanup2487902484\\001\\library\\Series Alpha\\Volume 001.cbz" match=size_mtime
+2026/11/18 22:30:49 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:49 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=1 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=3 library_id=1
+2026/11/18 22:30:49 INFO Library cleanup completed library_id=1 removed_series=0
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=14 library_id=1
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=1 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=2 library_id=1
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=7 library_id=1
+2026/11/18 22:30:50 INFO Rehomed renamed book book_id=1 old_path="C:\\tmp\\TestSeriesScanRehomesRenamedBook4234044585\\001\\library\\Series Alpha\\Vol 01.cbz" new_path="C:\\tmp\\TestSeriesScanRehomesRenamedBook4234044585\\001\\library\\Series Alpha\\Volume 001.cbz" match=size_mtime
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:50 INFO Scan completed scope=series scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=1 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=2 series_id=1
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=1 io_wait_ms=0 paused_ms=0 duration_ms=6 library_id=1
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=2
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=6 library_id=1
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=2
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=7 library_id=1
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=2
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=7 library_id=1
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=1 io_wait_ms=0 paused_ms=0 duration_ms=5 library_id=1
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:50 INFO Scan completed scope=series scan_profile=fast_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=1 io_wait_ms=0 paused_ms=0 duration_ms=3 series_id=1
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=2
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=9 library_id=1
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=fast_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=1 io_wait_ms=0 paused_ms=0 duration_ms=4 library_id=1
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=2
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=fast_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=7 library_id=1
+2026/11/18 22:30:50 ERROR Failed to create/upsert series series_name="One Piece" error="constraint failed: reject initial series (1811)"
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=25 library_id=1
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=14 library_id=1
+2026/11/18 22:30:50 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:50 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=5 library_id=1
+2026/11/18 22:30:51 ERROR Failed to upsert book path="C:\\tmp\\TestScanMetadataFailurePathsKeepTheirBatchSemanticsbook_transac2931125831\\001\\library\\One Piece\\One Piece 01.cbz" error="constraint failed: reject batch (1811)"
+2026/11/18 22:30:51 ERROR Batch ingest transaction failed, dropping batch book_count=1 error="SQL logic error: cannot commit - no transaction is active (1)"
+2026/11/18 22:30:51 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=0 failed_archives=1 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=4 library_id=1
+2026/11/18 22:30:51 WARN Failed to load library scan formats, falling back to all supported formats library_id=1 error="context canceled"
+2026/11/18 22:30:51 WARN Failed to load existing books cache library_id=1 error="context canceled"
+2026/11/18 22:30:51 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:51 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=122 library_id=1
+2026/11/18 22:30:52 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:52 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=66 library_id=1
+2026/11/18 22:30:52 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:52 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=119 library_id=1
+2026/11/18 22:30:52 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=1 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=2 library_id=1
+2026/11/18 22:30:53 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:53 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=41 library_id=1
+2026/11/18 22:30:53 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:53 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=54 library_id=1
+2026/11/18 22:30:54 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:54 INFO Scan completed scope=library scan_profile=fast_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=13 library_id=1
+2026/11/18 22:30:55 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:55 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=25 library_id=1
+2026/11/18 22:30:55 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:55 INFO Scan completed scope=library scan_profile=fast_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=3 library_id=1
+2026/11/18 22:30:56 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:56 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=62 library_id=1
+2026/11/18 22:30:56 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:56 INFO Scan completed scope=series scan_profile=fast_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=3 series_id=1
+2026/11/18 22:30:57 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:57 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=28 library_id=1
+2026/11/18 22:30:58 INFO Successfully ingested batch book_count=1
+2026/11/18 22:30:58 INFO Scan completed scope=library scan_profile=identity_scan force=true storage_profile=hdd_external volume_key=c: archive_open_concurrency=1 cover_concurrency=1 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=2 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=44 library_id=1
+2026/11/18 22:31:00 INFO Successfully ingested batch book_count=1
+2026/11/18 22:31:00 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=199 library_id=1
+2026/11/18 22:31:01 INFO Successfully ingested batch book_count=4
+2026/11/18 22:31:01 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=4 skipped_archives=0 processed_archives=4 opened_archives=4 hashed_files=0 queued_covers=4 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=76 library_id=1
+2026/11/18 22:31:01 INFO Successfully ingested batch book_count=3
+2026/11/18 22:31:01 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=3 skipped_archives=0 processed_archives=3 opened_archives=3 hashed_files=0 queued_covers=3 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=96 library_id=1
+2026/11/18 22:31:01 INFO Library cleanup completed library_id=1 removed_series=0
+2026/11/18 22:31:01 INFO Successfully ingested batch book_count=3
+2026/11/18 22:31:01 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=3 skipped_archives=0 processed_archives=3 opened_archives=3 hashed_files=0 queued_covers=3 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=14 library_id=1
+2026/11/18 22:31:02 INFO Removing missing series series_id=3 path="C:\\tmp\\TestCleanupLibraryRemovesSeriesWhenFilesAreGone2333358001\\001\\library\\Series Gamma"
+2026/11/18 22:31:02 INFO Library cleanup completed library_id=1 removed_series=1
+2026/11/18 22:31:02 INFO Scan completed scope=library scan_profile=metadata_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=0 skipped_archives=0 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=1 library_id=1
+2026/11/18 22:31:02 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=0 skipped_archives=0 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=1 library_id=1
+2026/11/18 22:31:02 INFO Scan completed scope=series scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=0 skipped_archives=0 processed_archives=0 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=1 series_id=1
+2026/11/18 22:31:02 INFO Successfully ingested batch book_count=1
+2026/11/18 22:31:02 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=12 library_id=1
+2026/11/18 22:31:02 INFO Successfully ingested batch book_count=1
+2026/11/18 22:31:02 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=7 library_id=1
+2026/11/18 22:31:03 INFO Successfully ingested batch book_count=2
+2026/11/18 22:31:03 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=2 skipped_archives=0 processed_archives=2 opened_archives=2 hashed_files=0 queued_covers=2 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=62 library_id=1
+2026/11/18 22:31:03 INFO File watcher started for library library_id=1 path=C:/tmp\TestWatcherRequiresScanAfterEventsArrivingDuringIngestion2289445645\001 watched=1 symlink_dirs=0
+2026/11/18 22:31:03 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:03 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:05 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:05 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:05 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:05 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:05 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:06 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:06 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:06 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:06 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:06 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:06 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:07 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:07 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:07 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:07 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:07 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:08 INFO Successfully ingested batch book_count=1
+2026/11/18 22:31:08 INFO Scan completed scope=library scan_profile=fast_scan force=false storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=0 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=5 library_id=1
+2026/11/18 22:31:08 INFO File watcher started for library library_id=1 path=C:/tmp\TestWatcherDrainsBurstWhileRegistrationIsBlockedAndStops966900739\001 watched=2 symlink_dirs=0
+2026/11/18 22:31:08 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:08 INFO File watcher started for library library_id=1 path=C:/tmp\TestRealWatcherStopsWhileDirectoriesAreRenamedAndRecreated2093905639\001 watched=1 symlink_dirs=0
+2026/11/18 22:31:11 INFO File watcher started for library library_id=1 path=C:/tmp\TestStopCancelsAnInFlightRecursiveRegistration2168777466\001 watched=1 symlink_dirs=0
+2026/11/18 22:31:13 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:15 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:15 ERROR Hot reload scan failed library_id=1 error="scan failed"
+2026/11/18 22:31:16 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:16 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:17 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:17 ERROR Hot reload scan failed library_id=1 error="scan failed"
+2026/11/18 22:31:17 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:17 ERROR Hot reload scan failed library_id=1 error="scan failed"
+2026/11/18 22:31:17 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:17 ERROR Hot reload scan failed library_id=1 error="scan failed"
+2026/11/18 22:31:17 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:17 ERROR Hot reload scan failed library_id=1 error="scan failed"
+2026/11/18 22:31:17 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=false
+2026/11/18 22:31:17 ERROR Hot reload scan failed library_id=1 error="scan failed"
+2026/11/18 22:31:18 INFO Hot reload triggered by file watcher library_id=1 forced_by_cleanup=true
+2026/11/18 22:31:18 INFO File watcher started for library library_id=1 path=C:/tmp\TestWatchLibraryWatchesNestedDirectories2426415534\001 watched=3 symlink_dirs=0
+2026/11/18 22:31:18 INFO File watcher started for library library_id=1 path=C:/tmp\TestUnwatchLibraryRemovesNestedDirectories509241472\001 watched=3 symlink_dirs=0
+FAIL
+FAIL	yomifolio/internal/scanner	119.268s
+?   	yomifolio/internal/seriescontext	[no test files]
+ok  	yomifolio/internal/seriesmeta	3.344s
+?   	yomifolio/internal/seriesreview	[no test files]
+ok  	yomifolio/internal/storageio	1.037s
+ok  	yomifolio/internal/task	34.968s
+ok  	yomifolio/internal/taskcontrol	5.748s
+ok  	yomifolio/internal/taskstore	39.537s
+?   	yomifolio/internal/testfixture	[no test files]
+?   	yomifolio/web	[no test files]
+?   	yomifolio/web/node_modules/flatted/golang/pkg/flatted	[no test files]
+FAIL

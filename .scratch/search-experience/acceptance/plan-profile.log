@@ -1,0 +1,16 @@
+=== RUN   TestSearchAcceptanceQueryPlan
+    search_acceptance_plan_test.go:31: SELECT count(*) FROM series_gram_fts WHERE series_gram_fts MATCH '"E6B5B7"*' 19980 9.71034ms
+    search_acceptance_plan_test.go:31: SELECT count(*) FROM series_search_text WHERE instr(name,'海')>0 19980 22.90396ms
+    search_acceptance_plan_test.go:31: SELECT count(*) FROM series_gram_fts f JOIN series_search_text st ON st.series_id=f.rowid WHERE series_gram_fts MATCH '"E6B5B7"*' AND instr(st.name,'海')>0 19980 12.58183ms
+    search_acceptance_plan_test.go:39: global series avg 101.007635ms
+    search_acceptance_plan_test.go:58: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:58: LIST SUBQUERY 1
+    search_acceptance_plan_test.go:58: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:58: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:58: REUSE LIST SUBQUERY 1
+    search_acceptance_plan_test.go:58: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:58: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:58: USE TEMP B-TREE FOR ORDER BY
+--- PASS: TestSearchAcceptanceQueryPlan (10.58s)
+PASS
+ok  	yomifolio/internal/database	11.102s

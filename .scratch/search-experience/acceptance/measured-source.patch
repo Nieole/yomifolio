@@ -1,0 +1,137 @@
+diff --git a/internal/database/series_search.go b/internal/database/series_search.go
+index 85ef6bfd..2dc5c32e 100644
+--- a/internal/database/series_search.go
++++ b/internal/database/series_search.go
+@@ -284,6 +284,16 @@ func (s *SqlStore) searchProtocolSeriesSubstring(ctx context.Context, keyword st
+ // Each type is ordered by the same key before LIMIT: its top N is a sufficient
+ // superset of its contribution to the mixed top N (no raw-source truncation).
+ func (s *SqlStore) searchGlobalBooksSubstring(ctx context.Context, db globalSearchReader, keyword string, limit int32, after *GlobalSearchKey) ([]BookSearchHit, error) {
++	query, args := globalBooksStatement(keyword, limit, after)
++	rows, err := db.QueryContext(ctx, query, args...)
++
++	if err != nil {
++		return nil, err
++	}
++	return scanBookSearchHits(rows)
++}
++
++func globalBooksStatement(keyword string, limit int32, after *GlobalSearchKey) (string, []interface{}) {
+ 	seriesFilter, seriesArgs := normalizedSeriesFilter(keyword)
+ 	table, match := "book_search_fts", fts5PhraseQuery(keyword)
+ 	if expr, ok := normalizedBookGramExpr(keyword); ok {
+@@ -292,44 +302,67 @@ func (s *SqlStore) searchGlobalBooksSubstring(ctx context.Context, db globalSear
+ 	candidates := `SELECT rowid AS id FROM ` + table + ` WHERE ` + table + ` MATCH ?
+  UNION SELECT b2.id FROM series s JOIN books b2 ON b2.series_id=s.id WHERE ` + seriesFilter
+ 	args := append([]interface{}{match}, seriesArgs...)
+-	fields := `SELECT c.id, bt.name AS field, 0 AS inherited FROM candidates c JOIN book_search_text bt ON bt.book_id=c.id
+- UNION ALL SELECT c.id, bt.title, 0 FROM candidates c JOIN book_search_text bt ON bt.book_id=c.id
+- UNION ALL SELECT c.id, st.name, 1 FROM candidates c JOIN books b ON b.id=c.id JOIN series_search_text st ON st.series_id=b.series_id
+- UNION ALL SELECT c.id, st.title, 1 FROM candidates c JOIN books b ON b.id=c.id JOIN series_search_text st ON st.series_id=b.series_id`
++	fields := `SELECT c.id,
++ CASE WHEN instr(bt.name,?)>0 OR instr(bt.title,?)>0 THEN ` + bestSearchField("bt.name", "bt.title") + ` ELSE ` + bestSearchField("st.name", "st.title") + ` END AS field,
++ CASE WHEN instr(bt.name,?)>0 OR instr(bt.title,?)>0 THEN 0 ELSE 1 END AS inherited
++ FROM candidates c JOIN book_search_text bt ON bt.book_id=c.id
++ JOIN books b ON b.id=c.id JOIN series_search_text st ON st.series_id=b.series_id`
++	for i := 0; i < 20; i++ {
++		args = append(args, keyword)
++	}
+ 	args = append(args, keyword, keyword, keyword, keyword)
+ 	seek, seekArgs := globalSearchSeek(after, 0)
+ 	args = append(args, seekArgs...)
+ 	args = append(args, limit)
+-	rows, err := db.QueryContext(ctx, globalRankCTE(candidates, fields)+`
++	return globalRankCTE(candidates, fields) + `, top AS MATERIALIZED (
++ SELECT * FROM ranked r WHERE 1=1 ` + seek + ` ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?)
+  SELECT b.id, b.series_id, b.library_id, b.name, b.path, b.size, b.file_modified_at, b.volume, b.title, b.summary, b.number, b.sort_number, b.page_count, b.cover_path, b.last_read_page, b.last_read_at, b.is_read, b.file_hash, b.quick_hash, b.path_fingerprint, b.path_fingerprint_no_ext, b.filename_fingerprint, b.created_at, b.updated_at,
+  s.name, s.title, r.tier, r.position, r.extra
+- FROM ranked r JOIN books b ON b.id=r.id JOIN series s ON s.id=b.series_id
+- WHERE r.choice=1 `+seek+` ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?`, args...)
++ FROM top r JOIN books b ON b.id=r.id JOIN series s ON s.id=b.series_id
++ ORDER BY r.tier,r.position,r.extra,r.id`, args
++}
++
++func (s *SqlStore) searchGlobalSeriesSubstring(ctx context.Context, db globalSearchReader, keyword string, limit int32, after *GlobalSearchKey) ([]SeriesSearchHit, error) {
++	query, args := globalSeriesStatement(keyword, limit, after)
++	rows, err := db.QueryContext(ctx, query, args...)
++
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	return scanBookSearchHits(rows)
++	return scanSeriesSearchHits(rows)
+ }
+ 
+-func (s *SqlStore) searchGlobalSeriesSubstring(ctx context.Context, db globalSearchReader, keyword string, limit int32, after *GlobalSearchKey) ([]SeriesSearchHit, error) {
+-	filter, args := normalizedSeriesFilter(keyword)
+-	candidates := `SELECT s.id FROM series s WHERE ` + filter
+-	fields := `SELECT c.id, st.name AS field, 0 AS inherited FROM candidates c JOIN series_search_text st ON st.series_id=c.id
+- UNION ALL SELECT c.id, st.title, 0 FROM candidates c JOIN series_search_text st ON st.series_id=c.id`
++func globalSeriesStatement(keyword string, limit int32, after *GlobalSearchKey) (string, []interface{}) {
++	table, match := "series_search_fts", fts5PhraseQuery(keyword)
++	if len([]rune(keyword)) <= gramSearchMaxRunes {
++		table, match = "series_gram_fts", normalizedSeriesGramMatch(keyword)
++	}
++	args := []interface{}{match}
++	candidates := `SELECT rowid AS id FROM ` + table + ` WHERE ` + table + ` MATCH ?`
++	// Cache the four bounded numeric facts, not repeated CASE expressions over
++	// unbounded text. This also avoids a window sort for two fields per identity.
++	ranking := `WITH candidates AS (` + candidates + `), positions AS MATERIALIZED (
++ SELECT c.id, instr(st.name,?) AS np, instr(st.title,?) AS tp,
++ length(st.name)-length(?) AS ne, length(st.title)-length(?) AS te
++ FROM candidates c JOIN series_search_text st ON st.series_id=c.id), picked AS (
++ SELECT *, CASE WHEN np=0 THEN 0 WHEN tp=0 THEN 1
++ WHEN np=1 AND ne=0 THEN 1 WHEN tp=1 AND te=0 THEN 0
++ WHEN np<tp THEN 1 WHEN np>tp THEN 0 WHEN ne<=te THEN 1 ELSE 0 END AS use_name
++ FROM positions WHERE np>0 OR tp>0), ranked AS (
++ SELECT id, CASE WHEN use_name=1 THEN CASE WHEN ne=0 THEN 0 ELSE 1 END ELSE CASE WHEN te=0 THEN 0 ELSE 1 END END AS tier,
++ CASE WHEN use_name=1 THEN np-1 ELSE tp-1 END AS position,
++ CASE WHEN use_name=1 THEN ne ELSE te END AS extra FROM picked)`
+ 	args = append(args, keyword, keyword, keyword, keyword)
+ 	seek, seekArgs := globalSearchSeek(after, 1)
+ 	args = append(args, seekArgs...)
+ 	args = append(args, limit)
+-	rows, err := db.QueryContext(ctx, globalRankCTE(candidates, fields)+`
++	return ranking + `, top AS MATERIALIZED (
++ SELECT * FROM ranked r WHERE 1=1 ` + seek + ` ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?)
+  SELECT s.id, s.library_id, s.name, s.title, s.summary, s.publisher, s.status, s.rating, s.language, s.locked_fields, s.name_initial, s.path, s.created_at, s.updated_at, s.is_favorite, s.volume_count, s.book_count, s.total_pages,
+  ss.cover_path, COALESCE(ss.tag_names_cache, ''), COALESCE(ss.read_pages, 0),ss.last_read_at,NULLIF(ss.last_read_book_id,0),
+  (SELECT b2.last_read_page FROM books b2 WHERE b2.id=ss.last_read_book_id), r.tier,r.position,r.extra
+- FROM ranked r JOIN series s ON s.id=r.id LEFT JOIN series_stats ss ON ss.series_id=s.id
+- WHERE r.choice=1 `+seek+` ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?`, args...)
+-	if err != nil {
+-		return nil, err
+-	}
+-	return scanSeriesSearchHits(rows)
++ FROM top r JOIN series s ON s.id=r.id LEFT JOIN series_stats ss ON ss.series_id=s.id
++ ORDER BY r.tier,r.position,r.extra,r.id`, args
+ }
+ 
+ // SearchMatchRank contains no text. SQLite's maximum TEXT length is below 2^31
+@@ -352,11 +385,23 @@ func (r SearchMatchRank) Score() float64 {
+ 	}
+ }
+ 
++// bestSearchField selects one independently matching field by the complete
++// field-level order. Choosing before row expansion avoids sorting four rows per
++// book with a window function; candidates already contain unique identities.
++// Each expansion binds eight copies of the normalized keyword.
++func bestSearchField(name, title string) string {
++	return `CASE WHEN instr(` + name + `,?)=0 THEN ` + title + `
++ WHEN instr(` + title + `,?)=0 THEN ` + name + `
++ WHEN ` + name + `=? THEN ` + name + ` WHEN ` + title + `=? THEN ` + title + `
++ WHEN instr(` + name + `,?)<instr(` + title + `,?) THEN ` + name + `
++ WHEN instr(` + name + `,?)>instr(` + title + `,?) THEN ` + title + `
++ WHEN length(` + name + `)<=length(` + title + `) THEN ` + name + ` ELSE ` + title + ` END`
++}
++
+ func globalRankCTE(candidates, fields string) string {
+-	return `WITH candidates AS (` + candidates + `), fields AS (` + fields + `),
+- matches AS (SELECT id, CASE WHEN inherited=1 THEN 2 WHEN field=? THEN 0 ELSE 1 END AS tier,
+- instr(field,?)-1 AS position, length(field)-length(?) AS extra FROM fields WHERE instr(field,?)>0),
+- ranked AS (SELECT *, row_number() OVER (PARTITION BY id ORDER BY tier,position,extra, id ASC) AS choice FROM matches)`
++	return `WITH candidates AS (` + candidates + `), fields AS MATERIALIZED (` + fields + `),
++ ranked AS (SELECT id, 1 AS choice, CASE WHEN inherited=1 THEN 2 WHEN field=? THEN 0 ELSE 1 END AS tier,
++ instr(field,?)-1 AS position, length(field)-length(?) AS extra FROM fields WHERE instr(field,?)>0)`
+ }
+ 
+ func fts5PhraseQuery(keyword string) string {

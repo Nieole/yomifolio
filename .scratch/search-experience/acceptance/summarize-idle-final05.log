@@ -1,0 +1,37 @@
+{
+  "candidate-idle-final05": {
+    "scenarios": 30,
+    "max_ratio": 1.266571245249494,
+    "failures": []
+  },
+  "candidate-idle-final05-repeat": {
+    "scenarios": 30,
+    "max_ratio": 2.2572737698008436,
+    "failures": [
+      {
+        "query": "∫£‘ÙÕı",
+        "target": "book",
+        "phase": "near_end",
+        "p95_ms": 609.9937,
+        "ratio": 2.2572737698008436
+      }
+    ]
+  },
+  "candidate-idle-final05-confirm": {
+    "scenarios": 30,
+    "max_ratio": 1.0925551675458802,
+    "failures": []
+  },
+  "load": {
+    "samples": 275,
+    "start": "2026-11-19T01:27:27.8925584Z",
+    "end": "2026-11-19T01:56:11.3108950Z",
+    "cpu_min": 1,
+    "cpu_median": 16,
+    "cpu_p95": 36,
+    "cpu_max": 100,
+    "cpu_100_count": 1,
+    "freeKB_min": 5321212
+  }
+}
+Source verification: 772 True

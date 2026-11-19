@@ -1,0 +1,21 @@
+=== RUN   TestSearchAcceptanceMeasure
+    search_acceptance_test.go:264: 海 series first matches=19980 p50=148.362ms p95=287.104ms
+    search_acceptance_test.go:264: 海 book first matches=199980 p50=993.034ms p95=1087.968ms
+    search_acceptance_test.go:264: 海贼 series first matches=19980 p50=76.609ms p95=90.619ms
+    search_acceptance_test.go:264: 海贼 book first matches=199980 p50=877.383ms p95=944.821ms
+    search_acceptance_test.go:264: 海贼王 series first matches=19980 p50=76.443ms p95=90.154ms
+    search_acceptance_test.go:264: 海贼王 book first matches=199980 p50=897.828ms p95=965.872ms
+    search_acceptance_test.go:264: 星 series first matches=20 p50=2.007ms p95=3.516ms
+    search_acceptance_test.go:264: 星 series near_end matches=20 p50=2.204ms p95=3.978ms
+    search_acceptance_test.go:264: 星 book first matches=380 p50=6.058ms p95=9.538ms
+    search_acceptance_test.go:264: 星 book near_end matches=380 p50=5.006ms p95=7.779ms
+    search_acceptance_test.go:264: 孤星 series first matches=20 p50=2.003ms p95=3.688ms
+    search_acceptance_test.go:264: 孤星 series near_end matches=20 p50=2.264ms p95=3.678ms
+    search_acceptance_test.go:264: 孤星 book first matches=380 p50=6.542ms p95=10.967ms
+    search_acceptance_test.go:264: 孤星 book near_end matches=380 p50=4.879ms p95=7.577ms
+    search_acceptance_test.go:264: 孤星Atlas series first matches=20 p50=3.175ms p95=6.689ms
+    search_acceptance_test.go:264: 孤星Atlas series near_end matches=20 p50=2.833ms p95=5.123ms
+    search_acceptance_test.go:264: 孤星Atlas book first matches=380 p50=7.401ms p95=10.695ms
+    search_acceptance_test.go:264: 孤星Atlas book near_end matches=380 p50=6.795ms p95=11.971ms
+--- PASS: TestSearchAcceptanceMeasure (410.94s)
+PASS

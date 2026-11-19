@@ -1,0 +1,15 @@
+=== RUN   TestSearchAcceptanceMeasure
+    search_acceptance_test.go:264: 海 series first matches=19980 p50=21.597ms p95=24.102ms
+    search_acceptance_test.go:264: 海 book first matches=199980 p50=829.206ms p95=1132.873ms
+    search_acceptance_test.go:264: 海贼 series first matches=19980 p50=48.480ms p95=70.261ms
+    search_acceptance_test.go:264: 海贼 book first matches=199980 p50=872.729ms p95=1184.880ms
+    search_acceptance_test.go:264: 海贼王 series first matches=19980 p50=131.381ms p95=207.493ms
+    search_acceptance_test.go:264: 海贼王 book first matches=199980 p50=3662.734ms p95=4952.703ms
+    search_acceptance_test.go:264: 星 series first matches=20 p50=1.138ms p95=11.746ms
+    search_acceptance_test.go:264: 星 book first matches=380 p50=3.268ms p95=9.949ms
+    search_acceptance_test.go:264: 孤星 series first matches=20 p50=1.962ms p95=6.910ms
+    search_acceptance_test.go:264: 孤星 book first matches=380 p50=4.011ms p95=17.520ms
+    search_acceptance_test.go:264: 孤星Atlas series first matches=20 p50=2.016ms p95=13.169ms
+    search_acceptance_test.go:264: 孤星Atlas book first matches=380 p50=8.435ms p95=45.061ms
+--- PASS: TestSearchAcceptanceMeasure (655.44s)
+PASS

@@ -1,0 +1,41 @@
+=== RUN   TestSearchAcceptanceMeasure
+    search_acceptance_test.go:366: 海 series first matches=19980 p50=17.480ms p95=19.448ms
+    search_acceptance_test.go:366: 海 series middle matches=19980 p50=19.084ms p95=20.967ms
+    search_acceptance_test.go:366: 海 series near_end matches=19980 p50=14.725ms p95=16.617ms
+    search_acceptance_test.go:366: 海 book first matches=199980 p50=410.923ms p95=444.147ms
+    search_acceptance_test.go:366: 海 book middle matches=199980 p50=424.168ms p95=485.255ms
+    search_acceptance_test.go:366: 海 book near_end matches=199980 p50=418.851ms p95=462.781ms
+    search_acceptance_test.go:366: 海贼 series first matches=19980 p50=24.716ms p95=28.386ms
+    search_acceptance_test.go:366: 海贼 series middle matches=19980 p50=26.494ms p95=30.136ms
+    search_acceptance_test.go:366: 海贼 series near_end matches=19980 p50=19.028ms p95=23.734ms
+    search_acceptance_test.go:366: 海贼 book first matches=199980 p50=362.877ms p95=393.166ms
+    search_acceptance_test.go:366: 海贼 book middle matches=199980 p50=208.391ms p95=373.872ms
+    search_acceptance_test.go:366: 海贼 book near_end matches=199980 p50=362.578ms p95=380.701ms
+    search_acceptance_test.go:366: 海贼王 series first matches=19980 p50=24.226ms p95=28.503ms
+    search_acceptance_test.go:366: 海贼王 series middle matches=19980 p50=26.768ms p95=30.752ms
+    search_acceptance_test.go:366: 海贼王 series near_end matches=19980 p50=18.667ms p95=21.959ms
+    search_acceptance_test.go:366: 海贼王 book first matches=199980 p50=379.080ms p95=398.343ms
+    search_acceptance_test.go:366: 海贼王 book middle matches=199980 p50=378.394ms p95=402.514ms
+    search_acceptance_test.go:366: 海贼王 book near_end matches=199980 p50=388.423ms p95=410.326ms
+    search_acceptance_test.go:366: 星 series first matches=20 p50=1.504ms p95=2.161ms
+    search_acceptance_test.go:423: complete HTTP walk 星/series count=20 page_size=20
+    search_acceptance_test.go:366: 星 book first matches=380 p50=2.515ms p95=3.518ms
+    search_acceptance_test.go:423: complete HTTP walk 星/book count=380 page_size=20
+    search_acceptance_test.go:366: 星 book near_end matches=380 p50=2.509ms p95=3.811ms
+    search_acceptance_test.go:366: 孤星 series first matches=20 p50=1.504ms p95=2.095ms
+    search_acceptance_test.go:423: complete HTTP walk 孤星/series count=20 page_size=20
+    search_acceptance_test.go:366: 孤星 book first matches=380 p50=2.638ms p95=4.004ms
+    search_acceptance_test.go:423: complete HTTP walk 孤星/book count=380 page_size=20
+    search_acceptance_test.go:366: 孤星 book near_end matches=380 p50=2.002ms p95=3.112ms
+    search_acceptance_test.go:366: 孤星Atlas series first matches=20 p50=1.511ms p95=2.511ms
+    search_acceptance_test.go:423: complete HTTP walk 孤星Atlas/series count=20 page_size=20
+    search_acceptance_test.go:366: 孤星Atlas book first matches=380 p50=3.005ms p95=4.191ms
+    search_acceptance_test.go:423: complete HTTP walk 孤星Atlas/book count=380 page_size=20
+    search_acceptance_test.go:366: 孤星Atlas book near_end matches=380 p50=3.005ms p95=4.035ms
+    search_acceptance_test.go:366: 孤—星 Ａｔｌａｓ series first matches=20 p50=1.513ms p95=2.519ms
+    search_acceptance_test.go:423: complete HTTP walk 孤—星 Ａｔｌａｓ/series count=20 page_size=20
+    search_acceptance_test.go:366: 孤—星 Ａｔｌａｓ book first matches=380 p50=2.510ms p95=3.995ms
+    search_acceptance_test.go:423: complete HTTP walk 孤—星 Ａｔｌａｓ/book count=380 page_size=20
+    search_acceptance_test.go:366: 孤—星 Ａｔｌａｓ book near_end matches=380 p50=2.510ms p95=4.016ms
+--- PASS: TestSearchAcceptanceMeasure (424.44s)
+PASS

@@ -25,4 +25,4 @@ depends-on: [mm-database, mm-reading]
 
 游标只定位，不授予权限。HTTP 每次重新认证账号与角色；当前目录策略允许所有有效读者访问全部资料库，权限摘要绑定版本化目录策略与当前角色。没有新增资料库 ACL 或筛选参数；未来引入 ACL 时必须在候选 LIMIT 前过滤并扩展权限摘要，不能分页后丢弃越权行。
 
-真实 HTTP + SQLite 的独立字面顺序、宽松书匹配、升级、维护及长标题回归见 `internal/api/book_rank_search_test.go`、`internal/api/search_cursor_test.go` 与 `internal/api/search_cursor_contract_test.go`；弹窗和真实搜索会话组合回归见 `web/src/components/layout/SearchModal*.test.tsx`。
+真实 HTTP + SQLite 的独立字面顺序、宽松书匹配、升级、维护及长标题回归见 `internal/api/book_rank_search_test.go`、`internal/api/search_cursor_test.go` 与 `internal/api/search_cursor_contract_test.go`；字段最佳键与完整真实归档维护回归补充于 `internal/api/search_best_field_acceptance_test.go`、`internal/api/search_maintenance_acceptance_test.go`。冻结大库与真实浏览器的已执行结果、两轮低负载完整矩阵通过首批及深页相对2x预算的证据（包含全部污染轮失败记录）及未验项见 `.scratch/search-experience/acceptance/README.md`；结果不保证任意主机负载下的延迟。弹窗和真实搜索会话组合回归见 `web/src/components/layout/SearchModal*.test.tsx`。

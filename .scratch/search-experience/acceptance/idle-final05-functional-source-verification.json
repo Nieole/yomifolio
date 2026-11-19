@@ -1,0 +1,11 @@
+{
+  "files": 12,
+  "mismatches": [
+    {
+      "path": "internal/database/series_search.go",
+      "matches": false
+    }
+  ],
+  "frontend_tracked_diff_empty": true,
+  "frontend_tracked_files": 369
+}

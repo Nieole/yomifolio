@@ -1,0 +1,284 @@
+=== RUN   TestSearchAcceptanceQueryPlan
+    search_acceptance_plan_test.go:44: query="海" target=series deep=false
+    search_acceptance_plan_test.go:51: MATERIALIZE top
+    search_acceptance_plan_test.go:51: MERGE (UNION ALL)
+    search_acceptance_plan_test.go:51: LEFT
+    search_acceptance_plan_test.go:51: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: RIGHT
+    search_acceptance_plan_test.go:51: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: SCAN r
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH ss USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
+    search_acceptance_plan_test.go:51: CORRELATED SCALAR SUBQUERY 6
+    search_acceptance_plan_test.go:51: SEARCH b2 USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:44: query="海" target=series deep=true
+    search_acceptance_plan_test.go:51: MATERIALIZE top
+    search_acceptance_plan_test.go:51: MERGE (UNION ALL)
+    search_acceptance_plan_test.go:51: LEFT
+    search_acceptance_plan_test.go:51: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: RIGHT
+    search_acceptance_plan_test.go:51: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: SCAN r
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH ss USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
+    search_acceptance_plan_test.go:51: CORRELATED SCALAR SUBQUERY 6
+    search_acceptance_plan_test.go:51: SEARCH b2 USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:44: query="海" target=book deep=false
+    search_acceptance_plan_test.go:51: COMPOUND QUERY
+    search_acceptance_plan_test.go:51: LEFT-MOST SUBQUERY
+    search_acceptance_plan_test.go:51: SCAN book_gram_fts VIRTUAL TABLE INDEX 0:M4
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: UNION ALL
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: LIST SUBQUERY 2
+    search_acceptance_plan_test.go:51: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH b USING COVERING INDEX idx_books_series_id (series_id=?)
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: CO-ROUTINE top
+    search_acceptance_plan_test.go:69: hydrate: SCAN CONSTANT ROW
+    search_acceptance_plan_test.go:69: hydrate: SCAN r
+    search_acceptance_plan_test.go:69: hydrate: SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:44: query="海" target=book deep=true
+    search_acceptance_plan_test.go:51: COMPOUND QUERY
+    search_acceptance_plan_test.go:51: LEFT-MOST SUBQUERY
+    search_acceptance_plan_test.go:51: SCAN book_gram_fts VIRTUAL TABLE INDEX 0:M4
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: UNION ALL
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: LIST SUBQUERY 2
+    search_acceptance_plan_test.go:51: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH b USING COVERING INDEX idx_books_series_id (series_id=?)
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: CO-ROUTINE top
+    search_acceptance_plan_test.go:69: hydrate: SCAN CONSTANT ROW
+    search_acceptance_plan_test.go:69: hydrate: SCAN r
+    search_acceptance_plan_test.go:69: hydrate: SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:44: query="海贼" target=series deep=false
+    search_acceptance_plan_test.go:51: MATERIALIZE top
+    search_acceptance_plan_test.go:51: MERGE (UNION ALL)
+    search_acceptance_plan_test.go:51: LEFT
+    search_acceptance_plan_test.go:51: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: RIGHT
+    search_acceptance_plan_test.go:51: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: SCAN r
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH ss USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
+    search_acceptance_plan_test.go:51: CORRELATED SCALAR SUBQUERY 6
+    search_acceptance_plan_test.go:51: SEARCH b2 USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:44: query="海贼" target=series deep=true
+    search_acceptance_plan_test.go:51: MATERIALIZE top
+    search_acceptance_plan_test.go:51: MERGE (UNION ALL)
+    search_acceptance_plan_test.go:51: LEFT
+    search_acceptance_plan_test.go:51: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: RIGHT
+    search_acceptance_plan_test.go:51: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: SCAN r
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH ss USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
+    search_acceptance_plan_test.go:51: CORRELATED SCALAR SUBQUERY 6
+    search_acceptance_plan_test.go:51: SEARCH b2 USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:44: query="海贼" target=book deep=false
+    search_acceptance_plan_test.go:51: COMPOUND QUERY
+    search_acceptance_plan_test.go:51: LEFT-MOST SUBQUERY
+    search_acceptance_plan_test.go:51: SCAN book_gram_fts VIRTUAL TABLE INDEX 0:M4
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: UNION ALL
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: LIST SUBQUERY 2
+    search_acceptance_plan_test.go:51: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH b USING COVERING INDEX idx_books_series_id (series_id=?)
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: CO-ROUTINE top
+    search_acceptance_plan_test.go:69: hydrate: SCAN CONSTANT ROW
+    search_acceptance_plan_test.go:69: hydrate: SCAN r
+    search_acceptance_plan_test.go:69: hydrate: SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:44: query="海贼" target=book deep=true
+    search_acceptance_plan_test.go:51: COMPOUND QUERY
+    search_acceptance_plan_test.go:51: LEFT-MOST SUBQUERY
+    search_acceptance_plan_test.go:51: SCAN book_gram_fts VIRTUAL TABLE INDEX 0:M4
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: UNION ALL
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: LIST SUBQUERY 2
+    search_acceptance_plan_test.go:51: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH b USING COVERING INDEX idx_books_series_id (series_id=?)
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: CO-ROUTINE top
+    search_acceptance_plan_test.go:69: hydrate: SCAN CONSTANT ROW
+    search_acceptance_plan_test.go:69: hydrate: SCAN r
+    search_acceptance_plan_test.go:69: hydrate: SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:44: query="海贼王" target=series deep=false
+    search_acceptance_plan_test.go:51: MATERIALIZE top
+    search_acceptance_plan_test.go:51: MERGE (UNION ALL)
+    search_acceptance_plan_test.go:51: LEFT
+    search_acceptance_plan_test.go:51: SCAN series_search_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: RIGHT
+    search_acceptance_plan_test.go:51: SCAN series_search_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: SCAN r
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH ss USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
+    search_acceptance_plan_test.go:51: CORRELATED SCALAR SUBQUERY 6
+    search_acceptance_plan_test.go:51: SEARCH b2 USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:44: query="海贼王" target=series deep=true
+    search_acceptance_plan_test.go:51: MATERIALIZE top
+    search_acceptance_plan_test.go:51: MERGE (UNION ALL)
+    search_acceptance_plan_test.go:51: LEFT
+    search_acceptance_plan_test.go:51: SCAN series_search_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: RIGHT
+    search_acceptance_plan_test.go:51: SCAN series_search_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: SCAN r
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH ss USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
+    search_acceptance_plan_test.go:51: CORRELATED SCALAR SUBQUERY 6
+    search_acceptance_plan_test.go:51: SEARCH b2 USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:44: query="海贼王" target=book deep=false
+    search_acceptance_plan_test.go:51: COMPOUND QUERY
+    search_acceptance_plan_test.go:51: LEFT-MOST SUBQUERY
+    search_acceptance_plan_test.go:51: SCAN book_search_fts VIRTUAL TABLE INDEX 0:M4
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: UNION ALL
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: LIST SUBQUERY 2
+    search_acceptance_plan_test.go:51: SCAN series_search_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH b USING COVERING INDEX idx_books_series_id (series_id=?)
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: CO-ROUTINE top
+    search_acceptance_plan_test.go:69: hydrate: SCAN CONSTANT ROW
+    search_acceptance_plan_test.go:69: hydrate: SCAN r
+    search_acceptance_plan_test.go:69: hydrate: SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:44: query="海贼王" target=book deep=true
+    search_acceptance_plan_test.go:51: COMPOUND QUERY
+    search_acceptance_plan_test.go:51: LEFT-MOST SUBQUERY
+    search_acceptance_plan_test.go:51: SCAN book_search_fts VIRTUAL TABLE INDEX 0:M4
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: UNION ALL
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: LIST SUBQUERY 2
+    search_acceptance_plan_test.go:51: SCAN series_search_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH b USING COVERING INDEX idx_books_series_id (series_id=?)
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: CO-ROUTINE top
+    search_acceptance_plan_test.go:69: hydrate: SCAN CONSTANT ROW
+    search_acceptance_plan_test.go:69: hydrate: SCAN r
+    search_acceptance_plan_test.go:69: hydrate: SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:44: query="孤星Atlas" target=series deep=false
+    search_acceptance_plan_test.go:51: MATERIALIZE top
+    search_acceptance_plan_test.go:51: MERGE (UNION ALL)
+    search_acceptance_plan_test.go:51: LEFT
+    search_acceptance_plan_test.go:51: SCAN series_search_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: RIGHT
+    search_acceptance_plan_test.go:51: SCAN series_search_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: SCAN r
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH ss USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
+    search_acceptance_plan_test.go:51: CORRELATED SCALAR SUBQUERY 6
+    search_acceptance_plan_test.go:51: SEARCH b2 USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:44: query="孤星Atlas" target=series deep=true
+    search_acceptance_plan_test.go:51: MATERIALIZE top
+    search_acceptance_plan_test.go:51: MERGE (UNION ALL)
+    search_acceptance_plan_test.go:51: LEFT
+    search_acceptance_plan_test.go:51: SCAN series_search_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: RIGHT
+    search_acceptance_plan_test.go:51: SCAN series_search_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:51: SCAN r
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH ss USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
+    search_acceptance_plan_test.go:51: CORRELATED SCALAR SUBQUERY 6
+    search_acceptance_plan_test.go:51: SEARCH b2 USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:44: query="孤星Atlas" target=book deep=false
+    search_acceptance_plan_test.go:51: COMPOUND QUERY
+    search_acceptance_plan_test.go:51: LEFT-MOST SUBQUERY
+    search_acceptance_plan_test.go:51: SCAN book_search_fts VIRTUAL TABLE INDEX 0:M4
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: UNION ALL
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: LIST SUBQUERY 2
+    search_acceptance_plan_test.go:51: SCAN series_search_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH b USING COVERING INDEX idx_books_series_id (series_id=?)
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: CO-ROUTINE top
+    search_acceptance_plan_test.go:69: hydrate: SCAN CONSTANT ROW
+    search_acceptance_plan_test.go:69: hydrate: SCAN r
+    search_acceptance_plan_test.go:69: hydrate: SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: USE TEMP B-TREE FOR ORDER BY
+    search_acceptance_plan_test.go:44: query="孤星Atlas" target=book deep=true
+    search_acceptance_plan_test.go:51: COMPOUND QUERY
+    search_acceptance_plan_test.go:51: LEFT-MOST SUBQUERY
+    search_acceptance_plan_test.go:51: SCAN book_search_fts VIRTUAL TABLE INDEX 0:M4
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: UNION ALL
+    search_acceptance_plan_test.go:51: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: LIST SUBQUERY 2
+    search_acceptance_plan_test.go:51: SCAN series_search_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:51: SEARCH b USING COVERING INDEX idx_books_series_id (series_id=?)
+    search_acceptance_plan_test.go:51: SEARCH bt USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: CO-ROUTINE top
+    search_acceptance_plan_test.go:69: hydrate: SCAN CONSTANT ROW
+    search_acceptance_plan_test.go:69: hydrate: SCAN r
+    search_acceptance_plan_test.go:69: hydrate: SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:69: hydrate: USE TEMP B-TREE FOR ORDER BY
+--- PASS: TestSearchAcceptanceQueryPlan (0.04s)
+PASS
+ok  	yomifolio/internal/database	0.432s

@@ -1,0 +1,6 @@
+=== RUN   TestSearchArchiveUpgrade
+    search_archive_acceptance_test.go:57: pass=0 version=6 books=200000 series=20000 migrate=31.1748635s
+    search_archive_acceptance_test.go:57: pass=1 version=6 books=200000 series=20000 migrate=120.0318ms
+--- PASS: TestSearchArchiveUpgrade (31.49s)
+PASS
+ok  	yomifolio/internal/database	31.847s

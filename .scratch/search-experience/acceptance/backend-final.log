@@ -1,0 +1,50 @@
+?   	yomifolio/cmd/queryplan	[no test files]
+?   	yomifolio/cmd/sampledata	[no test files]
+ok  	yomifolio/cmd/server	2.009s
+?   	yomifolio/cmd/storageiobench	[no test files]
+?   	yomifolio/cmd/tsgen	[no test files]
+?   	yomifolio/internal/accounts	[no test files]
+ok  	yomifolio/internal/api	400.423s
+ok  	yomifolio/internal/application	3.680s
+ok  	yomifolio/internal/application/configuration	4.214s
+ok  	yomifolio/internal/application/diskjobs	6.648s
+ok  	yomifolio/internal/application/intelligence	1.827s
+ok  	yomifolio/internal/application/libraries	7.286s
+ok  	yomifolio/internal/application/maintenance	8.016s
+ok  	yomifolio/internal/application/relocating	1.828s
+ok  	yomifolio/internal/application/runtime	5.018s
+ok  	yomifolio/internal/application/scanning	15.217s
+ok  	yomifolio/internal/application/seriesediting	0.968s
+ok  	yomifolio/internal/bookcontent	3.470s
+ok  	yomifolio/internal/bookidentity	4.074s
+ok  	yomifolio/internal/booksort	3.234s
+ok  	yomifolio/internal/bootstrap	6.253s
+?   	yomifolio/internal/catalogsearch	[no test files]
+ok  	yomifolio/internal/config	5.674s
+?   	yomifolio/internal/dashboard	[no test files]
+ok  	yomifolio/internal/database	44.813s
+ok  	yomifolio/internal/diskwork	3.040s
+ok  	yomifolio/internal/external	6.534s
+ok  	yomifolio/internal/images	8.124s
+ok  	yomifolio/internal/koreader	6.510s
+ok  	yomifolio/internal/logger	1.991s
+ok  	yomifolio/internal/metadata	8.554s
+ok  	yomifolio/internal/organize	10.648s
+ok  	yomifolio/internal/parser	2.981s
+ok  	yomifolio/internal/proposal	8.415s
+ok  	yomifolio/internal/reading	21.032s
+?   	yomifolio/internal/recommendation	[no test files]
+?   	yomifolio/internal/relocation	[no test files]
+ok  	yomifolio/internal/runhandle	2.146s
+ok  	yomifolio/internal/runtimecfg	2.504s
+ok  	yomifolio/internal/scanner	34.074s
+?   	yomifolio/internal/seriescontext	[no test files]
+ok  	yomifolio/internal/seriesmeta	3.112s
+?   	yomifolio/internal/seriesreview	[no test files]
+ok  	yomifolio/internal/storageio	2.752s
+ok  	yomifolio/internal/task	2.179s
+ok  	yomifolio/internal/taskcontrol	2.254s
+ok  	yomifolio/internal/taskstore	7.436s
+?   	yomifolio/internal/testfixture	[no test files]
+?   	yomifolio/web	[no test files]
+?   	yomifolio/web/node_modules/flatted/golang/pkg/flatted	[no test files]
