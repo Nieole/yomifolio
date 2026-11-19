@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 `cmd/server/main.go` is the backend entrypoint. Core Go packages live under `internal/`:
-`api/` for HTTP/protocol parsing, authorization and responses, `reading/` for reader-specific positions, read state, activity, time, bookmarks and projections, `organize/` for collections, smart shelves, relations, AI grouping adjudication and ordered reading lists, and `application/` for cross-feature runs and lifecycle (`runtime/` owns process assembly, recovery and shutdown). `scanner/` owns library ingestion, `metadata/` owns scraping and LLM prompts, and `database/` owns SQLite and generated `sqlc` code. Supporting services live in `parser/`, `images/`, `koreader/`, `config/`, `runtimecfg/`, `logger/`, `booksort/`, `seriesmeta/`, `proposal/`, `relocation/`, `external/`, `storageio/`, `diskwork/`, `taskcontrol/`, `runhandle/`, `task/` and `taskstore/` (full-text search uses SQLite FTS5 inside `database/`). SQL sources are in `sql/query.sql` and `internal/database/schema.sql`; task/run DDL lives in `internal/taskstore/schema.go` because it has no sqlc queries. The Vite frontend lives in `web/`; routes are in `web/src/App.tsx`, connection/refresh coordination in `web/src/session/`, feature projections in `web/src/features/`, pages in `web/src/pages/`, shared UI in `web/src/components/`, and locale/theme helpers in `web/src/i18n/` and `web/src/theme/`. Screenshots and marketing assets are under `images/`.
+`api/` for HTTP/protocol parsing, authorization and responses, `reading/` for reader-specific positions, read state, activity, time, bookmarks and projections, `organize/` for collections, smart shelves, relations, AI grouping adjudication and ordered reading lists, and `application/` for complete use cases, cross-feature runs and lifecycle (`runtime/` assembles application capabilities and owns recovery and shutdown; `bootstrap/` is the production composition root for application resources and HTTP adapters). `scanner/` owns library ingestion, `metadata/` owns scraping and LLM prompts, and `database/` owns SQLite and generated `sqlc` code. Supporting services live in `parser/`, `images/`, `koreader/`, `config/`, `runtimecfg/`, `logger/`, `booksort/`, `seriesmeta/`, `proposal/`, `relocation/`, `external/`, `storageio/`, `diskwork/`, `taskcontrol/`, `runhandle/`, `task/` and `taskstore/` (full-text search uses SQLite FTS5 inside `database/`). SQL sources are in `sql/query.sql` and `internal/database/schema.sql`; task/run DDL lives in `internal/taskstore/schema.go` because it has no sqlc queries. The Vite frontend lives in `web/`; routes are in `web/src/App.tsx`, connection/refresh coordination in `web/src/session/`, feature projections in `web/src/features/`, pages in `web/src/pages/`, shared UI in `web/src/components/`, and locale/theme helpers in `web/src/i18n/` and `web/src/theme/`. Screenshots and marketing assets are under `images/`.
 
 ## Build, Test, and Development Commands
 Run the frontend locally with `cd web && npm run dev`. Build the frontend with `cd web && npm run build`; this is the standard verification step for UI changes. Lint the frontend with `cd web && npm run lint`. Run backend tests with a repo-local Go cache to avoid sandbox/cache permission issues:
@@ -39,7 +39,7 @@ Go code should stay `gofmt`-clean and package-oriented; keep handlers thin and p
 ## Documentation & Comments
 注释与文档只写**当前的结果**；历史归 `CHANGELOG.md` 与 `docs/adr/`。每段内容有唯一**归属**，环境（`package.json`、`config.example.yaml`、`--help`）本身也是一处。引用代码写符号名——行号、出现次数、代码行数都会**腐坏**。分**层**写，每层只答一个问题，答不下就往下沉：Go 是 package doc → 文件头（≤5 行）→ 符号 doc → 行内，前端去掉 package doc 这层。文件头可选——说不出一句从文件名与 package doc 推不出来的话，就不写。
 
-写文件头、处置带历史的旧注释、判断一段内容归哪个文件时，见 `docs/agents/doc-style.md`；`scripts/check-doc-style.sh` 是配套检查器。
+定位或维护 ThinkRail 长期规格、写文件头、处置旧注释或判断内容归属时，见 `docs/agents/doc-style.md`；`scripts/check-doc-style.sh` 是配套检查器。
 
 ## Testing Guidelines
 Add or update `_test.go` files in the touched backend package, following the existing table-driven style in `internal/api/*_test.go` and `internal/scanner/*_test.go`. Frontend changes must pass `npm run test` (vitest) and `npm run build`. If you change SQL in `sql/query.sql` or `schema.sql`, regenerate the Go bindings with `sqlc generate` before testing. If you change a Go response struct that is a generated frontend contract (see `cmd/tsgen`'s `targets`, e.g. `api.RunSnapshot`), regenerate `web/src/api/generated.ts` with `go run ./cmd/tsgen` (CI checks it for drift).
@@ -58,7 +58,7 @@ Recent history uses Conventional Commit prefixes such as `feat:` and `fix:` with
 
 ### Issue tracker
 
-Issues and specs live as markdown files under `.scratch/<feature-slug>/` in this repo, not on GitHub. See `docs/agents/issue-tracker.md`.
+Engineering tickets and effort records live under `.scratch/<feature-slug>/`, not on GitHub; see `docs/agents/issue-tracker.md`. Durable ThinkRail specs live at the repository root and beside their owning modules; their lifecycle and temporary task-spec rules are in `docs/agents/doc-style.md`.
 
 ### Triage labels
 

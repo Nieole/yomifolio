@@ -4,11 +4,14 @@ type: module-design
 status: active
 title: 阅读事实与用户投影
 parent: mm-architecture
+references: [mm-adr-0010]
 ---
 
 ## 责任与契约
 
-保存显式用户的阅读位置、读态、活动、时长和书签，并构造用户相关的藏书与继续阅读投影。协议适配不能分别实现一套位置规则。
+保存显式用户的阅读位置、读态、活动、时长和书签，并构造用户相关的藏书与继续阅读投影。协议适配不能分别实现一套位置规则。`Subject` 零值无效；用户查询只读取该用户事实，缺失时不回退全局进度，只有显式 `AnonymousSubject` 使用兼容全局状态。
+
+已读标记表示完成，不证明绝对页码已知；只有已读标记而无位置时可以呈现 page 0，不得推造第一页或末页。
 
 `RecordPosition` 区分客户端事实时间与可信接收时间，拒绝二者同时出现；位置按书页数约束，通过持久事实标识及时间顺序拒绝重放或陈旧写入。位置成功与兼容活动投影失败分开返回，不因附带统计失败伪称位置没有提交。
 
@@ -20,4 +23,4 @@ parent: mm-architecture
 
 服务接收已授权身份和语义输入，不解析 HTTP，不选择后台运行策略。持久化通过本包持有的 Store/查询端口完成；投影不修改合集成员或系列元数据。调用方不能绕过本包直接写用户位置来取得不同协议语义。
 
-核对入口：`RecordPosition`、`MarkBooks`、`MarkSeries`、`Queries`、`position_test.go`、`mark_test.go`、`sync_test.go`、`time_test.go`。
+核对入口：`RecordPosition`、`MarkBooks`、`MarkSeries`、`Queries`、`position_test.go`、`mark_test.go`、`sync_test.go`、`time_test.go`、`subject_commands_test.go`、`book_view_test.go` 与 `state.go`。

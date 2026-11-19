@@ -1,13 +1,13 @@
 # Issue tracker: Local Markdown
 
-Engineering issues and specs (you may know a spec as a PRD) for this repo live as markdown files in `.scratch/`.
+Engineering tickets and effort planning records for this repo live as markdown files in `.scratch/`. Durable ThinkRail specs and temporary task-specs have separate ownership and lifecycle rules in [doc-style.md](doc-style.md#thinkrail-规格); `.scratch/` is not a parallel source of current product contracts.
 
 GitHub Issues is a public feedback intake surface, not the engineering tracker. Public reports do not change the publish/fetch rules below; skills continue to create and read engineering tickets locally.
 
 ## Conventions
 
 - One feature per directory: `.scratch/<feature-slug>/`
-- The spec is `.scratch/<feature-slug>/spec.md`
+- An effort's planning spec or PRD is `.scratch/<feature-slug>/spec.md`; it records that effort, not a replacement for durable ThinkRail specs
 - Implementation issues are one file per ticket at `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01` — never a single combined tickets file
 - Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
 - Comments and conversation history append to the bottom of the file under a `## Comments` heading

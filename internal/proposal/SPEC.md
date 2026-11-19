@@ -4,6 +4,7 @@ type: module-design
 status: active
 title: 元数据提案生命周期
 parent: mm-architecture
+references: [mm-adr-0011]
 ---
 
 ## Responsibility

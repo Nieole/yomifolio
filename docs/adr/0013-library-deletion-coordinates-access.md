@@ -1,5 +1,10 @@
 ---
-status: accepted
+id: mm-adr-0013
+type: architecture-design
+title: 资料库删除协调准入与真实退出
+status: active
+parent: mm-architecture
+references: [mm-adr-0009]
 ---
 
 # 资料库删除协调准入并保留失败结果

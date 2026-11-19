@@ -1,10 +1,15 @@
 ---
-status: accepted
+id: mm-adr-0014
+type: architecture-design
+title: 完整用例、查询与独立宿主装配
+status: active
+parent: mm-architecture
+references: [mm-adr-0001, mm-adr-0006, mm-adr-0010]
 ---
 
 # 按完整功能组织用例与查询，宿主独立装配
 
-实施状态：生产装配由 `bootstrap.Open` 持有唯一 `runtime.New` 调用，创建内容、缓存与应用资源，绑定 HTTP leaf effects 后才执行恢复并开放输入。`Host` 只保存已绑定的 HTTP 适配器，在同一鉴权 chi 子树组合阅读、编排、资料库/运行与管理家庭；不构造应用、不持有 Runtime 或全量 Store。旧 `Controller`、core/runtime HTTP 装配、家庭重建与兼容转发已删除。工单 47、48 已经独立评审、集成并关闭；全项目逐故事证据及两轴复审结论见架构整理 acceptance.md。该映射不是所有故事的穷尽认证，Linux/Darwin CGO 构建失败及非 Windows、真实设备/服务与浏览器存储未执行限制仍保留。
+实施状态：生产装配由 `bootstrap.Open` 持有唯一 `runtime.New` 调用，创建内容、缓存与应用资源，绑定 HTTP leaf effects 后才执行恢复并开放输入。`Host` 只保存已绑定的 HTTP 适配器，在同一鉴权 chi 子树组合阅读、编排、资料库/运行与管理家庭；不构造应用、不持有 Runtime 或全量 Store。旧 `Controller`、core/runtime HTTP 装配、家庭重建与兼容转发已删除。交付时的评审与执行限制单列于下方历史记录，不作为永久能力承诺。
 
 阅读、目录、评价及 OPDS/Mihon 由 `ReaderHTTP` 消费阅读命令、查询与只读目录投影；元数据、提案裁决、合集、智能书架、关系、阅读清单与 AI 分组审核由编排家庭持有。阅读协议经窄回调共享同一编排查询、认证和内容访问适配器，不按需回退重建家庭。
 
@@ -22,6 +27,10 @@ API 白盒回归通过 `_test.go` 的显式能力绑定持有多个窄适配器�
 
 全面实体化读写会增加无规则收益的装载与转换，继续由宿主和页面拼配方又会分散一致性知识。接受针对场景的接口与必要转换，以集中业务知识并收窄依赖，而不统一模板化所有包或建立全站万能对象。
 
+
+## 交付证据（历史）
+
+工单 47、48 的集成和评审记录，以及逐故事映射见 [架构整理验收记录](../../.scratch/architecture-refinement/acceptance.md)。该批记录不是所有故事的穷尽认证；其中 Linux/Darwin CGO 构建失败及非 Windows、真实设备/服务与浏览器存储未执行限制属于当次验收范围，后续交付仍须重新验证。
 
 ## 47 第一阶段记录（历史；当前状态见上文与工单）
 

@@ -1,5 +1,9 @@
 ---
-status: accepted
+id: mm-adr-0011
+type: architecture-design
+title: 提案终态阻止继续应用
+status: active
+parent: mm-architecture
 ---
 
 # 提案进入终态后不能继续应用字段

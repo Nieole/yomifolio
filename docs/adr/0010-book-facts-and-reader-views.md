@@ -1,5 +1,9 @@
 ---
-status: accepted
+id: mm-adr-0010
+type: architecture-design
+title: 藏书事实与读者阅读视图
+status: active
+parent: mm-architecture
 ---
 
 # 藏书事实与读者阅读视图区分建模

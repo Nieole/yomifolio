@@ -1,5 +1,10 @@
 ---
-status: accepted
+id: mm-adr-0015
+type: architecture-design
+title: 书内容发布协调活跃读取
+status: active
+parent: mm-architecture
+references: [mm-adr-0013, mm-adr-0009]
 ---
 
 # 书内容发布协调活跃读取并保留原文件

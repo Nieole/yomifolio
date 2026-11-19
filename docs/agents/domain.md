@@ -2,7 +2,7 @@
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
-This is a **single-context** repo: one `GLOSSARY.md` and one `docs/adr/` at the root.
+This is a **single-context** repo: one `GLOSSARY.md` and one `docs/adr/` at the root. Both participate in the ThinkRail spec graph; current goals, architecture and module contracts live in their owning specs. For spec ownership and lifecycle, see [doc-style.md](doc-style.md#thinkrail-规格).
 
 ## Before exploring, read these
 

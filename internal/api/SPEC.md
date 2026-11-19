@@ -4,7 +4,7 @@ type: module-design
 status: active
 title: HTTP 与客户端协议适配
 parent: mm-architecture
-references: [mm-adr-0003, mm-adr-0007, mm-database]
+references: [mm-adr-0003, mm-adr-0007, mm-database, mm-adr-0014, mm-catalogsearch]
 ---
 
 ## 责任与入口
@@ -27,7 +27,7 @@ references: [mm-adr-0003, mm-adr-0007, mm-database]
 
 ## 藏书名称搜索
 
-全局、资料库和协议系列搜索共享 `mm-database` 的归一化连续子串语义，分别匹配系列名与元数据标题；不拼接字段或拆词。书自身名称、标题及通过所属系列命中的路径共享此语义。全局批次由 `mm-catalogsearch` 按自身精确、自身子串、仅归属三层及字符位置、额外字符数、类型和身份统一混排去重，整批默认 20 项；兼容 score 为 1、0.5、0.25，max_score 为当前批最大值，空批为 0，前端隐藏数值。`GET /api/search` 的 target 默认 all，支持 series、book 与 title（book 别名）；非法 target 返回 400。limit 默认 20，显式参数须为单个十进制正整数且不超过 100，非法值返回 400。cursor 省略或为空表示首批；游标规则归 mm-catalogsearch，无效、重复或上下文失配的游标，以及非法查询串编码，返回 400、稳定 code 为 invalid_search_cursor。每次请求仍由现有 authGate 重新校验会话和当前账号，游标不绕过授权。
+名称匹配语义归 `mm-database`；全局排名、去重、分数与游标语义归 `mm-catalogsearch`，HTTP 不另定义排序或 score。`GET /api/search` 的 target 默认 all，支持 series、book 与 title（book 别名）；非法 target 返回 400。limit 默认 20，显式参数须为单个十进制正整数且不超过 100，非法值返回 400。cursor 省略或为空表示首批；游标规则归 mm-catalogsearch，无效、重复或上下文失配的游标，以及非法查询串编码，返回 400、稳定 code 为 invalid_search_cursor。每次请求仍由现有 authGate 重新校验会话和当前账号，游标不绕过授权。
 
 具名 `SearchResult`、`SearchHit` 与 `SearchHitFields` 纳入 tsgen：保留 hits、total_hits、max_score 及原身份和 fields，新增 has_more 和 next_cursor；hits 始终为数组，末页游标为空字符串。total_hits 只表示当前批条数，不是全局总数或累计数。空关键词、归一化为空或无命中均返回同一空批形状，不进行目录全匹配；资料库与协议的无关键词目录浏览语义不变。
 

@@ -1,3 +1,12 @@
+---
+id: mm-adr-0002
+type: architecture-design
+title: 扫描观察者寿命的历史决定
+status: deprecated
+parent: mm-architecture
+references: [mm-adr-0005]
+---
+
 # 扫描观察者活得比扫描调用久，不设撤销机制
 
 状态：被 ADR 0005 取代（2026-09-06）。异步封面自此归属它自己那次运行，报文经封面作业

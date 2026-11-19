@@ -4,6 +4,7 @@ type: module-design
 status: active
 title: 藏书编排与生成建议裁决
 parent: mm-architecture
+references: [mm-adr-0012]
 ---
 
 ## 责任与契约
@@ -14,8 +15,12 @@ parent: mm-architecture
 
 AI 分组建议修改合集编排，不修改系列元数据。应用建议需复核相关系列和当前状态；不能因为生成时存在就跳过应用时的冲突检测。关系变动后的作品群重建属于该用例，不由页面拼接 SQL 维护。
 
+作品群重建责任以持久 desired/applied 版本记录，不依赖后台通知是否送达；关系及相关系列事实变更与待重建标记同事务提交。失败保留上次成功投影及可观察的陈旧／失败状态、错误和重试时间，重启后仍须恢复未完成责任。重建在一致事务中更新投影及完成版本，失败整体回滚，旧版本完成或失败不得覆盖较新的责任。应用层负责重试轮询与生命周期。
+
+作品群按连通分量最小系列 ID 作为自然键 upsert，键不变则保留合集 ID；合并或拆分导致最小 ID 改变时不承诺原身份。成员以差集更新，保留未变成员的加入时间，不得整体删除重建投影来刷新身份或加入时间。
+
 ## 边界
 
-公开服务持有校验与事务，授权和协议错误映射留给适配器。生成建议的后台运行配方在应用层，本包接受候选并负责裁决，不拥有调度、HTTP 或服务生命周期。与兄弟模块的实际依赖归 `mm-architecture`。
+公开服务持有校验与事务，授权和协议错误映射留给适配器。`AIGrouping` 拥有未分组候选选择、调用生成能力、建议校验与原子入队及应用裁决；生成入队不是应用合集。后台运行策略、调度与服务生命周期归应用层，本包不拥有 HTTP。与兄弟模块的实际依赖归 `mm-architecture`。
 
-核对入口：`ReadingLists`、`Relations`、`franchiseRebuilder`、`collections_test.go`、`smart_collections_test.go`、`reading_lists_test.go`、`ai_grouping_test.go`。
+核对入口：`ReadingLists`、`Relations`、`franchiseRebuilder`、`collections_test.go`、`smart_collections_test.go`、`reading_lists_test.go`、`ai_grouping_test.go`、`franchise_repair_test.go` 与 `franchise_facts_test.go`。

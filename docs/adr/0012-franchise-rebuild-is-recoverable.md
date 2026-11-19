@@ -1,5 +1,9 @@
 ---
-status: accepted
+id: mm-adr-0012
+type: architecture-design
+title: 作品群重建的持久恢复责任
+status: active
+parent: mm-architecture
 ---
 
 # 作品群派生更新允许滞后但必须可恢复
