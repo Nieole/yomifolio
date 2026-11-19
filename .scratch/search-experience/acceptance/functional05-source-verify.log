@@ -1,0 +1,12 @@
+internal/application/scanning/maintenance.go: OK
+internal/database/series_search.go: OK
+internal/database/search_rank.go: OK
+internal/database/migrate.go: OK
+internal/api/search_acceptance_test.go: OK
+internal/api/search_large_maintenance_acceptance_test.go: OK
+internal/api/search_upgrade_matrix_acceptance_test.go: OK
+internal/api/search_real_identity_acceptance_test.go: OK
+scripts/search-browser-functional05.cjs: OK
+scripts/search-upgrade-attribution-functional05.cjs: OK
+C:/Users/saber/.thinkrail/search-experience-research/acceptance-05/functional05-final-database.test.exe: OK
+C:/Users/saber/.thinkrail/search-experience-research/acceptance-05/intermediate-database.test.exe: OK

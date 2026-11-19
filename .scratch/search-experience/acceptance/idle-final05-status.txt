@@ -1,0 +1,24 @@
+ M .scratch/search-experience/issues/05-integrated-search-acceptance.md
+ M CHANGELOG.md
+ M internal/api/book_rank_search_test.go
+ M internal/api/series_normalized_search_test.go
+ M internal/application/SPEC.md
+ M internal/application/scanning/maintenance.go
+ M internal/catalogsearch/SPEC.md
+ M internal/database/SPEC.md
+ M internal/database/series_search.go
+?? .scratch/search-experience/acceptance/
+?? internal/api/search_acceptance_test.go
+?? internal/api/search_best_field_acceptance_test.go
+?? internal/api/search_browser_acceptance_test.go
+?? internal/api/search_large_maintenance_acceptance_test.go
+?? internal/api/search_maintenance_acceptance_test.go
+?? internal/api/search_real_identity_acceptance_test.go
+?? internal/api/search_upgrade_matrix_acceptance_test.go
+?? internal/database/search_acceptance_plan_test.go
+?? internal/database/search_archive_acceptance_test.go
+?? internal/database/search_rank.go
+?? scripts/search-acceptance.ps1
+?? scripts/search-browser-acceptance.cjs
+?? scripts/search-browser-functional05.cjs
+?? scripts/search-upgrade-attribution-functional05.cjs

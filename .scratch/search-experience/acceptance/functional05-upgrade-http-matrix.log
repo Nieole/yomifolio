@@ -1,0 +1,20 @@
+=== RUN   TestSearchBroadCompleteOrderedHTTP
+    search_best_field_acceptance_test.go:98: full HTTP all: 3150 independently ordered matches
+    search_best_field_acceptance_test.go:98: full HTTP series: 150 independently ordered matches
+    search_best_field_acceptance_test.go:98: full HTTP book: 3000 independently ordered matches
+--- PASS: TestSearchBroadCompleteOrderedHTTP (5.22s)
+=== RUN   TestSearchArchivedUpgradeHTTPMatrix
+    search_upgrade_matrix_acceptance_test.go:148: archive HTTP "星": all/series/book/title full ordered oracle; library 1/999 asc/desc; Mihon+OPDS 4 pages and totals
+    search_upgrade_matrix_acceptance_test.go:148: archive HTTP "孤星": all/series/book/title full ordered oracle; library 1/999 asc/desc; Mihon+OPDS 4 pages and totals
+    search_upgrade_matrix_acceptance_test.go:148: archive HTTP "孤星Atlas": all/series/book/title full ordered oracle; library 1/999 asc/desc; Mihon+OPDS 4 pages and totals
+    search_upgrade_matrix_acceptance_test.go:148: archive HTTP "孤—星 Ａｔｌａｓ": all/series/book/title full ordered oracle; library 1/999 asc/desc; Mihon+OPDS 4 pages and totals
+--- PASS: TestSearchArchivedUpgradeHTTPMatrix (5.18s)
+PASS
+=== RUN   TestSearchArchivedUpgradeHTTPMatrix
+    search_upgrade_matrix_acceptance_test.go:148: archive HTTP "星": all/series/book/title full ordered oracle; library 1/999 asc/desc; Mihon+OPDS 4 pages and totals
+    search_upgrade_matrix_acceptance_test.go:148: archive HTTP "孤星": all/series/book/title full ordered oracle; library 1/999 asc/desc; Mihon+OPDS 4 pages and totals
+    search_upgrade_matrix_acceptance_test.go:148: archive HTTP "孤星Atlas": all/series/book/title full ordered oracle; library 1/999 asc/desc; Mihon+OPDS 4 pages and totals
+    search_upgrade_matrix_acceptance_test.go:148: archive HTTP "孤—星 Ａｔｌａｓ": all/series/book/title full ordered oracle; library 1/999 asc/desc; Mihon+OPDS 4 pages and totals
+--- PASS: TestSearchArchivedUpgradeHTTPMatrix (5.38s)
+PASS
+EXIT=0

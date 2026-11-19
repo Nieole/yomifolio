@@ -2,6 +2,8 @@ package scanning
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"sync"
 	"yomifolio/internal/database"
@@ -13,6 +15,8 @@ import (
 // It does not acquire a second run slot; cover batches still use their own queued runs.
 func (c *Service) ReindexLibraries(ctx context.Context, handle *runhandle.Handle, libs []database.Library) error {
 	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var scanErrors []error
 	defer wg.Wait()
 	for _, lib := range libs {
 		if err := handle.Checkpoint(ctx); err != nil {
@@ -26,11 +30,18 @@ func (c *Service) ReindexLibraries(ctx context.Context, handle *runhandle.Handle
 			}
 			if err != nil {
 				slog.ErrorContext(ctx, "Global scan of library failed", "library_id", lib.ID, "path", lib.Path, "error", err)
+				mu.Lock()
+				scanErrors = append(scanErrors, fmt.Errorf("library %d (%s): %w", lib.ID, lib.Path, err))
+				mu.Unlock()
 			}
 		})
 	}
 	wg.Wait()
-	return ctx.Err()
+	// Keep cancellation as the primary outcome even when a scan also failed.
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	return errors.Join(scanErrors...)
 }
 
 // RebuildThumbnails scans every known format in an existing maintenance run.

@@ -1,0 +1,4 @@
+=== RUN   TestSearchBestFieldNumericProjectionHTTP
+--- PASS: TestSearchBestFieldNumericProjectionHTTP (0.24s)
+PASS
+ok  	yomifolio/internal/api	0.564s

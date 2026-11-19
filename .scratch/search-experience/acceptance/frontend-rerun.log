@@ -1,0 +1,9 @@
+
+ RUN  v5.1.0 C:/Users/saber/.thinkrail/worktrees/manga-manager/search-acceptance-05/web
+
+
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+   Start at  19:26:35
+   Duration  8.26s (import 72%, environment 14%, tests 10%, transform 4%)
+

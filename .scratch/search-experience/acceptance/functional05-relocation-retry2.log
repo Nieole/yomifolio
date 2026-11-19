@@ -1,0 +1,27 @@
+=== RUN   TestRelocationPolicyPersistenceFailuresCompensateOrRemainBlocked
+=== RUN   TestRelocationPolicyPersistenceFailuresCompensateOrRemainBlocked/before_rename
+2026/11/18 23:16:12 INFO Logger level updated level=info
+2026/11/18 23:16:13 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 23:16:13 INFO Logger level updated level=info
+=== RUN   TestRelocationPolicyPersistenceFailuresCompensateOrRemainBlocked/after_rename
+2026/11/18 23:16:13 INFO Logger level updated level=info
+2026/11/18 23:16:13 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 23:16:13 INFO Logger level updated level=info
+=== RUN   TestRelocationPolicyPersistenceFailuresCompensateOrRemainBlocked/compensation
+2026/11/18 23:16:14 INFO Logger level updated level=info
+2026/11/18 23:16:14 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 23:16:15 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 23:16:25 INFO Logger level updated level=info
+--- PASS: TestRelocationPolicyPersistenceFailuresCompensateOrRemainBlocked (26.76s)
+    --- PASS: TestRelocationPolicyPersistenceFailuresCompensateOrRemainBlocked/before_rename (1.05s)
+    --- PASS: TestRelocationPolicyPersistenceFailuresCompensateOrRemainBlocked/after_rename (1.10s)
+    --- PASS: TestRelocationPolicyPersistenceFailuresCompensateOrRemainBlocked/compensation (24.60s)
+=== RUN   TestRelocationRepairLooseRootBooksAndVirtualSeries
+=== RUN   TestRelocationRepairLooseRootBooksAndVirtualSeries/false
+2026/11/18 23:17:14 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 23:17:14 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+=== RUN   TestRelocationRepairLooseRootBooksAndVirtualSeries/true
+2026/11/18 23:17:59 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+2026/11/18 23:18:04 INFO Library relocation preview checked plan_id=1 books=1 blockers=0 anomalies=0
+Terminated                 C:/Users/saber/scoop/apps/go/current/bin/go.exe test ./internal/api -run '^TestRelocation(PolicyPersistenceFailuresCompensateOrRemainBlocked|RepairLooseRootBooksAndVirtualSeries|RepairMixedAndPrefixLookalikeRecordsRemainUntouched)$' -count=3 -v -timeout 10m
+EXIT=143

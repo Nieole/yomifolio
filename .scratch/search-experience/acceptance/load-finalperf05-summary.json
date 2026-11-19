@@ -1,0 +1,23 @@
+{
+  "samples": 720,
+  "start": "2026-11-18T16:14:37.4834433Z",
+  "end": "2026-11-18T17:27:03.7830646Z",
+  "system_cpu_min": 92,
+  "system_cpu_median": 100.0,
+  "system_cpu_max": 100,
+  "system_cpu_100_count": 639,
+  "external_observed": {
+    "chdman": {
+      "samples": 702,
+      "min": 57,
+      "median": 1048.5,
+      "max": 1429
+    },
+    "python": {
+      "samples": 930,
+      "min": 23,
+      "median": 184.5,
+      "max": 1153
+    }
+  }
+}

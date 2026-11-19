@@ -1,0 +1,15 @@
+=== RUN   TestSearchAcceptanceQueryPlan
+    search_acceptance_plan_test.go:21: MATERIALIZE fields
+    search_acceptance_plan_test.go:21: MATERIALIZE candidates
+    search_acceptance_plan_test.go:21: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:21: LIST SUBQUERY 1
+    search_acceptance_plan_test.go:21: SCAN series_gram_fts VIRTUAL TABLE INDEX 0:M3
+    search_acceptance_plan_test.go:21: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:21: SCAN c
+    search_acceptance_plan_test.go:21: SEARCH st USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:21: SCAN fields
+    search_acceptance_plan_test.go:21: SEARCH s USING INTEGER PRIMARY KEY (rowid=?)
+    search_acceptance_plan_test.go:21: USE TEMP B-TREE FOR ORDER BY
+--- PASS: TestSearchAcceptanceQueryPlan (14.73s)
+PASS
+ok  	yomifolio/internal/database	15.023s

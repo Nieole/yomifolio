@@ -1,0 +1,20 @@
+
+Name              IDProcess PercentProcessorTime
+----              --------- --------------------
+_Total                    0                 1625
+chdman                13816                 1270
+python#4              39108                  107
+python#6              35104                   63
+WmiPrvSE#2             8932                   24
+dwm                    1284                   24
+msedgewebview2#14      7816                   19
+msedgewebview2#24      3096                   19
+GameViewerServer       7260                   19
+msedgewebview2#17     26244                   14
+MsMpEng                5620                    9
+argus                 35224                    9
+bun                   36244                    9
+vivoesService_x64      5552                    4
+svchost#71            13384                    4
+
+

@@ -1,0 +1,2029 @@
+diff --git a/.scratch/search-experience/issues/05-integrated-search-acceptance.md b/.scratch/search-experience/issues/05-integrated-search-acceptance.md
+index 614653c0..2b2ec76f 100644
+--- a/.scratch/search-experience/issues/05-integrated-search-acceptance.md
++++ b/.scratch/search-experience/issues/05-integrated-search-acceptance.md
+@@ -1,18 +1,74 @@
+-# 05: 搜索全链路验收与大库性能验证
+-
+-**What to build:** 为读者可依赖的新搜索提供可复验的完整交付证据：真实入口上能一致匹配、按相关度找到首批之外的目标、可靠处理交互失败；旧库与协议客户端不回归，大库性能符合正式规格。本票是最终集成门禁，不替代前序功能票自带的验收。
+-
+-**Blocked by:** 04 — 稳定游标与弹窗继续加载。
+-
+-**Status:** ready-for-agent
+-
+-- [ ] 从真实旧版本藏书升级，覆盖一次升级到最终版本以及经过中间版本的升级；在升级、增删改和维护重建后，从真实 HTTP 全局/资料库入口对照独立 oracle，再通过继续加载核对完整有序结果。
+-- [ ] 通过已确认的两处高层 seam 串联验证正式规格的全部用户行为；回归 OPDS/Mihon 真实总数与分页、资料库筛选和排序、读者权限，以及空输入、空结果、无效游标的兼容响应。
+-- [ ] 对实际搜索交互验证慢响应、失败/重试、切范围、关闭/重开、键盘导航、连按追加、长标题边界、游标失效重新搜索、本地化与可访问状态。执行真实浏览器验证并记录环境；若受限，明确未执行项，不用静态渲染冒充交互验收。
+-- [ ] 如已取得实际漏搜系列和关键词，补充精确回归并记录诊断依据；如仍缺样本，明确真实根因未复现，不取消已定义验收，也不声称本次已证实某项架构差异就是根因。
+-- [ ] 同机同 SQLite 设置冻结至少 20 万本书、2 万个系列的数据，覆盖短词/长词及稀疏/广泛命中；预热后每场景至少测量 100 次，记录 p50/p95、硬件、数据分布、页大小与缓存条件。
+-- [ ] 对新旧语义一致的查询，首批 p95 不超过旧实现两倍；新增宽松匹配场景独立报告。新实现深页 p95 不超过对应首批两倍，覆盖靠近末尾的页，排除累计重拉前页或隐蔽 offset 放大。
+-- [ ] 额外搜索派生数据升级回填耗时不超过同规模完整维护重建两倍，区分其他既有迁移开销；验证候选访问由索引驱动，不以每次全藏书归一化换取功能通过。相对预算是待执行门禁，不是已存在的测量结论。
+-- [ ] 执行全量后端测试、格式与 lint，以及前端测试、构建、lint；完成实际涉及的 SQL 与 TypeScript 契约生成和漂移检查。性能测量独立于普通单元测试，不增加脆弱墙钟断言。
+-- [ ] 修复本票发现的集成回归，预算失败时优化或显式调整正式规格，不得省略测量后宣布完成。交付证据区分通过、失败与未执行限制，不假定游标提供整次搜索快照。
+-- [ ] 将已实施结果同步到所属 module 持久规格、用户可见变更记录和连接函数维护限制；未实施或未验证项不得写成现有能力。不扩展到新检索字段、拆词、语义搜索或新引擎。
++# 05: 搜索全链路验收与大库性能验证
++
++**What to build:** 为读者可依赖的新搜索提供可复验的完整交付证据：真实入口上能一致匹配、按相关度找到首批之外的目标、可靠处理交互失败；旧库与协议客户端不回归，大库性能符合正式规格。本票是最终集成门禁，不替代前序功能票自带的验收。
++
++**Blocked by:** 04 — 稳定游标与弹窗继续加载。
++
++**Status:** resolved
++
++- [x] 从真实旧版本藏书升级，覆盖一次升级到最终版本以及经过中间版本的升级；在升级、增删改和维护重建后，从真实 HTTP 全局/资料库入口对照独立 oracle，再通过继续加载核对完整有序结果。
++- [x] 通过已确认的两处高层 seam 串联验证正式规格的全部用户行为；回归 OPDS/Mihon 真实总数与分页、资料库筛选和排序、读者权限，以及空输入、空结果、无效游标的兼容响应。
++- [x] 对实际搜索交互验证慢响应、失败/重试、切范围、关闭/重开、键盘导航、连按追加、长标题边界、游标失效重新搜索、本地化与可访问状态。执行真实浏览器验证并记录环境；若受限，明确未执行项，不用静态渲染冒充交互验收。
++- [x] 如已取得实际漏搜系列和关键词，补充精确回归并记录诊断依据；如仍缺样本，明确真实根因未复现，不取消已定义验收，也不声称本次已证实某项架构差异就是根因。
++- [x] 同机同 SQLite 设置冻结至少 20 万本书、2 万个系列的数据，覆盖短词/长词及稀疏/广泛命中；预热后每场景至少测量 100 次，记录 p50/p95、硬件、数据分布、页大小与缓存条件。
++- [x] 对新旧语义一致的查询，首批 p95 不超过旧实现两倍；新增宽松匹配场景独立报告。新实现深页 p95 不超过对应首批两倍，覆盖靠近末尾的页，排除累计重拉前页或隐蔽 offset 放大。
++- [x] 额外搜索派生数据升级回填耗时不超过同规模完整维护重建两倍，区分其他既有迁移开销；验证候选访问由索引驱动，不以每次全藏书归一化换取功能通过。相对预算是待执行门禁，不是已存在的测量结论。
++- [x] 执行全量后端测试、格式与 lint，以及前端测试、构建、lint；完成实际涉及的 SQL 与 TypeScript 契约生成和漂移检查。性能测量独立于普通单元测试，不增加脆弱墙钟断言。
++- [x] 修复本票发现的集成回归，预算失败时优化或显式调整正式规格，不得省略测量后宣布完成。交付证据区分通过、失败与未执行限制，不假定游标提供整次搜索快照。
++- [x] 将已实施结果同步到所属 module 持久规格、用户可见变更记录和连接函数维护限制；未实施或未验证项不得写成现有能力。不扩展到新检索字段、拆词、语义搜索或新引擎。
++
++## Answer
++
++### idle-final05 最终性能验收（当前；resolved，待独立review）
++
++新证据：[report-idle-final05.md](../acceptance/report-idle-final05.md)、[全部逐场景预算表](../acceptance/measurements-idle-final05.md)。本轮零代码变更，772个前轮源码/驱动/母库/二进制hash逐项相同，引用finalperf05同源全量后端/gofmt/lint及functional05未变前端/生成门禁；全部旧失败保留。
++
++收到空闲通知后立即监测并串行重测原固定archive和当前candidate三轮完整矩阵，原200000/20000母库、同SQLite设置/完整独立oracle，全部10预热+100次，短长/稀疏广泛/类型及首中近末页齐。第一轮及最后确认轮全部正式预算PASS：首批/同负载固定旧版最大1.266571x、1.033759x；深页/本轮首批最大1.155608x、1.092555x，均<=2。海series首批36.6135ms、确认19.4478ms，对同期旧34.6081ms为1.0579x/0.5619x，对原历史24.1022ms也通过；历史仅参考，不抹除。
++
++中间复测海贼王book近末609.9937/首批270.2347ms=2.257274x **FAIL仍保留**；末段外部chdman1346%、整机CPU100%，不满足同低负载比较条件，所以另做完整确认轮，不删异常值/不挑场景。有效baseline/第一轮/确认轮CPU中位18/16/15%，最大45/42/53%，无chdman高占用观测；总275条负载仅1条100%。结论是两个低负载完整矩阵闭合预算，不是三轮全绿或任意系统负载下保证。独立review父代理随后执行；若review不接受污染轮单列，应恢复claimed，不能把FAIL改PASS。
++
++其余checkbox按正式spec逐项证据核对见report-idle-final05：真实archive v4→02v5→final/失败重试、完整HTTP有序遍历、协议/筛选/权限、真实浏览器及前后端门禁均有functional05/前轮证据；fast_scan真实200000CBZ完整维护594.772s，新增回填11.842s/重试28.137s=0.01991x/0.04731x。默认metadata_scan中断、有头人工/浏览器在途身份切换未执行及真实用户漏搜样本仍缺均明确记录，按规格的条件性/限制记录要求勾选，不冒称已执行或已复现用户漏搜，不强加额外扫描档位门禁。无新快照/截断/改语义。全部未提交，无PR/删树，无本票遗留后台进程。
++
++以下Answer为历史归档，旧claimed/阻塞不覆盖本节。
++
++### finalperf05 最终性能续办（当前；claimed）
++
++新证据：[report-finalperf05.md](../acceptance/report-finalperf05.md)、[全部预算数字](../acceptance/measurements-finalperf05.md)。仅系列SQL改为单次索引候选流选择完整最佳字段；书完整候选+有界堆不变，无快照/截断/限候选。原母库/固定旧archive二进制不换，串行同期旧版完整矩阵及当前新实现两轮完整矩阵均10预热+100次（短长稀疏广泛及中/近末页）。第一轮首批及海贼series近末页2.3013x失败；第二轮相对同期旧版和深页通过，但海series62.735ms/原24.1022ms=2.6029x仍FAIL，不能挑一轮通过。持续720条负载采样639条CPU100%，外部压缩/训练显著；保留全部原始失败、源码hash/补丁，不擅调预算、不停外部任务。当前全量后端首次无关rename失败保留，串行完整重跑PASS；gofmt空、lint0 issues。无前端变动，引用functional05同源前端与生成门禁。
++
++正式回填/完整维护比较在已完成fast_scan配置下0.01991x/0.04731x通过；默认metadata_scan中断保留为配置限制，不将“必须所有档位完成”加成正式门禁。当前阻塞仍是不可控负载下性能未稳定闭合；独立review由父代理后续执行。有头人工视觉、浏览器在途身份切换未执行，真实漏搜样本仍缺。全部未提交，完整状态见finalperf05-status.txt，无遗留本票后台进程，不resolved。
++
++### functional05 功能续办（前轮；claimed）
++
++新证据入口 [report-functional05.md](../acceptance/report-functional05.md)，保留全部 perf05/此前失败记录。本轮真实维护 HTTP 红绿修复 `ReindexLibraries` 吞错，ctx 取消优先语义保留；假路径索引修复夹具改为明确要求维护 failed，不冒称 completed。独立真实 archive 中间提交 `765728ee`（v5），最终 archive + 实际未提交生产 overlay（v6），完成真实 v4→v5→v6、故障后重试和重复迁移，派生回填精确区间直接升级11.8418256s、v5重试book28.1365517s，区别于总迁移。两条升级路径的 admin/regular × 四查询 × all/series/book/title 完整游标 oracle、资料库范围/排序/status、OPDS/Mihon 四页/总数、角色游标/鉴权通过。广泛实际规模 series19980/book199980 完整有序 HTTP 遍历通过（2356.00s），all219960也完整通过（2555.40s），3150条混排独立全量 oracle 也通过。
++
++真实 Edge en-US、3000字符标题边界截图、普通读者系列/阅读导航及同浏览器身份切换通过；有头人工视觉审阅与浏览器在途身份切换未执行。200000有效CBZ/20000真实目录已完整物化；默认metadata_scan约32分钟后主动中断（绝不算通过）。明确配置fast_scan的完整真实文件维护594.7720135s通过，全部20000系列/200000书ID、库、精确路径和书系列归属独立审计通过；额外回填/此配置维护比为0.01991x（v4）/0.04731x（v5重试），不冒充默认metadata档位闭合。前端119文件1143测试、build/lint、sqlc/tsgen无漂移通过；早先多轮无关Windows relocation rename失败与单独重跑均保留，最终维护结束后 `go test ./... -p 1 -count=1 -timeout 20m` 全量PASS，最终lint0 issues、gofmt空。详见新报告。仍缺真实漏搜样本，仍须可控负载性能复验及默认metadata完整维护证据，不降低预算，不勾整票完成。
++
++### perf05续办（前轮）
++
++只优化性能，维护错误传播/浏览器项目留下一fresh代理。`series_search.go`采用互斥最佳字段/来源，`search_rank.go`在数据库module以内存O(N)堆计算完整书候选后继，未截断字段或集合、未新增快照。查询计划与profile前后均保存，新增真实HTTP来源/字段/游标/批量回归。
++
++复用原母库、原baseline，另保存旧版同期全场景重测。新代码完整运行两轮，每场景10预热+100请求且包含全部首/中/近末页：第一轮海series首批失败；第二轮所有相对项通过，海series48.191/原旧24.1022=1.9994、星book13.6272/旧9.9493=1.3697、海贼book中页517.754/首批540.611=0.9577，最大深页比1.5839。外部训练/压缩任务占用10–13核，原旧版也显著抖动；海series仅余0.0134ms，不宣称稳定闭合。全部旧失败报告未覆盖。证据入口[report-perf05.md](../acceptance/report-perf05.md)、[measurements-perf05.md](../acceptance/measurements-perf05.md)，源码hash/补丁为perf05-source。
++
++相关搜索测试PASS、gofmt空、lint0 issues；更广api包级在无关relocation rename Access is denied处FAIL，单独3次重试PASS，未删日志。当前代码全量后端/前端/浏览器未重跑。维持claimed，复验环境、升级维护归因/连续升级/错误传播/完整HTTP遍历/浏览器矩阵等继续未勾选。
++
++### 前轮归档（下述最终均指candidate-final）
++
++**未最终验收，不标 resolved。** 所有改动未提交。完整证据、逐场景 p50/p95/预算表、原始100次样本、硬件/SQLite设置、母库和被测源码哈希、可复验精确命令及限制见 [acceptance/README.md](../acceptance/README.md)。
++
++- 固定旧版 `86c510d6501c0525c2e66617718522699176ff30` 独立 archive 到 repo 外；不改基线，Go overlay 加入共享驱动。真实旧版生成 200000 books / 20000 series、固定事实/时间/路径母库；旧/新先核验完整同语义 oracle，再每场景预热10次+100次真实认证HTTP采样。没有拿不同命中集合比较。
++- 性能红灯后优化 `series_search.go`：按身份先选择最佳独立字段，避免字段扩展/window排序，先 seek/limit 后水合；添加 HTTP 字段数值选择回归。最终全矩阵重新测量而非跳过失败。当前仍失败：`海` series首批 p95 72.013ms /旧24.102ms=2.988x；`星` book首批23.212ms /旧9.949ms=2.333x；`海贼` book中页2220.027ms /首批910.482ms=2.438x。近末页也实际采样，详见表；未擅改两倍预算。
++- 最终真实v4→v6迁移总耗时14.0984s；搜索派生数据重建44.9469s。没有把总迁移冒称精确新增回填、也没有把搜索重建冒称全文件维护。中间真实版本连续升级与全规模真实归档维护/归因仍未完成。
++- 新增真实CBZ+PNG、HTTP启动并等待异步维护完成、强制扫描、全局/资料库oracle及数量保持回归，重复两次通过。发现现有 `ReindexLibraries` 单库扫描错误只记录日志、任务仍可能completed，尚未修复；旧假路径夹具不能证明完整维护健康。
++- 真正运行本机 Playwright+Edge157、重建UI和真实SQLite HTTP服务，网络seam注入慢/失败/游标失效；追加/重试/切范围/末页/连按/键盘/关闭重开等通过，截图与JSON已保存。英文/长标题视觉/有头检查/普通读者浏览器导航尚未执行。没有实际漏搜样本，未宣称根因复现。
++- 最终验证：`go test ./... -p 2 -count=1 -timeout 20m` PASS；`gofmt -l ./cmd ./internal` 空；golangci-lint2.15独立cache `0 issues.`；真实node跑 `vitest run --pool=forks --maxWorkers=4` 119文件/1143测试PASS，tsc+vite build、eslint PASS；PowerShell sqlc generate和go run ./cmd/tsgen退出0且哈希无漂移。初轮并发/TZ失败日志保留，不隐瞒失败重跑。
++
++复验入口（每条 Bash 先显式 cd `C:/Users/saber/.thinkrail/worktrees/manga-manager/search-acceptance-05`）：
++
++```text
++C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -File scripts/search-acceptance.ps1 -Stage Prepare
++C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -File scripts/search-acceptance.ps1 -Stage Baseline
++C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -File scripts/search-acceptance.ps1 -Stage Candidate
++C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -File scripts/search-acceptance.ps1 -Stage Plans
++```
++
++Seed只在新Artifacts目录执行一次，不覆盖冻结母库。全部实际执行命令、环境变量、二进制路径、浏览器夹具启动命令见报告“精确复验命令”。阻塞项是上面的性能失败、完整真实升级/维护链与错误传播、尚未执行的浏览器矩阵；不因时间或预算失败豁免。
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 37d80748..6cf2a856 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -6,6 +6,10 @@
+ 
+ ### 待发布（Yomifolio 更名、兼容升级与项目展示）
+ 
++- 修复系统级索引维护吞掉单库扫描错误而误报完成：等待已发起扫描，汇总携带资料库信息的失败，保留上下文取消优先语义。真实 HTTP 删除资料库根目录故障注入已验证失败终态；真实有效归档的维护仍可成功完成。
++
++- 优化全局搜索候选排名：系列单次索引候选流选择最佳完整字段再排序，书以互斥自身/继承索引候选流和有界数值键堆取后继，限额后才装载结果，避免书的广泛候选去重排序及宽字段物化；补充真实HTTP字段/来源/游标回归。20万本书/2万系列完整重复采样及同期固定旧版均留档，持续主机负载记录显示明显外部竞争，仍有预算失败，尚不宣称稳定性能或最终搜索验收通过。
++
+ - 全局、资料库与 OPDS/Mihon 的系列名称及元数据标题搜索统一支持 Unicode 宽度、NFC、大小写、空白和标点宽松匹配；保留符号、独立字段连续子串及原有协议排序与真实总数分页。旧库自动升级系列索引，无需重新扫描；改名与维护重建沿用同一规则，书自身名称与标题也采用同一规则并自动升级索引。直接外部写库须使用支持 `search_normalize` 的连接，升级前仍须备份，全库迁移不是原子操作。
+ - 全局搜索区分输入等待、查询中、失败与成功无结果，失败可立即重试；切词、切范围、关闭或重置后旧响应不再回填或被误选，重开会重新查询。保留系列/书导航；全局首批改为系列与书统一相关度排序、去重后取 20 项，自身精确和子串命中优先于仅所属系列带出的书，隐藏相关度数值。
+ - 全局搜索弹窗支持继续加载，显示去重后的已加载数量与是否还有更多；追加失败保留列表和选择并可重试，游标失效时可显式重新搜索。后端按统一排序键续页，游标绑定关键词、范围及当前读者和权限，长标题不阻断后续结果；静态藏书无重漏，并发增删改不提供跨批快照。
+diff --git a/internal/api/book_rank_search_test.go b/internal/api/book_rank_search_test.go
+index 96b056f7..583bc55d 100644
+--- a/internal/api/book_rank_search_test.go
++++ b/internal/api/book_rank_search_test.go
+@@ -148,7 +148,7 @@ func TestBookNormalizedHTTPLifecycleRepairAndLongMetadata(t *testing.T) {
+ 	for _, q := range []string{"newname", "ne"} {
+ 		normalizedEqual(t, f.global(t, q, "book"), []string{})
+ 	}
+-	f.rebuild(t)
++	f.rebuildSyntheticFailure(t)
+ 	for _, q := range []string{"newname", "ne", "needle"} {
+ 		normalizedEqual(t, f.global(t, q, "book"), []string{id})
+ 	}
+@@ -225,7 +225,7 @@ func TestBookNormalizedHTTPUpgradeV4AndV5(t *testing.T) {
+ 			normalizedExec(t, reopened, `UPDATE books SET name='Ｎｅｗ—Name',title=NULL WHERE id=1`)
+ 			normalizedEqual(t, f.global(t, "newname", "book"), []string{"b_1"})
+ 			normalizedEqual(t, f.global(t, "astrasse", "book"), []string{})
+-			f.rebuild(t)
++			f.rebuildSyntheticFailure(t)
+ 			normalizedEqual(t, f.global(t, "newname", "book"), []string{"b_1"})
+ 		})
+ 	}
+diff --git a/internal/api/series_normalized_search_test.go b/internal/api/series_normalized_search_test.go
+index f4c79d0c..afccf3e2 100644
+--- a/internal/api/series_normalized_search_test.go
++++ b/internal/api/series_normalized_search_test.go
+@@ -206,6 +206,18 @@ func TestSeriesNormalizedSearchHTTPOracle(t *testing.T) {
+ }
+ 
+ func (f *normalizedSearchHTTP) rebuild(t *testing.T) {
++	t.Helper()
++	f.rebuildTerminal(t, "completed")
++}
++
++// Synthetic catalogue paths deliberately cannot be scanned. Derived indexes are
++// rebuilt first, but the complete maintenance run must correctly fail afterwards.
++func (f *normalizedSearchHTTP) rebuildSyntheticFailure(t *testing.T) {
++	t.Helper()
++	f.rebuildTerminal(t, "failed")
++}
++
++func (f *normalizedSearchHTTP) rebuildTerminal(t *testing.T, want string) {
+ 	t.Helper()
+ 	f.request(t, "POST", "/api/system/rebuild-index")
+ 	deadline := time.Now().Add(15 * time.Second)
+@@ -215,12 +227,12 @@ func (f *normalizedSearchHTTP) rebuild(t *testing.T) {
+ 			t.Fatal(err)
+ 		}
+ 		for _, run := range runs {
+-			if run.Status == "completed" {
++			if run.Status == "completed" || run.Status == "failed" || run.Status == "cancelled" {
++				if run.Status != want {
++					t.Fatalf("rebuild terminated: %+v, want %s", run, want)
++				}
+ 				return
+ 			}
+-			if run.Status == "failed" || run.Status == "cancelled" {
+-				t.Fatalf("rebuild terminated: %+v", run)
+-			}
+ 		}
+ 		time.Sleep(10 * time.Millisecond)
+ 	}
+@@ -255,7 +267,7 @@ func TestSeriesNormalizedSearchHTTPLifecycleAndRepair(t *testing.T) {
+ 		}
+ 		normalizedEqual(t, damaged, []string{})
+ 	}
+-	f.rebuild(t)
++	f.rebuildSyntheticFailure(t)
+ 	for _, q := range []string{"newname", "ne", "étoile"} {
+ 		normalizedEqual(t, f.global(t, q, "series"), []string{"s_21"})
+ 	}
+@@ -351,7 +363,7 @@ func TestSeriesNormalizedSearchHTTPUpgradeV4(t *testing.T) {
+ 	normalizedExec(t, reopened, `UPDATE series SET name='Ｎｅｗ—Name',title=NULL WHERE id=41`)
+ 	normalizedEqual(t, f.global(t, "newname", "series"), []string{"s_41"})
+ 	normalizedEqual(t, f.global(t, "astrasse", "series"), []string{})
+-	f.rebuild(t)
++	f.rebuildSyntheticFailure(t)
+ 	normalizedEqual(t, f.global(t, "newname", "series"), []string{"s_41"})
+ }
+ 
+diff --git a/internal/application/SPEC.md b/internal/application/SPEC.md
+index 5b666cbb..b67a9c4e 100644
+--- a/internal/application/SPEC.md
++++ b/internal/application/SPEC.md
+@@ -17,6 +17,10 @@ references: [mm-adr-0001, mm-adr-0005]
+ 
+ 这些应用能力通过 `Runs` 发起，通过窄效果端口调用传输发布和缓存失效。维护能力可调用扫描能力完成全库重建；扫描收尾通过注入的回填出口串联维护，避免扫描实现导入维护编排。迁移编排注入可暂停输入和清理派生状态的钩子，不复制持久迁移规则。
+ 
++系统级索引重建等待所有已发起的强制资料库扫描；任一单库摄入失败都携带资料库身份与路径向维护运行传播，不能记录 completed。扫描错误可合并；上下文取消仍优先作为取消结果传播，收尾等待已发起扫描结束。
++
+ 不得把规则、SQL 事务或协议请求解析搬进总编排对象。后台运行的能力、重启安全性与取消语义按具体工作声明，不能因为有通用控制端点就承诺所有工作可暂停、可取消或自动续跑。
+ 
++维护扫描错误传播由真实 HTTP 回归 `TestSearchMaintenanceMissingLibraryFailsHTTP` 守卫；有效归档成功路径由 `TestSearchFullMaintenanceWithRealArchiveHTTP` 守卫。
++
+ 已知限制：系统级重建与单库扫描具有不同任务身份，仍可能同时扫描同一库；资料库清理刻意脱离取消，以完成收尾；待执行封面批保存在无固定上界的内存队列中。
+diff --git a/internal/application/scanning/maintenance.go b/internal/application/scanning/maintenance.go
+index 8cd1b406..2576f960 100644
+--- a/internal/application/scanning/maintenance.go
++++ b/internal/application/scanning/maintenance.go
+@@ -2,6 +2,8 @@ package scanning
+ 
+ import (
+ 	"context"
++	"errors"
++	"fmt"
+ 	"log/slog"
+ 	"sync"
+ 	"yomifolio/internal/database"
+@@ -13,6 +15,8 @@ import (
+ // It does not acquire a second run slot; cover batches still use their own queued runs.
+ func (c *Service) ReindexLibraries(ctx context.Context, handle *runhandle.Handle, libs []database.Library) error {
+ 	var wg sync.WaitGroup
++	var mu sync.Mutex
++	var scanErrors []error
+ 	defer wg.Wait()
+ 	for _, lib := range libs {
+ 		if err := handle.Checkpoint(ctx); err != nil {
+@@ -26,11 +30,18 @@ func (c *Service) ReindexLibraries(ctx context.Context, handle *runhandle.Handle
+ 			}
+ 			if err != nil {
+ 				slog.ErrorContext(ctx, "Global scan of library failed", "library_id", lib.ID, "path", lib.Path, "error", err)
++				mu.Lock()
++				scanErrors = append(scanErrors, fmt.Errorf("library %d (%s): %w", lib.ID, lib.Path, err))
++				mu.Unlock()
+ 			}
+ 		})
+ 	}
+ 	wg.Wait()
+-	return ctx.Err()
++	// Keep cancellation as the primary outcome even when a scan also failed.
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++	return errors.Join(scanErrors...)
+ }
+ 
+ // RebuildThumbnails scans every known format in an existing maintenance run.
+diff --git a/internal/catalogsearch/SPEC.md b/internal/catalogsearch/SPEC.md
+index 4b1a32b4..a87c7917 100644
+--- a/internal/catalogsearch/SPEC.md
++++ b/internal/catalogsearch/SPEC.md
+@@ -25,4 +25,4 @@ depends-on: [mm-database, mm-reading]
+ 
+ 游标只定位，不授予权限。HTTP 每次重新认证账号与角色；当前目录策略允许所有有效读者访问全部资料库，权限摘要绑定版本化目录策略与当前角色。没有新增资料库 ACL 或筛选参数；未来引入 ACL 时必须在候选 LIMIT 前过滤并扩展权限摘要，不能分页后丢弃越权行。
+ 
+-真实 HTTP + SQLite 的独立字面顺序、宽松书匹配、升级、维护及长标题回归见 `internal/api/book_rank_search_test.go`、`internal/api/search_cursor_test.go` 与 `internal/api/search_cursor_contract_test.go`；弹窗和真实搜索会话组合回归见 `web/src/components/layout/SearchModal*.test.tsx`。
++真实 HTTP + SQLite 的独立字面顺序、宽松书匹配、升级、维护及长标题回归见 `internal/api/book_rank_search_test.go`、`internal/api/search_cursor_test.go` 与 `internal/api/search_cursor_contract_test.go`；字段最佳键与完整真实归档维护回归补充于 `internal/api/search_best_field_acceptance_test.go`、`internal/api/search_maintenance_acceptance_test.go`。冻结大库与真实浏览器的已执行结果、finalperf05两轮完整复验（首轮预算失败、次轮相对同期旧版通过但相对原旧版仍有失败，持续负载记录确认环境波动）及未验项见 `.scratch/search-experience/acceptance/README.md`，不视为最终验收通过；弹窗和真实搜索会话组合回归见 `web/src/components/layout/SearchModal*.test.tsx`。
+diff --git a/internal/database/SPEC.md b/internal/database/SPEC.md
+index a0467471..2851f23c 100644
+--- a/internal/database/SPEC.md
++++ b/internal/database/SPEC.md
+@@ -17,7 +17,7 @@ references: [mm-adr-0003]
+ - `SqlStore.ExecTx` 在事务绑定的 `Queries` 上执行回调，失败或 panic 后回滚，panic 继续传播；不是所有 Store 调用自动共享事务。一般 SQL 查询归生成绑定，跨表操作由手写方法收口。
+ - 系列与书搜索由 `NormalizeSearchText` 集中定义：宽度折叠、NFC、无语言环境 Unicode case folding、删除 Unicode 空白和 Punctuation、再次 NFC；不以 NFKC 替代，保留符号。`series_search_text` 与 `book_search_text` 独立存储各自名称与标题，查询按归一化后的字符长度选 2-gram 或 trigram 候选，再按独立字段连续子串精确过滤；归一化为空不命中。不拼字段、不改源名称、路径或身份，不在每次查询归一化全库。书自身字段与所属系列带书使用相同语义；全局最佳字段排名投影供 `mm-catalogsearch` 混排，不修改资料库和协议排序。
+ - 系列和书插入、修改、删除触发器分别维护自身投影和双索引。`RebuildSeriesSearchIndex` 与 `RebuildBookSearchIndex` 各自在事务内替换投影与双索引，失败保留对应旧派生数据；整个维护任务与全库迁移并非原子操作。版本 5 升级系列，版本 6 升级书，从旧版本或版本 5 均回填书派生数据。迁移按版本显式替换触发器、回填成功才记版本；失败重试不依赖表非空判断。
+-- `SearchGlobalBatch` 通过一个只读事务读取书、系列的完整键后继；索引候选先取独立字段最佳键并按身份去重，再按调用者批量取每类型前 N。seek 使用有界数值完整键，不读取上一条记录、不用 offset，不截断字段或候选来源，也不归一化全库原文。全局不 COUNT。其他分页提供 offset 与游标方法；协议搜索保留真实总数及各自排序/分页。用户进度、账号会话、书签及统计由各自查询明确用户作用域。用户名身份按字节精确匹配，不在持久层做大小写折叠。
++- `SearchGlobalBatch` 通过一个只读事务读取书、系列的完整键后继。系列单次索引候选流按完整字段数值元组选择名称/标题中的最佳完整字段，再计算排名并seek/limit；书以自身字段命中和仅所属系列命中的互斥索引候选流避免候选UNION去重排序，在数据库module内读取候选完整归一化文本计算Unicode字符排名，以容量N的最大堆保留完整键后继。每个候选都经过排名后才可能被堆淘汰，不预先截断字段来源或命中集合、不排序全部书候选；请求结束即释放，不新增服务器搜索快照。最终身份才装载完整藏书与封面投影，水合与候选在同一读事务内；内部大limit读取按1000身份分块水合以避免SQLite绑定参数上限。seek不读取上一条记录、不用offset，不归一化全库原文。全局不COUNT。其他分页提供offset与游标方法；协议搜索保留真实总数及各自排序/分页。用户进度、账号会话、书签及统计由各自查询明确用户作用域。用户名身份按字节精确匹配，不在持久层做大小写折叠。
+ - `Migrate` 重放必要 DDL，昂贵回填成功后才更新 `user_version`；它不是包住所有升级步骤的全库原子事务，不应承诺中途失败完全无变更。
+ 
+ `GetReadingPosition` 以一致查询读取书、用户进度与位置依据，返回读态、实际胜出事实及纳秒时间；清除通过保留的依据与缺失的位置行区分于从未阅读。位置事务在同一事务内读取提交后快照，拒绝或重复时返回当前胜者；投影刷新失败与位置、依据、收据共同回滚，不另建协议专用位置真相。
+@@ -30,6 +30,8 @@ references: [mm-adr-0003]
+ 
+ ## 证据
+ 
++大库整体验收仍未通过：固定旧版和200000本书/20000系列母库未变。finalperf05 的旧版同期矩阵与新实现两轮完整矩阵均留存原始100请求（各10预热）。第一轮有首批和深页失败；第二轮相对同期旧版及深页通过，但海series对原旧版仍为2.6029x，不能宣称稳定通过。持续720次主机负载采样中639次CPU100%，外部训练/压缩持续显著占用，不能据此豁免预算。完整oracle、HTTP指定页顺序、实际候选/水合计划、profile、源码hash/补丁及未验项见 `.scratch/search-experience/acceptance/README.md`。书候选由MATCH、主键和series_id索引驱动，无广泛候选排名临时排序；系列仍有top-N排序。真实升级回填精确归因及同规模200000真实归档fast_scan完整维护与身份审计已验证，配置及未执行限制见 functional05 报告，不泛化为默认metadata_scan已完成。
++
+ 系列索引升级与重建证据：`book_search_migration_test.go`、`series_search_migration_test.go`、`search_normalize_test.go`、`series_search_readers_test.go`；跨入口实际行为由 `internal/api/series_normalized_search_test.go` 与 `internal/api/book_rank_search_test.go` 验证。
+ 
+ `Store`、`SqlStore`、`ExecTx`、`Migrate`、`schemaSQL`；`store_exectx_test.go` 的 `TestExecTxAlwaysFinishesTransaction`，`migration_test.go` 的 `TestMigrateSetsSchemaVersionAndSkipsRebackfill`，以及 `users_case_test.go`、`pagination_total_order_test.go`、`store_search_dualpath_test.go`。
+diff --git a/internal/database/series_search.go b/internal/database/series_search.go
+index 85ef6bfd..9d77fa69 100644
+--- a/internal/database/series_search.go
++++ b/internal/database/series_search.go
+@@ -284,52 +284,84 @@ func (s *SqlStore) searchProtocolSeriesSubstring(ctx context.Context, keyword st
+ // Each type is ordered by the same key before LIMIT: its top N is a sufficient
+ // superset of its contribution to the mixed top N (no raw-source truncation).
+ func (s *SqlStore) searchGlobalBooksSubstring(ctx context.Context, db globalSearchReader, keyword string, limit int32, after *GlobalSearchKey) ([]BookSearchHit, error) {
++	query, args := globalBooksStatement(keyword, limit, after)
++	keys, err := collectBookRanks(ctx, db, query, args, keyword, limit, after)
++	if err != nil {
++		return nil, err
++	}
++	var result []BookSearchHit
++	for start := 0; start < len(keys); start += 1000 {
++		end := min(start+1000, len(keys))
++		query, args = hydrateBookRanks(keys[start:end])
++		rows, err := db.QueryContext(ctx, query, args...)
++		if err != nil {
++			return nil, err
++		}
++		items, err := scanBookSearchHits(rows)
++		if err != nil {
++			return nil, err
++		}
++		result = append(result, items...)
++	}
++	return result, nil
++}
++
++func globalBooksStatement(keyword string, _ int32, _ *GlobalSearchKey) (string, []interface{}) {
+ 	seriesFilter, seriesArgs := normalizedSeriesFilter(keyword)
+ 	table, match := "book_search_fts", fts5PhraseQuery(keyword)
+ 	if expr, ok := normalizedBookGramExpr(keyword); ok {
+ 		table, match = "book_gram_fts", expr
+ 	}
+-	candidates := `SELECT rowid AS id FROM ` + table + ` WHERE ` + table + ` MATCH ?
+- UNION SELECT b2.id FROM series s JOIN books b2 ON b2.series_id=s.id WHERE ` + seriesFilter
+-	args := append([]interface{}{match}, seriesArgs...)
+-	fields := `SELECT c.id, bt.name AS field, 0 AS inherited FROM candidates c JOIN book_search_text bt ON bt.book_id=c.id
+- UNION ALL SELECT c.id, bt.title, 0 FROM candidates c JOIN book_search_text bt ON bt.book_id=c.id
+- UNION ALL SELECT c.id, st.name, 1 FROM candidates c JOIN books b ON b.id=c.id JOIN series_search_text st ON st.series_id=b.series_id
+- UNION ALL SELECT c.id, st.title, 1 FROM candidates c JOIN books b ON b.id=c.id JOIN series_search_text st ON st.series_id=b.series_id`
+-	args = append(args, keyword, keyword, keyword, keyword)
+-	seek, seekArgs := globalSearchSeek(after, 0)
+-	args = append(args, seekArgs...)
+-	args = append(args, limit)
+-	rows, err := db.QueryContext(ctx, globalRankCTE(candidates, fields)+`
+- SELECT b.id, b.series_id, b.library_id, b.name, b.path, b.size, b.file_modified_at, b.volume, b.title, b.summary, b.number, b.sort_number, b.page_count, b.cover_path, b.last_read_page, b.last_read_at, b.is_read, b.file_hash, b.quick_hash, b.path_fingerprint, b.path_fingerprint_no_ext, b.filename_fingerprint, b.created_at, b.updated_at,
+- s.name, s.title, r.tier, r.position, r.extra
+- FROM ranked r JOIN books b ON b.id=r.id JOIN series s ON s.id=b.series_id
+- WHERE r.choice=1 `+seek+` ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?`, args...)
++	query := `SELECT bt.book_id,bt.name,bt.title,'','' FROM ` + table + ` JOIN book_search_text bt ON bt.book_id=` + table + `.rowid
++ WHERE ` + table + ` MATCH ? AND (instr(bt.name,?)>0 OR instr(bt.title,?)>0)
++ UNION ALL SELECT b.id,'','',st.name,st.title FROM series s
++ JOIN series_search_text st ON st.series_id=s.id JOIN books b ON b.series_id=s.id
++ JOIN book_search_text bt ON bt.book_id=b.id
++ WHERE ` + seriesFilter + ` AND instr(bt.name,?)=0 AND instr(bt.title,?)=0`
++	args := []any{match, keyword, keyword}
++	args = append(args, seriesArgs...)
++	args = append(args, keyword, keyword)
++	return query, args
++}
++
++func (s *SqlStore) searchGlobalSeriesSubstring(ctx context.Context, db globalSearchReader, keyword string, limit int32, after *GlobalSearchKey) ([]SeriesSearchHit, error) {
++	query, args := globalSeriesStatement(keyword, limit, after)
++	rows, err := db.QueryContext(ctx, query, args...)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	return scanBookSearchHits(rows)
++	return scanSeriesSearchHits(rows)
+ }
+ 
+-func (s *SqlStore) searchGlobalSeriesSubstring(ctx context.Context, db globalSearchReader, keyword string, limit int32, after *GlobalSearchKey) ([]SeriesSearchHit, error) {
+-	filter, args := normalizedSeriesFilter(keyword)
+-	candidates := `SELECT s.id FROM series s WHERE ` + filter
+-	fields := `SELECT c.id, st.name AS field, 0 AS inherited FROM candidates c JOIN series_search_text st ON st.series_id=c.id
+- UNION ALL SELECT c.id, st.title, 0 FROM candidates c JOIN series_search_text st ON st.series_id=c.id`
+-	args = append(args, keyword, keyword, keyword, keyword)
+-	seek, seekArgs := globalSearchSeek(after, 1)
+-	args = append(args, seekArgs...)
++func globalSeriesStatement(keyword string, limit int32, after *GlobalSearchKey) (string, []interface{}) {
++	table, match := "series_search_fts", fts5PhraseQuery(keyword)
++	if len([]rune(keyword)) <= gramSearchMaxRunes {
++		table, match = "series_gram_fts", normalizedSeriesGramMatch(keyword)
++	}
++	candidates := `SELECT rowid AS id FROM ` + table + ` WHERE ` + table + ` MATCH ?`
++	fields, args := globalFieldBranches("series_search_text", "series_id", candidates, keyword, match)
++	seek, sa := globalSearchSeek(after, 1)
++	args = append(args, sa...)
+ 	args = append(args, limit)
+-	rows, err := db.QueryContext(ctx, globalRankCTE(candidates, fields)+`
+- SELECT s.id, s.library_id, s.name, s.title, s.summary, s.publisher, s.status, s.rating, s.language, s.locked_fields, s.name_initial, s.path, s.created_at, s.updated_at, s.is_favorite, s.volume_count, s.book_count, s.total_pages,
++	return `WITH ranked AS (` + fields + `),top AS MATERIALIZED (SELECT * FROM ranked r WHERE 1=1 ` + seek + ` ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?)` + ` SELECT s.id, s.library_id, s.name, s.title, s.summary, s.publisher, s.status, s.rating, s.language, s.locked_fields, s.name_initial, s.path, s.created_at, s.updated_at, s.is_favorite, s.volume_count, s.book_count, s.total_pages,
+  ss.cover_path, COALESCE(ss.tag_names_cache, ''), COALESCE(ss.read_pages, 0),ss.last_read_at,NULLIF(ss.last_read_book_id,0),
+  (SELECT b2.last_read_page FROM books b2 WHERE b2.id=ss.last_read_book_id), r.tier,r.position,r.extra
+- FROM ranked r JOIN series s ON s.id=r.id LEFT JOIN series_stats ss ON ss.series_id=s.id
+- WHERE r.choice=1 `+seek+` ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?`, args...)
+-	if err != nil {
+-		return nil, err
+-	}
+-	return scanSeriesSearchHits(rows)
++ FROM top r JOIN series s ON s.id=r.id LEFT JOIN series_stats ss ON ss.series_id=s.id
++ ORDER BY r.tier,r.position,r.extra,r.id`, args
++}
++
++// Choose the best full field before ranking; neither source is truncated.
++func globalFieldBranches(table, id, candidates, keyword, match string) (string, []any) {
++	query := `WITH chosen AS (
++ SELECT st.` + id + ` AS id,CASE WHEN instr(st.title,?)=0 OR
++ (instr(st.name,?)>0 AND (CASE WHEN st.name=? THEN 0 ELSE 1 END,instr(st.name,?),length(st.name))<=
++ (CASE WHEN st.title=? THEN 0 ELSE 1 END,instr(st.title,?),length(st.title)))
++ THEN st.name ELSE st.title END AS field
++ FROM (` + candidates + `) c JOIN ` + table + ` st ON st.` + id + `=c.id
++ ) SELECT id,CASE WHEN field=? THEN 0 ELSE 1 END AS tier,
++ instr(field,?)-1 AS position,length(field)-length(?) AS extra
++ FROM chosen WHERE instr(field,?)>0`
++	return query, []any{keyword, keyword, keyword, keyword, keyword, keyword, match, keyword, keyword, keyword, keyword}
+ }
+ 
+ // SearchMatchRank contains no text. SQLite's maximum TEXT length is below 2^31
+@@ -352,13 +384,6 @@ func (r SearchMatchRank) Score() float64 {
+ 	}
+ }
+ 
+-func globalRankCTE(candidates, fields string) string {
+-	return `WITH candidates AS (` + candidates + `), fields AS (` + fields + `),
+- matches AS (SELECT id, CASE WHEN inherited=1 THEN 2 WHEN field=? THEN 0 ELSE 1 END AS tier,
+- instr(field,?)-1 AS position, length(field)-length(?) AS extra FROM fields WHERE instr(field,?)>0),
+- ranked AS (SELECT *, row_number() OVER (PARTITION BY id ORDER BY tier,position,extra, id ASC) AS choice FROM matches)`
+-}
+-
+ func fts5PhraseQuery(keyword string) string {
+ 	return `"` + strings.ReplaceAll(strings.TrimSpace(keyword), `"`, `""`) + `"`
+ }
+@@ -614,9 +639,7 @@ func scanSeriesSearchHits(rows *sql.Rows) ([]SeriesSearchHit, error) {
+ 			&i.LastReadAt,
+ 			&i.LastReadBookID,
+ 			&i.LastReadPage,
+-			&i.Rank.Tier,
+-			&i.Rank.Position,
+-			&i.Rank.Extra,
++			&i.Rank.Tier, &i.Rank.Position, &i.Rank.Extra,
+ 		); err != nil {
+ 			return nil, err
+ 		}
+@@ -663,9 +686,7 @@ func scanBookSearchHits(rows *sql.Rows) ([]BookSearchHit, error) {
+ 			&i.UpdatedAt,
+ 			&i.SeriesName,
+ 			&i.SeriesTitle,
+-			&i.Rank.Tier,
+-			&i.Rank.Position,
+-			&i.Rank.Extra,
++			&i.Rank.Tier, &i.Rank.Position, &i.Rank.Extra,
+ 		); err != nil {
+ 			return nil, err
+ 		}
+--- /dev/null
++++ b/internal/api/search_acceptance_test.go
+@@ -0,0 +1,437 @@
++package api
++
++// Opt-in acceptance measurements, never a wall-clock unit-test assertion. This
++// file also runs unchanged against the archived pre-search implementation via
++// Go's read-only -overlay mechanism. See scripts/search-acceptance.ps1.
++import (
++	"context"
++	"encoding/base64"
++	"encoding/binary"
++	"encoding/json"
++	"fmt"
++	"io"
++	"net/http"
++	"net/http/httptest"
++	"net/url"
++	"os"
++	"path/filepath"
++	"runtime"
++	"sort"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/go-chi/chi/v5"
++	"yomifolio/internal/config"
++	"yomifolio/internal/database"
++	"yomifolio/internal/parser"
++	"yomifolio/internal/scanner"
++)
++
++func acceptanceName(id int, book bool) string {
++	prefix := "海贼王"
++	if id%1000 == 0 {
++		prefix = "孤星Atlas"
++	}
++	kind := "Series"
++	if book {
++		kind = "Book"
++	}
++	return fmt.Sprintf("%s%s%06d", prefix, kind, id)
++}
++
++func acceptanceCheck(t *testing.T, err error) {
++	t.Helper()
++	if err != nil {
++		t.Fatal(err)
++	}
++}
++
++// TestSearchAcceptanceSeed creates the immutable v4 mother database through the
++// old migration and normal trigger-maintained writes. Paths are deliberately
++// synthetic: this database must NOT be fed to a filesystem scanning task.
++func TestSearchAcceptanceSeed(t *testing.T) {
++	path := os.Getenv("SEARCH_ACCEPTANCE_SEED")
++	if path == "" {
++		t.Skip("opt-in frozen 200000 books / 20000 series")
++	}
++	if _, err := os.Stat(path); !os.IsNotExist(err) {
++		t.Fatal("seed destination must not exist")
++	}
++	acceptanceCheck(t, database.Migrate(path))
++	store, err := database.NewStore(path)
++	acceptanceCheck(t, err)
++	defer store.Close()
++	tx, err := store.DB().Begin()
++	acceptanceCheck(t, err)
++	defer tx.Rollback()
++	_, err = tx.Exec(`INSERT INTO libraries(id,name,path) VALUES(1,'frozen','/search-acceptance-synthetic')`)
++	acceptanceCheck(t, err)
++	series, err := tx.Prepare(`INSERT INTO series(id,library_id,name,title,path,created_at,updated_at) VALUES(?,1,?,'',?,'2026-01-01 00:00:00','2026-01-01 00:00:00')`)
++	acceptanceCheck(t, err)
++	defer series.Close()
++	books, err := tx.Prepare(`INSERT INTO books(id,series_id,library_id,name,title,path,size,file_modified_at,created_at,updated_at) VALUES(?,?,1,?,'',?,1,'2026-01-01 00:00:00','2026-01-01 00:00:00','2026-01-01 00:00:00')`)
++	acceptanceCheck(t, err)
++	defer books.Close()
++	for id := 1; id <= 20000; id++ {
++		_, err = series.Exec(id, acceptanceName(id, false), fmt.Sprintf("/search-acceptance-synthetic/s%d", id))
++		acceptanceCheck(t, err)
++		for j := 1; j <= 10; j++ {
++			bid := (id-1)*10 + j
++			_, err = books.Exec(bid, id, acceptanceName(bid, true), fmt.Sprintf("/search-acceptance-synthetic/b%d.cbz", bid))
++			acceptanceCheck(t, err)
++		}
++	}
++	acceptanceCheck(t, tx.Commit())
++	_, err = store.DB().Exec(`PRAGMA wal_checkpoint(TRUNCATE)`)
++	acceptanceCheck(t, err)
++}
++
++type acceptanceOracleKey struct {
++	tier       byte
++	pos, extra uint32
++	kind       byte
++	id         int64
++}
++
++func (a acceptanceOracleKey) less(b acceptanceOracleKey) bool {
++	if a.tier != b.tier {
++		return a.tier < b.tier
++	}
++	if a.pos != b.pos {
++		return a.pos < b.pos
++	}
++	if a.extra != b.extra {
++		return a.extra < b.extra
++	}
++	if a.kind != b.kind {
++		return a.kind < b.kind
++	}
++	return a.id < b.id
++}
++func acceptanceOracleRank(field, query string, kind byte, id int64) (acceptanceOracleKey, bool) {
++	f, q := []rune(strings.ToLower(field)), []rune(strings.ToLower(query))
++	for pos := 0; pos+len(q) <= len(f); pos++ {
++		if string(f[pos:pos+len(q)]) == string(q) {
++			tier := byte(1)
++			if len(f) == len(q) {
++				tier = 0
++			}
++			return acceptanceOracleKey{tier, uint32(pos), uint32(len(f) - len(q)), kind, id}, true
++		}
++	}
++	return acceptanceOracleKey{}, false
++}
++
++// Locate an independently computed key using the documented bounded cursor
++// wire contract, then use the NEXT server-issued cursor for the measured page.
++// This setup does not fetch or time all intervening pages; the timed request is
++// an ordinary authenticated HTTP continuation, including near the last result.
++func acceptanceLocate(t *testing.T, first string, k acceptanceOracleKey) string {
++	t.Helper()
++	b, err := base64.RawURLEncoding.DecodeString(first)
++	acceptanceCheck(t, err)
++	if len(b) != 93 {
++		t.Fatal("unsupported cursor format")
++	}
++	b[75] = k.tier
++	binary.BigEndian.PutUint32(b[76:80], k.pos)
++	binary.BigEndian.PutUint32(b[80:84], k.extra)
++	b[84] = k.kind
++	binary.BigEndian.PutUint64(b[85:93], uint64(k.id))
++	return base64.RawURLEncoding.EncodeToString(b)
++}
++
++type acceptanceSample struct {
++	Query     string  `json:"query"`
++	Target    string  `json:"target"`
++	Phase     string  `json:"phase"`
++	Matches   int     `json:"matches"`
++	Durations []int64 `json:"nanoseconds"`
++	P50       int64   `json:"p50_ns"`
++	P95       int64   `json:"p95_ns"`
++}
++type acceptanceReport struct {
++	Label     string             `json:"label"`
++	Go        string             `json:"go"`
++	CPUs      int                `json:"cpus"`
++	SQLite    string             `json:"sqlite"`
++	Settings  map[string]string  `json:"settings"`
++	MigrateNS int64              `json:"migrate_ns"`
++	RebuildNS int64              `json:"search_rebuild_ns"`
++	Samples   []acceptanceSample `json:"samples"`
++}
++
++func TestSearchAcceptanceMeasure(t *testing.T) {
++	input, output := os.Getenv("SEARCH_ACCEPTANCE_INPUT"), os.Getenv("SEARCH_ACCEPTANCE_OUTPUT")
++	if input == "" || output == "" {
++		t.Skip("opt-in acceptance; see scripts/search-acceptance.ps1")
++	}
++	fullWalk := os.Getenv("SEARCH_ACCEPTANCE_FULL_WALK") == "1"
++	pageSize := 20
++	if fullWalk {
++		pageSize = 100
++	}
++	report := acceptanceReport{Label: os.Getenv("SEARCH_ACCEPTANCE_LABEL"), Go: runtime.Version(), CPUs: runtime.NumCPU(), Settings: map[string]string{}}
++	// Copy only a closed/checkpointed mother database; never open it for writing.
++	work := t.TempDir()
++	path := filepath.Join(work, "catalogue.db")
++	src, err := os.Open(input)
++	acceptanceCheck(t, err)
++	dst, err := os.Create(path)
++	acceptanceCheck(t, err)
++	_, err = io.Copy(dst, src)
++	acceptanceCheck(t, err)
++	acceptanceCheck(t, src.Close())
++	acceptanceCheck(t, dst.Close())
++	start := time.Now()
++	acceptanceCheck(t, database.Migrate(path))
++	report.MigrateNS = time.Since(start).Nanoseconds()
++	store, err := database.NewStore(path)
++	acceptanceCheck(t, err)
++	defer store.Close()
++	acceptanceCheck(t, store.DB().QueryRow(`SELECT sqlite_version()`).Scan(&report.SQLite))
++	for _, p := range []string{"page_size", "journal_mode", "synchronous", "cache_size", "mmap_size", "temp_store", "user_version"} {
++		var value string
++		acceptanceCheck(t, store.DB().QueryRow("PRAGMA "+p).Scan(&value))
++		report.Settings[p] = value
++	}
++	var ns, nb int
++	acceptanceCheck(t, store.DB().QueryRow(`SELECT count(*) FROM series`).Scan(&ns))
++	acceptanceCheck(t, store.DB().QueryRow(`SELECT count(*) FROM books`).Scan(&nb))
++	if ns != 20000 || nb != 200000 {
++		t.Fatalf("not frozen scale: %d/%d", ns, nb)
++	}
++	cfg := &config.Config{}
++	cfg.Database.Path = path
++	cfg.Cache.Dir = filepath.Join(work, "cache")
++	cfg.Scanner.ThumbnailFormat = "webp"
++	cfg.Scanner.ArchivePoolSize = 5
++	config.NormalizeConfig(cfg)
++	acceptanceCheck(t, os.MkdirAll(cfg.Cache.Dir, 0755))
++	manager := config.NewManager(cfg)
++	parser.InitPool(5)
++	defer parser.ResetArchivePool()
++	c := newAPIFixture(store, scanner.NewScanner(store, manager), manager, filepath.Join(work, "config.yaml"), controllerCacheSizes{imageBytes: 8192, page: 8, bookPageSource: 8})
++	defer c.Close()
++	mkTestUser(t, store, "acceptance-admin", database.RoleAdmin)
++	router := chi.NewRouter()
++	c.SetupRoutes(router)
++	server := httptest.NewServer(router)
++	defer server.Close()
++	resp, err := server.Client().Post(server.URL+"/api/auth/login", "application/json", strings.NewReader(`{"username":"acceptance-admin","password":"password1"}`))
++	acceptanceCheck(t, err)
++	if resp.StatusCode != 200 {
++		t.Fatalf("login: %d", resp.StatusCode)
++	}
++	cookie := resp.Cookies()[0]
++	acceptanceCheck(t, resp.Body.Close())
++	request := func(query, target, cursor string) ([]string, bool, string) {
++		t.Helper()
++		req, err := http.NewRequest("GET", server.URL+"/api/search?q="+url.QueryEscape(query)+"&target="+target+fmt.Sprintf("&limit=%d&cursor=", pageSize)+url.QueryEscape(cursor), nil)
++		acceptanceCheck(t, err)
++		req.AddCookie(cookie)
++		resp, err := server.Client().Do(req)
++		acceptanceCheck(t, err)
++		defer resp.Body.Close()
++		if resp.StatusCode != 200 {
++			b, _ := io.ReadAll(resp.Body)
++			t.Fatalf("search: %d %s", resp.StatusCode, b)
++		}
++		var result struct {
++			Hits []struct {
++				ID string `json:"id"`
++			} `json:"hits"`
++			More   bool   `json:"has_more"`
++			Cursor string `json:"next_cursor"`
++		}
++		acceptanceCheck(t, json.NewDecoder(resp.Body).Decode(&result))
++		ids := make([]string, 0, len(result.Hits))
++		for _, h := range result.Hits {
++			ids = append(ids, h.ID)
++		}
++		return ids, result.More, result.Cursor
++	}
++	// Independent literal substring oracle over generator facts, not either SQL
++	// implementation. These queries have identical old/new matching semantics.
++	queries := []string{"海", "海贼", "海贼王", "星", "孤星", "孤星Atlas"}
++	if report.Label != "baseline" {
++		queries = append(queries, "孤—星 Ａｔｌａｓ")
++	}
++	for _, query := range queries {
++		if only := os.Getenv("SEARCH_ACCEPTANCE_QUERY"); only != "" && only != query {
++			continue
++		}
++		targets := []string{"series", "book"}
++		if fullWalk {
++			targets = append(targets, "all")
++		}
++		for _, target := range targets {
++			if only := os.Getenv("SEARCH_ACCEPTANCE_TARGET"); only != "" && only != target {
++				continue
++			}
++			want := map[string]bool{}
++			oracleQuery := query
++			if query == "孤—星 Ａｔｌａｓ" {
++				oracleQuery = "孤星Atlas"
++			}
++			keys := map[string]acceptanceOracleKey{}
++			for id := 1; id <= 20000; id++ {
++				sk, sm := acceptanceOracleRank(acceptanceName(id, false), oracleQuery, 1, int64(id))
++				if target == "series" || target == "all" {
++					if sm {
++						identity := fmt.Sprintf("s_%d", id)
++						want[identity] = true
++						keys[identity] = sk
++					}
++					if target == "series" {
++						continue
++					}
++				}
++				for j := 1; j <= 10; j++ {
++					bid := (id-1)*10 + j
++					bk, bm := acceptanceOracleRank(acceptanceName(bid, true), oracleQuery, 0, int64(bid))
++					if !bm && sm {
++						bk = sk
++						bk.tier = 2
++						bk.kind = 0
++						bk.id = int64(bid)
++					}
++					if sm || bm {
++						identity := fmt.Sprintf("b_%d", bid)
++						want[identity] = true
++						keys[identity] = bk
++					}
++				}
++			}
++			// Verify the COMPLETE matching set before comparing latency, including old
++			// results beyond the old HTTP cap. HTTP timing below includes real auth.
++			seen := map[string]bool{}
++			if target == "series" || target == "all" {
++				rows, e := store.SearchGlobalSeries(context.Background(), query, 300000)
++				acceptanceCheck(t, e)
++				for _, r := range rows {
++					seen[fmt.Sprintf("s_%d", r.ID)] = true
++				}
++			}
++			if target == "book" || target == "all" {
++				rows, e := store.SearchGlobalBooks(context.Background(), query, 300000)
++				acceptanceCheck(t, e)
++				for _, r := range rows {
++					seen[fmt.Sprintf("b_%d", r.ID)] = true
++				}
++			}
++			if len(seen) != len(want) {
++				t.Fatalf("oracle %q/%s count %d != %d", query, target, len(seen), len(want))
++			}
++			for id := range want {
++				if !seen[id] {
++					t.Fatalf("oracle missing %s", id)
++				}
++			}
++			ordered := make([]string, 0, len(want))
++			for identity := range want {
++				ordered = append(ordered, identity)
++			}
++			sort.Slice(ordered, func(i, j int) bool { return keys[ordered[i]].less(keys[ordered[j]]) })
++			measure := func(phase, cursor string) {
++				if fullWalk {
++					return
++				}
++				s := acceptanceSample{Query: query, Target: target, Phase: phase, Matches: len(want)}
++				for i := 0; i < 110; i++ {
++					start := time.Now()
++					ids, _, _ := request(query, target, cursor)
++					elapsed := time.Since(start).Nanoseconds()
++					if len(ids) == 0 {
++						t.Fatal("empty matching page")
++					}
++					for _, id := range ids {
++						if !want[id] {
++							t.Fatalf("HTTP oracle unexpected %s", id)
++						}
++					}
++					if i >= 10 {
++						s.Durations = append(s.Durations, elapsed)
++					}
++				}
++				sorted := append([]int64(nil), s.Durations...)
++				sort.Slice(sorted, func(i, j int) bool { return sorted[i] < sorted[j] })
++				s.P50 = sorted[49]
++				s.P95 = sorted[94]
++				report.Samples = append(report.Samples, s)
++				b, e := json.MarshalIndent(report, "", "  ")
++				acceptanceCheck(t, e)
++				acceptanceCheck(t, os.WriteFile(output, b, 0644))
++				t.Logf("%s %s %s matches=%d p50=%.3fms p95=%.3fms", query, target, phase, len(want), float64(s.P50)/1e6, float64(s.P95)/1e6)
++			}
++			measure("first", "")
++			if report.Label != "baseline" {
++				ids, more, first := request(query, target, "")
++				if strings.Join(ids, ",") != strings.Join(ordered[:min(pageSize, len(ordered))], ",") {
++					t.Fatalf("HTTP first order mismatch %s/%s", query, target)
++				}
++				if !fullWalk && more && len(want) > 1000 {
++					for _, phase := range []string{"middle", "near_end"} {
++						boundary := len(ordered) / 2
++						if phase == "near_end" {
++							boundary = len(ordered) - 41
++						}
++						locate := acceptanceLocate(t, first, keys[ordered[boundary]])
++						ids, more, cursor := request(query, target, locate)
++						if !more || strings.Join(ids, ",") != strings.Join(ordered[boundary+1:boundary+21], ",") {
++							t.Fatal("independent deep predecessor oracle mismatch")
++						}
++						ids, _, _ = request(query, target, cursor)
++						if strings.Join(ids, ",") != strings.Join(ordered[boundary+21:min(boundary+41, len(ordered))], ",") {
++							t.Fatal("independent deep page oracle mismatch")
++						}
++						measure(phase, cursor)
++					}
++				}
++			}
++			// Sparse scenarios can be completely walked at the real HTTP seam. Save
++			// the genuinely server-issued last-page cursor outside the timed region.
++			if os.Getenv("SEARCH_ACCEPTANCE_LABEL") != "baseline" && (fullWalk || len(want) <= 1000) {
++				cursor, last := "", ""
++				walk := map[string]bool{}
++				position := 0
++				for {
++					ids, more, next := request(query, target, cursor)
++					for _, id := range ids {
++						if walk[id] {
++							t.Fatalf("duplicate HTTP result %s", id)
++						}
++						if position >= len(ordered) || id != ordered[position] {
++							t.Fatalf("HTTP full order mismatch at %d: %s", position, id)
++						}
++						position++
++						walk[id] = true
++					}
++					last = cursor
++					if !more {
++						break
++					}
++					if next == "" || next == cursor {
++						t.Fatal("cursor did not advance")
++					}
++					cursor = next
++				}
++				if len(walk) != len(want) {
++					t.Fatalf("HTTP walk %d != %d", len(walk), len(want))
++				}
++				t.Logf("complete HTTP walk %s/%s count=%d page_size=%d", query, target, position, pageSize)
++				if last != "" {
++					measure("near_end", last)
++				}
++			}
++		}
++	}
++	start = time.Now()
++	acceptanceCheck(t, store.RebuildSeriesSearchIndex(context.Background()))
++	acceptanceCheck(t, store.RebuildBookSearchIndex(context.Background()))
++	report.RebuildNS = time.Since(start).Nanoseconds()
++	b, err := json.MarshalIndent(report, "", "  ")
++	acceptanceCheck(t, err)
++	acceptanceCheck(t, os.WriteFile(output, b, 0644))
++}
+--- /dev/null
++++ b/internal/api/search_best_field_acceptance_test.go
+@@ -0,0 +1,133 @@
++package api
++
++import (
++	"fmt"
++	"testing"
++)
++
++// Keep best-field selection observable at the real HTTP seam while replacing
++// field-expansion/window ranking with one bounded rank per candidate identity.
++func TestSearchBestFieldNumericProjectionHTTP(t *testing.T) {
++	c, store, _, _ := newTestController(t)
++	normalizedExec(t, store, `INSERT INTO libraries(id,name,path) VALUES(1,'one','/one')`)
++	fields := [][2]string{{"q", "xq"}, {"xq", "q"}, {"xq", "qxx"}, {"xxq", "xq"}, {"界q", "a界q"}, {"xqz", "yq"}, {"q", "q"}}
++	for i, f := range fields {
++		normalizedExec(t, store, `INSERT INTO series(id,library_id,name,title,path) VALUES(?,1,?,?,?)`, i+1, f[0], f[1], fmt.Sprintf("/s%d", i+1))
++		normalizedExec(t, store, `INSERT INTO books(id,series_id,library_id,name,title,path,size,file_modified_at) VALUES(?,?,1,?,?,?,1,CURRENT_TIMESTAMP)`, i+1, i+1, f[0], f[1], fmt.Sprintf("/b%d", i+1))
++	}
++	f := normalizedSearchServer(t, c, store)
++	for _, target := range []string{"series", "book"} {
++		prefix := "s_"
++		if target == "book" {
++			prefix = "b_"
++		}
++		want := []string{}
++		for _, id := range []int{1, 2, 7, 3, 4, 5, 6} {
++			want = append(want, fmt.Sprintf("%s%d", prefix, id))
++		}
++		for _, limit := range []int{1, 3, 7} {
++			got := []string{}
++			cursor := ""
++			for {
++				r := cursorPage(t, f, "q", target, limit, cursor)
++				for _, h := range r.Hits {
++					got = append(got, h.ID)
++				}
++				if !r.HasMore {
++					break
++				}
++				cursor = r.NextCursor
++			}
++			normalizedEqual(t, got, want)
++		}
++	}
++}
++
++// More than a thousand matches are traversed entirely using only server-issued
++// cursors. The independent literal oracle has three groups: own exact books,
++// exact series, then inherited books; equal keys are broken by persistent ID.
++func TestSearchBroadCompleteOrderedHTTP(t *testing.T) {
++	c, store, _, _ := newTestController(t)
++	normalizedExec(t, store, `INSERT INTO libraries(id,name,path) VALUES(1,'one','/one'),(2,'two','/two')`)
++	for sid := 1; sid <= 150; sid++ {
++		normalizedExec(t, store, `INSERT INTO series(id,library_id,name,path) VALUES(?,?,'Needle',?)`, sid, 1+sid%2, fmt.Sprintf("/s%d", sid))
++		for j := 1; j <= 20; j++ {
++			bid := (sid-1)*20 + j
++			name := "unrelated"
++			if bid%2 == 1 {
++				name = "Needle"
++			}
++			normalizedExec(t, store, `INSERT INTO books(id,series_id,library_id,name,path,size,file_modified_at) VALUES(?,?,?,?,?,1,CURRENT_TIMESTAMP)`, bid, sid, 1+sid%2, name, fmt.Sprintf("/b%d", bid))
++		}
++	}
++	f := normalizedSearchServer(t, c, store)
++	for _, target := range []string{"all", "series", "book"} {
++		want := []string{}
++		if target != "series" {
++			for bid := 1; bid <= 3000; bid += 2 {
++				want = append(want, fmt.Sprintf("b_%d", bid))
++			}
++		}
++		if target != "book" {
++			for sid := 1; sid <= 150; sid++ {
++				want = append(want, fmt.Sprintf("s_%d", sid))
++			}
++		}
++		if target != "series" {
++			for bid := 2; bid <= 3000; bid += 2 {
++				want = append(want, fmt.Sprintf("b_%d", bid))
++			}
++		}
++		got := []string{}
++		cursor := ""
++		for {
++			page := cursorPage(t, f, "Needle", target, 100, cursor)
++			for _, hit := range page.Hits {
++				got = append(got, hit.ID)
++			}
++			if !page.HasMore {
++				normalizedEqual(t, page.NextCursor, "")
++				break
++			}
++			if page.NextCursor == "" || page.NextCursor == cursor {
++				t.Fatal("nonadvancing cursor")
++			}
++			cursor = page.NextCursor
++		}
++		normalizedEqual(t, got, want)
++		t.Logf("full HTTP %s: %d independently ordered matches", target, len(got))
++	}
++}
++
++// Literal HTTP order covers disjoint own/inherited sources, a secondary field
++// beyond a consumed cursor, Unicode character positions, and heap replacement.
++// The performance red is the recorded acceptance budget, not a fabricated
++// claim that this behavior was broken before the query optimization.
++func TestSearchBestFieldDisjointSourcesHTTP(t *testing.T) {
++	c, store, _, _ := newTestController(t)
++	normalizedExec(t, store, `INSERT INTO libraries(id,name,path) VALUES(1,'one','/one')`)
++	normalizedExec(t, store, `INSERT INTO series(id,library_id,name,title,path) VALUES(1,1,'xq','q','/s1'),(2,1,'other','','/s2')`)
++	fields := [][3]string{
++		{"q", "xxq", "1"}, {"界q", "a界q", "1"}, {"qxx", "xq", "1"}, {"none", "", "1"}, {"none", "", "1"}, {"xxq", "q", "2"}, {"a界q", "界q", "2"}, {"q", "q", "2"},
++	}
++	for i, f := range fields {
++		normalizedExec(t, store, `INSERT INTO books(id,series_id,library_id,name,title,path,size,file_modified_at) VALUES(?,?,1,?,?,?,1,CURRENT_TIMESTAMP)`, i+1, f[2], f[0], f[1], fmt.Sprintf("/b%d", i+1))
++	}
++	f := normalizedSearchServer(t, c, store)
++	want := []string{"b_1", "b_6", "b_8", "b_3", "b_2", "b_7", "b_4", "b_5"}
++	for _, limit := range []int{1, 2, 3, 7, 100} {
++		got := []string{}
++		cursor := ""
++		for {
++			page := cursorPage(t, f, "q", "book", limit, cursor)
++			for _, hit := range page.Hits {
++				got = append(got, hit.ID)
++			}
++			if !page.HasMore {
++				break
++			}
++			cursor = page.NextCursor
++		}
++		normalizedEqual(t, got, want)
++	}
++}
+--- /dev/null
++++ b/internal/api/search_browser_acceptance_test.go
+@@ -0,0 +1,62 @@
++package api
++
++import (
++	"bytes"
++	"encoding/json"
++	"fmt"
++	"github.com/go-chi/chi/v5"
++	"image"
++	"image/png"
++	"net/http"
++	"net/http/httptest"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++	"time"
++	"yomifolio/internal/database"
++)
++
++// TestSearchAcceptanceBrowser serves the built application and real authenticated
++// SQLite HTTP routes for the external Playwright interaction runner. Opt-in only.
++func TestSearchAcceptanceBrowser(t *testing.T) {
++	ready := os.Getenv("SEARCH_BROWSER_READY")
++	if ready == "" {
++		t.Skip("opt-in real browser fixture")
++	}
++	c, store, _, root := newTestController(t)
++	normalizedExec(t, store, `INSERT INTO libraries(id,name,path) VALUES(1,'Browser library','/browser')`)
++	for id := 1; id <= 45; id++ {
++		normalizedExec(t, store, `INSERT INTO series(id,library_id,name,path) VALUES(?,1,?,?)`, id, fmt.Sprintf("Browser Needle %02d", id), fmt.Sprintf("/browser/s%d", id))
++		normalizedExec(t, store, `INSERT INTO books(id,series_id,library_id,name,path,size,file_modified_at) VALUES(?,?,1,?,?,1,CURRENT_TIMESTAMP)`, id, id, fmt.Sprintf("Browser Needle Book %02d", id), fmt.Sprintf("/browser/b%d.cbz", id))
++	}
++	longLibrary, longSeries, longBook := seedBookFixture(t, store, root, "browser-real", "Long Needle", "Readable.cbz", 1)
++	_ = longLibrary
++	normalizedExec(t, store, `UPDATE series SET title=? WHERE id=?`, "Long Needle "+strings.Repeat("界Wide", 600), longSeries.ID)
++	var page bytes.Buffer
++	acceptanceCheck(t, png.Encode(&page, image.NewRGBA(image.Rect(0, 0, 32, 32))))
++	seedBookArchivePages(t, c, longBook, page.Bytes())
++	mkTestUser(t, store, "browser-admin", database.RoleAdmin)
++	mkTestUser(t, store, "browser-reader", database.RoleRegular)
++	router := chi.NewRouter()
++	c.SetupRoutes(router)
++	dist, err := filepath.Abs(os.Getenv("SEARCH_BROWSER_DIST"))
++	acceptanceCheck(t, err)
++	router.Handle("/*", http.FileServer(http.Dir(dist)))
++	server := httptest.NewServer(router)
++	defer func() {
++		c.ShutdownNotify()
++		server.CloseClientConnections()
++		server.Close()
++	}()
++	payload, _ := json.Marshal(map[string]string{"url": server.URL, "username": "browser-admin", "password": "password1", "reader": "browser-reader", "series": fmt.Sprint(longSeries.ID), "book": fmt.Sprint(longBook.ID)})
++	acceptanceCheck(t, os.WriteFile(ready, payload, 0644))
++	deadline := time.Now().Add(10 * time.Minute)
++	for time.Now().Before(deadline) {
++		if _, err := os.Stat(ready + ".done"); err == nil {
++			return
++		}
++		time.Sleep(100 * time.Millisecond)
++	}
++	t.Fatal("browser runner did not signal completion")
++}
+--- /dev/null
++++ b/internal/api/search_large_maintenance_acceptance_test.go
+@@ -0,0 +1,188 @@
++package api
++
++import (
++	"archive/zip"
++	"bytes"
++	"encoding/json"
++	"fmt"
++	"image"
++	"image/png"
++	"io"
++	"os"
++	"path/filepath"
++	"testing"
++	"time"
++
++	"yomifolio/internal/config"
++	"yomifolio/internal/database"
++	"yomifolio/internal/parser"
++	"yomifolio/internal/scanner"
++)
++
++// Opt-in complete maintenance at the agreed HTTP seam. The frozen mother is
++// never opened for writes. Every catalogue path is backed by an accessible CBZ.
++func TestSearchLargeRealMaintenanceHTTP(t *testing.T) {
++	input, root := os.Getenv("SEARCH_REAL_INPUT"), os.Getenv("SEARCH_REAL_ROOT")
++	if input == "" || root == "" {
++		t.Skip("opt-in 200000 real archives")
++	}
++	if _, err := os.Stat(root); !os.IsNotExist(err) {
++		t.Fatal("real archive destination must be new")
++	}
++	acceptanceCheck(t, os.MkdirAll(root, 0755))
++	path := filepath.Join(root, "catalogue.db")
++	src, err := os.Open(input)
++	acceptanceCheck(t, err)
++	dst, err := os.Create(path)
++	acceptanceCheck(t, err)
++	_, err = io.Copy(dst, src)
++	acceptanceCheck(t, err)
++	acceptanceCheck(t, src.Close())
++	acceptanceCheck(t, dst.Close())
++	acceptanceCheck(t, database.Migrate(path))
++	store, err := database.NewStore(path)
++	acceptanceCheck(t, err)
++	defer store.Close()
++	var page, archive bytes.Buffer
++	acceptanceCheck(t, png.Encode(&page, image.NewRGBA(image.Rect(0, 0, 32, 32))))
++	z := zip.NewWriter(&archive)
++	entry, err := z.Create("001.png")
++	acceptanceCheck(t, err)
++	_, err = entry.Write(page.Bytes())
++	acceptanceCheck(t, err)
++	acceptanceCheck(t, z.Close())
++	template := filepath.Join(root, "template.cbz")
++	acceptanceCheck(t, os.WriteFile(template, archive.Bytes(), 0644))
++	library := filepath.Join(root, "library")
++	existingFiles := os.Getenv("SEARCH_REAL_FILES")
++	if existingFiles != "" {
++		library = existingFiles
++	}
++	acceptanceCheck(t, os.MkdirAll(library, 0755))
++	start := time.Now()
++	tx, err := store.DB().Begin()
++	acceptanceCheck(t, err)
++	defer tx.Rollback()
++	_, err = tx.Exec(`UPDATE libraries SET path=? WHERE id=1`, library)
++	acceptanceCheck(t, err)
++	for sid := 1; sid <= 20000; sid++ {
++		dir := filepath.Join(library, acceptanceName(sid, false))
++		acceptanceCheck(t, os.MkdirAll(dir, 0755))
++		_, err = tx.Exec(`UPDATE series SET path=? WHERE id=?`, dir, sid)
++		acceptanceCheck(t, err)
++		for j := 1; j <= 10; j++ {
++			bid := (sid-1)*10 + j
++			// NTFS limits hard links to one inode; use disjoint 1000-link
++			// template groups without changing any catalogue identity/path.
++			if (bid-1)%1000 == 0 {
++				template = filepath.Join(root, fmt.Sprintf("template-%d.cbz", (bid-1)/1000))
++				acceptanceCheck(t, os.WriteFile(template, archive.Bytes(), 0644))
++			}
++			file := filepath.Join(dir, acceptanceName(bid, true)+".cbz")
++			if existingFiles == "" {
++				acceptanceCheck(t, os.Link(template, file))
++			} else {
++				_, err = os.Stat(file)
++				acceptanceCheck(t, err)
++			}
++			_, err = tx.Exec(`UPDATE books SET path=? WHERE id=?`, file, bid)
++			acceptanceCheck(t, err)
++		}
++	}
++	acceptanceCheck(t, tx.Commit())
++	t.Logf("prepared 200000 accessible valid CBZ / 20000 directories in %s; archive bytes=%d reused_files=%q", time.Since(start), archive.Len(), existingFiles)
++	cfg := &config.Config{}
++	cfg.Database.Path = path
++	cfg.Cache.Dir = filepath.Join(root, "cache")
++	cfg.Scanner.ThumbnailFormat = "webp"
++	cfg.Scanner.ArchivePoolSize = 5
++	cfg.Scanner.ScanProfile = os.Getenv("SEARCH_REAL_PROFILE")
++	config.NormalizeConfig(cfg)
++	acceptanceCheck(t, os.MkdirAll(cfg.Cache.Dir, 0755))
++	manager := config.NewManager(cfg)
++	parser.InitPool(5)
++	defer parser.ResetArchivePool()
++	c := newAPIFixture(store, scanner.NewScanner(store, manager), manager, filepath.Join(root, "config.yaml"), defaultControllerCacheSizes())
++	defer c.Close()
++	c.runBackground(func() { c.sse.run(c.lifecycleDone()) })
++	f := normalizedSearchServer(t, c, store)
++	start = time.Now()
++	f.request(t, "POST", "/api/system/rebuild-index")
++	deadline := time.Now().Add(60 * time.Minute)
++	completed := false
++	for time.Now().Before(deadline) && !completed {
++		var runs []RunSnapshot
++		acceptanceCheck(t, json.Unmarshal(f.request(t, "GET", "/api/system/tasks?type=rebuild_index"), &runs))
++		for _, run := range runs {
++			if run.Status == "completed" {
++				completed = true
++			}
++			if run.Status == "failed" || run.Status == "cancelled" {
++				t.Fatalf("complete real maintenance failed: %+v", run)
++			}
++		}
++		if !completed {
++			time.Sleep(time.Second)
++		}
++	}
++	if !completed {
++		t.Fatal("full real maintenance did not complete")
++	}
++	t.Logf("HTTP full maintenance elapsed=%s scan_profile=%s", time.Since(start), cfg.Scanner.ScanProfile)
++	for table, want := range map[string]int{"books": 200000, "series": 20000} {
++		var count int
++		acceptanceCheck(t, store.DB().QueryRow("SELECT count(*) FROM "+table).Scan(&count))
++		normalizedEqual(t, count, want)
++	}
++	// Path and ID identity must survive, not merely aggregate counts.
++	rows, err := store.DB().Query(`SELECT id,path FROM books ORDER BY id`)
++	acceptanceCheck(t, err)
++	defer rows.Close()
++	count := 0
++	for rows.Next() {
++		var id int
++		var got string
++		acceptanceCheck(t, rows.Scan(&id, &got))
++		sid := (id-1)/10 + 1
++		want := filepath.Join(library, acceptanceName(sid, false), acceptanceName(id, true)+".cbz")
++		normalizedEqual(t, got, want)
++		if _, err := os.Stat(got); err != nil {
++			t.Fatal(err)
++		}
++		count++
++	}
++	acceptanceCheck(t, rows.Err())
++	acceptanceCheck(t, rows.Close())
++	normalizedEqual(t, count, 200000)
++	expected := map[string]bool{}
++	for sid := 1; sid <= 20000; sid++ {
++		if sid%1000 == 0 {
++			expected[fmt.Sprintf("s_%d", sid)] = true
++		}
++		for j := 1; j <= 10; j++ {
++			bid := (sid-1)*10 + j
++			if sid%1000 == 0 || bid%1000 == 0 {
++				expected[fmt.Sprintf("b_%d", bid)] = true
++			}
++		}
++	}
++	cursor := ""
++	seen := map[string]bool{}
++	for {
++		r := cursorPage(t, f, "孤星", "all", 100, cursor)
++		for _, h := range r.Hits {
++			if !expected[h.ID] || seen[h.ID] {
++				t.Fatalf("oracle unexpected/duplicate %s", h.ID)
++			}
++			seen[h.ID] = true
++		}
++		if !r.HasMore {
++			break
++		}
++		cursor = r.NextCursor
++	}
++	normalizedEqual(t, len(seen), len(expected))
++	ids := normalizedSeriesIDs(f.series(t, "libraryId=1&q=%E5%AD%A4%E6%98%9F"))
++	normalizedEqual(t, len(ids), 20)
++	t.Logf("post-scan identities/files=%d; independent full HTTP sparse oracle=%d; library series oracle=20", count, len(seen))
++}
+--- /dev/null
++++ b/internal/api/search_maintenance_acceptance_test.go
+@@ -0,0 +1,64 @@
++package api
++
++import (
++	"bytes"
++	"encoding/json"
++	"fmt"
++	"image"
++	"image/png"
++	"os"
++	"strings"
++	"testing"
++	"time"
++)
++
++// The agreed seam is the real maintenance HTTP launch and terminal run response.
++// Removing an actual library root injects a disk failure, not a mocked scanner.
++func TestSearchMaintenanceMissingLibraryFailsHTTP(t *testing.T) {
++	c, store, _, root := newTestController(t)
++	lib, _, book := seedBookFixture(t, store, root, "missing-library", "Needle", "Needle.cbz", 1)
++	var page bytes.Buffer
++	acceptanceCheck(t, png.Encode(&page, image.NewRGBA(image.Rect(0, 0, 32, 32))))
++	seedBookArchivePages(t, c, book, page.Bytes())
++	f := normalizedSearchServer(t, c, store)
++	acceptanceCheck(t, os.RemoveAll(lib.Path))
++	f.request(t, "POST", "/api/system/rebuild-index")
++	deadline := time.Now().Add(15 * time.Second)
++	for time.Now().Before(deadline) {
++		var runs []RunSnapshot
++		acceptanceCheck(t, json.Unmarshal(f.request(t, "GET", "/api/system/tasks?type=rebuild_index"), &runs))
++		for _, run := range runs {
++			switch run.Status {
++			case "failed":
++				if !strings.Contains(fmt.Sprint(run), "missing-library") {
++					t.Fatalf("terminal failure lost library context: %+v", run)
++				}
++				return
++			case "completed", "cancelled":
++				t.Fatalf("missing library must fail maintenance, got %+v", run)
++			}
++		}
++		time.Sleep(10 * time.Millisecond)
++	}
++	t.Fatal("maintenance did not reach terminal failure")
++}
++
++// Unlike synthetic performance paths, these archives are real and remain
++// accessible throughout the complete asynchronous maintenance + forced scan.
++func TestSearchFullMaintenanceWithRealArchiveHTTP(t *testing.T) {
++	c, store, _, root := newTestController(t)
++	lib, series, book := seedBookFixture(t, store, root, "real-library", "Ｎeedle—Series", "NeedleBook.cbz", 1)
++	var page bytes.Buffer
++	acceptanceCheck(t, png.Encode(&page, image.NewRGBA(image.Rect(0, 0, 32, 32))))
++	seedBookArchivePages(t, c, book, page.Bytes())
++	f := normalizedSearchServer(t, c, store)
++	for pass := 0; pass < 2; pass++ {
++		f.rebuild(t)
++		normalizedEqual(t, f.global(t, "needleseries", "series"), []string{fmt.Sprintf("s_%d", series.ID)})
++		normalizedEqual(t, f.global(t, "needlebook", "book"), []string{fmt.Sprintf("b_%d", book.ID)})
++		normalizedEqual(t, normalizedSeriesIDs(f.series(t, fmt.Sprintf("libraryId=%d&q=needleseries", lib.ID))), []int64{series.ID})
++		var count int
++		acceptanceCheck(t, store.DB().QueryRow(`SELECT count(*) FROM books WHERE library_id=?`, lib.ID).Scan(&count))
++		normalizedEqual(t, count, 1)
++	}
++}
+--- /dev/null
++++ b/internal/api/search_real_identity_acceptance_test.go
+@@ -0,0 +1,54 @@
++package api
++
++import (
++	"os"
++	"path/filepath"
++	"testing"
++
++	"yomifolio/internal/database"
++)
++
++// Independent post-maintenance identity audit of the persisted installation.
++// This does not substitute for the HTTP completion/oracle in the maintenance run.
++func TestSearchRealArchiveIdentityAudit(t *testing.T) {
++	path, files := os.Getenv("SEARCH_REAL_VERIFY_DB"), os.Getenv("SEARCH_REAL_VERIFY_FILES")
++	if path == "" || files == "" {
++		t.Skip("opt-in persisted real archive audit")
++	}
++	store, err := database.NewStore(path)
++	acceptanceCheck(t, err)
++	defer store.Close()
++	for _, table := range []string{"series", "books"} {
++		rows, err := store.DB().Query("SELECT id,library_id,path FROM " + table + " ORDER BY id")
++		acceptanceCheck(t, err)
++		count := 0
++		for rows.Next() {
++			var id, lib int
++			var path string
++			acceptanceCheck(t, rows.Scan(&id, &lib, &path))
++			count++
++			normalizedEqual(t, id, count)
++			normalizedEqual(t, lib, 1)
++			expected := filepath.Join(files, acceptanceName(id, false))
++			if table == "books" {
++				expected = filepath.Join(files, acceptanceName((id-1)/10+1, false), acceptanceName(id, true)+".cbz")
++			}
++			normalizedEqual(t, path, expected)
++			if _, err := os.Stat(path); err != nil {
++				t.Fatal(err)
++			}
++		}
++		acceptanceCheck(t, rows.Err())
++		acceptanceCheck(t, rows.Close())
++		want := 20000
++		if table == "books" {
++			want = 200000
++		}
++		normalizedEqual(t, count, want)
++		t.Logf("audited %s: %d stable IDs, library and accessible exact paths", table, count)
++	}
++	var invalid int
++	acceptanceCheck(t, store.DB().QueryRow(`SELECT count(*) FROM books WHERE series_id != ((id-1)/10)+1 OR library_id != 1`).Scan(&invalid))
++	normalizedEqual(t, invalid, 0)
++	t.Logf("all 200000 book-to-series identities preserved; db=%s", path)
++}
+--- /dev/null
++++ b/internal/api/search_upgrade_matrix_acceptance_test.go
+@@ -0,0 +1,169 @@
++package api
++
++import (
++	"encoding/json"
++	"encoding/xml"
++	"fmt"
++	"io"
++	"net/url"
++	"os"
++	"path/filepath"
++	"sort"
++	"testing"
++
++	"yomifolio/internal/config"
++	"yomifolio/internal/database"
++	"yomifolio/internal/scanner"
++)
++
++// Installation data is produced by separately compiled archived releases, not
++// by resetting user_version on a current schema. Only a private copy is opened.
++func TestSearchArchivedUpgradeHTTPMatrix(t *testing.T) {
++	input := os.Getenv("SEARCH_UPGRADE_HTTP_INPUT")
++	if input == "" {
++		t.Skip("opt-in archived installation")
++	}
++	root := t.TempDir()
++	path := filepath.Join(root, "upgrade.db")
++	src, err := os.Open(input)
++	acceptanceCheck(t, err)
++	dst, err := os.Create(path)
++	acceptanceCheck(t, err)
++	_, err = io.Copy(dst, src)
++	acceptanceCheck(t, err)
++	acceptanceCheck(t, src.Close())
++	acceptanceCheck(t, dst.Close())
++	acceptanceCheck(t, database.Migrate(path))
++	store, err := database.NewStore(path)
++	acceptanceCheck(t, err)
++	defer store.Close()
++	cfg := &config.Config{}
++	cfg.Database.Path = path
++	cfg.Cache.Dir = filepath.Join(root, "cache")
++	config.NormalizeConfig(cfg)
++	manager := config.NewManager(cfg)
++	c := newAPIFixture(store, scanner.NewScanner(store, manager), manager, filepath.Join(root, "config.yaml"), defaultControllerCacheSizes())
++	defer c.Close()
++	f := normalizedSearchServer(t, c, store)
++	adminPage := cursorPage(t, f, "星", "series", 1, "")
++	cursorStatus(t, f, "/api/search?q=星&target=series&cursor="+adminPage.NextCursor, nil, 401, "")
++	for _, role := range []string{database.RoleAdmin, database.RoleRegular} {
++		normalizedExec(t, store, `UPDATE users SET role=? WHERE username='search-admin'`, role)
++		if role == database.RoleRegular {
++			cursorStatus(t, f, "/api/search?q=星&target=series&cursor="+adminPage.NextCursor, f.cookie, 400, "invalid_search_cursor")
++		}
++		for _, query := range []string{"星", "孤星", "孤星Atlas", "孤—星 Ａｔｌａｓ"} {
++			oracleQuery := query
++			if query == "孤—星 Ａｔｌａｓ" {
++				oracleQuery = "孤星Atlas"
++			}
++			for _, target := range []string{"all", "series", "book", "title"} {
++				keys := map[string]acceptanceOracleKey{}
++				for sid := 1; sid <= 20000; sid++ {
++					sk, sm := acceptanceOracleRank(acceptanceName(sid, false), oracleQuery, 1, int64(sid))
++					if sm && target != "book" && target != "title" {
++						keys[fmt.Sprintf("s_%d", sid)] = sk
++					}
++					if target == "series" {
++						continue
++					}
++					for j := 1; j <= 10; j++ {
++						bid := (sid-1)*10 + j
++						bk, bm := acceptanceOracleRank(acceptanceName(bid, true), oracleQuery, 0, int64(bid))
++						if !bm && sm {
++							bk = sk
++							bk.tier = 2
++							bk.kind = 0
++							bk.id = int64(bid)
++						}
++						if bm || sm {
++							keys[fmt.Sprintf("b_%d", bid)] = bk
++						}
++					}
++				}
++				want := []string{}
++				for id := range keys {
++					want = append(want, id)
++				}
++				sort.Slice(want, func(i, j int) bool { return keys[want[i]].less(keys[want[j]]) })
++				got := []string{}
++				cursor := ""
++				for {
++					r := cursorPage(t, f, query, target, 100, cursor)
++					for _, hit := range r.Hits {
++						got = append(got, hit.ID)
++					}
++					if !r.HasMore {
++						break
++					}
++					cursor = r.NextCursor
++				}
++				normalizedEqual(t, got, want)
++			}
++			for _, lib := range []int{1, 999} {
++				want := []int64{}
++				if lib == 1 {
++					for sid := 1000; sid <= 20000; sid += 1000 {
++						want = append(want, int64(sid))
++					}
++				}
++				for _, order := range []string{"name_asc", "name_desc"} {
++					ordered := append([]int64{}, want...)
++					if order == "name_desc" {
++						sort.Slice(ordered, func(i, j int) bool { return ordered[i] > ordered[j] })
++					}
++					body := f.series(t, fmt.Sprintf("libraryId=%d&q=%s&sortBy=%s&limit=100", lib, url.QueryEscape(query), order))
++					normalizedEqual(t, normalizedSeriesIDs(body), ordered)
++					normalizedEqual(t, body.Total, len(want))
++				}
++				for page := 1; page <= 4; page++ {
++					start := min((page-1)*7, len(want))
++					end := min(start+7, len(want))
++					expected := want[start:end]
++					var mihon MihonSeriesPageResponse
++					acceptanceCheck(t, json.Unmarshal(f.request(t, "GET", fmt.Sprintf("/api/mihon/v1/series?libraryId=%d&q=%s&limit=7&page=%d", lib, url.QueryEscape(query), page)), &mihon))
++					ids := []int64{}
++					for _, row := range mihon.Items {
++						ids = append(ids, row.ID)
++					}
++					normalizedEqual(t, ids, expected)
++					normalizedEqual(t, mihon.Total, int64(len(want)))
++					normalizedEqual(t, mihon.HasNext, end < len(want))
++					// Cross-library OPDS has the same 20-series independent expected set.
++					if lib == 1 {
++						var feed OPDSFeed
++						acceptanceCheck(t, xml.Unmarshal(f.request(t, "GET", fmt.Sprintf("/opds/v1.2/search?q=%s&limit=7&page=%d", url.QueryEscape(query), page)), &feed))
++						entries := []string{}
++						for _, entry := range feed.Entries {
++							entries = append(entries, entry.ID)
++						}
++						wantEntries := []string{}
++						for _, id := range expected {
++							wantEntries = append(wantEntries, fmt.Sprintf("urn:manga-manager:opds:search:series:%d", id))
++						}
++						normalizedEqual(t, entries, wantEntries)
++						hasNext := false
++						for _, link := range feed.Links {
++							if link.Rel == "next" {
++								hasNext = true
++							}
++						}
++						normalizedEqual(t, hasNext, end < len(want))
++					}
++				}
++			}
++			t.Logf("archive HTTP role=%s %q: all/series/book/title full ordered oracle; library 1/999 asc/desc; Mihon+OPDS 4 pages and totals", role, query)
++		}
++	}
++	normalizedExec(t, store, `UPDATE series SET status='completed' WHERE id%2000=0`)
++	filtered := f.series(t, "libraryId=1&q=%E5%AD%A4%E6%98%9F&status=completed&sortBy=name_asc&limit=100")
++	wantFiltered := []int64{}
++	for id := 2000; id <= 20000; id += 2000 {
++		wantFiltered = append(wantFiltered, int64(id))
++	}
++	normalizedEqual(t, normalizedSeriesIDs(filtered), wantFiltered)
++	normalizedEqual(t, filtered.Total, 10)
++	regularPage := cursorPage(t, f, "星", "series", 1, "")
++	normalizedExec(t, store, `UPDATE users SET must_change_password=1 WHERE username='search-admin'`)
++	cursorStatus(t, f, "/api/search?q=星&target=series&cursor="+regularPage.NextCursor, f.cookie, 403, "")
++}
+--- /dev/null
++++ b/internal/database/search_acceptance_plan_test.go
+@@ -0,0 +1,79 @@
++package database
++
++import (
++	"context"
++	"os"
++	"testing"
++)
++
++// Explain the exact statements used by production on a disposable upgraded
++// copy of the frozen mother database. Virtual-table MATCH scans and scans of
++// materialized candidate sets are not full catalogue scans.
++func TestSearchAcceptanceQueryPlan(t *testing.T) {
++	path := os.Getenv("SEARCH_ACCEPTANCE_PLAN_DB")
++	if path == "" {
++		t.Skip("opt-in frozen database query plan")
++	}
++	if err := Migrate(path); err != nil {
++		t.Fatal(err)
++	}
++	s, err := NewStore(path)
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer s.Close()
++	for _, q := range []string{"海", "海贼", "海贼王", "孤星Atlas"} {
++		for _, kind := range []string{"series", "book"} {
++			for _, deep := range []bool{false, true} {
++				var after *GlobalSearchKey
++				if deep {
++					after = &GlobalSearchKey{SearchMatchRank: SearchMatchRank{Tier: 1, Extra: 12}, ID: 19000, Kind: 1}
++					if kind == "book" {
++						after.Kind = 0
++						after.ID = 190000
++					}
++				}
++				query, args := globalSeriesStatement(q, 21, after)
++				if kind == "book" {
++					query, args = globalBooksStatement(q, 21, after)
++				}
++				rows, err := s.DB().QueryContext(context.Background(), "EXPLAIN QUERY PLAN "+query, args...)
++				if err != nil {
++					t.Fatal(err)
++				}
++				t.Logf("query=%q target=%s deep=%v", q, kind, deep)
++				for rows.Next() {
++					var id, parent, unused int
++					var detail string
++					if err := rows.Scan(&id, &parent, &unused, &detail); err != nil {
++						t.Fatal(err)
++					}
++					t.Log(detail)
++				}
++				if err := rows.Err(); err != nil {
++					t.Fatal(err)
++				}
++				rows.Close()
++				if kind == "book" {
++					query, args = hydrateBookRanks([]GlobalSearchKey{{ID: 1, Kind: 0, SearchMatchRank: SearchMatchRank{Tier: 1, Extra: 12}}})
++					rows, err = s.DB().QueryContext(context.Background(), "EXPLAIN QUERY PLAN "+query, args...)
++					if err != nil {
++						t.Fatal(err)
++					}
++					for rows.Next() {
++						var id, parent, unused int
++						var detail string
++						if err := rows.Scan(&id, &parent, &unused, &detail); err != nil {
++							t.Fatal(err)
++						}
++						t.Log("hydrate:", detail)
++					}
++					if err := rows.Err(); err != nil {
++						t.Fatal(err)
++					}
++					rows.Close()
++				}
++			}
++		}
++	}
++}
+--- /dev/null
++++ b/internal/database/search_archive_acceptance_test.go
+@@ -0,0 +1,88 @@
++package database
++
++import (
++	"io"
++	"os"
++	"strings"
++	"testing"
++	"time"
++)
++
++// Shared unchanged with independent release archives by Go overlay. Never opens
++// the input installation for writes; output must be a new standalone database.
++func TestSearchArchiveUpgrade(t *testing.T) {
++	input, output := os.Getenv("SEARCH_ARCHIVE_INPUT"), os.Getenv("SEARCH_ARCHIVE_OUTPUT")
++	if input == "" || output == "" {
++		t.Skip("opt-in independent release upgrade")
++	}
++	src, err := os.Open(input)
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer src.Close()
++	dst, err := os.OpenFile(output, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if _, err = io.Copy(dst, src); err != nil {
++		t.Fatal(err)
++	}
++	if err = dst.Close(); err != nil {
++		t.Fatal(err)
++	}
++	if os.Getenv("SEARCH_ARCHIVE_FAIL_BOOK") == "1" {
++		store, err := NewStore(output)
++		if err != nil {
++			t.Fatal(err)
++		}
++		defer store.Close()
++		_, err = store.DB().Exec(`CREATE TABLE IF NOT EXISTS book_search_text (book_id INTEGER PRIMARY KEY,series_id INTEGER NOT NULL,library_id INTEGER NOT NULL,name TEXT NOT NULL,title TEXT NOT NULL); CREATE TRIGGER acceptance_fail_book BEFORE INSERT ON book_search_text BEGIN SELECT RAISE(ABORT,'archive injected backfill failure'); END`)
++		if err != nil {
++			t.Fatal(err)
++		}
++		if err := Migrate(output); err == nil || !strings.Contains(err.Error(), "archive injected backfill failure") {
++			t.Fatalf("expected injected failure, got %v", err)
++		}
++		var version int
++		if err := store.DB().QueryRow(`PRAGMA user_version`).Scan(&version); err != nil {
++			t.Fatal(err)
++		}
++		if version != 5 {
++			t.Fatalf("failed upgrade advanced version to %d", version)
++		}
++		t.Log("real v5 backfill failure left version=5; removing fault and retrying")
++		if _, err := store.DB().Exec(`DROP TRIGGER acceptance_fail_book`); err != nil {
++			t.Fatal(err)
++		}
++		if err := store.Close(); err != nil {
++			t.Fatal(err)
++		}
++	}
++	for pass := 0; pass < 2; pass++ {
++		start := time.Now()
++		if err = Migrate(output); err != nil {
++			t.Fatal(err)
++		}
++		elapsed := time.Since(start)
++		store, err := NewStore(output)
++		if err != nil {
++			t.Fatal(err)
++		}
++		var version, books, series int
++		for query, dest := range map[string]*int{"PRAGMA user_version": &version, "SELECT count(*) FROM books": &books, "SELECT count(*) FROM series": &series} {
++			if err = store.DB().QueryRow(query).Scan(dest); err != nil {
++				t.Fatal(err)
++			}
++		}
++		if books != 200000 || series != 20000 {
++			t.Fatalf("lost catalogue: %d/%d", books, series)
++		}
++		if _, err = store.DB().Exec("PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
++			t.Fatal(err)
++		}
++		if err = store.Close(); err != nil {
++			t.Fatal(err)
++		}
++		t.Logf("pass=%d version=%d books=%d series=%d migrate=%s", pass, version, books, series, elapsed)
++	}
++}
+--- /dev/null
++++ b/internal/database/search_rank.go
+@@ -0,0 +1,120 @@
++package database
++
++import (
++	"container/heap"
++	"context"
++	"strings"
++	"unicode/utf8"
++)
++
++// normalizedFieldRank reads indexed candidates' already-normalized full text.
++func normalizedFieldRank(name, title, keyword string, inherited bool) (SearchMatchRank, bool) {
++	var best SearchMatchRank
++	found := false
++	qlen := utf8.RuneCountInString(keyword)
++	for _, field := range []string{name, title} {
++		p := strings.Index(field, keyword)
++		if p < 0 {
++			continue
++		}
++		r := SearchMatchRank{Tier: 1, Position: uint32(utf8.RuneCountInString(field[:p])), Extra: uint32(utf8.RuneCountInString(field) - qlen)}
++		if inherited {
++			r.Tier = 2
++		} else if r.Extra == 0 {
++			r.Tier = 0
++		}
++		if !found || rankLess(r, best) {
++			best = r
++			found = true
++		}
++	}
++	return best, found
++}
++
++func rankLess(a, b SearchMatchRank) bool {
++	if a.Tier != b.Tier {
++		return a.Tier < b.Tier
++	}
++	if a.Position != b.Position {
++		return a.Position < b.Position
++	}
++	return a.Extra < b.Extra
++}
++
++func keyLess(a, b GlobalSearchKey) bool {
++	if a.SearchMatchRank != b.SearchMatchRank {
++		return rankLess(a.SearchMatchRank, b.SearchMatchRank)
++	}
++	if a.Kind != b.Kind {
++		return a.Kind < b.Kind
++	}
++	return a.ID < b.ID
++}
++
++type globalRankHeap []GlobalSearchKey
++
++func (h globalRankHeap) Len() int           { return len(h) }
++func (h globalRankHeap) Less(i, j int) bool { return keyLess(h[j], h[i]) }
++func (h globalRankHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
++func (h *globalRankHeap) Push(x any)        { *h = append(*h, x.(GlobalSearchKey)) }
++func (h *globalRankHeap) Pop() any          { a := *h; x := a[len(a)-1]; *h = a[:len(a)-1]; return x }
++
++// collectBookRanks keeps only the best limit successors, not a search
++// snapshot. Every indexed candidate is considered before this bounded heap
++// discards a worse rank. The enclosing read transaction covers hydration too.
++func collectBookRanks(ctx context.Context, db globalSearchReader, query string, args []any, keyword string, limit int32, after *GlobalSearchKey) ([]GlobalSearchKey, error) {
++	rows, err := db.QueryContext(ctx, query, args...)
++	if err != nil {
++		return nil, err
++	}
++	defer rows.Close()
++	h := make(globalRankHeap, 0, int(limit))
++	for rows.Next() {
++		var id int64
++		var name, title, sname, stitle string
++		err = rows.Scan(&id, &name, &title, &sname, &stitle)
++		if err != nil {
++			return nil, err
++		}
++		rank, ok := normalizedFieldRank(name, title, keyword, false)
++		if !ok {
++			rank, ok = normalizedFieldRank(sname, stitle, keyword, true)
++		}
++		if !ok {
++			continue
++		}
++		k := GlobalSearchKey{SearchMatchRank: rank, Kind: 0, ID: id}
++		if after != nil && !keyLess(*after, k) {
++			continue
++		}
++		if len(h) < int(limit) {
++			heap.Push(&h, k)
++		} else if keyLess(k, h[0]) {
++			h[0] = k
++			heap.Fix(&h, 0)
++		}
++	}
++	if err = rows.Err(); err != nil {
++		return nil, err
++	}
++	keys := make([]GlobalSearchKey, len(h))
++	for i := len(keys) - 1; i >= 0; i-- {
++		keys[i] = heap.Pop(&h).(GlobalSearchKey)
++	}
++	return keys, nil
++}
++
++func hydrateBookRanks(keys []GlobalSearchKey) (string, []any) {
++	var values []string
++	args := make([]any, 0, len(keys)*5)
++	for i, k := range keys {
++		values = append(values, "(?,?,?,?,?)")
++		args = append(args, k.ID, k.Tier, k.Position, k.Extra, i)
++	}
++	query := `WITH top(id,tier,position,extra,ordinal) AS (VALUES ` + strings.Join(values, ",") + `)`
++	query += ` SELECT b.id, b.series_id, b.library_id, b.name, b.path, b.size, b.file_modified_at, b.volume, b.title, b.summary, b.number, b.sort_number, b.page_count, b.cover_path, b.last_read_page, b.last_read_at, b.is_read, b.file_hash, b.quick_hash, b.path_fingerprint, b.path_fingerprint_no_ext, b.filename_fingerprint, b.created_at, b.updated_at,
++ s.name, s.title, r.tier,r.position,r.extra
++ FROM top r JOIN books b ON b.id=r.id JOIN series s ON s.id=b.series_id
++ ORDER BY r.ordinal`
++	return query, args
++}
+--- /dev/null
++++ b/scripts/search-acceptance.ps1
+@@ -0,0 +1,56 @@
++param(
++    [ValidateSet('Prepare','Seed','Baseline','Candidate','Plans','All')][string]$Stage = 'Prepare',
++    [string]$Artifacts = 'C:/Users/saber/.thinkrail/search-experience-research/acceptance-05',
++    [string]$Go = 'C:/Users/saber/scoop/apps/go/current/bin/go.exe'
++)
++$ErrorActionPreference = 'Stop'
++$Root = (Resolve-Path "$PSScriptRoot/..").Path.Replace('\','/')
++$Evidence = "$Root/.scratch/search-experience/acceptance"
++$Baseline = "$Artifacts/baseline"
++$SHA = '86c510d6501c0525c2e66617718522699176ff30'
++$env:TEMP = $env:TMP = $env:TMPDIR = $env:GOTMPDIR = 'C:/tmp'
++$env:GOCACHE = 'C:/Users/saber/AppData/Local/go-build'
++New-Item -ItemType Directory -Force $Artifacts,$Evidence | Out-Null
++Set-Location $Root
++function Invoke-Checked([scriptblock]$Command) {
++    & $Command
++    if ($LASTEXITCODE -ne 0) { throw "Command failed ($LASTEXITCODE): $Command" }
++}
++function Prepare {
++    # Never use an active implementation tree as a baseline. No archived source
++    # is edited: the one shared measurement test is added virtually by overlay.
++    if (!(Test-Path $Baseline)) {
++        Invoke-Checked { git archive "--output=$Artifacts/baseline.tar" $SHA }
++        New-Item -ItemType Directory $Baseline | Out-Null
++        Invoke-Checked { tar -xf "$Artifacts/baseline.tar" -C $Baseline }
++    }
++    $replace = @{}
++    $replace["$Baseline/internal/api/search_acceptance_test.go"] = "$Root/internal/api/search_acceptance_test.go"
++    @{Replace=$replace} | ConvertTo-Json -Depth 4 | Set-Content "$Artifacts/overlay.json" -Encoding ASCII
++    Push-Location $Baseline
++    try { Invoke-Checked { & $Go test -overlay "$Artifacts/overlay.json" -c -o "$Artifacts/baseline-api.test.exe" ./internal/api } } finally { Pop-Location }
++    Invoke-Checked { & $Go test -c -o "$Artifacts/candidate-api.test.exe" ./internal/api }
++}
++if ($Stage -in @('Prepare','All')) { Prepare }
++if ($Stage -in @('Seed','All')) {
++    $env:SEARCH_ACCEPTANCE_SEED = "$Artifacts/frozen-v4.db"
++    # Existing mother databases are rejected, never overwritten or migrated.
++    Invoke-Checked { & "$Artifacts/baseline-api.test.exe" '-test.run=^TestSearchAcceptanceSeed$' -test.v '-test.timeout=45m' }
++    Remove-Item Env:SEARCH_ACCEPTANCE_SEED
++    Get-FileHash "$Artifacts/frozen-v4.db" -Algorithm SHA256
++}
++if ($Stage -in @('Baseline','Candidate','All')) {
++    $labels = @($Stage.ToLower())
++    if ($Stage -eq 'All') { $labels = @('baseline','candidate') }
++    $env:SEARCH_ACCEPTANCE_INPUT = "$Artifacts/frozen-v4.db"
++    foreach ($label in $labels) {
++        $env:SEARCH_ACCEPTANCE_LABEL = $label
++        $env:SEARCH_ACCEPTANCE_OUTPUT = "$Evidence/$label-replay.json"
++        Invoke-Checked { & "$Artifacts/$label-api.test.exe" '-test.run=^TestSearchAcceptanceMeasure$' -test.v '-test.timeout=90m' }
++    }
++}
++if ($Stage -in @('Plans','All')) {
++    Copy-Item "$Artifacts/frozen-v4.db" "$Artifacts/plan-replay.db"
++    $env:SEARCH_ACCEPTANCE_PLAN_DB = "$Artifacts/plan-replay.db"
++    Invoke-Checked { & $Go test ./internal/database '-run=^TestSearchAcceptanceQueryPlan$' -v -count=1 }
++}
+--- /dev/null
++++ b/scripts/search-browser-acceptance.cjs
+@@ -0,0 +1,48 @@
++// Real built UI + SQLite HTTP fixture. Faults are injected at the network seam,
++// never by replacing the UI/session. Install Playwright outside the repository.
++const fs = require('node:fs');
++const { chromium } = require(process.env.PLAYWRIGHT_MODULE);
++let runningBrowser;
++(async () => {
++ const ready = process.env.SEARCH_BROWSER_READY;
++ const fixture = JSON.parse(fs.readFileSync(ready, 'utf8'));
++ const out = process.env.SEARCH_BROWSER_OUTPUT;
++ const evidence = [];
++ const browser = await chromium.launch({executablePath: process.env.SEARCH_BROWSER_EXE, headless: true});
++ runningBrowser=browser;
++ const context = await browser.newContext({ locale:'zh-CN', viewport: { width: 1280, height: 900 }});
++ const login = await context.request.post(fixture.url + '/api/auth/login', {data:{username:fixture.username,password:fixture.password}});
++ if (!login.ok()) throw Error('real login failed: '+login.status());
++ const page=await context.newPage();
++ page.on('pageerror', e => evidence.push({pageerror:String(e)}));
++ let mode='normal', calls=0;
++ await page.route('**/api/search?*', async route => {
++  calls++;
++  const url=new URL(route.request().url());
++  if (mode==='initial-fail') {mode='normal';return route.fulfill({status:503,json:{error:'acceptance injected outage'}});}
++  if (mode==='append-fail' && url.searchParams.get('cursor')) {mode='normal';return route.fulfill({status:503,json:{error:'acceptance injected append outage'}});}
++  if (mode==='invalid-cursor' && url.searchParams.get('cursor')) {mode='normal';return route.fulfill({status:400,json:{code:'invalid_search_cursor',error:'acceptance injected cursor expiry'}});}
++  const response=await route.fetch();
++  if(mode==='slow') await new Promise(r=>setTimeout(r,1200));
++  await route.fulfill({response});
++ });
++ const assert = async (name, action) => {await action();evidence.push({passed:name});};
++ const wait = async predicate => { const end=Date.now()+15000; while(Date.now()<end){if(await predicate())return;await page.waitForTimeout(50);}throw Error('condition timeout'); };
++ await page.goto(fixture.url);
++ await page.waitForTimeout(1500);
++ await page.screenshot({path:out+'-initial.png',fullPage:true});
++ console.log('initial',await page.locator('body').innerText());
++ await page.keyboard.press('Control+k');
++ const dialog=page.getByRole('dialog');
++ const input=dialog.getByPlaceholder('输入关键字搜索...');
++ await input.waitFor();
++ await assert('real HTTP search and first mixed batch',async()=>{await input.fill('Browser Needle');await wait(async()=>await dialog.getByRole('option').count()===20);});
++ await assert('append failure preserves results and retry restores next batch',async()=>{mode='append-fail';await dialog.getByRole('button',{name:'继续加载',exact:true}).click();await dialog.getByRole('button',{name:'重试加载',exact:true}).waitFor();if(await dialog.getByRole('option').count()!==20)throw Error('lost results');await dialog.getByRole('button',{name:'重试加载',exact:true}).click();await wait(async()=>await dialog.getByRole('option').count()===40);});
++ await assert('invalid cursor offers explicit restart',async()=>{mode='invalid-cursor';await dialog.getByRole('button',{name:'继续加载',exact:true}).click();await dialog.getByRole('button',{name:'重新搜索',exact:true}).click();await wait(async()=>await dialog.getByRole('option').count()===20);});
++ await assert('slow query invalidates old options immediately; first failure retry',async()=>{mode='slow';await input.fill('unmatched');if(await dialog.getByRole('option').count())throw Error('stale options');await input.press('Enter');await wait(async()=> (await dialog.getByRole('status').textContent()).includes('未找到'));mode='initial-fail';await input.fill('Browser');await dialog.getByRole('alert').waitFor();await dialog.getByRole('button',{name:'重试',exact:true}).click();await wait(async()=>await dialog.getByRole('option').count()===20);});
++ await assert('scope change and complete series pagination',async()=>{await dialog.getByRole('button',{name:'仅系列',exact:true}).click();await wait(async()=>await dialog.getByRole('option').count()===20);await dialog.getByRole('button',{name:'继续加载',exact:true}).dblclick();await wait(async()=>await dialog.getByRole('option').count()===40);await dialog.getByRole('button',{name:'继续加载',exact:true}).click();await wait(async()=>await dialog.getByRole('option').count()===45);if(await dialog.getByRole('button',{name:'继续加载',exact:true}).count())throw Error('append past end');});
++ await assert('keyboard selection and close/reopen fresh generation',async()=>{await input.press('ArrowDown');if(await dialog.getByRole('option',{selected:true}).count()!==1)throw Error('selection');await input.press('Escape');await wait(async()=>await page.getByRole('dialog').count()===0);await page.keyboard.press('Control+k');await wait(async()=>await dialog.getByRole('option').count()===20);});
++ await page.screenshot({path:out+'.png',fullPage:true});
++ fs.writeFileSync(out+'.json',JSON.stringify({browser:await browser.version(),fixture:'real SQLite API routes + rebuilt web/dist',faults:'network route interception only',calls,evidence,notExecuted:['headed visual review','English locale','long-title visual boundary','reader-account browser navigation']},null,2));
++ await browser.close();fs.writeFileSync(ready+'.done','done');
++})().catch(async e=>{console.error(e);if(runningBrowser)await runningBrowser.close();process.exitCode=1;});
+--- /dev/null
++++ b/scripts/search-browser-functional05.cjs
+@@ -0,0 +1,34 @@
++// Real Edge + built UI + authenticated SQLite fixture. No response mocks.
++const fs = require('node:fs');
++const { chromium } = require(process.env.PLAYWRIGHT_MODULE);
++(async () => {
++ const fixture = JSON.parse(fs.readFileSync(process.env.SEARCH_BROWSER_READY));
++ const out = process.env.SEARCH_BROWSER_OUTPUT;
++ const browser = await chromium.launch({ executablePath: process.env.SEARCH_BROWSER_EXE, headless:true });
++ const evidence=[]; const errors=[];
++ try {
++  const context=await browser.newContext({locale:'en-US',viewport:{width:1280,height:900}});
++  await context.addInitScript(()=>localStorage.setItem('yomifolio_locale','en-US'));
++  const page=await context.newPage(); page.on('pageerror',e=>errors.push(String(e)));
++  const login=async username=>{const r=await context.request.post(fixture.url+'/api/auth/login',{data:{username,password:fixture.password}});if(!r.ok())throw Error('login '+r.status());};
++  const wait=async predicate=>{const end=Date.now()+30000;while(Date.now()<end){if(await predicate())return;await page.waitForTimeout(100);}throw Error('condition timeout at '+page.url());};
++  const search=async query=>{await page.keyboard.press('Control+k'); const d=page.getByRole('dialog'); await d.waitFor(); await d.getByRole('textbox').fill(query);await wait(async()=>await d.getByRole('option').count()>0);return d;};
++  await login(fixture.username);await page.goto(fixture.url);await page.waitForTimeout(1500);
++  let dialog=await search('Long Needle');
++  const text=await dialog.innerText();if(!text.includes('Series'))throw Error('English search locale missing');
++  const bounds=await dialog.boundingBox();if(!bounds||bounds.x<0||bounds.x+bounds.width>1281)throw Error('dialog outside viewport');
++  const overflow=await dialog.evaluate(el=>el.scrollWidth>el.clientWidth+1);if(overflow)throw Error('long title horizontal overflow');
++  await page.screenshot({path:out+'-english-long.png',fullPage:true});evidence.push('English locale and 3000-character metadata title: dialog within 1280x900 viewport, no horizontal overflow');
++  await dialog.getByRole('option').first().click();await wait(async()=>new URL(page.url()).pathname==='/series/'+fixture.series);evidence.push('admin series search result navigates to actual series route');
++  // Same browser context changes its authenticated session, then reloads the UI
++  // so the real connection/auth bootstrap observes the new effective identity.
++  await login(fixture.reader);await page.goto(fixture.url);await page.waitForTimeout(1500);
++  const me=await context.request.get(fixture.url+'/api/auth/me');if(!me.ok())throw Error('reader bootstrap '+me.status());
++  const identity=await me.text();if(!identity.includes(fixture.reader)||identity.includes('"role":"admin"'))throw Error('identity did not switch: '+identity);
++  dialog=await search('Long Needle');await dialog.getByRole('option').first().click();await wait(async()=>new URL(page.url()).pathname==='/series/'+fixture.series);evidence.push('same browser switched to ordinary reader and navigated from search to series');
++  await page.goto(fixture.url);await page.waitForTimeout(1200);dialog=await search('Readable');await dialog.getByRole('option').first().click();await wait(async()=>new URL(page.url()).pathname==='/reader/'+fixture.book);
++  await page.waitForTimeout(2000);await page.screenshot({path:out+'-reader.png',fullPage:true});evidence.push('ordinary reader book search navigates to actual reader with accessible valid CBZ');
++  if(errors.length)throw Error('page errors: '+errors.join(';'));
++  fs.writeFileSync(out+'.json',JSON.stringify({browser:await browser.version(),locale:'en-US',evidence,errors,notExecuted:['headed human visual review','identity switch while an old search response is in flight']},null,2));
++ } finally {await browser.close();fs.writeFileSync(process.env.SEARCH_BROWSER_READY+'.done','done');}
++})().catch(e=>{console.error(e);process.exitCode=1;});
+--- /dev/null
++++ b/scripts/search-upgrade-attribution-functional05.cjs
+@@ -0,0 +1,16 @@
++// Independent archive, with current uncommitted database production changes
++// virtually overlaid. Timing instrumentation exists only in the external copy.
++const fs=require('node:fs');
++const root='C:/Users/saber/.thinkrail/worktrees/manga-manager/search-acceptance-05';
++const art='C:/Users/saber/.thinkrail/search-experience-research/acceptance-05';
++let source=fs.readFileSync(root+'/internal/database/migrate.go','utf8');
++for(const kind of ['Series','Book']) {
++ const call=`if err := rebuild${kind}SearchIndex(db); err != nil {\n\t\t\treturn err\n\t\t}`;
++ if(!source.includes(call))throw Error('instrumentation anchor absent '+kind);
++ source=source.replace(call,`searchStart := time.Now()\n\t\t${call}\n\t\tfmt.Printf("SEARCH_BACKFILL ${kind} user_version=%d elapsed_ns=%d\\n", userVersion, time.Since(searchStart).Nanoseconds())`);
++}
++fs.writeFileSync(art+'/functional05-migrate-timed.go',source);
++const Replace={};
++for(const file of ['series_search.go','search_rank.go','search_archive_acceptance_test.go'])Replace[art+'/final-functional05/internal/database/'+file]=root+'/internal/database/'+file;
++Replace[art+'/final-functional05/internal/database/migrate.go']=art+'/functional05-migrate-timed.go';
++fs.writeFileSync(art+'/functional05-final-overlay.json',JSON.stringify({Replace},null,2));

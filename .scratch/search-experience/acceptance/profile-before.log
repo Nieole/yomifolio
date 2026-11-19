@@ -1,0 +1,6 @@
+=== RUN   TestSearchAcceptanceMeasure
+    search_acceptance_test.go:351: 海贼 book first matches=199980 p50=1793.334ms p95=2651.640ms
+    search_acceptance_test.go:351: 海贼 book middle matches=199980 p50=1695.540ms p95=1928.504ms
+    search_acceptance_test.go:351: 海贼 book near_end matches=199980 p50=1577.881ms p95=2062.989ms
+--- PASS: TestSearchAcceptanceMeasure (663.54s)
+PASS

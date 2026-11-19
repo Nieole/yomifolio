@@ -1,0 +1,3 @@
+level=error msg="Running error: context loading failed: no go files to analyze: running `go mod tidy` may solve the problem"
+Terminated                 GOLANGCI_LINT_CACHE=C:/Users/saber/.thinkrail/worktrees/manga-manager/search-acceptance-05/.tmp/lint-cache C:/Users/saber/.thinkrail/worktrees/manga-manager/search-book-ranking-03/.tmp/lint/golangci-lint-2.15.0-windows-amd64/golangci-lint.exe run
+EXIT=143

@@ -207,6 +207,18 @@ func TestSeriesNormalizedSearchHTTPOracle(t *testing.T) {
 
 func (f *normalizedSearchHTTP) rebuild(t *testing.T) {
 	t.Helper()
+	f.rebuildTerminal(t, "completed")
+}
+
+// Synthetic catalogue paths deliberately cannot be scanned. Derived indexes are
+// rebuilt first, but the complete maintenance run must correctly fail afterwards.
+func (f *normalizedSearchHTTP) rebuildSyntheticFailure(t *testing.T) {
+	t.Helper()
+	f.rebuildTerminal(t, "failed")
+}
+
+func (f *normalizedSearchHTTP) rebuildTerminal(t *testing.T, want string) {
+	t.Helper()
 	f.request(t, "POST", "/api/system/rebuild-index")
 	deadline := time.Now().Add(15 * time.Second)
 	for time.Now().Before(deadline) {
@@ -215,11 +227,11 @@ func (f *normalizedSearchHTTP) rebuild(t *testing.T) {
 			t.Fatal(err)
 		}
 		for _, run := range runs {
-			if run.Status == "completed" {
+			if run.Status == "completed" || run.Status == "failed" || run.Status == "cancelled" {
+				if run.Status != want {
+					t.Fatalf("rebuild terminated: %+v, want %s", run, want)
+				}
 				return
-			}
-			if run.Status == "failed" || run.Status == "cancelled" {
-				t.Fatalf("rebuild terminated: %+v", run)
 			}
 		}
 		time.Sleep(10 * time.Millisecond)
@@ -255,7 +267,7 @@ func TestSeriesNormalizedSearchHTTPLifecycleAndRepair(t *testing.T) {
 		}
 		normalizedEqual(t, damaged, []string{})
 	}
-	f.rebuild(t)
+	f.rebuildSyntheticFailure(t)
 	for _, q := range []string{"newname", "ne", "étoile"} {
 		normalizedEqual(t, f.global(t, q, "series"), []string{"s_21"})
 	}
@@ -351,7 +363,7 @@ func TestSeriesNormalizedSearchHTTPUpgradeV4(t *testing.T) {
 	normalizedExec(t, reopened, `UPDATE series SET name='Ｎｅｗ—Name',title=NULL WHERE id=41`)
 	normalizedEqual(t, f.global(t, "newname", "series"), []string{"s_41"})
 	normalizedEqual(t, f.global(t, "astrasse", "series"), []string{})
-	f.rebuild(t)
+	f.rebuildSyntheticFailure(t)
 	normalizedEqual(t, f.global(t, "newname", "series"), []string{"s_41"})
 }
 

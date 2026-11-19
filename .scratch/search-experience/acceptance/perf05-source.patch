@@ -1,0 +1,293 @@
+diff --git a/internal/database/series_search.go b/internal/database/series_search.go
+index 85ef6bfd..7e84a8b6 100644
+--- a/internal/database/series_search.go
++++ b/internal/database/series_search.go
+@@ -284,52 +284,94 @@ func (s *SqlStore) searchProtocolSeriesSubstring(ctx context.Context, keyword st
+ // Each type is ordered by the same key before LIMIT: its top N is a sufficient
+ // superset of its contribution to the mixed top N (no raw-source truncation).
+ func (s *SqlStore) searchGlobalBooksSubstring(ctx context.Context, db globalSearchReader, keyword string, limit int32, after *GlobalSearchKey) ([]BookSearchHit, error) {
++	query, args := globalBooksStatement(keyword, limit, after)
++	keys, err := collectBookRanks(ctx, db, query, args, keyword, limit, after)
++	if err != nil {
++		return nil, err
++	}
++	var result []BookSearchHit
++	for start := 0; start < len(keys); start += 1000 {
++		end := min(start+1000, len(keys))
++		query, args = hydrateBookRanks(keys[start:end])
++		rows, err := db.QueryContext(ctx, query, args...)
++		if err != nil {
++			return nil, err
++		}
++		items, err := scanBookSearchHits(rows)
++		if err != nil {
++			return nil, err
++		}
++		result = append(result, items...)
++	}
++	return result, nil
++}
++
++func globalBooksStatement(keyword string, _ int32, _ *GlobalSearchKey) (string, []interface{}) {
+ 	seriesFilter, seriesArgs := normalizedSeriesFilter(keyword)
+ 	table, match := "book_search_fts", fts5PhraseQuery(keyword)
+ 	if expr, ok := normalizedBookGramExpr(keyword); ok {
+ 		table, match = "book_gram_fts", expr
+ 	}
+-	candidates := `SELECT rowid AS id FROM ` + table + ` WHERE ` + table + ` MATCH ?
+- UNION SELECT b2.id FROM series s JOIN books b2 ON b2.series_id=s.id WHERE ` + seriesFilter
+-	args := append([]interface{}{match}, seriesArgs...)
+-	fields := `SELECT c.id, bt.name AS field, 0 AS inherited FROM candidates c JOIN book_search_text bt ON bt.book_id=c.id
+- UNION ALL SELECT c.id, bt.title, 0 FROM candidates c JOIN book_search_text bt ON bt.book_id=c.id
+- UNION ALL SELECT c.id, st.name, 1 FROM candidates c JOIN books b ON b.id=c.id JOIN series_search_text st ON st.series_id=b.series_id
+- UNION ALL SELECT c.id, st.title, 1 FROM candidates c JOIN books b ON b.id=c.id JOIN series_search_text st ON st.series_id=b.series_id`
+-	args = append(args, keyword, keyword, keyword, keyword)
+-	seek, seekArgs := globalSearchSeek(after, 0)
+-	args = append(args, seekArgs...)
+-	args = append(args, limit)
+-	rows, err := db.QueryContext(ctx, globalRankCTE(candidates, fields)+`
+- SELECT b.id, b.series_id, b.library_id, b.name, b.path, b.size, b.file_modified_at, b.volume, b.title, b.summary, b.number, b.sort_number, b.page_count, b.cover_path, b.last_read_page, b.last_read_at, b.is_read, b.file_hash, b.quick_hash, b.path_fingerprint, b.path_fingerprint_no_ext, b.filename_fingerprint, b.created_at, b.updated_at,
+- s.name, s.title, r.tier, r.position, r.extra
+- FROM ranked r JOIN books b ON b.id=r.id JOIN series s ON s.id=b.series_id
+- WHERE r.choice=1 `+seek+` ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?`, args...)
++	query := `SELECT bt.book_id,bt.name,bt.title,'','' FROM ` + table + ` JOIN book_search_text bt ON bt.book_id=` + table + `.rowid
++ WHERE ` + table + ` MATCH ? AND (instr(bt.name,?)>0 OR instr(bt.title,?)>0)
++ UNION ALL SELECT b.id,'','',st.name,st.title FROM series s
++ JOIN series_search_text st ON st.series_id=s.id JOIN books b ON b.series_id=s.id
++ JOIN book_search_text bt ON bt.book_id=b.id
++ WHERE ` + seriesFilter + ` AND instr(bt.name,?)=0 AND instr(bt.title,?)=0`
++	args := []any{match, keyword, keyword}
++	args = append(args, seriesArgs...)
++	args = append(args, keyword, keyword)
++	return query, args
++}
++
++func (s *SqlStore) searchGlobalSeriesSubstring(ctx context.Context, db globalSearchReader, keyword string, limit int32, after *GlobalSearchKey) ([]SeriesSearchHit, error) {
++	query, args := globalSeriesStatement(keyword, limit, after)
++	rows, err := db.QueryContext(ctx, query, args...)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	return scanBookSearchHits(rows)
++	return scanSeriesSearchHits(rows)
+ }
+ 
+-func (s *SqlStore) searchGlobalSeriesSubstring(ctx context.Context, db globalSearchReader, keyword string, limit int32, after *GlobalSearchKey) ([]SeriesSearchHit, error) {
+-	filter, args := normalizedSeriesFilter(keyword)
+-	candidates := `SELECT s.id FROM series s WHERE ` + filter
+-	fields := `SELECT c.id, st.name AS field, 0 AS inherited FROM candidates c JOIN series_search_text st ON st.series_id=c.id
+- UNION ALL SELECT c.id, st.title, 0 FROM candidates c JOIN series_search_text st ON st.series_id=c.id`
+-	args = append(args, keyword, keyword, keyword, keyword)
+-	seek, seekArgs := globalSearchSeek(after, 1)
+-	args = append(args, seekArgs...)
++func globalSeriesStatement(keyword string, limit int32, after *GlobalSearchKey) (string, []interface{}) {
++	table, match := "series_search_fts", fts5PhraseQuery(keyword)
++	if len([]rune(keyword)) <= gramSearchMaxRunes {
++		table, match = "series_gram_fts", normalizedSeriesGramMatch(keyword)
++	}
++	candidates := `SELECT rowid AS id FROM ` + table + ` WHERE ` + table + ` MATCH ?`
++	fields, args := globalFieldBranches("series_search_text", "series_id", candidates, keyword, match)
++	seek, sa := globalSearchSeek(after, 1)
++	args = append(args, sa...)
+ 	args = append(args, limit)
+-	rows, err := db.QueryContext(ctx, globalRankCTE(candidates, fields)+`
+- SELECT s.id, s.library_id, s.name, s.title, s.summary, s.publisher, s.status, s.rating, s.language, s.locked_fields, s.name_initial, s.path, s.created_at, s.updated_at, s.is_favorite, s.volume_count, s.book_count, s.total_pages,
++	return `WITH ranked AS (` + fields + `),top AS MATERIALIZED (SELECT * FROM ranked r WHERE 1=1 ` + seek + ` ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?)` + ` SELECT s.id, s.library_id, s.name, s.title, s.summary, s.publisher, s.status, s.rating, s.language, s.locked_fields, s.name_initial, s.path, s.created_at, s.updated_at, s.is_favorite, s.volume_count, s.book_count, s.total_pages,
+  ss.cover_path, COALESCE(ss.tag_names_cache, ''), COALESCE(ss.read_pages, 0),ss.last_read_at,NULLIF(ss.last_read_book_id,0),
+  (SELECT b2.last_read_page FROM books b2 WHERE b2.id=ss.last_read_book_id), r.tier,r.position,r.extra
+- FROM ranked r JOIN series s ON s.id=r.id LEFT JOIN series_stats ss ON ss.series_id=s.id
+- WHERE r.choice=1 `+seek+` ORDER BY r.tier,r.position,r.extra,r.id LIMIT ?`, args...)
+-	if err != nil {
+-		return nil, err
++ FROM top r JOIN series s ON s.id=r.id LEFT JOIN series_stats ss ON ss.series_id=s.id
++ ORDER BY r.tier,r.position,r.extra,r.id`, args
++}
++
++// Two disjoint field branches choose each identity's best rank before keyset.
++// Unlike expanding and window-sorting fields, each branch rejects the worse
++// field by a numeric tuple comparison before the bounded top-N sort.
++func globalFieldBranches(table, id, candidates, keyword, match string) (string, []any) {
++	branches := []string{}
++	args := []any{}
++	for i, field := range []string{"name", "title"} {
++		other := "title"
++		cmp := "<="
++		if i == 1 {
++			other = "name"
++			cmp = "<"
++		}
++		branches = append(branches, `SELECT st.`+id+` AS id,CASE WHEN st.`+field+`=? THEN 0 ELSE 1 END AS tier,
++ instr(st.`+field+`,?)-1 AS position,length(st.`+field+`)-length(?) AS extra
++ FROM (`+candidates+`) c JOIN `+table+` st ON st.`+id+`=c.id
++ WHERE instr(st.`+field+`,?)>0 AND (instr(st.`+other+`,?)=0 OR
++ (CASE WHEN st.`+field+`=? THEN 0 ELSE 1 END,instr(st.`+field+`,?),length(st.`+field+`)) `+cmp+`
++ (CASE WHEN st.`+other+`=? THEN 0 ELSE 1 END,instr(st.`+other+`,?),length(st.`+other+`)))`)
++		args = append(args, keyword, keyword, keyword, match, keyword, keyword, keyword, keyword, keyword, keyword)
+ 	}
+-	return scanSeriesSearchHits(rows)
++	return strings.Join(branches, " UNION ALL "), args
+ }
+ 
+ // SearchMatchRank contains no text. SQLite's maximum TEXT length is below 2^31
+@@ -352,13 +394,6 @@ func (r SearchMatchRank) Score() float64 {
+ 	}
+ }
+ 
+-func globalRankCTE(candidates, fields string) string {
+-	return `WITH candidates AS (` + candidates + `), fields AS (` + fields + `),
+- matches AS (SELECT id, CASE WHEN inherited=1 THEN 2 WHEN field=? THEN 0 ELSE 1 END AS tier,
+- instr(field,?)-1 AS position, length(field)-length(?) AS extra FROM fields WHERE instr(field,?)>0),
+- ranked AS (SELECT *, row_number() OVER (PARTITION BY id ORDER BY tier,position,extra, id ASC) AS choice FROM matches)`
+-}
+-
+ func fts5PhraseQuery(keyword string) string {
+ 	return `"` + strings.ReplaceAll(strings.TrimSpace(keyword), `"`, `""`) + `"`
+ }
+@@ -614,9 +649,7 @@ func scanSeriesSearchHits(rows *sql.Rows) ([]SeriesSearchHit, error) {
+ 			&i.LastReadAt,
+ 			&i.LastReadBookID,
+ 			&i.LastReadPage,
+-			&i.Rank.Tier,
+-			&i.Rank.Position,
+-			&i.Rank.Extra,
++			&i.Rank.Tier, &i.Rank.Position, &i.Rank.Extra,
+ 		); err != nil {
+ 			return nil, err
+ 		}
+@@ -663,9 +696,7 @@ func scanBookSearchHits(rows *sql.Rows) ([]BookSearchHit, error) {
+ 			&i.UpdatedAt,
+ 			&i.SeriesName,
+ 			&i.SeriesTitle,
+-			&i.Rank.Tier,
+-			&i.Rank.Position,
+-			&i.Rank.Extra,
++			&i.Rank.Tier, &i.Rank.Position, &i.Rank.Extra,
+ 		); err != nil {
+ 			return nil, err
+ 		}
+diff --git a/internal/database/search_rank.go b/internal/database/search_rank.go
+new file mode 100644
+index 00000000..75e79a66
+--- /dev/null
++++ b/internal/database/search_rank.go
+@@ -0,0 +1,120 @@
++package database
++
++import (
++	"container/heap"
++	"context"
++	"strings"
++	"unicode/utf8"
++)
++
++// normalizedFieldRank reads indexed candidates' already-normalized full text.
++func normalizedFieldRank(name, title, keyword string, inherited bool) (SearchMatchRank, bool) {
++	var best SearchMatchRank
++	found := false
++	qlen := utf8.RuneCountInString(keyword)
++	for _, field := range []string{name, title} {
++		p := strings.Index(field, keyword)
++		if p < 0 {
++			continue
++		}
++		r := SearchMatchRank{Tier: 1, Position: uint32(utf8.RuneCountInString(field[:p])), Extra: uint32(utf8.RuneCountInString(field) - qlen)}
++		if inherited {
++			r.Tier = 2
++		} else if r.Extra == 0 {
++			r.Tier = 0
++		}
++		if !found || rankLess(r, best) {
++			best = r
++			found = true
++		}
++	}
++	return best, found
++}
++
++func rankLess(a, b SearchMatchRank) bool {
++	if a.Tier != b.Tier {
++		return a.Tier < b.Tier
++	}
++	if a.Position != b.Position {
++		return a.Position < b.Position
++	}
++	return a.Extra < b.Extra
++}
++
++func keyLess(a, b GlobalSearchKey) bool {
++	if a.SearchMatchRank != b.SearchMatchRank {
++		return rankLess(a.SearchMatchRank, b.SearchMatchRank)
++	}
++	if a.Kind != b.Kind {
++		return a.Kind < b.Kind
++	}
++	return a.ID < b.ID
++}
++
++type globalRankHeap []GlobalSearchKey
++
++func (h globalRankHeap) Len() int           { return len(h) }
++func (h globalRankHeap) Less(i, j int) bool { return keyLess(h[j], h[i]) }
++func (h globalRankHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
++func (h *globalRankHeap) Push(x any)        { *h = append(*h, x.(GlobalSearchKey)) }
++func (h *globalRankHeap) Pop() any          { a := *h; x := a[len(a)-1]; *h = a[:len(a)-1]; return x }
++
++// collectBookRanks keeps only the best limit successors, not a search
++// snapshot. Every indexed candidate is considered before this bounded heap
++// discards a worse rank. The enclosing read transaction covers hydration too.
++func collectBookRanks(ctx context.Context, db globalSearchReader, query string, args []any, keyword string, limit int32, after *GlobalSearchKey) ([]GlobalSearchKey, error) {
++	rows, err := db.QueryContext(ctx, query, args...)
++	if err != nil {
++		return nil, err
++	}
++	defer rows.Close()
++	h := make(globalRankHeap, 0, int(limit))
++	for rows.Next() {
++		var id int64
++		var name, title, sname, stitle string
++		err = rows.Scan(&id, &name, &title, &sname, &stitle)
++		if err != nil {
++			return nil, err
++		}
++		rank, ok := normalizedFieldRank(name, title, keyword, false)
++		if !ok {
++			rank, ok = normalizedFieldRank(sname, stitle, keyword, true)
++		}
++		if !ok {
++			continue
++		}
++		k := GlobalSearchKey{SearchMatchRank: rank, Kind: 0, ID: id}
++		if after != nil && !keyLess(*after, k) {
++			continue
++		}
++		if len(h) < int(limit) {
++			heap.Push(&h, k)
++		} else if keyLess(k, h[0]) {
++			h[0] = k
++			heap.Fix(&h, 0)
++		}
++	}
++	if err = rows.Err(); err != nil {
++		return nil, err
++	}
++	keys := make([]GlobalSearchKey, len(h))
++	for i := len(keys) - 1; i >= 0; i-- {
++		keys[i] = heap.Pop(&h).(GlobalSearchKey)
++	}
++	return keys, nil
++}
++
++func hydrateBookRanks(keys []GlobalSearchKey) (string, []any) {
++	var values []string
++	args := make([]any, 0, len(keys)*5)
++	for i, k := range keys {
++		values = append(values, "(?,?,?,?,?)")
++		args = append(args, k.ID, k.Tier, k.Position, k.Extra, i)
++	}
++	query := `WITH top(id,tier,position,extra,ordinal) AS (VALUES ` + strings.Join(values, ",") + `)`
++	query += ` SELECT b.id, b.series_id, b.library_id, b.name, b.path, b.size, b.file_modified_at, b.volume, b.title, b.summary, b.number, b.sort_number, b.page_count, b.cover_path, b.last_read_page, b.last_read_at, b.is_read, b.file_hash, b.quick_hash, b.path_fingerprint, b.path_fingerprint_no_ext, b.filename_fingerprint, b.created_at, b.updated_at,
++ s.name, s.title, r.tier,r.position,r.extra
++ FROM top r JOIN books b ON b.id=r.id JOIN series s ON s.id=b.series_id
++ ORDER BY r.ordinal`
++	return query, args
++}

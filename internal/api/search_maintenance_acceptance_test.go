@@ -1,0 +1,64 @@
+package api
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"image"
+	"image/png"
+	"os"
+	"strings"
+	"testing"
+	"time"
+)
+
+// The agreed seam is the real maintenance HTTP launch and terminal run response.
+// Removing an actual library root injects a disk failure, not a mocked scanner.
+func TestSearchMaintenanceMissingLibraryFailsHTTP(t *testing.T) {
+	c, store, _, root := newTestController(t)
+	lib, _, book := seedBookFixture(t, store, root, "missing-library", "Needle", "Needle.cbz", 1)
+	var page bytes.Buffer
+	acceptanceCheck(t, png.Encode(&page, image.NewRGBA(image.Rect(0, 0, 32, 32))))
+	seedBookArchivePages(t, c, book, page.Bytes())
+	f := normalizedSearchServer(t, c, store)
+	acceptanceCheck(t, os.RemoveAll(lib.Path))
+	f.request(t, "POST", "/api/system/rebuild-index")
+	deadline := time.Now().Add(15 * time.Second)
+	for time.Now().Before(deadline) {
+		var runs []RunSnapshot
+		acceptanceCheck(t, json.Unmarshal(f.request(t, "GET", "/api/system/tasks?type=rebuild_index"), &runs))
+		for _, run := range runs {
+			switch run.Status {
+			case "failed":
+				if !strings.Contains(fmt.Sprint(run), "missing-library") {
+					t.Fatalf("terminal failure lost library context: %+v", run)
+				}
+				return
+			case "completed", "cancelled":
+				t.Fatalf("missing library must fail maintenance, got %+v", run)
+			}
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatal("maintenance did not reach terminal failure")
+}
+
+// Unlike synthetic performance paths, these archives are real and remain
+// accessible throughout the complete asynchronous maintenance + forced scan.
+func TestSearchFullMaintenanceWithRealArchiveHTTP(t *testing.T) {
+	c, store, _, root := newTestController(t)
+	lib, series, book := seedBookFixture(t, store, root, "real-library", "Ｎeedle—Series", "NeedleBook.cbz", 1)
+	var page bytes.Buffer
+	acceptanceCheck(t, png.Encode(&page, image.NewRGBA(image.Rect(0, 0, 32, 32))))
+	seedBookArchivePages(t, c, book, page.Bytes())
+	f := normalizedSearchServer(t, c, store)
+	for pass := 0; pass < 2; pass++ {
+		f.rebuild(t)
+		normalizedEqual(t, f.global(t, "needleseries", "series"), []string{fmt.Sprintf("s_%d", series.ID)})
+		normalizedEqual(t, f.global(t, "needlebook", "book"), []string{fmt.Sprintf("b_%d", book.ID)})
+		normalizedEqual(t, normalizedSeriesIDs(f.series(t, fmt.Sprintf("libraryId=%d&q=needleseries", lib.ID))), []int64{series.ID})
+		var count int
+		acceptanceCheck(t, store.DB().QueryRow(`SELECT count(*) FROM books WHERE library_id=?`, lib.ID).Scan(&count))
+		normalizedEqual(t, count, 1)
+	}
+}

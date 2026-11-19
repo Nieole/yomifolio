@@ -1,0 +1,8 @@
+=== RUN   TestSearchFullMaintenanceWithRealArchiveHTTP
+2026/11/18 20:25:31 INFO Successfully ingested batch book_count=1
+2026/11/18 20:25:31 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=1 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=39 library_id=1
+2026/11/18 20:25:31 INFO Successfully ingested batch book_count=1
+2026/11/18 20:25:31 INFO Scan completed scope=library scan_profile=metadata_scan force=true storage_profile=auto volume_key=c: archive_open_concurrency=0 cover_concurrency=0 discovered_archives=1 skipped_archives=0 processed_archives=1 opened_archives=1 hashed_files=0 queued_covers=0 failed_archives=0 rehomed_books=0 stale_series_stats=0 format_filtered_archives=0 io_wait_ms=0 paused_ms=0 duration_ms=13 library_id=1
+--- PASS: TestSearchFullMaintenanceWithRealArchiveHTTP (0.56s)
+PASS
+ok  	yomifolio/internal/api	1.143s

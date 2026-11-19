@@ -1,0 +1,5 @@
+=== RUN   TestSearchLargeRealMaintenanceHTTP
+    search_large_maintenance_acceptance_test.go:72: link C:\tmp\search-functional05-real\template.cbz C:\tmp\search-functional05-real\library\海贼王Series000103\海贼王Book001024.cbz: An attempt was made to create more links on a file than the file system supports.
+--- FAIL: TestSearchLargeRealMaintenanceHTTP (52.42s)
+FAIL
+EXIT=1

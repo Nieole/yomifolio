@@ -148,7 +148,7 @@ func TestBookNormalizedHTTPLifecycleRepairAndLongMetadata(t *testing.T) {
 	for _, q := range []string{"newname", "ne"} {
 		normalizedEqual(t, f.global(t, q, "book"), []string{})
 	}
-	f.rebuild(t)
+	f.rebuildSyntheticFailure(t)
 	for _, q := range []string{"newname", "ne", "needle"} {
 		normalizedEqual(t, f.global(t, q, "book"), []string{id})
 	}
@@ -225,7 +225,7 @@ func TestBookNormalizedHTTPUpgradeV4AndV5(t *testing.T) {
 			normalizedExec(t, reopened, `UPDATE books SET name='Ｎｅｗ—Name',title=NULL WHERE id=1`)
 			normalizedEqual(t, f.global(t, "newname", "book"), []string{"b_1"})
 			normalizedEqual(t, f.global(t, "astrasse", "book"), []string{})
-			f.rebuild(t)
+			f.rebuildSyntheticFailure(t)
 			normalizedEqual(t, f.global(t, "newname", "book"), []string{"b_1"})
 		})
 	}

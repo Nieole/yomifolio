@@ -1,0 +1,6 @@
+=== RUN   TestSearchAcceptanceMeasure
+    search_acceptance_test.go:416: complete HTTP walk 海/series count=19980 page_size=100
+    search_acceptance_test.go:416: complete HTTP walk 海/book count=199980 page_size=100
+--- PASS: TestSearchAcceptanceMeasure (2356.00s)
+PASS
+EXIT=0

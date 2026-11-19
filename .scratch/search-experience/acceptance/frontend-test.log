@@ -1,0 +1,203 @@
+
+ RUN  v5.1.0 C:/Users/saber/.thinkrail/worktrees/manga-manager/search-acceptance-05/web
+
+ ❯ src/session/ApplicationRoutes.test.tsx (1 test | 1 failed) 1283ms
+   × actual navigation routes share the session, refresh the library and release it in reader and graph 1278ms
+ ❯ src/utils/heatmap.test.ts (16 tests | 1 failed) 77ms
+   ❯ 热力图日期网格 (9)
+     × UTC-5 当地还停在前一日：终点是本地今天 24ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/session/ApplicationRoutes.test.tsx > actual navigation routes share the session, refresh the library and release it in reader and graph
+AssertionError: expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mlang[39m=[32m"en-US"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<button>[39m
+        [0mlibrary[0m
+      [36m</button>[39m
+      [36m<button>[39m
+        [0mreader[0m
+      [36m</button>[39m
+      [36m<button>[39m
+        [0mgraph[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-screen bg-komgaDark text-gray-200 font-sans flex flex-col relative"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"bg-komgaSurface shadow-md sticky top-0 z-20 px-4 sm:px-6 py-4 flex items-center justify-between border-b border-gray-800"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"md:hidden p-2 -ml-2 mr-2 text-gray-400 hover:text-white transition-colors"[39m
+              [33mtitle[39m=[32m"打开菜单"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-menu w-6 h-6"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 5h16"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 12h16"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 19h16"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center space-x-2 sm:space-x-3 w-auto sm:w-56"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-book-open text-komgaPrimary h-7 w-7 sm:h-8 sm:w-8"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v16"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-xl sm:text-2xl font-bold tracking-tight text-white hover:text-komgaPrimary transition hidden sm:block whitespace-nowrap"[39m
+              [36m>[39m
+                [0mYomifolio[0m
+              [36m</h1>[39m
+            [36m</a>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-1 max-w-xl flex justify-end sm:justify-center px-2 sm:px-4"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"hidden md:flex w-full max-w-md bg-gray-900 border border-gray-800 rounded-lg px-4 py-2 items-center justify-between text-sm text-gray-500 hover:border-gray-700 hover:text-gray-300 transition-all opacity-80 hover:opacity-100 shadow-inner group overflow-hidden"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center min-w-0 overflow-hidden"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-search w-4 h-4 mr-3 group-hover:text-komgaPrimary transition-colors shrink-0"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m21 21-4.34-4.34"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"11"[39m
+                    [33mcy[39m=[32m"11"[39m
+                    [33mr[39m=[32m"8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"truncate"[39m
+                [36m>[39m
+                  [0m搜索漫画名称、连载系列...[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<kbd[39m
+                [33mclass[39m=[32m"hidden md:inline-block bg-gray-800 border border-gray-700 rounded-sm px-2 py-0.5 text-xs font-mono text-gray-400 shrink-0 ml-3"[39m
+              [36m>[39m
+                [0m⌘K[0m
+              [36m</kbd>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"搜索漫画名称、连载系列..."[39m
+              [33mclass[39m=[32m"md:hidden p-2 text-gray-400 hover:text-komgaPrimary hover:bg-gray-800 rounded-full transition-colors"[39m
+              [33mtitle[39m=[32m"搜索漫画名称、连载系列..."[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-search w-5 h-5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=...
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/session/ApplicationRoutes.test.tsx:43:81
+     41|   render(<MemoryRouter initialEntries={['/library/1']}><LocaleProvider…
+     42|   await waitFor(() => expect(Source.instances).toHaveLength(1));
+     43|   await waitFor(() => expect(requests.some(url => url.includes('/api/s…
+       |                                                                                 ^
+     44|   const sidebarFilter = screen.getByPlaceholderText('搜索资料库...');
+     45|   fireEvent.change(sidebarFilter, { target: { value: 'My library 1' } …
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/utils/heatmap.test.ts > 热力图日期网格 > UTC-5 当地还停在前一日：终点是本地今天
+AssertionError: expected '2026-07-30' to be '2026-07-29' // Object.is equality
+
+Expected: "2026-07-29"
+Received: "2026-07-30"
+
+ ❯ src/utils/heatmap.test.ts:115:44
+    113|
+    114|       const cells = buildHeatmapCells(28);
+    115|       expect(cells[cells.length - 1].date).toBe(tc.want);
+       |                                            ^
+    116|     });
+    117|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 117 passed (119)
+      Tests  2 failed | 1141 passed (1143)
+   Start at  19:17:21
+   Duration  109.92s (import 54%, environment 37%, tests 5%, transform 4%)
+
+    Isolate  119 workers spawned · ~5.21s startup each (spawn + environment, per file)
+             at least ~36.15s faster with isolate: false — reuses workers across files instead of one per file
+

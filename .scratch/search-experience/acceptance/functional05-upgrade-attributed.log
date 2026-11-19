@@ -1,0 +1,15 @@
+=== RUN   TestSearchArchiveUpgrade
+    search_archive_acceptance_test.go:43: real v5 backfill failure left version=5; removing fault and retrying
+SEARCH_BACKFILL Book user_version=5 elapsed_ns=28136551700
+    search_archive_acceptance_test.go:72: pass=0 version=6 books=200000 series=20000 migrate=28.2452258s
+    search_archive_acceptance_test.go:72: pass=1 version=6 books=200000 series=20000 migrate=14.3058ms
+--- PASS: TestSearchArchiveUpgrade (42.06s)
+PASS
+=== RUN   TestSearchArchiveUpgrade
+SEARCH_BACKFILL Series user_version=4 elapsed_ns=950649700
+SEARCH_BACKFILL Book user_version=4 elapsed_ns=10891175900
+    search_archive_acceptance_test.go:72: pass=0 version=6 books=200000 series=20000 migrate=11.9814812s
+    search_archive_acceptance_test.go:72: pass=1 version=6 books=200000 series=20000 migrate=18.1658ms
+--- PASS: TestSearchArchiveUpgrade (12.77s)
+PASS
+EXIT=0

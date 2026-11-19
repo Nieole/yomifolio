@@ -1,0 +1,5 @@
+=== RUN   TestSearchArchiveUpgrade
+    search_archive_acceptance_test.go:57: pass=0 version=5 books=200000 series=20000 migrate=5.4285268s
+    search_archive_acceptance_test.go:57: pass=1 version=5 books=200000 series=20000 migrate=344.836ms
+--- PASS: TestSearchArchiveUpgrade (9.46s)
+PASS
