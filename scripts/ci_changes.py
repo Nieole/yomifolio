@@ -14,6 +14,8 @@ def classify(paths):
     for path in paths:
         if path.startswith(".github/workflows/") or path.startswith("scripts/ci_"):
             selected.update(CATEGORIES)
+        elif path.endswith(".md") or path.startswith(("docs/", "images/", ".github/ISSUE_TEMPLATE/")):
+            selected.add("docs")
         elif path.startswith("extensions/mihon/"):
             selected.add("mihon")
         elif path == "web/public/icons/icon-192.png":
@@ -30,8 +32,6 @@ def classify(paths):
             if path.startswith("internal/api/"):
                 selected.add("mihon")
         elif path == "scripts/check-doc-style.sh":
-            selected.add("docs")
-        elif (path.endswith(".md") or path.startswith(("docs/", "images/", ".github/ISSUE_TEMPLATE/"))):
             selected.add("docs")
         else:
             selected.update(CATEGORIES)

@@ -1,6 +1,8 @@
 """Regression checks for path selection and conservative comparison handling."""
 
+from pathlib import Path
 import subprocess
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -14,7 +16,9 @@ class SelectionTests(unittest.TestCase):
     def test_product_boundaries(self):
         self.assertEqual(self.enabled("extensions/mihon/src/Foo.kt"), {"mihon"})
         self.assertEqual(self.enabled("extensions/mihon/tools/test_repository.py"), {"mihon"})
-        self.assertEqual(self.enabled("README.md"), {"docs"})
+        for path in ("README.md", "web/README.md", "extensions/mihon/README.md", "extensions/mihon/SPEC.md"):
+            with self.subTest(path=path):
+                self.assertEqual(self.enabled(path), {"docs"})
         self.assertEqual(self.enabled("web/src/App.tsx"), {"frontend", "backend", "docs"})
         self.assertNotIn("mihon", self.enabled("internal/reading/state.go"))
 
@@ -58,7 +62,7 @@ class SelectionTests(unittest.TestCase):
     @patch("ci_changes.git")
     def test_push_compares_before_and_after(self, git):
         before, after = "a" * 40, "b" * 40
-        git.return_value = b"extensions/mihon/README.md\0"
+        git.return_value = b"extensions/mihon/build.gradle.kts\0"
         selected = select({"before": before, "after": after}, "push")
         self.assertEqual({key for key, enabled in selected.items() if enabled}, {"mihon"})
         self.assertEqual(git.call_args.args, ("diff", "--name-only", "--no-renames", "-z", before, after, "--"))
@@ -78,6 +82,43 @@ class SelectionTests(unittest.TestCase):
                       {"before": "--bad-flag", "after": "b" * 40}):
             with self.subTest(event=event):
                 self.assertTrue(all(select(event, "push").values()))
+
+
+class GitComparisonTests(unittest.TestCase):
+    def test_divergent_pr_excludes_unrelated_base_changes_and_tracks_renames(self):
+        with tempfile.TemporaryDirectory() as directory:
+            def git(*args):
+                return subprocess.check_output(["git", *args], cwd=directory, stderr=subprocess.PIPE)
+
+            def commit(path, content):
+                target = Path(directory) / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(content, encoding="utf-8")
+                git("add", "--all")
+                git("-c", "commit.gpgsign=false", "commit", "-qm", "fixture")
+                return git("rev-parse", "HEAD").decode().strip()
+
+            git("init", "-q")
+            git("config", "user.name", "CI Test")
+            git("config", "user.email", "ci-test@example.invalid")
+            root = commit("README.md", "root")
+            git("branch", "feature")
+            base = commit("internal/reading/state.go", "base-only")
+            git("checkout", "-q", "feature")
+            head = commit("extensions/mihon/src/Source.kt", "feature-only")
+            event = {"pull_request": {"base": {"sha": base}, "head": {"sha": head}}}
+            with patch("ci_changes.git", side_effect=git):
+                selected = select(event, "pull_request")
+                self.assertEqual({key for key, enabled in selected.items() if enabled}, {"mihon"})
+                self.assertEqual(select({"before": root, "after": head}, "push"), selected)
+            before = commit("web/old name.ts", "renamed")
+            git("mv", "web/old name.ts", "moved.md")
+            git("-c", "commit.gpgsign=false", "commit", "-qm", "rename")
+            after = git("rev-parse", "HEAD").decode().strip()
+            with patch("ci_changes.git", side_effect=git):
+                selected = select({"before": before, "after": after}, "push")
+                self.assertTrue(selected["frontend"])
+                self.assertTrue(selected["backend"])
 
 
 if __name__ == "__main__":
