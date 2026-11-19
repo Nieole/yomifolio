@@ -205,9 +205,9 @@ func TestSeriesNormalizedSearchHTTPOracle(t *testing.T) {
 	}
 }
 
-func (f *normalizedSearchHTTP) rebuild(t *testing.T) {
+func (f *normalizedSearchHTTP) rebuild(t *testing.T) RunSnapshot {
 	t.Helper()
-	f.rebuildTerminal(t, "completed")
+	return f.rebuildTerminal(t, "completed")
 }
 
 // Synthetic catalogue paths deliberately cannot be scanned. Derived indexes are
@@ -217,26 +217,46 @@ func (f *normalizedSearchHTTP) rebuildSyntheticFailure(t *testing.T) {
 	f.rebuildTerminal(t, "failed")
 }
 
-func (f *normalizedSearchHTTP) rebuildTerminal(t *testing.T, want string) {
+func (f *normalizedSearchHTTP) rebuildTerminal(t *testing.T, want string) RunSnapshot {
 	t.Helper()
-	f.request(t, "POST", "/api/system/rebuild-index")
-	deadline := time.Now().Add(15 * time.Second)
-	for time.Now().Before(deadline) {
+	listRuns := func() []RunSnapshot {
 		var runs []RunSnapshot
 		if err := json.Unmarshal(f.request(t, "GET", "/api/system/tasks?type=rebuild_index"), &runs); err != nil {
 			t.Fatal(err)
 		}
-		for _, run := range runs {
-			if run.Status == "completed" || run.Status == "failed" || run.Status == "cancelled" {
+		return runs
+	}
+	// The launch response contains only a message, not a run ID. Discover the
+	// new run through the public list, excluding every pre-launch run.
+	existing := make(map[int64]bool)
+	for _, run := range listRuns() {
+		existing[run.RunID] = true
+	}
+	f.request(t, "POST", "/api/system/rebuild-index")
+	deadline := time.Now().Add(15 * time.Second)
+	var runID int64
+	for time.Now().Before(deadline) {
+		for _, run := range listRuns() {
+			if existing[run.RunID] {
+				continue
+			}
+			if runID == 0 {
+				runID = run.RunID
+			}
+			if run.RunID != runID {
+				continue
+			}
+			if run.Status == "completed" || run.Status == "failed" || run.Status == "cancelled" || run.Status == "interrupted" {
 				if run.Status != want {
 					t.Fatalf("rebuild terminated: %+v, want %s", run, want)
 				}
-				return
+				return run
 			}
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	t.Fatal("HTTP rebuild did not complete")
+	t.Fatalf("HTTP rebuild did not complete a new run (run_id=%d)", runID)
+	return RunSnapshot{}
 }
 
 func TestSeriesNormalizedSearchHTTPLifecycleAndRepair(t *testing.T) {

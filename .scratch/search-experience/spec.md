@@ -1,6 +1,8 @@
 # 统一搜索匹配、结果可达性与搜索会话
 
-Status: ready-for-agent
+Status: resolved
+
+交付分支：`search-experience-integration`。工单结案与限制见 [交付索引](map.md)，可复验数据见 [验收证据](acceptance/README.md)。
 
 ## Problem Statement
 
