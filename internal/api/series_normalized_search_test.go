@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -67,7 +68,12 @@ func normalizedSearchServer(t *testing.T, c *apiFixture, store database.Store) *
 
 func (f *normalizedSearchHTTP) request(t *testing.T, method, path string) []byte {
 	t.Helper()
-	req, err := http.NewRequest(method, f.server.URL+path, nil)
+	return f.requestContext(t, t.Context(), method, path)
+}
+
+func (f *normalizedSearchHTTP) requestContext(t *testing.T, ctx context.Context, method, path string) []byte {
+	t.Helper()
+	req, err := http.NewRequestWithContext(ctx, method, f.server.URL+path, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -219,9 +225,26 @@ func (f *normalizedSearchHTTP) rebuildSyntheticFailure(t *testing.T) {
 
 func (f *normalizedSearchHTTP) rebuildTerminal(t *testing.T, want string) RunSnapshot {
 	t.Helper()
+	// Long metadata makes real SQLite index work expensive under -race. Allow
+	// instrumentation/load headroom, without outliving the test budget.
+	started := time.Now()
+	deadline := started.Add(2 * time.Minute)
+	if testDeadline, ok := t.Deadline(); ok && testDeadline.Add(-time.Second).Before(deadline) {
+		deadline = testDeadline.Add(-time.Second)
+	}
+	ctx, cancel := context.WithDeadline(t.Context(), deadline)
+	defer cancel()
+	var runID int64
+	var last RunSnapshot
+	settled := false
+	defer func() {
+		if !settled {
+			t.Logf("HTTP rebuild wait stopped after %s (run_id=%d, want=%s, last=%+v)", time.Since(started), runID, want, last)
+		}
+	}()
 	listRuns := func() []RunSnapshot {
 		var runs []RunSnapshot
-		if err := json.Unmarshal(f.request(t, "GET", "/api/system/tasks?type=rebuild_index"), &runs); err != nil {
+		if err := json.Unmarshal(f.requestContext(t, ctx, "GET", "/api/system/tasks?type=rebuild_index"), &runs); err != nil {
 			t.Fatal(err)
 		}
 		return runs
@@ -232,10 +255,10 @@ func (f *normalizedSearchHTTP) rebuildTerminal(t *testing.T, want string) RunSna
 	for _, run := range listRuns() {
 		existing[run.RunID] = true
 	}
-	f.request(t, "POST", "/api/system/rebuild-index")
-	deadline := time.Now().Add(15 * time.Second)
-	var runID int64
-	for time.Now().Before(deadline) {
+	f.requestContext(t, ctx, "POST", "/api/system/rebuild-index")
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+	for ctx.Err() == nil {
 		for _, run := range listRuns() {
 			if existing[run.RunID] {
 				continue
@@ -246,16 +269,21 @@ func (f *normalizedSearchHTTP) rebuildTerminal(t *testing.T, want string) RunSna
 			if run.RunID != runID {
 				continue
 			}
+			last = run
 			if run.Status == "completed" || run.Status == "failed" || run.Status == "cancelled" || run.Status == "interrupted" {
 				if run.Status != want {
 					t.Fatalf("rebuild terminated: %+v, want %s", run, want)
 				}
+				settled = true
 				return run
 			}
 		}
-		time.Sleep(10 * time.Millisecond)
+		select {
+		case <-ctx.Done():
+		case <-ticker.C:
+		}
 	}
-	t.Fatalf("HTTP rebuild did not complete a new run (run_id=%d)", runID)
+	t.Fatalf("HTTP rebuild did not reach %s within %s (run_id=%d, last=%+v): %v", want, time.Since(started), runID, last, ctx.Err())
 	return RunSnapshot{}
 }
 
