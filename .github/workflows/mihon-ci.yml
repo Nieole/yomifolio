@@ -1,33 +1,85 @@
-name: Mihon extension CI
+name: Mihon / Validate
 
 on:
   pull_request:
-    paths:
-      - 'extensions/mihon/**'
-      - '.github/workflows/mihon-*.yml'
-      - 'web/public/icons/icon-192.png'
   push:
     branches: [main]
-    paths:
-      - 'extensions/mihon/**'
-      - '.github/workflows/mihon-*.yml'
-      - 'web/public/icons/icon-192.png'
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        default: ''
+      full:
+        type: boolean
+        default: true
 
 permissions:
   contents: read
 
+# Full validation (including signing callers) must not be cancelled by daily CI.
 concurrency:
-  group: mihon-ci-${{ github.event.pull_request.number || github.ref }}
+  group: mihon-ci-${{ github.workflow }}-${{ (github.event_name == 'workflow_dispatch' || inputs.full == true) && github.run_id || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  check:
+  changes:
+    name: Mihon / Select checks
     runs-on: ubuntu-latest
+    outputs:
+      mihon: ${{ steps.changes.outputs.mihon }}
     steps:
-      # Same immutable action revisions as the existing server workflows.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ inputs.ref || '' }}
+      - name: Detect relevant changes
+        id: changes
+        env:
+          FULL: ${{ github.event_name == 'workflow_dispatch' || inputs.full == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$FULL" == "true" ]]; then
+            python3 scripts/ci_changes.py --event "$GITHUB_EVENT_PATH" --output "$GITHUB_OUTPUT" --full
+          else
+            python3 scripts/ci_changes.py --event "$GITHUB_EVENT_PATH" --output "$GITHUB_OUTPUT"
+          fi
+
+  tools:
+    name: Mihon / Python publication tools tests
+    needs: changes
+    if: needs.changes.outputs.mihon == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref || '' }}
+      - name: Python repository tests
+        run: python3 -m unittest discover -s extensions/mihon/tools -v
+
+  android:
+    name: Mihon / ${{ matrix.name }}
+    needs: changes
+    if: needs.changes.outputs.mihon == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Protocol tests
+            task: ':protocol-tests:test'
+          - name: Android lint
+            task: lint
+          - name: Debug APK (NOT FOR PUBLICATION)
+            task: assembleDebug
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref || '' }}
       - name: Select pinned build toolchain
         shell: bash
         run: |
@@ -35,17 +87,53 @@ jobs:
           echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
           echo "$JAVA_HOME_21_X64/bin" >> "$GITHUB_PATH"
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-35' 'build-tools;35.0.0'
-      - name: Python repository tests
-        run: python3 -m unittest discover -s extensions/mihon/tools -v
-      - name: Protocol tests, debug APK and lint (no signing secrets)
+      - name: Run Android check (no signing secrets)
         working-directory: extensions/mihon
-        run: bash ./gradlew --no-daemon :protocol-tests:test assembleDebug lint
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        env:
+          GRADLE_TASK: ${{ matrix.task }}
+        run: bash ./gradlew --no-daemon "$GRADLE_TASK"
+      - name: Upload debug APK (NOT FOR PUBLICATION)
+        if: matrix.task == 'assembleDebug'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: mihon-debug-NOT-FOR-PUBLICATION
-          path: |
-            extensions/mihon/build/outputs/apk/debug/*.apk
-            extensions/mihon/build/reports/lint-results-*
-            extensions/mihon/protocol-tests/build/reports/tests/
+          path: extensions/mihon/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 7
+
+      - name: Upload check reports
+        if: always() && matrix.task != 'assembleDebug'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mihon-${{ matrix.task == 'lint' && 'lint' || 'protocol' }}-reports
+          path: |
+            extensions/mihon/build/reports/lint-results-*
+            extensions/mihon/protocol-tests/build/reports/tests/
+          if-no-files-found: warn
+          retention-days: 7
+
+  required:
+    name: Mihon / required checks
+    if: always()
+    needs: [changes, tools, android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify selected checks succeeded
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+
+          needs = json.loads(os.environ['NEEDS'])
+          changes = needs['changes']
+          selected = changes['outputs'].get('mihon')
+          if changes['result'] != 'success' or selected not in ('true', 'false'):
+              sys.exit('Mihon change detection failed or returned an invalid selection')
+          expected = 'success' if selected == 'true' else 'skipped'
+          for job in ('tools', 'android'):
+              if needs[job]['result'] != expected:
+                  sys.exit(f"{job}: expected {expected}, got {needs[job]['result']}")
+          PY

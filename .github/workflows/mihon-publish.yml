@@ -1,4 +1,4 @@
-name: Mihon signed repository publication
+name: Mihon / Publish signed repository
 
 on:
   workflow_dispatch:
@@ -12,7 +12,16 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  ci:
+    name: Full secrets-free validation
+    if: github.repository == 'Nieole/yomifolio' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    uses: ./.github/workflows/mihon-ci.yml
+    with:
+      ref: ${{ github.sha }}
+      full: true
+
   build:
+    needs: ci
     # Never execute signing code from PRs, tags or non-default branches.
     if: github.repository == 'Nieole/yomifolio' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
@@ -20,6 +29,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: ${{ github.sha }}
       - name: Select pinned build toolchain
         shell: bash
         run: |
@@ -27,13 +37,6 @@ jobs:
           echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
           echo "$JAVA_HOME_21_X64/bin" >> "$GITHUB_PATH"
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-35' 'build-tools;35.0.0'
-      - name: Tests and lint without secrets
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -m unittest discover -s extensions/mihon/tools -v
-          cd extensions/mihon
-          bash ./gradlew --no-daemon :protocol-tests:test assembleDebug lint
       - name: Decode private keystore into runner temporary storage
         env:
           MIHON_KEYSTORE_BASE64: ${{ secrets.MIHON_KEYSTORE_BASE64 }}
