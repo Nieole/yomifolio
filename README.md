@@ -12,7 +12,7 @@ Turn your local manga, comics, and artbook archives into a browsable library. Re
 
 ![Yomifolio library browser with series covers and reading progress](images/yomifolio-library.png)
 
-Browse your collection by series, then pick up where you left off. Screenshots use original demonstration artwork, not bundled manga or a downloadable content collection.
+Your collection, with real covers and a place to continue reading. Screenshots feature **Pepper&Carrot**, **Give My Regards to Black Jack**, **Coffee For You**, and **Superflu**, used under their respective public permissions. [Comic credits, licenses, and screenshot details](images/README.md). Comics are not bundled with the server.
 
 ## Why Yomifolio?
 
@@ -31,23 +31,46 @@ Browse your collection by series, then pick up where you left off. Screenshots u
 
 The default `config.yaml` is created in the **working directory**, not inside `data/`. `-data-dir` controls **logs only**; database and cache locations come from configuration (defaults: `./data/manga.db`, `./data/cache`). See [paths, configuration, and upgrades](docs/getting-started.md).
 
-## A closer look
+## From a folder of archives to your next read
 
-### Organize a series
+### Find a book, then give it a place
 
-Keep volumes, metadata, and reading state together. Review scraped suggestions, lock fields you want to preserve, and organize related series into collections.
+- **Search across libraries** by series or book name and title; narrow the library view with author, tag, rating, publication status, and reading-progress filters.
+- **Organize beyond folders:** curate collections, save smart filters, turn their current matches into a collection snapshot, or build an ordered reading list.
+- **Keep a series together:** view books, authors, tags, descriptions, and progress in one place. Link prequels, sequels, and spinoffs, then explore relationships in a graph.
 
-![Series details, volumes, and metadata in Yomifolio](images/yomifolio-series.png)
+![Pepper&Carrot series details in Yomifolio, with real artwork, author, tags, and reading progress](images/yomifolio-series.png)
 
-### Read on desktop or phone
+### Read comfortably on desktop or phone
 
-Choose page turns or vertical scrolling, reading direction in paged mode, fitting, bookmarks, and image options. Offline downloads stay in the current browser; storage availability and eviction depend on that browser. Logout or user changes can clear local books; they are not permanent backups.
+- **Choose your rhythm:** page turns, double-page spreads, or continuous Webtoon scrolling; left-to-right or right-to-left in paged mode.
+- **Make the page fit:** width/height/screen fitting, paged zoom and pan, themes, warm eye-comfort overlay, automatic border cropping, and image resampling.
+- **Keep your place:** bookmarks with notes, saved progress, and whole-book downloads to the current browser. Offline progress queues for synchronization when you reconnect.
 
-![Yomifolio desktop reader using original demo pages](images/yomifolio-reader-desktop.png)
+<p>
+  <img src="images/yomifolio-reader-desktop.png" width="74%" alt="Desktop reader showing real Pepper&amp;Carrot pages in a double-page spread">
+  <img src="images/yomifolio-reader-mobile.png" width="24%" alt="Phone-sized reader showing Pepper&amp;Carrot in continuous vertical mode">
+</p>
 
-![Yomifolio mobile reader using original demo pages](images/yomifolio-reader-mobile.png)
+Offline reading requires Service Worker / Cache Storage support, normally HTTPS or localhost. Browser storage limits and eviction apply; logout or user changes can clear local books. These downloads are not permanent backups. The phone view is a real touch-emulated browser capture, not a physical-device photograph. [Artwork attribution and capture details](images/README.md).
 
-The mobile view is a real browser capture at a touch-enabled phone-sized viewport, not a physical-device photograph. [Screenshot provenance](images/README.md).
+### Improve metadata without losing editorial control
+
+Connect optional sources such as Bangumi, AniList, MangaDex, MyAnimeList, and Comic Vine. Compare suggested fields with current values, inspect sources and confidence, then apply or reject proposals individually or in batches. Lock fields you want to preserve.
+
+Optional LLM assistance can suggest metadata, themed collections, and recommendations based on reading preferences. Suggestions remain subject to review; basic library use needs no AI service. Embedded `ComicInfo.xml` can be imported, and edited metadata can be written back to **ZIP/CBZ** archives; RAR/CBR write-back is not supported.
+
+### Share the library, keep personal reading records
+
+Administrators manage the shared collection and accounts. Each reader keeps their own progress, bookmarks, series comments, reading time, streaks, and period statistics. Accounts separate reading records, **not private library partitions**.
+
+### Keep a growing collection manageable
+
+- **Ingest at your pace:** choose scan profiles and optional folder watching; tune background IO for SSD, HDD, or network storage rather than competing with reading.
+- **Review duplicates and missing files:** identity scans support content-based duplicate detection; selected originals can be moved to trash instead of permanently deleted. Scan cleanup has missing-root safeguards, but still needs backups.
+- **Follow background work:** inspect task progress and logs, review failures, and retry supported jobs. External-library comparison helps identify and transfer missing books; supported library-path relocation preserves identities after you prepare the destination files.
+
+For detailed behavior and limits, see [library, reading, and maintenance features](docs/features.md).
 
 ## Clients and integrations
 
@@ -55,12 +78,16 @@ The mobile view is a real browser capture at a touch-enabled phone-sized viewpor
 | --- | --- | --- |
 | Web reader | Browsing, paged/vertical reading, per-user progress and bookmarks, browser-local offline books | Session cookie + CSRF. Offline support requires Service Worker / Cache Storage, normally HTTPS or localhost. |
 | OPDS 1.2 | Catalog navigation, archive acquisition, and PSE page streaming | **Off by default.** Enable in settings; site username/password via HTTP Basic. Client support varies; do not assume progress write-back. Catalog: `/opds/v1.2/`. |
-| Mihon API | Series/books, filters, collections, reading lists, and a progress write endpoint | **Off by default.** HTTP Basic; requires an adapter implementing this API (`/api/mihon/v1`). Server support does not imply a published extension or inclusion in an upstream extension repository. |
+| Mihon API + companion source | Series/books, filters, collections, reading lists; companion source supports browsing, reading, and downloads | **Off by default.** HTTP Basic, `/api/mihon/v1`. See the [companion extension guide](extensions/mihon/README.md) for build/install and release prerequisites. Not an upstream-store extension; the standalone source does **not** provide page-level two-way sync. |
 | KOReader | kosync-compatible device progress storage and matching to library books | **Off by default**, as is self-registration. Separate per-account sync keys; bind an account to a site user and match book identities before expecting site progress updates. Default base path: `/koreader`. |
 
 Accounts created by an administrator must first change their password in the web UI before using any reading protocol. Arbitrary third-party readers do not automatically write progress back.
 
-Online metadata sources and LLM-assisted metadata, grouping, and recommendations are **optional** and may contact external services. Optional waifu2x / Real-CUGAN processing requires separately installed executables and suitable hardware. Neither is required for basic reading. See [features and optional tools](docs/features.md).
+### Optional services and image enhancement
+
+Online metadata sources and remote LLM endpoints may send library metadata to external services; some sources require API credentials. Local Ollama is also supported. Enable only the providers you trust.
+
+For low-resolution pages, optional **waifu2x / Real-CUGAN** processing runs on demand while reading. It requires separately installed executables and suitable Vulkan hardware/drivers; it is not required for normal reading. See [provider requirements and optional tools](docs/features.md).
 
 ## Documentation
 
