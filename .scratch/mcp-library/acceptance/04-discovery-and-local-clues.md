@@ -117,3 +117,44 @@ No open functional acceptance defect in this scoped repair. XML parsing remains 
 Integration branch was observed at `acaecadd` (documentation-only successor of requested `a0245ff5`), not an ancestor of this tree's HEAD. Parent owns any safe integration; worker did not merge or edit 03/06 acceptance. All changes remain uncommitted.
 
 Suggested fix subject: `fix(parser): validate complete ComicInfo documents before exposing clues`
+
+## request_review rc_6c56374b — run-tool public error boundary
+
+Fresh worker04 repair, initially clean `f6d2b19e2a6281c351fdd4fb89a38e7f3a41db96`; integration branch and merge-base were the same tip and remain so at final verification. Only this independent worktree was edited. No stage/commit/merge, parent-tree changes, new ticket implementation, or edits to 03/06 status/acceptance. **Ready-for-agent / pending review remains; the current full-backend gate is NOT green.**
+
+### Boundary and actual fix
+
+- `registerMCPRuns` routes all five handler errors through `runToolError` / `publicMCPToolError`. Only `errors.Is` matches for the existing delegated denial/validation sentinels select approved fixed messages; unknown errors become `run operation unavailable; retry later`. Even matching wrapped sentinels are replaced, never returned with their potentially private wrapper. No substring whitelist or secret-word filtering in production.
+- `discoveryError` reuses this boundary, preserving its existing discovery validation/unavailable messages and replacing wrapped denial with the canonical sentinel. Existing HTTP credential error mapping already selects fixed messages; series lookup already returns a canonical denial. Neither needed changing.
+- `delegated.StartScan` library lookup and `GetRun` snapshot lookup distinguish `sql.ErrNoRows` (unknown/denied) from actual storage failures. Storage failures retain their typed internal error and diagnostic; Get/Wait/Cancel now report genuine failures generically at MCP rather than misclassifying them as denial. No error is swallowed into a successful run or empty list.
+- Existing `internal/api/SPEC.md` generic-error and application bounded-run contracts remain authoritative and unchanged. No protocol schema, SQL/schema, generated frontend response, runtime composition, or normal run lifecycle change. CHANGELOG records the public fix.
+
+### Production regression / red → green
+
+Evidence: ignored `.tmp/run-error-fix/`, Go1.26.10, guide's shared worker01 GOCACHE, independent `gotmp` / `lintcache`, environment in `env.sh`.
+
+`TestMCPRunPersistenceErrorsStayPrivate` uses real production `bootstrap.Open`, temporary SQLite, and the official generic Streamable HTTP client. An actual SQLite `BEFORE INSERT` trigger aborts admission with synthetic private path/SQL diagnostics; a broken SQLite view then forces List/Get/Wait/Cancel read failures with a synthetic private table name. No business service/store mock replaces these failures. It observes raw wire responses (including JSON-RPC/SDK text), decoded text/structured results, returned errors and captured request-time slog output; failed responses must be errors without structured success data. A direct application invocation also proves `errors.As(*sqlite.Error)` and its internal diagnostic survive. After failed admission, public run listing is empty (no ghost run). Explicit denial/validation remain distinguishable; the existing real-archive run and stdio suites preserve normal completion/disconnect/reconnect/cancellation/revocation semantics.
+
+- RED command: `go test -p 1 ./internal/bootstrap -run '^TestMCPRunPersistenceErrorsStayPrivate$' -count=1 -timeout=2m`, `red-final.log`. Scan text exposed the trigger diagnostic; list text exposed the private table; Get/Wait/Cancel incorrectly returned denial on storage failure. This was run before production edits. Earlier authoring runs supplied extra arguments / omitted required `timeout_ms`; fixed before the final valid red.
+- GREEN: identical command, `green.log`, PASS. Added `TestMCPToolErrorsExposeOnlyCanonicalMessages` covers nil, arbitrary errors, wrapped denial/validation, and denial/validation text that is NOT a typed sentinel, for both run/discovery mappers.
+- Initial repeat found test setup competition: startup history janitor could hit the deliberately broken database and log its own internal diagnostic (`repeated.log`, `log-probe.log`). Fixed test synchronization, not production logging or assertions: wait on the janitor's public terminal run state before injecting the request fault. Removed temporary diagnostic printing; log buffer is synchronized. `stable.log`: production regression passed 10 times. Internal background diagnostic logging is not globally prohibited by this patch; these checks isolate MCP request failures and do not inject faults into unrelated startup jobs.
+- Final related repeat: `go test -p 1 ./internal/application/delegated ./internal/task ./internal/taskstore ./internal/bootstrap -count=3 -timeout=10m`, PASS (`related-full.log`), full packages including actual stdio process tests. `targeted-final.log` and `targeted-final2.log`: three repetitions of API MCP / bootstrap MCP+delegated+run tests also PASS. Some filtered packages had no matching tests; full related repeat above supplies their coverage.
+- One early command mistakenly named nonexistent `./internal/mcpproxy` and used an overly broad `Test.*Run` regex; it failed setup and also selected an API relocation Windows rename failure (`repeated-final.log`). Correct proxy is `cmd/mcp-proxy` (no package-local tests); its actual process acceptance lives in bootstrap, repeatedly exercised above. No failed command is counted as passing.
+
+### Gates and failures, without baseline attribution
+
+Full backend command every time: `go test -p 1 ./... -count=1 -timeout=10m`, outer timeout **1800s**. Four attempts; **none passed overall**:
+
+1. `backend-full.log`: API `TestRelocationBlocksNewConflictingLibraryRootsUntilEffectsFinish` failed renaming source → target, Windows Access denied; other packages passed.
+2. `backend-full-rerun.log`: API `TestWriteBookComicInfoMergesInsteadOfReplacing` expected 200, received archive-write 500; other packages passed.
+3. `backend-full-third.log`: API and MCP/bootstrap passed, scanner `TestRealWatcherStopsWhileDirectoriesAreRenamedAndRecreated` hung until the 10-minute package timeout. No timeout increase, weakening, or watcher fix attempted.
+4. `backend-full-fourth.log`: API `TestRelocationPolicySQLFailureCompensatesAndAllowsNewConfirmation` remained prepared/recovering at its operation deadline; `TestRelocationPolicyPersistenceFailuresCompensateOrRemainBlocked/compensation` and `TestRelocationPolicyCrashRecoversFromActualDurabilityBoundaries/derived_effects` failed Windows source → target rename Access denied. Other packages, including scanner and MCP/bootstrap, passed.
+
+Focused failing tests: first two earlier relocation failures plus ComicInfo test passed three times (`api-rerun.log`); timed-out watcher passed three times (`scanner-rerun.log`). These are not substitutes for a green full suite. No migration failure was observed in these four runs; historical migration failures in prior acceptance remain historical, not reclassified as baseline or erased. No unrelated production/tests changed.
+
+- Final `golangci-lint run`: PASS, `0 issues.` (`lint-final.log`).
+- Final `gofmt -l ./cmd ./internal`: PASS, empty (`gofmt-final.log`).
+- `go run ./cmd/tsgen` + `git diff --exit-code HEAD -- web/src/api/generated.ts`: PASS, 32 types, no contract drift (`tsgen.log`). No frontend/SQL changes, so no frontend/sqlc regeneration needed.
+- `git diff --check`: final PASS. An intermediate Python write converted CHANGELOG newlines to CRLF and produced a noisy diff; restored original LF before final check, leaving only the focused entry.
+
+Remaining: review this boundary fix and obtain a clean full-backend gate; do not close 04, 03 or 06 based on targeted passes. No known remaining run-tool diagnostic disclosure in the covered paths. Suggested subject: `fix(mcp): sanitize run tool failures at the public boundary`.

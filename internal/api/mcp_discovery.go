@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"yomifolio/internal/application/delegated"
@@ -32,11 +31,5 @@ func discoveryResult() *mcp.CallToolResult {
 }
 
 func discoveryError(err error) error {
-	if err == nil || errors.Is(err, delegated.ErrDenied) {
-		return err
-	}
-	if errors.Is(err, delegated.ErrInvalid) {
-		return errors.New("invalid discovery filters, pagination or oversized result; use supported fields and limit 1..50, or reduce the target/page size")
-	}
-	return errors.New("local catalogue evidence unavailable; retry after current library work completes")
+	return publicMCPToolError(err, "invalid discovery filters, pagination or oversized result; use supported fields and limit 1..50, or reduce the target/page size", "local catalogue evidence unavailable; retry after current library work completes")
 }

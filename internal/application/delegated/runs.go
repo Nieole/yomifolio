@@ -2,6 +2,8 @@ package delegated
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strconv"
 	"time"
 
@@ -41,8 +43,11 @@ func (s *Service) StartScan(ctx context.Context, subject Subject, library int64)
 		return Run{}, err
 	}
 	lib, err := s.runs.Libraries.GetLibrary(ctx, library)
-	if err != nil {
+	if errors.Is(err, sql.ErrNoRows) {
 		return Run{}, ErrDenied
+	}
+	if err != nil {
+		return Run{}, err
 	}
 	launched, err := s.runs.Scans.ScanLibraryWithPolicy(ctx, lib, func(spec task.RunSpec, body task.Body) (task.RunSpec, task.Body, error) {
 		return s.PrepareRun(ctx, subject, library, ScanControl, spec, body)
@@ -74,8 +79,11 @@ func (s *Service) GetRun(ctx context.Context, subject Subject, id int64) (Run, e
 		return Run{}, ErrDenied
 	}
 	snap, err := s.runs.Engine.SnapshotOf(ctx, id)
-	if err != nil {
+	if errors.Is(err, sql.ErrNoRows) {
 		return Run{}, ErrDenied
+	}
+	if err != nil {
+		return Run{}, err
 	}
 	return s.visible(ctx, subject, snap)
 }
