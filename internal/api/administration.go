@@ -40,6 +40,7 @@ type AdministrationStore interface {
 
 // administrationHTTP owns the administration transport family, not an application graph.
 type administrationHTTP struct {
+	sources        ExternalSources
 	initialization *accounts.Initialization
 	management     *accounts.Management
 	passwords      *accounts.Passwords

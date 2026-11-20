@@ -194,7 +194,7 @@ func (c *administrationHTTP) testLLMConfig(w http.ResponseWriter, r *http.Reques
 		jsonError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	var provider metadata.ConnectionTester = metadata.NewAIProvider(req.Provider, req.APIMode, req.BaseURL, req.RequestPath, req.Model, req.APIKey, cfg.LLM.Timeout)
+	var provider metadata.ConnectionTester = c.sources.ai(req.Provider, req.APIMode, req.BaseURL, req.RequestPath, req.Model, req.APIKey, cfg.LLM.Timeout)
 	response, err := provider.TestLLM(r.Context(), req.Prompt)
 	if err != nil {
 		jsonError(w, http.StatusInternalServerError, fmt.Sprintf("LLM Test failed: %v", err))

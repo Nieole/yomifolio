@@ -47,6 +47,7 @@ func NewReaderCapabilities(store ReaderStore, relations seriescontext.Relations,
 // ReaderHTTP owns reader and catalogue protocol parsing. Leaf transport effects
 // share the host's authentication, content access and organization query adapters.
 type ReaderHTTP struct {
+	sources    ExternalSources
 	mihonClock func() time.Time
 	*ReaderCapabilities
 	store                                                               ReaderQueryStore

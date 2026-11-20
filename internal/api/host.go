@@ -109,9 +109,14 @@ type Transport struct {
 }
 
 func NewTransport(cfg *config.Manager) *Transport {
+	return NewTransportWithSources(cfg, ExternalSources{})
+}
+
+// NewTransportWithSources binds external client factories before assembly and recovery.
+func NewTransportWithSources(cfg *config.Manager, sources ExternalSources) *Transport {
 	t := &Transport{cfg: cfg, auth: newAuthState(), events: newSSEBroker()}
 	snapshot := cfg.Snapshot
-	t.clients = &providerClients{currentConfig: snapshot}
+	t.clients = &providerClients{currentConfig: snapshot, sources: sources}
 	t.projection = &taskEngine{configSnapshot: snapshot, identities: make(map[int64]TaskIdentity),
 		slots:          func() int { return snapshot().Tasks.RunSlots },
 		backoff:        func() task.BackoffPolicy { return backoffPolicyOf(snapshot()) },
@@ -128,7 +133,7 @@ func (t *Transport) RuntimeEffects() appruntime.Effects {
 		InvalidateReading:         func() { e.stats.InvalidateVolatile("koreader_progress") },
 		RunEvents:                 t.events.run, StopEvents: t.events.closeClients,
 		TrimPageCache: func() { t.media.enforcePageCacheBudget() }, ObserveIdentity: t.projection.observeIdentity,
-		Sources: intelligence.Sources{Metadata: t.clients.getMetadataFetcher}}
+		Sources: intelligence.Sources{Metadata: t.clients.getMetadataFetcher, Grouping: func() intelligence.GroupingProvider { return t.clients.sources.configuredAI(t.cfg.Snapshot()) }}}
 }
 
 // TaskOptions attaches transport projections while retaining caller-controlled clocks and scheduling.
@@ -185,9 +190,10 @@ func (t *Transport) Bind(d HostDependencies) *Host {
 	t.media = &contentHTTP{store: d.Reading.ContentQueries, content: d.Reading.Content, imageCache: d.Reading.ImageCache, currentConfig: snapshot, engine: e.engine}
 	providers := &providerHTTP{providerClients: t.clients, store: d.Organization.Series, proposals: d.Organization.ProposalQueue}
 	admin := newAdministration(d.Administration, t.auth, &t.warning)
+	admin.sources = t.clients.sources
 	organization := newOrganizationHTTP(d.Organization)
 	media := t.media
-	reader := &ReaderHTTP{ReaderCapabilities: d.Reading.Capabilities, store: d.Reading.Capabilities.queries,
+	reader := &ReaderHTTP{sources: t.clients.sources, ReaderCapabilities: d.Reading.Capabilities, store: d.Reading.Capabilities.queries,
 		stats: d.Reading.Statistics, recommendations: d.Reading.Recommendations, content: d.Reading.Content,
 		currentConfig: snapshot, failedRuns: e.statusesFrom,
 		requireProtocolEnabled: admin.requireProtocolEnabled, requireBasicAuth: admin.requireBasicAuth,

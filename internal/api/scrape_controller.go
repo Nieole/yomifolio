@@ -54,7 +54,7 @@ func (c *providerClients) getMetadataFetcher(name string) metadata.Fetcher {
 	if c.fetcherFactory != nil {
 		return c.fetcherFactory(name)
 	}
-	return metadata.NewConfiguredProvider(c.currentConfig(), name)
+	return c.sources.metadata(c.currentConfig(), name)
 }
 
 // availableProviders 返回可用的 provider 列表供前端展示。
@@ -368,5 +368,5 @@ func (c *providerClients) getMetadataSearcher(name string) metadata.Searcher {
 	if c.searcherFactory != nil {
 		return c.searcherFactory(name)
 	}
-	return metadata.NewConfiguredProvider(c.currentConfig(), name)
+	return c.sources.metadata(c.currentConfig(), name)
 }

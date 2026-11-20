@@ -65,6 +65,7 @@ type providerHTTP struct {
 
 // providerClients owns only configured external client factories.
 type providerClients struct {
+	sources         ExternalSources
 	currentConfig   func() config.Config
 	fetcherFactory  func(string) metadata.Fetcher
 	searcherFactory func(string) metadata.Searcher

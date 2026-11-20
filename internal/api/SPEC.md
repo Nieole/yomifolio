@@ -25,6 +25,8 @@ references: [mm-adr-0003, mm-adr-0007, mm-database, mm-adr-0014, mm-catalogsearc
 
 `NewTransport` 创建认证、事件 broker、运行投影及缓存/内容效果等技术 leaves；`Transport.Bind` 接受显式家庭能力与窄查询，在共享鉴权子树下组合 `Host`。`Host` 不构造应用、不持有 Runtime 或全量 Store，生产资源创建与恢复启动归 `bootstrap.Open`；底层服务不回调 HTTP 请求处理器。响应契约与前端生成类型须一致，协议差异在各适配器内消化。
 
+`NewTransportWithSources` 接收生产装配根传入的外部客户端工厂，HTTP 来源请求和应用来源端口共享这些工厂；接缝契约归 `mm-bootstrap`，不允许替换业务能力。`NewTransport` 等价于不覆盖来源的生产默认装配。
+
 ## 藏书名称搜索
 
 名称匹配语义归 `mm-database`；全局排名、去重、分数与游标语义归 `mm-catalogsearch`，HTTP 不另定义排序或 score。`GET /api/search` 的 target 默认 all，支持 series、book 与 title（book 别名）；非法 target 返回 400。limit 默认 20，显式参数须为单个十进制正整数且不超过 100，非法值返回 400。cursor 省略或为空表示首批；游标规则归 mm-catalogsearch，无效、重复或上下文失配的游标，以及非法查询串编码，返回 400、稳定 code 为 invalid_search_cursor。每次请求仍由现有 authGate 重新校验会话和当前账号，游标不绕过授权。

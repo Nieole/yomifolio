@@ -557,7 +557,7 @@ func (c *ReaderHTTP) getRecommendations(w http.ResponseWriter, r *http.Request) 
 	}
 	items, err := c.recommendations.Load(r.Context(), c.store, subject, requestLocale(r), r.URL.Query().Get("refresh") == "true", func() metadata.Recommender {
 		cfg := c.currentConfig()
-		return metadata.NewAIProvider(cfg.LLM.Provider, cfg.LLM.APIMode, cfg.LLM.BaseURL, cfg.LLM.RequestPath, cfg.LLM.Model, cfg.LLM.APIKey, cfg.LLM.Timeout)
+		return c.sources.configuredAI(cfg)
 	})
 	if err != nil {
 		jsonError(w, http.StatusInternalServerError, "AI inference failed: "+err.Error())

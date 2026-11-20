@@ -22,6 +22,7 @@ import (
 
 // Options controls process inputs and scheduling at the production assembly seam.
 type Options struct {
+	Sources     api.ExternalSources
 	ConfigPath  string
 	Scanner     *scanner.Scanner
 	Tasks       task.Config
@@ -40,7 +41,7 @@ type Process struct {
 // The caller retains ownership of the supplied database connection and process log file.
 func Open(ctx context.Context, store database.Store, cfg *config.Manager, options Options) (*Process, error) {
 	resources := runtimecfg.NewResources()
-	transport := api.NewTransport(cfg)
+	transport := api.NewTransportWithSources(cfg, options.Sources)
 	memory := bookcontent.NewMemoryCache(bookcontent.DefaultImageCacheBytes)
 	content := bookcontent.New(func(ctx context.Context, id int64) (bookcontent.Source, error) {
 		book, err := store.GetBook(ctx, id)
