@@ -167,7 +167,7 @@ func (r *RarArchive) readMetadataLocked(name string) ([]byte, error) {
 		return nil, err
 	}
 	if !found {
-		return nil, fmt.Errorf("parser: metadata file %q not found", name)
+		return nil, fmt.Errorf("%w: %s", ErrMetadataNotFound, name)
 	}
 	r.cachePutLocked(entry, data)
 	return append([]byte(nil), data...), nil

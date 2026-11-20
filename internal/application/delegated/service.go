@@ -10,6 +10,7 @@ import (
 	"errors"
 	"slices"
 	"strings"
+	"yomifolio/internal/bookcontent"
 )
 
 var (
@@ -49,10 +50,11 @@ type IssuedCredential struct {
 
 // Series deliberately excludes host paths, reading state and arbitrary file access.
 type Series struct {
-	ID        int64  `json:"id"`
-	LibraryID int64  `json:"library_id"`
-	Name      string `json:"name"`
-	Title     string `json:"title"`
+	ID            int64  `json:"id"`
+	LibraryID     int64  `json:"library_id"`
+	Name          string `json:"name"`
+	Title         string `json:"title"`
+	DirectoryName string `json:"directory_name"`
 }
 
 type Authority struct {
@@ -75,7 +77,11 @@ type Store interface {
 	Authority(context.Context, Subject) (Authority, error)
 	Series(context.Context, int64) (Series, error)
 }
-type Service struct{ store Store }
+type Service struct {
+	store   Store
+	content *bookcontent.Service
+	access  bookcontent.LibraryAccess
+}
 
 func New(store Store) *Service { return &Service{store: store} }
 func digest(token string) string {
@@ -235,5 +241,5 @@ func (s *Service) GetSeries(ctx context.Context, subject Subject, id int64) (Ser
 	if err := s.Authorize(ctx, subject, series.LibraryID, Read); err != nil {
 		return Series{}, err
 	}
-	return series, nil
+	return series, bounded(series)
 }

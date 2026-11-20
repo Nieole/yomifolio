@@ -55,10 +55,12 @@ references: [mm-adr-0003, mm-adr-0007, mm-database, mm-adr-0014, mm-catalogsearc
 
 ## MCP 与凭据管理
 
-生产 `Host.SetupRoutes` 在 Cookie 子树外挂载 `/mcp`，显式消费装配根注入的 `delegated.Service`；不把 POST 等同于管理员写入，不读取数据库或创建运行时。采用官方 Go SDK 的 stateless Streamable HTTP / JSON 响应，支持 initialize、tools/list 和 `library_get_series(series_id)`；GET/DELETE 不建立持久会话，无事件恢复或服务器主动请求。工具 schema 与只读提示由 SDK 提供；权限裁决仍由应用用例执行。静态 Bearer 凭据不是 OAuth，未提供 OAuth 发现、授权服务或交互登录。
+生产 `Host.SetupRoutes` 在 Cookie 子树外挂载 `/mcp`，显式消费装配根注入的 `delegated.Service`；不把 POST 等同于管理员写入，不读取数据库或创建运行时。采用官方 Go SDK 的 stateless Streamable HTTP / JSON 响应，支持 initialize、tools/list、`library_get_series(series_id)` 以及 `library_find_series`、`library_list_books`、`library_get_book_clues` 受限发现与本地线索工具；GET/DELETE 不建立持久会话，无事件恢复或服务器主动请求。工具 schema 与只读提示由 SDK 提供；权限裁决仍由应用用例执行。静态 Bearer 凭据不是 OAuth，未提供 OAuth 发现、授权服务或交互登录。
 
 每个 HTTP 请求都重新认证 Bearer，工具调用还按实际对象重查能力；不接受 Cookie、查询参数、重复 Authorization 或客户端指定的 Subject。当前只读工具不暴露凭据管理。`/api/mcp/credentials` 的 GET/POST 与 `/{credentialId}` 的 PATCH/DELETE 属管理员网页管理树，保留 Cookie、CSRF、当前角色及强制改密守卫。列表和命令结果均 no-store，不回显摘要或历史密钥；签发结果的密钥不可记录在日志中。错误为通用信息，不带凭据或底层 SQL。
 
 MCP 安全入口仅接受 `mcp.public_url` 配置的精确 authority；有 Origin 时须与该 origin 一致，重复 Origin 拒绝。SDK 的 localhost-only Host 检查由此更严格的单一 authority 检查替代，使显式 HTTPS 反向代理可用。HTTPS 的直连 TLS 或已配置可信代理的协议声明有效，Cookie Secure 的 always/never 不参与 MCP 判定；不信任 Forwarded Host。显式 LAN HTTP 还校验直连或可信代理报告的真实客户端为 private/loopback IP，可信代理缺失客户端地址时拒绝，公网明文不可用。请求体限制为 64 KiB，无记录协议 payload/Authorization 的 SDK logger；部署代理也不得记录这些秘密。
 
 核对入口：`bootstrap` 的 `TestMCPDelegatedSeriesLifecycle`、`TestMCPAccountPasswordAndManagementIsolation`、`TestMCPRejectsUnsafeTransport`；独立凭据与交集规则归 `mm-application`，配置合法性归 `mm-config`。
+
+发现工具只映射应用用例与结构化结果，查询条件、分页、证据及响应上限归 `mm-application`；工具描述提供条件交集、默认页长、硬上限与后继用法。不提供路径参数、任意磁盘读取或整书下载。

@@ -15,6 +15,7 @@ references: [mm-adr-0015]
 
 - `OpenArchive` 按扩展名分发，`Archive` 提供页面列表、按条目名读取、元数据读取与关闭。页序使用封面关键字、浅层目录优先及自然数排序，是启发式而非漫画语义识别。
 - 条目读取经 `readEntryLimited` 检查声明大小与实际读取上限，不直接信任归档头；ComicInfo 解析容忍部分脏数字、BOM 与字符集声明，非法 XML 返回错误。
+- `ReadMetadataLimited` 为按需线索读取提供调用方指定的较小字节预算，拒绝声明大小或实际解压超限，复用各格式的元数据选取规则，不改变普通读取和扫描语义；`ErrMetadataNotFound` 与 `ErrMetadataTooLarge` 区分缺失与超限。
 - `WriteComicInfoIntoArchive` 只支持 zip/cbz，rar/cbr 返回 `ErrArchiveNotWritable`。已有 XML 合并保留未建模字段等内容，危险原文拒写；写回分为 `PrepareComicInfo` 同目录暂存和 `PreparedComicInfo.Publish` 最终发布，不承诺任意归档格式可写。准备阶段仍准入读者，并在交出暂存对象前归还自身源借用；调用方须 `Close` 清理未发布暂存，成功发布不可重复使用。
 - 最终发布通过 `AcquireArchivePublication` 在有界、可取消窗口关闭该路径的新读准入（返回 `ErrArchivePublishing`），等待真实借用排空，包括已逐出池的在借句柄及整书原始流；EOF 不等于关闭，池淘汰或观察借用计数为零均不能替代发布保留。发布前复核源文件身份、大小、mtime 与内容摘要，变化返回 `ErrArchiveChanged` 而不覆盖；复核通过后替换原文件。超时或取消须释放读准入，未发布暂存仍由所有者清理。此协调限于本进程受管借用，不是对任意外部写入的跨进程锁。
 - `GetArchiveFromPool` 返回共享句柄与归还函数，借用方必须归还，不能自行关闭共享句柄。池按修改时间与大小判断文件变化；淘汰立即移出池，引用归零才关闭。`InitPool` 可调整容量，`CloseArchivePool` 用于所有者退出后的收尾。

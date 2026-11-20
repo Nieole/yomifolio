@@ -133,8 +133,13 @@ func TestMCPAccountPasswordAndManagementIsolation(t *testing.T) {
 	}
 	// No management/paid/write tool is made available by setting future capabilities.
 	tools, err := s.ListTools(ctx, nil)
-	if err != nil || len(tools.Tools) != 1 {
+	if err != nil || len(tools.Tools) != 4 {
 		t.Fatalf("unexpected capabilities %+v %v", tools, err)
+	}
+	for _, tool := range tools.Tools {
+		if tool.Annotations == nil || !tool.Annotations.ReadOnlyHint {
+			t.Fatalf("unexpected writable tool %s", tool.Name)
+		}
 	}
 	// An unsuccessful password change must leave both browser and delegated access intact.
 	failed := request("POST", "/api/auth/change-password", `{"current_password":"wrong-password","new_password":"replacement"}`, reader)

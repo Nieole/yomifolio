@@ -121,9 +121,22 @@ func testMCPDelegatedSeriesLifecycle(t *testing.T, tls bool) {
 		t.Fatalf("negotiated protocol %s", got)
 	}
 	tools, err := session.ListTools(context.Background(), nil)
-	if err != nil || len(tools.Tools) != 1 || tools.Tools[0].Name != "library_get_series" {
+	if err != nil || len(tools.Tools) != 4 {
 		t.Fatalf("tools %+v %v", tools, err)
 	}
+	for _, name := range []string{"library_get_series", "library_find_series", "library_list_books", "library_get_book_clues"} {
+		found := false
+		for _, tool := range tools.Tools {
+			if tool.Name == name {
+				found = true
+			}
+		}
+		if !found {
+			t.Fatalf("missing tool %s", name)
+		}
+	}
+	assertDiscoveryPage(t, session, lib.ID, series.ID)
+	assertLocalClues(t, session, store, lib.ID, series.ID, other.ID, hidden.ID, lib.Path)
 	allowed, err := session.CallTool(context.Background(), &mcp.CallToolParams{Name: "library_get_series", Arguments: map[string]any{"series_id": series.ID}})
 	if err != nil || allowed.IsError {
 		t.Fatalf("authorized series %+v %v", allowed, err)

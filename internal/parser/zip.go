@@ -146,7 +146,7 @@ func (z *ZipArchive) ReadMetadataFile(name string) ([]byte, error) {
 	if f := pickZipMetadataEntry(z.reader.File, name); f != nil {
 		return readZipEntry(f)
 	}
-	return nil, fmt.Errorf("parser: metadata file %q not found", name)
+	return nil, fmt.Errorf("%w: %s", ErrMetadataNotFound, name)
 }
 
 // pickZipMetadataEntry 选出归档里代表元数据文件 name 的那一条，没有命中时返回 nil。

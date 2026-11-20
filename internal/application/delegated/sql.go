@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"path/filepath"
 )
 
 // SQLStore is constructed only by the composition root. All credential management
@@ -124,6 +125,8 @@ func (s *SQLStore) Authority(ctx context.Context, subject Subject) (Authority, e
 }
 func (s *SQLStore) Series(ctx context.Context, id int64) (Series, error) {
 	var out Series
-	err := s.db.QueryRowContext(ctx, `SELECT id,library_id,name,coalesce(title,'') FROM series WHERE id=?`, id).Scan(&out.ID, &out.LibraryID, &out.Name, &out.Title)
+	var path string
+	err := s.db.QueryRowContext(ctx, `SELECT id,library_id,name,coalesce(title,''),path FROM series WHERE id=?`, id).Scan(&out.ID, &out.LibraryID, &out.Name, &out.Title, &path)
+	out.DirectoryName = filepath.Base(path)
 	return out, err
 }
