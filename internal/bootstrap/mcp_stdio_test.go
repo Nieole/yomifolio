@@ -235,3 +235,111 @@ func TestMCPStdioProductionProxy(t *testing.T) {
 		t.Fatal("secret leaked")
 	}
 }
+
+func TestMCPStdioSaturatedEOF(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	binary := filepath.Join(t.TempDir(), "mcp-proxy.exe")
+	build := exec.CommandContext(ctx, "go", "build", "-o", binary, "../../cmd/mcp-proxy")
+	if out, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build: %v %s", err, out)
+	}
+	// Hold transport requests open; no application run or business cancellation is involved.
+	entered, released := make(chan string, 32), make(chan struct{}, 32)
+	server := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		var request struct{ Method string }
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Error(err)
+		}
+		_, _ = io.Copy(io.Discard, r.Body)
+		entered <- request.Method
+		<-r.Context().Done()
+		released <- struct{}{}
+	}))
+	defer server.Close()
+	cmd := exec.CommandContext(ctx, binary, "--url", server.URL, "--allow-lan-http")
+	cmd.Env = append(os.Environ(), "YOMIFOLIO_MCP_TOKEN=saturation-secret")
+	input, err := cmd.StdinPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	waited := make(chan struct{})
+	var waitErr error
+	go func() {
+		waitErr = cmd.Wait()
+		close(waited)
+	}()
+	defer func() {
+		cancel()
+		_ = input.Close()
+		<-waited
+	}()
+	for id := 1; id <= 8; id++ {
+		if _, err := fmt.Fprintf(input, "{\"jsonrpc\":\"2.0\",\"id\":%d,\"method\":\"tools/list\"}\n", id); err != nil {
+			t.Fatal(err)
+		}
+		select {
+		case method := <-entered:
+			if method != "tools/list" {
+				t.Fatalf("unexpected upstream method %q", method)
+			}
+		case <-ctx.Done():
+			t.Fatal("did not saturate upstream concurrency")
+		}
+	}
+	if _, err := fmt.Fprintln(input, `{"jsonrpc":"2.0","id":9,"method":"tools/list"}`); err != nil {
+		t.Fatal(err)
+	}
+	_ = input.Close()
+	select {
+	case <-waited:
+		if waitErr != nil {
+			t.Fatalf("EOF exit: %v stderr=%s", waitErr, &stderr)
+		}
+	case <-time.After(3 * time.Second):
+		cancel()
+		<-waited
+		t.Fatal("saturated admission prevented prompt EOF exit")
+	}
+	for range 8 {
+		select {
+		case <-released:
+		case <-ctx.Done():
+			t.Fatal("upstream transport connection leaked")
+		}
+	}
+	select {
+	case method := <-entered:
+		t.Fatalf("overload or disconnect sent an extra upstream request: %q", method)
+	default:
+	}
+	scanner := bufio.NewScanner(&stdout)
+	overloaded := false
+	for scanner.Scan() {
+		var response struct {
+			JSONRPC string `json:"jsonrpc"`
+			ID      int    `json:"id"`
+			Error   struct {
+				Code    int    `json:"code"`
+				Message string `json:"message"`
+			} `json:"error"`
+		}
+		if err := json.Unmarshal(scanner.Bytes(), &response); err != nil || response.JSONRPC != "2.0" {
+			t.Fatalf("non-protocol stdout: %q", scanner.Text())
+		}
+		if response.ID == 9 && response.Error.Code == -32000 && response.Error.Message == "MCP proxy overloaded" {
+			overloaded = true
+		}
+	}
+	if err := scanner.Err(); err != nil || !overloaded {
+		t.Fatalf("missing explicit overload rejection: err=%v", err)
+	}
+	if strings.Contains(stderr.String(), "saturation-secret") {
+		t.Fatal("secret in diagnostics")
+	}
+}
