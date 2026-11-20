@@ -62,7 +62,7 @@ https://raw.githubusercontent.com/Nieole/yomifolio/mihon-repo/index.min.json
 
 ## 维护者：签名与自动发布
 
-1. 审查并合入扩展、工具、共享 CI 路径选择器与 `mihon-*` 工作流到默认分支。新的 `workflow_dispatch` 只有进入默认分支后才可运行；发布拒绝非默认分支和 fork，不接受 PR 触发。扩展发布不触发服务端版本标签或发布通道；入口选择和必需检查配置见 [Actions 操作指南](../../.github/README.md)。
+1. 审查并合入扩展、工具、共享 CI 路径选择器与 `mihon-*` 工作流到默认分支。新的 `workflow_dispatch` 只有进入默认分支后才可运行；发布拒绝非默认分支和 fork，不接受 PR 触发。扩展发布不触发服务端版本标签或发布通道；入口选择和必需检查配置见 [Actions 操作指南](../../.github/CI.md)。
 2. 私下准备长期 Android 发布 keystore，并验证离线备份；不要使用 Android debug key。通过私密渠道配置 Actions Secrets：`MIHON_KEYSTORE_BASE64`、`MIHON_KEYSTORE_PASSWORD`、`MIHON_KEY_ALIAS`、`MIHON_KEY_PASSWORD`。Base64 应为 keystore 的单行编码，秘密不得进入源码、命令行、日志或产物。本工具不会替维护者生成或保管私钥，也不支持证书轮换；丢失原私钥将无法正常升级。
 3. 允许 Actions 创建及非强推更新专用 `mihon-repo` 分支。只有发布 job 有 `contents: write`，token 只传入最终发布工具；构建 job 仅读，checkout 不保留凭证。PR 不获取签名秘密。可以另加环境保护要求发布审批。
 4. 手动运行 **Mihon / Publish signed repository**。流程先复用同一提交的当次全量无秘密验证，独立展示发布工具测试、协议测试、Android lint 和调试构建；全部成功后，再将 keystore 解码到权限 0600 的 runner 临时目录，通过环境变量签名，失败也清理。公共交接产物只含签名 APK、图标及发布工具，不含仓库检出或私钥。缺少秘密时 release 打包失败；只验证扩展可手动运行 **Mihon / Validate**，不需要签名秘密。

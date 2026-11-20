@@ -45,6 +45,15 @@ def gate_code(filename, job_name, step):
     return match.group(2)
 
 
+class DocumentationTests(unittest.TestCase):
+    def test_ci_guide_does_not_shadow_project_readme(self):
+        self.assertTrue((ROOT / "README.md").is_file())
+        shadowing = [path.name for path in (ROOT / ".github").iterdir()
+                     if path.is_file() and path.stem.casefold() == "readme"]
+        self.assertEqual(shadowing, [], "GitHub prefers .github README over the project overview")
+        self.assertTrue((ROOT / ".github" / "CI.md").is_file())
+
+
 class GateTests(unittest.TestCase):
     def run_gate(self, code, variable, needs):
         result = subprocess.run([sys.executable, "-c", code],
