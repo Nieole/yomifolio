@@ -275,3 +275,28 @@ func toFields(rows []database.MetadataReviewField, locked map[string]bool, curre
 	}
 	return fields
 }
+
+// Get reads a single proposal with current values and current field locks.
+func (s *Service) Get(ctx context.Context, id int64) (Proposal, error) {
+	row, err := s.db.GetMetadataReview(ctx, id)
+	if err != nil {
+		return Proposal{}, err
+	}
+	series, err := s.db.GetSeries(ctx, row.SeriesID)
+	if err != nil {
+		return Proposal{}, err
+	}
+	tags, err := s.db.GetTagsForSeries(ctx, row.SeriesID)
+	if err != nil {
+		return Proposal{}, err
+	}
+	authors, err := s.db.GetAuthorsForSeries(ctx, row.SeriesID)
+	if err != nil {
+		return Proposal{}, err
+	}
+	fields, err := s.db.ListMetadataReviewFieldsByReviews(ctx, []int64{id})
+	if err != nil {
+		return Proposal{}, err
+	}
+	return Proposal{Row: row, Fields: toFields(fields, lockedFieldSet(series), currentFieldValues(series, tags, authors))}, nil
+}

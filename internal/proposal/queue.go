@@ -38,6 +38,10 @@ const (
 
 // QueueOptions 控制入队的去重行为。
 type QueueOptions struct {
+	// RefreshSeries loads current values and locks inside the queue transaction.
+	RefreshSeries bool
+	// MatchEvidence supplies field-level origins for a confirmed delegated match.
+	MatchEvidence *metadata.MatchEvidence
 	// IgnoreRejected 让本次入队跳过「与已拒绝记录去重」这一步。
 	// 交互式的刮削入口会在用户显式要求时置位——否则一旦拒绝过，用户就再也没法
 	// 把同一份数据重新加回队列了，这是个死胡同。后台批量刮削永远不置位。
@@ -65,6 +69,13 @@ func (s *Service) Queue(ctx context.Context, series database.Series, result *met
 
 	var out QueueResult
 	err := s.db.ExecTx(ctx, func(q Queries) error {
+		if opts.RefreshSeries {
+			current, err := q.GetSeries(ctx, series.ID)
+			if err != nil {
+				return err
+			}
+			series = current
+		}
 		tags, err := q.GetTagsForSeries(ctx, series.ID)
 		if err != nil {
 			return err
@@ -137,14 +148,21 @@ func (s *Service) Queue(ctx context.Context, series database.Series, result *met
 		}
 
 		for _, change := range changes {
+			fieldSource, fieldURL := strings.TrimSpace(providerName), sourceURL
+			if opts.MatchEvidence != nil {
+				if evidence, ok := opts.MatchEvidence.Fields[change.Name]; ok {
+					fieldSource = evidence.Source
+					fieldURL = evidence.Metadata.SourceURL
+				}
+			}
 			field, err := q.CreateMetadataReviewField(ctx, database.CreateMetadataReviewFieldParams{
 				ReviewID:      created.ID,
 				FieldName:     change.Name,
 				CurrentValue:  change.Current,
 				ProposedValue: change.Proposed,
 				Confidence:    change.Confidence,
-				Source:        strings.TrimSpace(providerName),
-				SourceUrl:     sourceURL,
+				Source:        fieldSource,
+				SourceUrl:     fieldURL,
 				// 锁定字段根本走不到这里（buildFieldDrafts 已把它们筛掉），
 				// 所以行上这个快照恒为 false；渲染与应用一律按系列的当前锁定集算。
 				Locked: false,

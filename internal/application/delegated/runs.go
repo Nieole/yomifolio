@@ -95,7 +95,9 @@ func (s *Service) ListRuns(ctx context.Context, subject Subject, library, before
 		return nil, ErrInvalid
 	}
 	if err := s.Authorize(ctx, subject, library, ScanControl); err != nil {
-		return nil, err
+		if readErr := s.Authorize(ctx, subject, library, Read); readErr != nil {
+			return nil, readErr
+		}
 	}
 	variant := task.Variant("delegated:" + subject.CredentialID + ":")
 	snaps, err := s.runs.Engine.ListSnapshots(ctx, task.RunFilter{Scope: task.ScopeLibrary, ScopeID: &library, Variant: &variant, BeforeID: before, Order: task.OrderIDDesc, Limit: limit})
