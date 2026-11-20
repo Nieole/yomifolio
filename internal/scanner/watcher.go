@@ -85,10 +85,16 @@ func NewFileWatcher(hooks WatcherHooks) (*FileWatcher, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewFileWatcherWithSource(hooks, fsnotifySource{w})
+	var source WatchSource = fsnotifySource{w}
+	if runtime.GOOS == "windows" {
+		source = newDrainingWatchSource(source)
+	}
+	return NewFileWatcherWithSource(hooks, source)
 }
 
-// WatchSource supplies notifications and synchronous registrations. Close must unblock registrations.
+// WatchSource supplies notifications and synchronous registrations. Close must
+// reject new commands, finish or cancel accepted commands, and await native resources.
+// It must make progress even when the application stops consuming notifications.
 type WatchSource interface {
 	Events() <-chan fsnotify.Event
 	Errors() <-chan error
@@ -358,7 +364,7 @@ func (fw *FileWatcher) Stop() {
 	fw.stopping = true
 	fw.mu.Unlock()
 	fw.eventLoop.Wait()
-	// Close releases synchronous Add/Remove before joining a caller-owned registration.
+	// The source has drained accepted commands before joining caller-owned registration.
 	fw.registrationOps.Lock()
 	fw.registryMu.Lock()
 	clear(fw.registryPending)
