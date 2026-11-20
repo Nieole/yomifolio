@@ -7,14 +7,14 @@ import (
 )
 
 func registerMCPMatching(server *mcp.Server, service *delegated.Service, subject delegated.Subject) {
-	mcp.AddTool(server, &mcp.Tool{Name: "library_search_sources", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: false}, Description: "Start a bounded multi-source catalogue search for an authorized series. No LLM calls. Results are unconfirmed evidence, never identity probabilities or automatic first-result matches. Page with offset (multiple of limit); limit 1-10. Search evidence expires after 30 minutes or restart."}, func(ctx context.Context, _ *mcp.CallToolRequest, in delegated.SearchSourcesInput) (*mcp.CallToolResult, delegated.StartedSearch, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_search_sources", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: false}, Description: "Start a bounded multi-source catalogue search for an authorized series. No LLM calls. Results are unconfirmed evidence, never identity probabilities or automatic first-result matches. Page with offset 0-1000 (multiple of limit); limit 1-10. Search evidence expires after 30 minutes or restart."}, func(ctx context.Context, _ *mcp.CallToolRequest, in delegated.SearchSourcesInput) (*mcp.CallToolResult, delegated.StartedSearch, error) {
 		out, err := service.SearchSources(ctx, subject, in)
 		return discoveryResult(), out, publicMCPToolError(err, "invalid matching parameters or unconfirmed identity/edition", "source operation unavailable")
 	})
 	type searchInput struct {
 		SearchID string `json:"search_id"`
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "library_get_source_search", Description: "Read multiple candidate details from a search, with per-source availability and pagination. Raw covers/links are evidence only, not supported proposal fields. Confidence is source quality, NOT match probability.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true}}, func(ctx context.Context, _ *mcp.CallToolRequest, in searchInput) (*mcp.CallToolResult, delegated.SearchEvidence, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_get_source_search", Description: "Read multiple candidate details from a search, with per-source availability and pagination. next_offset is followable with the same limit; truncated=true means the offset bound stops continuation despite more source results, not source exhaustion. Raw covers/links are evidence only, not supported proposal fields. Confidence is source quality, NOT match probability.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true}}, func(ctx context.Context, _ *mcp.CallToolRequest, in searchInput) (*mcp.CallToolResult, delegated.SearchEvidence, error) {
 		out, err := service.GetSourceSearch(ctx, subject, in.SearchID)
 		return discoveryResult(), out, publicMCPToolError(err, "invalid matching parameters or unconfirmed identity/edition", "source operation unavailable")
 	})

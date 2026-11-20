@@ -42,6 +42,8 @@ type SourcePage struct {
 	Total      int               `json:"total"`
 	NextOffset *int              `json:"next_offset,omitempty"`
 	Candidates []SourceCandidate `json:"candidates"`
+	// Truncated means the offset bound prevents continuation, not source exhaustion.
+	Truncated bool `json:"truncated,omitempty"`
 }
 type SearchEvidence struct {
 	SearchID string       `json:"search_id"`
@@ -154,7 +156,11 @@ func (s *Service) SearchSources(ctx context.Context, subject Subject, in SearchS
 					successes++
 					if in.Offset+len(results) < total && len(results) > 0 {
 						next := in.Offset + in.Limit
-						page.NextOffset = &next
+						if next <= 1000 {
+							page.NextOffset = &next
+						} else {
+							page.Truncated = true
+						}
 					}
 				} else {
 					page.Candidates = []SourceCandidate{}
