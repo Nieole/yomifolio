@@ -35,13 +35,15 @@ func FromContext(ctx context.Context) *PauseGate {
 }
 
 func Wait(ctx context.Context) error {
+	if err := checkpoint(ctx); err != nil {
+		return err
+	}
 	if gate := FromContext(ctx); gate != nil {
-		return gate.Wait(ctx)
+		if err := gate.Wait(ctx); err != nil {
+			return err
+		}
 	}
-	if ctx == nil {
-		return nil
-	}
-	return ctx.Err()
+	return checkpoint(ctx)
 }
 
 func (g *PauseGate) Pause() {

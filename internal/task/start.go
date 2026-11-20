@@ -35,6 +35,9 @@ type RunSpec struct {
 	LibraryIDs []int64
 	// ValidateAccess revalidates path-bound plans at admission; it must not call the engine.
 	ValidateAccess func() error
+	// ExecutionCheck fences queued dispatch and execution; denial cancels, not fails.
+	// It must not call the engine.
+	ExecutionCheck func(context.Context) error
 	// Trigger 是**发起方**：谁叫来的。
 	Trigger Trigger
 
@@ -58,6 +61,8 @@ type RunSpec struct {
 
 	// Args 是重启入参：**重启函数**从这里读回这次运行是拿什么参数发起的。
 	Args map[string]string
+	// AtomicArgs requires a store that persists attribution with the new run.
+	AtomicArgs bool
 	// Labels 描述运行环境，重启函数不得读取；已在 Limits 声明的值不在这里重复。
 	// 开跑之后才变的标签走 runhandle.Frame.Labels，两条都是按键合并。
 	Labels map[string]string
@@ -222,7 +227,18 @@ func (e *Engine) admitLocked(ctx context.Context, owner Task, spec RunSpec, body
 		run.StartedAt = time.Time{}
 	}
 
-	created, err := e.store.CreateRun(ctx, run)
+	var created Run
+	if spec.AtomicArgs {
+		store, ok := e.store.(interface {
+			CreateRunWithArgs(context.Context, Run, map[string]string) (Run, error)
+		})
+		if !ok {
+			return Launched{}, nil, ErrInvalidRunSpec
+		}
+		created, err = store.CreateRunWithArgs(ctx, run, spec.Args)
+	} else {
+		created, err = e.store.CreateRun(ctx, run)
+	}
 	// 「最多一条排队中的运行」这条约束由**数据库**说了算，不在内存里再判一次：
 	// 撞上它就是「这个任务已经排着了」，本次发起合并进那一条。
 	if errors.Is(err, ErrRunAlreadyQueued) {
@@ -325,7 +341,7 @@ func (e *Engine) writeSideDataLocked(ctx context.Context, runID int64, spec RunS
 			slog.Warn("Failed to persist run limits", "run_id", runID, "error", err)
 		}
 	}
-	if len(spec.Args) > 0 {
+	if len(spec.Args) > 0 && !spec.AtomicArgs {
 		if err := e.store.MergeRunArgs(ctx, runID, spec.Args); err != nil {
 			slog.Warn("Failed to persist run args", "run_id", runID, "error", err)
 		}
@@ -368,6 +384,12 @@ func (e *Engine) beginLocked(run Run, spec RunSpec, body Body) func() {
 			// 之后才由 runGoroutine 的兜底把运行置为失败态。写成裸调用的话，任务体一 panic
 			// 就泄漏一份 ctx 与**暂停闸门**。
 			defer e.discardRuntime(runID)
+			if spec.ExecutionCheck != nil {
+				if err := spec.ExecutionCheck(runCtx); err != nil {
+					e.settle(runID, spec, Result{}, context.Canceled)
+					return
+				}
+			}
 			result, err := body(runCtx, handle)
 			e.settle(runID, spec, result, err)
 		})
@@ -568,6 +590,19 @@ func (e *Engine) releaseQueuedLocked() func() {
 			continue
 		}
 		if e.libraryAdmissionLocked(entry.spec.LibraryIDs) != nil {
+			continue
+		}
+		if entry.spec.ExecutionCheck != nil && entry.spec.ExecutionCheck(ctx) != nil {
+			now := e.clock()
+			run.Status = StatusCancelled
+			run.UpdatedAt, run.FinishedAt = now, &now
+			run.Sequence = e.nextSequenceLocked()
+			applyMessage(&run, Result{Code: entry.spec.CancelCode})
+			delete(e.queued, run.ID)
+			delete(e.libraryRuns, run.ID)
+			e.saveLocked(run)
+			e.publishLocked(run)
+			e.releaseWaitersLocked(run.ID)
 			continue
 		}
 		active, err := e.store.CountRuns(ctx, RunFilter{TaskID: run.TaskID, Statuses: activeStatuses})

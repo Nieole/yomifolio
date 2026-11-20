@@ -511,6 +511,8 @@ type coverJob struct {
 
 // LibraryScanOptions 是整库扫描的可选行为。
 type LibraryScanOptions struct {
+	// SkipCovers limits delegated preparation to ingestion, without unowned follow-up jobs.
+	SkipCovers bool
 	// Force 跳过 mtime+size 的增量拦截，重读每个归档。
 	Force bool
 	// IgnoreFormatFilter 让本次扫描无视库的 scan_formats。
@@ -576,7 +578,7 @@ func (s *Scanner) IngestLibrary(ctx context.Context, libraryID int64, rootPath s
 	}
 	renames := newRenameIndex(rehomeCandidatesFromLibraryRows(existingBooks))
 
-	walkErr := s.ingest(ctx, ingestionPlan{libraryID: libraryID, libraryRoot: rootPath, scanPath: rootPath, options: opts, formats: formats, existing: bookCache, renames: renames, queueSize: 1000}, metrics, progress, covers)
+	walkErr := s.ingest(ctx, ingestionPlan{libraryID: libraryID, libraryRoot: rootPath, scanPath: rootPath, options: opts, formats: formats, existing: bookCache, renames: renames, queueSize: 1000, skipCovers: scanOpts.SkipCovers}, metrics, progress, covers)
 	s.logScanCompleted(ctx, "library", libraryID, rootPath, opts, metrics, time.Since(started), walkErr, observer)
 	progress.publish("completed", "", true)
 	return scanOutcome(metrics, walkErr), walkErr

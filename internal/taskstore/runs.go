@@ -205,6 +205,10 @@ func scanRun(row rowScanner) (task.Run, error) {
 func runFilterClause(filter task.RunFilter) (string, []any) {
 	clauses := make([]string, 0, 4)
 	args := make([]any, 0, len(filter.Statuses)+len(filter.Types)+3)
+	if filter.BeforeID > 0 {
+		clauses = append(clauses, `id < ?`)
+		args = append(args, filter.BeforeID)
+	}
 	if filter.TaskID != 0 {
 		clauses = append(clauses, `task_id = ?`)
 		args = append(args, filter.TaskID)
@@ -247,8 +251,12 @@ func keywordClause(alias string) string {
 
 // identityClause 把身份那三项谓词拼成一句对身份表的子查询；一项都没给时返回空串。
 func identityClause(filter task.RunFilter) (string, []any) {
-	clauses := make([]string, 0, 3)
-	args := make([]any, 0, len(filter.Types)+2)
+	clauses := make([]string, 0, 4)
+	args := make([]any, 0, len(filter.Types)+3)
+	if filter.Variant != nil {
+		clauses = append(clauses, `variant = ?`)
+		args = append(args, string(*filter.Variant))
+	}
 	if len(filter.Types) > 0 {
 		placeholders, typeArgs := stringPlaceholders(filter.Types)
 		clauses = append(clauses, `type IN (`+placeholders+`)`)
@@ -282,6 +290,8 @@ func orderClause(order task.RunOrder) string {
 		// 列名加引号：trigger 是 SQLite 的关键字，在表达式里裸写会撞上建触发器那条语法。
 		return ` ORDER BY CASE WHEN "trigger" = '` + string(task.TriggerManual) +
 			`' THEN 0 ELSE 1 END, sequence DESC, id DESC`
+	case task.OrderIDDesc:
+		return ` ORDER BY id DESC`
 	case task.OrderSequenceDesc:
 		return ` ORDER BY sequence DESC, id DESC`
 	default:

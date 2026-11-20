@@ -111,9 +111,17 @@ func (s *SQLStore) Authenticate(ctx context.Context, hash string) (Subject, erro
 	return subject, nil
 }
 func (s *SQLStore) Authority(ctx context.Context, subject Subject) (Authority, error) {
+	return loadAuthority(ctx, s.db, subject)
+}
+
+type authorityQuery interface {
+	QueryRowContext(context.Context, string, ...any) *sql.Row
+}
+
+func loadAuthority(ctx context.Context, q authorityQuery, subject Subject) (Authority, error) {
 	var out Authority
 	var libs, caps string
-	err := s.db.QueryRowContext(ctx, `SELECT c.id,c.user_id,c.name,c.library_ids,c.capabilities,c.revoked,u.role='admin',u.must_change_password FROM mcp_credentials c JOIN users u ON u.id=c.user_id WHERE c.id=? AND c.user_id=?`, subject.CredentialID, subject.UserID).Scan(&out.Credential.ID, &out.Credential.UserID, &out.Credential.Name, &libs, &caps, &out.Credential.Revoked, &out.Admin, &out.MustChangePassword)
+	err := q.QueryRowContext(ctx, `SELECT c.id,c.user_id,c.name,c.library_ids,c.capabilities,c.revoked,u.role='admin',u.must_change_password FROM mcp_credentials c JOIN users u ON u.id=c.user_id WHERE c.id=? AND c.user_id=?`, subject.CredentialID, subject.UserID).Scan(&out.Credential.ID, &out.Credential.UserID, &out.Credential.Name, &libs, &caps, &out.Credential.Revoked, &out.Admin, &out.MustChangePassword)
 	if err != nil {
 		return out, ErrDenied
 	}

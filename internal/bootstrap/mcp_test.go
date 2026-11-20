@@ -121,20 +121,7 @@ func testMCPDelegatedSeriesLifecycle(t *testing.T, tls bool) {
 		t.Fatalf("negotiated protocol %s", got)
 	}
 	tools, err := session.ListTools(context.Background(), nil)
-	if err != nil || len(tools.Tools) != 4 {
-		t.Fatalf("tools %+v %v", tools, err)
-	}
-	for _, name := range []string{"library_get_series", "library_find_series", "library_list_books", "library_get_book_clues"} {
-		found := false
-		for _, tool := range tools.Tools {
-			if tool.Name == name {
-				found = true
-			}
-		}
-		if !found {
-			t.Fatalf("missing tool %s", name)
-		}
-	}
+	assertMCPToolDiscovery(t, tools, err)
 	assertDiscoveryPage(t, session, lib.ID, series.ID)
 	assertLocalClues(t, session, store, lib.ID, series.ID, other.ID, hidden.ID, lib.Path)
 	allowed, err := session.CallTool(context.Background(), &mcp.CallToolParams{Name: "library_get_series", Arguments: map[string]any{"series_id": series.ID}})
@@ -238,5 +225,35 @@ func TestMCPRejectsUnsafeTransport(t *testing.T) {
 				t.Fatalf("status %d want %d: %s", w.Code, tc.want, w.Body)
 			}
 		})
+	}
+}
+
+// assertMCPToolDiscovery verifies the complete public registration set, not just a count.
+func assertMCPToolDiscovery(t *testing.T, result *mcp.ListToolsResult, err error) {
+	t.Helper()
+	if err != nil || result == nil {
+		t.Fatalf("tools %+v %v", result, err)
+	}
+	expected := map[string]bool{
+		"library_get_series": true, "library_find_series": true,
+		"library_list_books": true, "library_get_book_clues": true,
+		"library_start_scan": false, "library_get_run": true,
+		"library_list_runs": true, "library_wait_run": true, "library_cancel_run": false,
+	}
+	seen := map[string]bool{}
+	for _, tool := range result.Tools {
+		readOnly, ok := expected[tool.Name]
+		if !ok || seen[tool.Name] {
+			t.Fatalf("unexpected or duplicate tool %s", tool.Name)
+		}
+		if tool.Annotations == nil || tool.Annotations.ReadOnlyHint != readOnly {
+			t.Fatalf("incorrect read-only annotation for %s: %+v", tool.Name, tool.Annotations)
+		}
+		seen[tool.Name] = true
+	}
+	for name := range expected {
+		if !seen[name] {
+			t.Errorf("missing tool %s", name)
+		}
 	}
 }

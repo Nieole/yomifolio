@@ -56,6 +56,13 @@ type discoveryStore interface {
 func NewWithDiscovery(store Store, content *bookcontent.Service, access bookcontent.LibraryAccess) *Service {
 	return &Service{store: store, content: content, access: access}
 }
+
+// NewWithDiscoveryAndRuns binds both use cases to the same process resources.
+func NewWithDiscoveryAndRuns(store Store, content *bookcontent.Service, access bookcontent.LibraryAccess, runs RunAccess) *Service {
+	service := NewWithDiscovery(store, content, access)
+	service.runs = &runs
+	return service
+}
 func pageLimit(limit int, after int64) (int, error) {
 	if limit < 0 || limit > 50 || after < 0 {
 		return 0, ErrInvalid

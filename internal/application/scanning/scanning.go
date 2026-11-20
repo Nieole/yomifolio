@@ -80,10 +80,18 @@ func (c *Service) BatchEvent(action string) {
 
 // ScanLibrary starts a library scan with one identity across manual, scheduled and watcher inputs.
 func (c *Service) ScanLibrary(lib database.Library, force bool, trigger task.Trigger) (task.Launched, error) {
-	return c.scanLibrary(lib, force, trigger, nil)
+	return c.scanLibrary(context.Background(), lib, force, trigger, nil, nil)
 }
 
-func (c *Service) scanLibrary(lib database.Library, force bool, trigger task.Trigger, completed func(scanner.ScanOutcome)) (task.Launched, error) {
+// RunPolicy binds caller-specific admission and execution fences without a second scan body.
+type RunPolicy func(task.RunSpec, task.Body) (task.RunSpec, task.Body, error)
+
+// ScanLibraryWithPolicy uses the same ingestion lifecycle with explicit caller authority.
+func (c *Service) ScanLibraryWithPolicy(ctx context.Context, lib database.Library, policy RunPolicy) (task.Launched, error) {
+	return c.scanLibrary(ctx, lib, false, task.TriggerManual, nil, policy)
+}
+
+func (c *Service) scanLibrary(admission context.Context, lib database.Library, force bool, trigger task.Trigger, completed func(scanner.ScanOutcome), policy RunPolicy) (task.Launched, error) {
 	if trigger != task.TriggerManual {
 		if err := c.requireAutomaticProcessing(context.Background(), lib.ID); err != nil {
 			return task.Launched{}, err
@@ -125,11 +133,11 @@ func (c *Service) scanLibrary(lib database.Library, force bool, trigger task.Tri
 	spec.Identity = task.Identity{Type: "scan_library", Scope: task.ScopeLibrary, ScopeID: lib.ID}
 	spec.Trigger = trigger
 	spec.LibraryIDs = []int64{lib.ID}
-	return c.runs.Start(context.Background(), spec, func(ctx context.Context, handle *runhandle.Handle) (task.Result, error) {
+	body := task.Body(func(ctx context.Context, handle *runhandle.Handle) (task.Result, error) {
 		defer c.effects.PurgeReadingPaths()
 		// 把**运行句柄**包成**扫描观察者**一起交出去：扫描器的报文不带身份，
 		// 「这次扫描的进度写到哪」由这次交出的是谁回答。
-		outcome, err := c.scanner.IngestLibrary(ctx, lib.ID, lib.Path, scanner.LibraryScanOptions{Force: force}, NewObserver(handle))
+		outcome, err := c.scanner.IngestLibrary(ctx, lib.ID, lib.Path, scanner.LibraryScanOptions{Force: force, SkipCovers: policy != nil}, NewObserver(handle))
 		if completed != nil {
 			completed(outcome)
 		}
@@ -145,9 +153,19 @@ func (c *Service) scanLibrary(lib database.Library, force bool, trigger task.Tri
 			return task.Result{}, err
 		}
 		c.effects.WarmStats("scan_library_completed")
-		c.effects.Backfill(ctx, "scan_library")
+		if policy == nil {
+			c.effects.Backfill(ctx, "scan_library")
+		}
 		return task.Result{Params: map[string]string{"name": lib.Name}}, nil
 	})
+	if policy != nil {
+		var err error
+		spec, body, err = policy(spec, body)
+		if err != nil {
+			return task.Launched{}, err
+		}
+	}
+	return c.runs.Start(admission, spec, body)
 }
 
 // ScanSeries starts a series scan with its library policy and admission protection.
@@ -296,7 +314,7 @@ func (c *Service) WatchIngestion(ctx context.Context, libraryID int64) (scanner.
 		return scanner.ScanOutcome{}, err
 	}
 	completed := make(chan scanner.ScanOutcome, 1)
-	launched, err := c.scanLibrary(lib, false, task.TriggerWatch, func(outcome scanner.ScanOutcome) { completed <- outcome })
+	launched, err := c.scanLibrary(ctx, lib, false, task.TriggerWatch, func(outcome scanner.ScanOutcome) { completed <- outcome }, nil)
 	err = c.awaitWatchedRun(ctx, launched, err)
 	select {
 	case outcome := <-completed:

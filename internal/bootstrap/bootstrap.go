@@ -67,7 +67,7 @@ func Open(ctx context.Context, store database.Store, cfg *config.Manager, option
 			UnmatchedCount: store.CountUnmatchedKOReaderProgress, KOReaderEnabled: func() bool { return cfg.Snapshot().KOReader.Enabled }, Publish: effects.Publish,
 		},
 		Libraries:      api.LibraryDependencies{Removal: store, Initials: store, Queries: store, ComicInfo: store, Management: app.LibraryManagement, Scans: app.Scans, Maintenance: app.Maintenance, Moves: app.Moves, Disk: app.Disk, Intelligence: app.Intelligence, External: app.External, Relocation: app.Relocation, Scanner: app.Scanner, Runs: api.RunDependencies{Engine: app.Engine, Runs: app.Runs, Store: app.Tasks, Registry: app.Registry}},
-		Administration: api.AdministrationDependencies{Delegated: delegated.NewWithDiscovery(delegated.NewSQLStore(store.DB()), content, app.Engine), Configuration: app.Configuration, Store: store, Manager: cfg, KOReader: app.KOReader},
+		Administration: api.AdministrationDependencies{Delegated: delegated.NewWithDiscoveryAndRuns(delegated.NewSQLStore(store.DB()), content, app.Engine, delegated.RunAccess{Engine: app.Engine, Scans: app.Scans, Libraries: store}), Configuration: app.Configuration, Store: store, Manager: cfg, KOReader: app.KOReader},
 		Lifecycle:      app,
 	})
 	if err := app.Start(ctx); err != nil {
