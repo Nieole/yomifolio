@@ -20,6 +20,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"yomifolio/internal/bootstrap"
+	"yomifolio/internal/config"
 	"yomifolio/internal/database"
 )
 
@@ -110,6 +111,7 @@ func TestMCPStdioProductionProxy(t *testing.T) {
 		if err != nil || result.IsError {
 			t.Fatalf("call: %+v %v", result, err)
 		}
+		assertImageEvidence(t, session, store, lib.ID, series.ID, lib.Path, config.ThumbnailDir(cfg.Snapshot()))
 		server.CloseClientConnections()
 		// A broken in-flight transport may fail once; never replay arbitrary tools.
 		_, _ = session.ListTools(ctx, nil)

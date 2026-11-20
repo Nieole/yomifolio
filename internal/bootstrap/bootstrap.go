@@ -46,7 +46,7 @@ func Open(ctx context.Context, store database.Store, cfg *config.Manager, option
 	memory := bookcontent.NewMemoryCache(bookcontent.DefaultImageCacheBytes)
 	content := bookcontent.New(func(ctx context.Context, id int64) (bookcontent.Source, error) {
 		book, err := store.GetBook(ctx, id)
-		return bookcontent.Source{ID: book.ID, LibraryID: book.LibraryID, Path: book.Path, FileModifiedAt: book.FileModifiedAt, Size: book.Size, PageCount: book.PageCount}, err
+		return bookcontent.Source{ID: book.ID, LibraryID: book.LibraryID, Path: book.Path, CoverPath: book.CoverPath.String, FileModifiedAt: book.FileModifiedAt, Size: book.Size, PageCount: book.PageCount}, err
 	}, cfg.Snapshot, memory, 512, 128)
 	effects := transport.RuntimeEffects()
 	app, err := runtime.New(store, cfg, runtime.Options{ConfigPath: options.ConfigPath, Scanner: options.Scanner, Resources: resources, Tasks: transport.TaskOptions(options.Tasks), Effects: effects, WatchConfig: options.WatchConfig})

@@ -55,7 +55,7 @@ references: [mm-adr-0003, mm-adr-0007, mm-database, mm-adr-0014, mm-catalogsearc
 
 ## MCP 与凭据管理
 
-生产 `Host.SetupRoutes` 在 Cookie 子树外挂载 `/mcp`，显式消费装配根注入的 `delegated.Service`；不把 POST 等同于管理员写入，不读取数据库或创建运行时。采用官方 Go SDK 的 stateless Streamable HTTP / JSON 响应，支持 initialize、tools/list、`library_get_series(series_id)`、`library_find_series`、`library_list_books`、`library_get_book_clues` 及 `library_start_scan`、`library_get_run`、`library_list_runs`、`library_wait_run`、`library_cancel_run`；GET/DELETE 不建立持久会话，无事件恢复或服务器主动请求。工具 schema 与控制提示由 SDK 提供；权限裁决、运行归属、受限等待与断线语义仍由应用用例执行（`mm-application`）。静态 Bearer 凭据不是 OAuth，未提供 OAuth 发现、授权服务或交互登录。
+生产 `Host.SetupRoutes` 在 Cookie 子树外挂载 `/mcp`，显式消费装配根注入的 `delegated.Service`；不把 POST 等同于管理员写入，不读取数据库或创建运行时。采用官方 Go SDK 的 stateless Streamable HTTP / JSON 响应，支持 initialize、tools/list、`library_get_series(series_id)`、`library_find_series`、`library_list_books`、`library_get_book_clues`、`library_get_series_cover`、`library_get_page_thumbnails` 及 `library_start_scan`、`library_get_run`、`library_list_runs`、`library_wait_run`、`library_cancel_run`；GET/DELETE 不建立持久会话，无事件恢复或服务器主动请求。工具 schema 与控制提示由 SDK 提供；权限裁决、运行归属、受限等待与断线语义仍由应用用例执行（`mm-application`）。静态 Bearer 凭据不是 OAuth，未提供 OAuth 发现、授权服务或交互登录。
 
 每个 HTTP 请求都重新认证 Bearer，工具调用还按实际对象重查能力；不接受 Cookie、查询参数、重复 Authorization 或客户端指定的 Subject。当前工具不暴露凭据管理。`/api/mcp/credentials` 的 GET/POST 与 `/{credentialId}` 的 PATCH/DELETE 属管理员网页管理树，保留 Cookie、CSRF、当前角色及强制改密守卫。列表和命令结果均 no-store，不回显摘要或历史密钥；签发结果的密钥不可记录在日志中。错误为通用信息，不带凭据或底层 SQL。
 
@@ -64,3 +64,7 @@ MCP 安全入口仅接受 `mcp.public_url` 配置的精确 authority；有 Origi
 核对入口：`bootstrap` 的 `TestMCPDelegatedSeriesLifecycle`、`TestMCPAccountPasswordAndManagementIsolation`、`TestMCPRejectsUnsafeTransport`；独立凭据与交集规则归 `mm-application`，配置合法性归 `mm-config`。
 
 发现工具只映射应用用例与结构化结果，查询条件、分页、证据及响应上限归 `mm-application`；工具描述提供条件交集、默认页长、硬上限与后继用法。不提供路径参数、任意磁盘读取或整书下载。
+
+图片工具只调用应用完整用例，以 SDK v1.8.0 `ImageContent.Data` 的原始字节字段交付真实 `image/jpeg`，让 SDK 执行 base64 序列化，不能预先 base64 后二次编码。结构化元数据与 image content 顺序一致，不在文本重复图片。stateless SDK 的工具上下文不自行代表 HTTP 请求生命周期：图片工具显式合并请求取消上下文，HTTP 断线、stdio EOF 取消上游后，在 IO 等待时也归还资格；这不改变已接纳后台运行的断线后继续语义。
+
+所有 MCP JSON HTTP 响应在写入网络前受 256 KiB 最终响应体硬上限约束，包含 SDK framing、调用方 JSON-RPC ID 与 base64/JSON 开销；有界缓冲溢出后返回短 HTTP 413，不发出部分图片 JSON。应用预留不是任意长请求 ID 的豁免。该接口仍为 stateless JSON，不用此缓冲提供 SSE 会话恢复；stdio 代理沿同一 HTTP 契约转发。

@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"yomifolio/internal/bootstrap"
+	"yomifolio/internal/config"
 )
 
 func TestMCPDelegatedSeriesLifecycle(t *testing.T) {
@@ -106,6 +107,7 @@ func testMCPDelegatedSeriesLifecycle(t *testing.T, tls bool) {
 	}
 	defer server.Close()
 	snapshot := cfg.Snapshot()
+	snapshot.Library.IOPolicy.ArchiveOpenConcurrency = 1
 	snapshot.MCP.PublicURL = server.URL
 	snapshot.MCP.AllowLANHTTP = !tls
 	cfg.Replace(&snapshot)
@@ -124,6 +126,10 @@ func testMCPDelegatedSeriesLifecycle(t *testing.T, tls bool) {
 	assertMCPToolDiscovery(t, tools, err)
 	assertDiscoveryPage(t, session, lib.ID, series.ID)
 	assertLocalClues(t, session, store, lib.ID, series.ID, other.ID, hidden.ID, lib.Path)
+	assertImageEvidence(t, session, store, lib.ID, series.ID, lib.Path, config.ThumbnailDir(cfg.Snapshot()), func(book int64) {
+		assertMCPWireBudget(t, httpClient, server.URL+"/mcp", series.ID, book)
+		assertImageRequestRelease(t, session, process.Application.Engine, cfg.Snapshot(), lib.Path+"/evidence.cbz", lib.ID, series.ID, book, server.CloseClientConnections)
+	})
 	allowed, err := session.CallTool(context.Background(), &mcp.CallToolParams{Name: "library_get_series", Arguments: map[string]any{"series_id": series.ID}})
 	if err != nil || allowed.IsError {
 		t.Fatalf("authorized series %+v %v", allowed, err)
@@ -151,6 +157,11 @@ func testMCPDelegatedSeriesLifecycle(t *testing.T, tls bool) {
 	denied, err = session.CallTool(context.Background(), &mcp.CallToolParams{Name: "library_get_series", Arguments: map[string]any{"series_id": series.ID}})
 	if err != nil || !denied.IsError {
 		t.Fatalf("removed read capability still usable %+v %v", denied, err)
+	}
+	deniedImage, e := session.CallTool(context.Background(), &mcp.CallToolParams{Name: "library_get_series_cover", Arguments: map[string]any{"series_id": series.ID}})
+	encodedImage, _ := json.Marshal(deniedImage)
+	if e != nil || !deniedImage.IsError || !strings.Contains(string(encodedImage), "delegated access denied") {
+		t.Fatalf("removed image permission: %+v %v", deniedImage, e)
 	}
 	// Cookie catalogue reading remains unaffected by MCP restrictions.
 	if web := request("GET", fmt.Sprintf("/api/series/%d", hidden.ID), ""); web.Code != 200 {
@@ -235,6 +246,7 @@ func assertMCPToolDiscovery(t *testing.T, result *mcp.ListToolsResult, err error
 		t.Fatalf("tools %+v %v", result, err)
 	}
 	expected := map[string]bool{
+		"library_get_series_cover": true, "library_get_page_thumbnails": true,
 		"library_get_series": true, "library_find_series": true,
 		"library_list_books": true, "library_get_book_clues": true,
 		"library_start_scan": false, "library_get_run": true,
