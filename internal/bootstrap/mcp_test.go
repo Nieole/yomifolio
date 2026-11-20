@@ -121,7 +121,14 @@ func testMCPDelegatedSeriesLifecycle(t *testing.T, tls bool) {
 		t.Fatalf("negotiated protocol %s", got)
 	}
 	tools, err := session.ListTools(context.Background(), nil)
-	if err != nil || len(tools.Tools) != 1 || tools.Tools[0].Name != "library_get_series" {
+	if err != nil || len(tools.Tools) != 6 {
+		t.Fatalf("tools %+v %v", tools, err)
+	}
+	found := map[string]bool{}
+	for _, tool := range tools.Tools {
+		found[tool.Name] = true
+	}
+	if !found["library_get_series"] || !found["library_start_scan"] || !found["library_get_run"] || !found["library_list_runs"] || !found["library_wait_run"] || !found["library_cancel_run"] {
 		t.Fatalf("tools %+v %v", tools, err)
 	}
 	allowed, err := session.CallTool(context.Background(), &mcp.CallToolParams{Name: "library_get_series", Arguments: map[string]any{"series_id": series.ID}})

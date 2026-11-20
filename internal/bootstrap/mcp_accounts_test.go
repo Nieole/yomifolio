@@ -131,9 +131,13 @@ func TestMCPAccountPasswordAndManagementIsolation(t *testing.T) {
 	if err != nil || result.IsError {
 		t.Fatalf("regular read %+v %v", result, err)
 	}
-	// No management/paid/write tool is made available by setting future capabilities.
+	// Scan tools are discoverable but cannot elevate a regular account.
+	deniedScan, err := s.CallTool(ctx, &mcp.CallToolParams{Name: "library_start_scan", Arguments: map[string]any{"library_id": lib.ID}})
+	if err != nil || !deniedScan.IsError {
+		t.Fatalf("regular scan %+v %v", deniedScan, err)
+	}
 	tools, err := s.ListTools(ctx, nil)
-	if err != nil || len(tools.Tools) != 1 {
+	if err != nil || len(tools.Tools) != 6 {
 		t.Fatalf("unexpected capabilities %+v %v", tools, err)
 	}
 	// An unsuccessful password change must leave both browser and delegated access intact.

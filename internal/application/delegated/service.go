@@ -75,7 +75,10 @@ type Store interface {
 	Authority(context.Context, Subject) (Authority, error)
 	Series(context.Context, int64) (Series, error)
 }
-type Service struct{ store Store }
+type Service struct {
+	store Store
+	runs  *RunAccess
+}
 
 func New(store Store) *Service { return &Service{store: store} }
 func digest(token string) string {
@@ -215,7 +218,14 @@ func (s *Service) Authenticate(ctx context.Context, token string) (Subject, erro
 }
 func (s *Service) Authorize(ctx context.Context, subject Subject, library int64, capability string) error {
 	authority, err := s.store.Authority(ctx, subject)
-	if err != nil || authority.Credential.Revoked || authority.MustChangePassword {
+	if err != nil {
+		return ErrDenied
+	}
+	return authorizeAuthority(authority, library, capability)
+}
+
+func authorizeAuthority(authority Authority, library int64, capability string) error {
+	if authority.Credential.Revoked || authority.MustChangePassword {
 		return ErrDenied
 	}
 	if !slices.Contains(authority.Credential.LibraryIDs, library) || !slices.Contains(authority.Credential.Capabilities, capability) {
