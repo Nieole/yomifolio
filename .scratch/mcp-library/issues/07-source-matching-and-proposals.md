@@ -4,7 +4,7 @@
 
 **Blocked by:** 04 筛选待整理系列并读取本地识别线索；06 发起和控制授权内的后台运行。
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 搜索现有已配置可用元数据来源并读取多个候选详情，不限 Bangumi；本票不启用内部 LLM 或产生模型调用。
 - [x] 返回支持身份和版本比较的证据，agent 可按字段组合已确认同一系列的来源，记录字段出处和简短、可核查摘要，不存模型内部推理。
@@ -15,6 +15,8 @@
 - [x] 生产组装服务使用确定性外部来源替身验证多候选、歧义、字段组合、提案复用和无差异；保留既有普通提案行为，后端门禁通过。
 
 ## Comments
+
+- Final integration: `74b2ff90` contains the implementation, watcher integration and pagination remediation. Parent `request_review` approved after independently passing the complete backend, two MCP rounds, pagination/watcher regressions, format, compatible-toolchain lint and contract generation. Ticket closed; the notes below retain historical implementation/review stages.
 
 - Worker claim: `mcp-source-proposals`, dedicated `mcp-library-07` worktree, HEAD/merge-base `0d9ef6ce260c31d90d0d71dc82ace22ef85c7a8f`; changes intentionally uncommitted, status remains ready-for-agent pending parent review/integration.
 - Evidence: [acceptance](../acceptance/07-source-matching-and-proposals.md). Search snapshots are bounded and temporary; confirmed field evidence belongs to persistent proposal raw_payload. No metadata adjudication/write, operation audit/undo or internal LLM implemented.
