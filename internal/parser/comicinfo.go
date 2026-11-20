@@ -3,6 +3,7 @@ package parser
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"io"
 	"log/slog"
 	"strconv"
@@ -78,7 +79,7 @@ func comicInfoCharsetReader(charset string, input io.Reader) (io.Reader, error) 
 }
 
 // ParseComicInfo 从 XML 字节流中反序列化 ComicInfo。
-// 对编码声明与脏数值字段都做了容错，尽量不让单点问题吞掉整份元数据。
+// 容忍编码声明与脏数值字段；校验完整文档到 EOF，非法内容不返回部分元数据。
 func ParseComicInfo(data []byte) (*ComicInfo, error) {
 	// 剥掉 UTF-8 BOM：带 BOM 的文档会让 xml.Decoder 在根元素之前遇到非法字符而报错。
 	data = bytes.TrimPrefix(data, []byte{0xEF, 0xBB, 0xBF})
@@ -86,10 +87,42 @@ func ParseComicInfo(data []byte) (*ComicInfo, error) {
 	var info ComicInfo
 	dec := xml.NewDecoder(bytes.NewReader(data))
 	dec.CharsetReader = comicInfoCharsetReader
-	if err := dec.Decode(&info); err != nil {
-		return nil, err
+	// DecodeElement consumes only the root; keep reading to validate the whole document.
+	decoded := false
+	for {
+		token, err := dec.Token()
+		if err == io.EOF {
+			if !decoded {
+				return nil, io.EOF
+			}
+			return &info, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		switch t := token.(type) {
+		case xml.StartElement:
+			if decoded {
+				return nil, errors.New("multiple ComicInfo document roots")
+			}
+			if err := dec.DecodeElement(&info, &t); err != nil {
+				return nil, err
+			}
+			decoded = true
+		case xml.CharData:
+			if len(bytes.Trim(t, " \t\r\n")) != 0 {
+				return nil, errors.New("text outside ComicInfo document root")
+			}
+		case xml.ProcInst:
+			if decoded && strings.EqualFold(t.Target, "xml") {
+				return nil, errors.New("XML declaration after ComicInfo document root")
+			}
+		case xml.Directive:
+			if decoded {
+				return nil, errors.New("directive after ComicInfo document root")
+			}
+		}
 	}
-	return &info, nil
 }
 
 func MarshalComicInfo(info ComicInfo) ([]byte, error) {

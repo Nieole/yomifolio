@@ -57,7 +57,18 @@ func assertLocalClues(t *testing.T, session *mcp.ClientSession, store database.S
 	}
 	// The public bootstrap/client boundary observes real local archives, not parser substitutes.
 	var ids []int64
-	for _, tc := range []struct{ name, xml, status string }{{"valid.cbz", "<ComicInfo><Series>Identity</Series><Title>Volume One</Title><Writer>Writer A</Writer></ComicInfo>", "available"}, {"missing.cbz", "", "missing"}, {"corrupt.cbz", "<ComicInfo><Title>", "corrupt"}, {"oversized.cbz", strings.Repeat("x", 65537), "too_large"}, {"gone.cbz", "", "unavailable"}} {
+	for _, tc := range []struct{ name, xml, status string }{
+		{"valid.cbz", "<ComicInfo><Series>Identity</Series><Title>Volume One</Title><Writer>Writer A</Writer></ComicInfo>", "available"},
+		{"broken-tail.cbz", "<ComicInfo><Title>Valid</Title></ComicInfo><broken", "corrupt"},
+		{"second-root.cbz", "<ComicInfo/><ComicInfo/>", "corrupt"},
+		{"text-tail.cbz", "<ComicInfo/>extra", "corrupt"},
+		{"misc.cbz", `<?xml version="1.0"?><!--before--><ComicInfo><Series>Identity</Series></ComicInfo>
+<!--after--><?tool done?>`, "available"},
+		{"missing.cbz", "", "missing"},
+		{"corrupt.cbz", "<ComicInfo><Title>", "corrupt"},
+		{"oversized.cbz", strings.Repeat("x", 65537), "too_large"},
+		{"gone.cbz", "", "unavailable"},
+	} {
 		path := filepath.Join(root, tc.name)
 		if tc.name != "gone.cbz" {
 			file, err := os.Create(path)
@@ -113,7 +124,7 @@ func assertLocalClues(t *testing.T, session *mcp.ClientSession, store database.S
 		}
 	}
 	cursor := int64(0)
-	for i := 0; i < 3; i++ {
+	for i := 0; i*2 < len(ids); i++ {
 		raw := call("library_list_books", map[string]any{"series_id": series, "limit": 2, "after_id": cursor}, false)
 		var p struct {
 			Items []struct {
@@ -125,14 +136,14 @@ func assertLocalClues(t *testing.T, session *mcp.ClientSession, store database.S
 			t.Fatal(err)
 		}
 		expected := 2
-		if i == 2 {
-			expected = 1
+		if len(ids)-i*2 < expected {
+			expected = len(ids) - i*2
 		}
 		if len(p.Items) != expected || p.Items[0].ID != ids[i*2] {
 			t.Fatalf("book page: %s", raw)
 		}
 		cursor = p.Next
-		if i < 2 && cursor == 0 || i == 2 && cursor != 0 {
+		if (i+1)*2 < len(ids) && cursor == 0 || (i+1)*2 >= len(ids) && cursor != 0 {
 			t.Fatalf("book cursor: %s", raw)
 		}
 	}

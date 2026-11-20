@@ -265,3 +265,38 @@ func TestWriteComicInfoRejectsUnknownExtension(t *testing.T) {
 		t.Fatalf("expected ErrArchiveNotWritable for .7z, got %v", err)
 	}
 }
+
+func TestParseComicInfoCompleteDocument(t *testing.T) {
+	const root = "<ComicInfo><Title>Valid</Title></ComicInfo>"
+	for _, tc := range []struct {
+		name, xml string
+		valid     bool
+	}{
+		{"root", root, true},
+		{"misc", `<?xml version="1.0" encoding="gbk"?><!--before-->` + root + `
+<!--after--><?tool done?>`, true},
+		{"doctype", `<!DOCTYPE ComicInfo SYSTEM "file:///not-read">` + root, true},
+		{"broken_tail", root + "<broken", false},
+		{"second_root", root + "<ComicInfo/>", false},
+		{"text_tail", root + "extra", false},
+		{"text_prefix", "extra" + root, false},
+		{"broken_comment", root + "<!--", false},
+		{"unexpected_end", root + "</ComicInfo>", false},
+		{"tail_declaration", root + `<?xml version="1.0"?>`, false},
+		{"tail_directive", root + `<!DOCTYPE ComicInfo>`, false},
+		{"non_xml_space", root + "　", false},
+		{"unknown_entity", "<ComicInfo><Title>&unknown;</Title></ComicInfo>", false},
+		{"declared_entity", `<!DOCTYPE ComicInfo [<!ENTITY x "expanded">]><ComicInfo><Title>&x;</Title></ComicInfo>`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			info, err := ParseComicInfo([]byte(tc.xml))
+			if tc.valid {
+				if err != nil || info == nil || info.Title != "Valid" {
+					t.Fatalf("info=%+v err=%v", info, err)
+				}
+			} else if err == nil || info != nil {
+				t.Fatalf("invalid document accepted: info=%+v err=%v", info, err)
+			}
+		})
+	}
+}

@@ -75,3 +75,45 @@ xml="<ComicInfo><Title>Valid</Title></ComicInfo><broken" clue={"status":"availab
 ```
 
 Reproduction: `go run ./.tmp/merger04/clueprobe`; self-contained source `.tmp/merger04/clueprobe/main.go`, output `.tmp/merger04/clueprobe.log`. It invokes the real content service and real bounded archive reader, not a parser replacement. The MCP adapter forwards this status unchanged. This behavior exists before conflict resolution; no production parser fix or global scan semantic change was attempted. The ticket's clue-truthfulness checkbox is reopened. Parent must triage/fix this before closing 04; passing existing gates does **not** establish that acceptance item. Merge conflict text is ready for parent staging, but **04 is not fully acceptance-ready**.
+
+
+## Targeted ComicInfo truthfulness repair (fresh TDD context)
+
+Scope: only worker04 `mcp-discovery-clues`, starting clean HEAD `4839e85c`; merge-base with requested `a0245ff5` is `a0245ff5`. No parent-tree edits, stage, commit or merge. Status stays **ready-for-agent** pending parent review/commit. The reopened clue-truthfulness item is repaired and rechecked; the historical finding above remains the red reproduction record.
+
+### Contract and root cause
+
+`parser.ParseComicInfo` previously used one `Decoder.Decode`, which stops at the first root. It now reads tokens through EOF, decodes exactly one ComicInfo root with the same charset/lenient-number behavior, and rejects extra roots, non-XML-whitespace outside the root and decoder errors without returning partial metadata. Legal XML declaration in the prologue, comments, processing instructions and XML whitespace remain accepted. Declarations/directives after the root are rejected. This corrects the existing parser contract (invalid XML errors), not a new scanner-specific policy. No scanner, protocol adapter, content-service implementation or status strings changed: malformed evidence remains `corrupt`, absent remains `missing`; `unavailable`, `unreadable`, `too_large` mappings and 64 KiB decompression budget are untouched.
+
+Decoder safety review: `xml.NewDecoder` keeps strict defaults; no Entity map or external resolver is configured. The standard decoder does not fetch external DTDs or expand custom declared entities. Regression cases preserve acceptance of an unreferenced external DOCTYPE and rejection of unknown/declared entity references; no DTD parser, dependencies or wider security policy added. Caller-owned byte/decompression limits remain unchanged.
+
+### Red / green evidence
+
+Logs are in ignored `.tmp/comicinfo-fix/`. All Go commands use Go1.26.10, guide's shared worker01 GOCACHE, this directory's independent `gotmp` and `lintcache` (settings in `env.sh`).
+
+- Added public `TestParseComicInfoCompleteDocument` and extended existing `assertLocalClues` real CBZ fixtures, preserving its scope/pagination/result-size assertions. No new test host or fake parser. Tests cover exact broken tail, second root, extra text, legal XML misc; parser additionally covers prefix text, broken comment, unexpected closing element, trailing declaration/directive, non-XML space and entity boundaries. Existing BOM/charset/dirty-number tests remain.
+- RED: `go test -p 1 ./internal/parser ./internal/bootstrap -run 'TestParseComicInfoCompleteDocument|TestMCPDelegatedSeriesLifecycle' -count=1 -timeout=5m` (`red.log`): parser accepted broken tail/second root/text tail/text prefix/broken comment; real production HTTP and TLS both returned `available` / `Valid` for `broken-tail.cbz`. This is the actual reported failure, before production edits. Initial test-authoring attempts hit unterminated Go literals and Python default-GBK decoding errors; corrected before behavioral red, not counted as regression evidence.
+- GREEN: `go test -p 1 ./internal/parser ./internal/bookcontent ./internal/bootstrap -run 'TestParseComicInfo|TestMCPDelegatedSeriesLifecycle' -count=1 -timeout=5m` (`green.log`): PASS (bookcontent had no matching tests in this filtered run). An initial implementation-authoring attempt also had an unterminated literal, corrected before green.
+- `go test -p 1 ./internal/parser ./internal/bookcontent ./internal/bootstrap -count=3 -timeout=10m`: PASS twice, `repeat.log` (bootstrap 52.689s) and `repeat-final.log` (128.039s). These are full packages, including bookcontent tests and integrated `TestMCPStdioAcceptedScanSurvivesEOFAndExplicitCancel`, `TestMCPStdioProductionProxy`, and saturated EOF regression; none removed/relaxed.
+- Final focused `go test -p 1 ./internal/parser ./internal/bookcontent ./internal/bootstrap -run 'TestParseComicInfo|TestMCP' -count=3 -timeout=10m`: PASS (`mcp-final.log`, bootstrap 91.584s; bookcontent has no matching tests in this filtered command).
+- Original independent repro `go run ./.tmp/merger04/clueprobe`: PASS, `clueprobe-final.log`: valid root still `available` / `Valid`; exact malformed tail now `{"status":"corrupt"}`, no partial title, error nil at content boundary as required by the status contract.
+
+### Full gates and honest failure record
+
+- `go test -p 1 ./... -count=1 -timeout=10m`, outer timeout **1800s**, ran three times:
+  1. PASS, `backend-full.log` (API 159.076s, bootstrap 38.182s).
+  2. FAIL, `backend-full-final.log`: `TestRestorationPersistenceFailuresCannotExposeHalfReleasedLibrary/result` at `relocation_restore_test.go` returned release 409 `relocation_plan_not_ready` / “Recheck this relocation plan before confirming”; API 299.003s, all other packages passed. No baseline attribution or unrelated fix.
+  3. Final PASS, `backend-full-rerun.log` (API 186.894s, bootstrap 36.911s, scanner 31.005s), after final source/test formatting.
+- The named failing API test was rerun with `go test -p 1 ./internal/api -run '^TestRestorationPersistenceFailuresCannotExposeHalfReleasedLibrary$' -count=3 -timeout=5m`: PASS 1.673s (`api-rerun.log`). Not a substitute for full gate; full gate subsequently passed as above.
+- `golangci-lint run`: PASS, `0 issues.` (`lint-final.log`).
+- `gofmt -l ./cmd ./internal`: PASS, empty (`gofmt-final.log`).
+- `go run ./cmd/tsgen` + `git diff --exit-code HEAD -- web/src/api/generated.ts`: PASS, 32 types, no drift (`tsgen.log`). No SQL/schema/frontend changes, no sqlc or frontend gates required.
+- `git diff --check`: final PASS (`diff-check.log`). One earlier check found trailing spaces in multiline XML test literals; removed, not suppressed.
+
+### Remaining review / integration
+
+No open functional acceptance defect in this scoped repair. XML parsing remains the existing standard-library/best-effort charset contract, not XSD validation or full DTD validation. New archive fixtures are CBZ; RAR continues through the same parser/bounded metadata API and its existing full-suite tests. Parent should review normal scan compatibility as the parser now correctly rejects invalid whole documents; valid-input tolerance tests and scanner/full suite pass.
+
+Integration branch was observed at `acaecadd` (documentation-only successor of requested `a0245ff5`), not an ancestor of this tree's HEAD. Parent owns any safe integration; worker did not merge or edit 03/06 acceptance. All changes remain uncommitted.
+
+Suggested fix subject: `fix(parser): validate complete ComicInfo documents before exposing clues`
