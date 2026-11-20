@@ -42,6 +42,10 @@ Environment: GOTOOLCHAIN=go1.26.10; shared GOCACHE at mcp-library-01/.tmp/merger
 - Future 07/08/12/13 must call the exported fences for their actual capability/library and implement their own transactional content ports. No future write/model functionality was added here.
 - Suggested parent commit subject: `feat: add delegated scans and revocation-aware run control`.
 
+## Integrated joint gate
+
+On integrated `a0245ff5`, `GOTOOLCHAIN=go1.26.10 go test -p 1 ./... -count=1 -timeout=10m` failed in `internal/api.TestRelocationDuplicateConfirmationAndDatabaseFailureAreDurable`: `rename ... source ... target: Access is denied.` Bootstrap (including the real stdio joint lifecycle) and all other packages passed. This is not a successful full gate and is not claimed to be a baseline failure. Retained log: ticket-06 worktree `.tmp/stdio-joint-integrated-full.log`. The forthcoming combined 04 integration gate must include this joint test before closing tickets 03/06.
+
 ## 03/06 fresh-context joint acceptance
 
 ### Scope and observable result
