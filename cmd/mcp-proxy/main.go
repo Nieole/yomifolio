@@ -107,6 +107,13 @@ func run(ctx context.Context) error {
 			case <-ctx.Done():
 				done <- nil
 				return
+			default:
+				// Admission must not block stdin EOF detection. Keep no waiting queue
+				// or goroutine per excess request; notifications cannot receive errors.
+				if len(envelope.ID) > 0 {
+					fail(envelope.ID, -32000, "MCP proxy overloaded")
+				}
+				continue
 			}
 			workers.Add(1)
 			go func() {
