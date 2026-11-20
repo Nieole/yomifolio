@@ -47,3 +47,26 @@ Environment: `GOTOOLCHAIN=go1.26.10`; shared guide GOCACHE, per-tree GOTMPDIR/li
 - Optional whole-repository doc-style script remains uncompleted due to the reported process-resource error; mandatory Go format/lint are green. No frontend gate applies (no frontend source changed).
 - Synchronous image decoder instructions cannot be interrupted mid-call; limited source dimensions/bytes plus two slots bound this work, and cancellation is observed at processing boundaries. There is no cross-request thumbnail-count quota: repeated requests can only obtain the same low-resolution JPEG evidence, never original book bytes.
 - Suggested commit subject for parent: `feat(mcp): expose bounded cover and page image evidence`.
+
+## Narrow RAR resource-budget maintenance (after 4a22b209)
+
+This section supersedes the earlier worktree/frontier snapshot for this maintenance only. Work is in the same dedicated tree, HEAD `4a22b209`, with the pre-existing `ff5c177e` merge still in progress (`CHANGELOG.md` index remains UU although its text is resolved). No stage/commit/merge/abort/reset or parent-tree edit was performed. Parent reported frontier `b3083e4b` including 07; this worker did not integrate it. Ticket remains ready-for-agent; the final combined gate stays unchecked. This is not completion or a retry of the previously platform-interrupted broad review.
+
+### Defect and fix
+
+- Existing `.tmp/merger05/rar-probe.log` records approximately 64 MiB allocated by ordinary `GetPages` before selected-entry rejection. This historical record was read, not rerun. No new exceptional archive, payload or risk probe was made.
+- `parser.GetPagesLimited` now serves evidence manifests; both it and `ReadPageLimited` create RAR readers through one helper with **16 MiB `MaxDictionarySize` passed before initialization**. Installed `rardecode/v2 v2.4.6` already supplies this option; dependency versions are unchanged. Ordinary `GetPages`, page session/cache and metadata scanning retain their original defaults.
+- The helper supplies a context-aware filesystem at reader construction, covering initial headers and each volume's reads. Enumeration checks context between entries. Skipped entries are explicitly drained through a context/byte-limited discard reader, avoiding the dependency's hidden solid-archive `Next` drain; no skipped bytes enter the ordinary page cache. Dictionary overflow at creation/Next/read is normalized to the existing byte-budget sentinel. BookContent maps manifest and selected-page budget errors to `ErrEvidenceLimit`; no ordinary/raw download fallback.
+- Conservative evidence-only limitation: all RAR skips (including non-solid entries, since the exported header does not expose archive-wide solid state) are drained with per-entry declared/actual limits. Consequently an unselected oversized RAR entry can reject evidence, and manifest work can decode intervening/all entries. This bounds retained buffers/dictionaries, **not total archive traversal CPU or a hard wall-clock deadline**. Ordinary large-book reading/scanning is untouched. Existing source bytes, pixels, two slots, response limits and access owners remain unchanged.
+
+### Deterministic regressions and checks
+
+Logs: ignored `.tmp/merger05/budget-*.log`; toolchain/cache configuration from existing `env.sh`.
+
+- `budget-red.log`: new parser regressions first failed to compile for missing bounded-manifest/helper API. Green tests use committed normal `testdata/vol.cbr`, injected reader creation errors, and small in-memory readers only. No archive generation was needed.
+- `TestEvidenceRarReadersShareCreationBudget` inspects applied **real dependency options** at both opens, validates identical fixed dictionary and cancellable filesystem settings, normal fixture manifest/page bytes, no ordinary-session cache/cursor pollution, unchanged ordinary manifest/page/metadata reader path, and explicit budget classification.
+- Cancellation regressions cover pre-cancel, cancellation during enumeration, volume open/read and explicit skip drain, plus actual-vs-declared skip-byte overflow. BookContent regression cancels precisely at manifest admission using the normal fixture, checks cancellation takes priority over page range, and verifies library/borrow release.
+- `go test -p 1 ./internal/parser ./internal/bookcontent ./internal/images ./internal/application/delegated ./internal/bootstrap -count=1 -timeout=10m` — PASS (`budget-related.log`, then final rerun `budget-related-final.log` after adding final regressions). These are complete related-package suites, including production MCP HTTP/TLS/stdio and resource-lifetime tests, not just named tests.
+- `golangci-lint run` — 0 issues (`budget-lint-final.log`); `gofmt -l ./cmd ./internal` — empty (`budget-gofmt-final.log`).
+- `go run ./cmd/tsgen` — generated 32 types, no generated.ts diff (`budget-tsgen.log`); `git diff --check` — PASS (`budget-diffcheck.log`). No SQL or frontend source changes.
+- Existing pre-maintenance `.tmp/merger05/full.exit` is `0`; that historical full run is not a post-fix full gate. No additional full-suite rerun was attempted. Latest combined-tree gate and parent integration remain open.

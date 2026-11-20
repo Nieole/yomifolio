@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"io"
-
-	"github.com/nwaples/rardecode/v2"
 )
 
 // ReadPageLimited reads only an exact selected entry, with a caller-owned smaller
 // decompression budget. It never falls back to an ordinary unbounded page read.
 func ReadPageLimited(ctx context.Context, arc Archive, name string, limit int64) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if limit < 0 || limit > maxPageUncompressedBytes {
 		return nil, ErrMetadataTooLarge
 	}
@@ -43,7 +44,7 @@ func ReadPageLimited(ctx context.Context, arc Archive, name string, limit int64)
 		if a.closed {
 			return nil, ErrArchiveClosed
 		}
-		rr, err := rardecode.OpenReader(a.path)
+		rr, err := boundedRar(ctx, a.path)
 		if err != nil {
 			return nil, err
 		}
@@ -54,10 +55,14 @@ func ReadPageLimited(ctx context.Context, arc Archive, name string, limit int64)
 			}
 			h, e := rr.Next()
 			if e != nil {
-				return nil, e
+				return nil, pageBudgetError(e)
 			}
 			if !h.IsDir && h.Name == name {
-				return read(rr, h.UnPackedSize)
+				data, err := read(rr, h.UnPackedSize)
+				return data, pageBudgetError(err)
+			}
+			if err := skipBoundedPage(ctx, rr, h.UnPackedSize, limit); err != nil {
+				return nil, err
 			}
 		}
 	default:

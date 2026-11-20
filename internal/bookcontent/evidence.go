@@ -99,8 +99,11 @@ func (s *Service) Evidence(ctx context.Context, id, libraryID int64, pages []int
 			return nil, err
 		}
 		defer done()
-		manifest, err := arc.GetPages()
+		manifest, err := parser.GetPagesLimited(ctx, arc)
 		if err != nil {
+			if errors.Is(err, parser.ErrMetadataTooLarge) {
+				return nil, ErrEvidenceLimit
+			}
 			return nil, err
 		}
 		for _, n := range pages {
