@@ -4,17 +4,17 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** resolved
+**Status:** done
 
 - [x] 沿现有 bootstrap 集成测试方式使用真实临时 SQLite、资料库、归档和图片，只在外部元数据与 LLM 来源边界注入替身，不替换应用用例、数据库或任务引擎。
 - [x] 测试可控制来源返回值、错误及阻塞时机，供以后从公开接口验证取消、竞争与费用边界，不依赖盲等或内部调用顺序。
 - [x] 通过生产服务公开 HTTP 验证替身确实由同一应用运行时使用；无注入时仍使用现有生产来源，启动与恢复失败不暴露半组装服务。
 - [x] 不增加新的产品工具、权限或工作流，不机械重构无关调用方，不静默修改现有来源行为。
-- [ ] 生产组装、共享任务队列、资源释放和 shutdown/drain 回归通过；后端测试、格式与 lint 通过。
+- [x] 生产组装、共享任务队列、资源释放和 shutdown/drain 回归通过；后端测试、格式与 lint 通过。
 
 ## Answer
 
-票01实现完成；最后一项全量门禁尚未全绿，保留未勾选，不代表完整 effort 或 MCP 功能交付。
+票01代码已合入集成分支，完整后端门禁已通过。下列保留实施及复核证据，不代表完整 effort 或 MCP 功能交付。
 
 - 工作树：`C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-01`，分支 `implement-mcp-source-seam`，实测与 `implement-mcp-library` 的 merge-base 为 `8197246c4bf90137096d90f26a837d59668c92ff`。未修改父工作区，未提交、合并或操作父计划。
 - `bootstrap.Options.Sources` 在生产装配前注入 `api.ExternalSources`。Metadata 工厂负责按来源键 fetch/search（包括 LLM 元数据）；AI 工厂负责分组、推荐和连接测试。未覆盖的工厂仍调用原生产构造器，按调用时配置创建客户端。没有替换数据库、应用用例或任务引擎，也没有增加测试专用业务宿主。
@@ -31,4 +31,11 @@
 - `golangci-lint run`：使用本树独立 cache，退出码 7。typechecking 报 `cannot decode "internal/goarch", export data version 5 is greater than maximum supported version 4`；工具虽打印 `0 issues.`，本次 lint **未通过**。环境为 Go 1.27.4、golangci-lint 2.12.2（built with go1.27.2）。缓存已清理，没有将工具产物加入交付。
 - 详细日志保留于本树忽略目录 `.tmp/ticket01-{backend,backend-serial,focused,lint}.log`。没有前端、SQL 或生成响应契约改动，未执行前端门禁或重新生成代码。
 
-限制与交接：需父代理在可用 lint 工具链及稳定 Windows 文件句柄环境下补齐全量门禁。替身的 context 取消仍是协作式；未增加强制中止、不响应取消客户端的超时包装或费用保证。未来测试若要屏蔽全部外部来源，应同时传入 Metadata 和 AI 两个工厂。所有改动保持未提交。
+限制与交接：需父代理在可用 lint 工具链及稳定 Windows 文件句柄环境下补齐全量门禁。替身的 context 取消仍是协作式；未增加强制中止、不响应取消客户端的超时包装或费用保证。未来测试若要屏蔽全部外部来源，应同时传入 Metadata 和 AI 两个工厂。该阶段改动当时未提交。
+
+### 集成复核
+
+- 实现已提交为 `f8109890` 并快进合入 `implement-mcp-library`；独立 merger 未发现阻塞代码缺陷。
+- 使用已安装 `GOTOOLCHAIN=go1.26.10` 与隔离缓存执行 `golangci-lint run --timeout=90s`：退出 0，`0 issues.`。
+- merger 重跑定向 bootstrap/runtime/intelligence/metadata/task 测试通过，格式及 diff 检查通过；三个此前失败迁移场景在基线及票分支均通过，不据此认定原失败归属。
+- 一次全量命令被外层限时中止，余下包分段通过；这不等同于完整全量命令成功。延长外层限时后，`GOTOOLCHAIN=go1.26.10 go test -p 1 ./... -count=1 -timeout=10m` 完整成功退出，所有包通过；完整日志在票树 `.tmp/merger01/backend-complete.log`。
