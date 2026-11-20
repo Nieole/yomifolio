@@ -27,10 +27,11 @@ Environment: `GOTOOLCHAIN=go1.26.10`; shared `GOCACHE=C:/Users/saber/.thinkrail/
 - Same `config.MCPConfig.Origin` policy as HTTP config; TLS verification on; redirects refused, environment HTTP proxies disabled to avoid accidentally forwarding credentials elsewhere. Actual server retains source-IP/Host checks. Token only from child environment, removed after loading, never logged; a privileged local user may still inspect process memory/environment or client configuration. Stdout contains only JSON-RPC; generic diagnostics omit upstream payload/error text and addresses.
 - EOF ends transport only, closes upstream requests/connections and reaps normally. Lost responses are not proof of nonacceptance: proxy does not replay business operations or synthesize cancel commands.
 
-## Deferred, not claimed complete
+## 03/06 joint lifecycle acceptance
 
-**Ticket 06 → ticket 14 integration** must accept a real long-running run over this helper, disconnect after acceptance, prove server work continues, reconnect and query the same run, and verify explicit authorized cancellation separately. 03's transport EOF and reconnect tests do not establish accepted-run lifecycle semantics; no such completion is claimed. The corresponding combined ticket checkbox remains open. No undecided product/security choice was introduced.
+The previously deferred accepted-run requirement is covered by `bootstrap_test.TestMCPStdioAcceptedScanSurvivesEOFAndExplicitCancel`, independently added on base `02ec9f45` without production changes. Actual compiled helper + generic SDK CommandTransport + same production bootstrap: accept a real scan behind a dispatch barrier, close/reap helper via stdin EOF, release dispatch with no client connected, observe actual archive ingestion/completion, then query the same run ID from a fresh helper. A second queued scan is explicitly cancelled through stdio; further fresh-helper queries distinguish completed and cancelled. Cross-library and same-library/different-credential control attempts are denied.
 
+Commands, repeated results, full-suite limitation and harness correction: [06 joint evidence](06-delegated-runs.md#0306-fresh-context-joint-acceptance). Lifecycle checkbox checked; status remains ready-for-agent pending parent commit/review. The parallel 03 concurrent transport EOF defect/repair is separate: this test does not exercise or claim to fix that race. No new product behavior or restart guarantee is introduced.
 ## Review fix rc_8faa939c — saturated admission / EOF
 
 - Scope: only the reviewed transport lifecycle defect. Started with clean `mcp-stdio-proxy` HEAD and integration merge-base `34eb50dd836b49844b1b4578c4437ed0b43212d4`. All changes remain unstaged/uncommitted, in worker 03 only. Integration advanced during verification to `02ec9f453a6fb28535b30abb52e37d6fedf366c4`; parent must reconcile against that tip (no worker merge performed).
@@ -50,4 +51,4 @@ Same Go 1.26.10/shared build cache/worker-local temp and lint cache setup as abo
 - **Lint:** `golangci-lint run`, `0 issues.` Evidence: `.tmp/proxy/rc_8faa939c-lint.log`.
 - **Diff hygiene:** `git diff --check`, PASS.
 
-The 03 long-running accepted-run disconnect/reconnect acceptance remains OPEN for 06 → 14; this fix does not claim accepted-run survival or close that checkbox. Suggested subject: `fix(mcp-proxy): reject saturated admission without blocking EOF`.
+At the time of this transport fix, accepted-run disconnect/reconnect acceptance remained open. It is now covered by the separate joint lifecycle evidence above, not by this saturation regression. Suggested subject for the transport fix: `fix(mcp-proxy): reject saturated admission without blocking EOF`.

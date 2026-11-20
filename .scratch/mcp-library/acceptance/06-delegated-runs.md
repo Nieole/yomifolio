@@ -37,7 +37,35 @@ Environment: GOTOOLCHAIN=go1.26.10; shared GOCACHE at mcp-library-01/.tmp/merger
 
 ## Remaining integration / scope
 
-- 03 owns real stdio helper/process smoke tests. This ticket proves shared server-side lifetime and HTTP reconnect; it does not claim to have run the parallel helper.
+- Original 06 implementation proved server lifetime and HTTP reconnect only. Subsequent real stdio joint acceptance is recorded below; the parallel 03 concurrent-EOF repair remains outside this delta.
 - Shared files can conflict with 03/04: api/mcp.go, delegated/service.go, bootstrap/bootstrap.go/tests, specs and CHANGELOG. Most new behavior is in separate named files.
 - Future 07/08/12/13 must call the exported fences for their actual capability/library and implement their own transactional content ports. No future write/model functionality was added here.
 - Suggested parent commit subject: `feat: add delegated scans and revocation-aware run control`.
+
+## 03/06 fresh-context joint acceptance
+
+### Scope and observable result
+
+- Worktree `C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-06`, branch `mcp-delegated-runs`, initially clean HEAD/merge-base `02ec9f453a6fb28535b30abb52e37d6fedf366c4`, containing 03 and 06. Only tests/evidence changed; no stage/commit/merge. Parent integration advanced during verification to `0ab7dbb810e344fc0efd7632d12ecc11c432590c`; parent must integrate/review against that tip, not assume it was tested here.
+- New symbol: `bootstrap_test.TestMCPStdioAcceptedScanSurvivesEOFAndExplicitCancel` in `internal/bootstrap/mcp_stdio_runs_test.go`; archive helper `writeStdioRunArchive`. Existing 03 test files were not edited.
+- Actual compiled `cmd/mcp-proxy` subprocess, official Go SDK v1.8.0 generic `CommandTransport`, protocol 2025-11-25, production `bootstrap.Open`, real temporary SQLite and PNG-in-CBZ. Helper cwd is an unrelated empty directory. Server HTTP is the helper's real upstream, not a replacement for stdio. No external metadata/model source is contacted.
+- First scan is accepted via stdio with nonzero run ID while dispatch is held at `Options.Tasks.RunBackground`. SDK session close sends EOF and reaps a successful helper. Only then is dispatch released. With no helper/client connected the server completes ingestion; public Engine.Await synchronizes completion, the real book exists, and a new helper queries the identical run/library ID with completed status.
+- Second scan is controlled by public Engine.PauseAll, receives a distinct ID via stdio, and stays queued through denied get/wait/cancel attempts from another-library and same-library/different-credential helpers. Authorized `library_cancel_run` is sent via stdio; resume/Await observes cancelled. A further fresh helper queries both original IDs: completed versus cancelled. EOF is not business cancellation.
+- All waits context-bounded (90s scenario, outer Go test timeouts); channel/public-engine barriers and Await, no sleep synchronization. SDK close checks successful process exit/reap and secret-free diagnostics.
+
+### Actual verification
+
+Environment: `GOTOOLCHAIN=go1.26.10`; shared `GOCACHE=C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-01/.tmp/merger01/gocache126`; own `GOTMPDIR=.../mcp-library-06/.tmp/joint`, `GOLANGCI_LINT_CACHE=.../mcp-library-06/.tmp/lint-joint`. Ignored web/dist was present. Logs are ignored local `.tmp/joint/` files.
+
+- Acceptance supplementation, not fabricated production red/green. First harness attempt timed out: one channel permit released an unrelated background worker rather than the scanner. Corrected harness broadcasts dispatch release after EOF and uses public PauseAll for the second controlled run. Production code unchanged. `first.log`: FAIL (90s); `second.log`: PASS (12.839s).
+- `go test -p 1 ./internal/bootstrap ./internal/application/delegated ./cmd/mcp-proxy -run 'MCP|Delegated|Proxy|Origin|Authorize' -count=3 -timeout=8m`: PASS; bootstrap 118.724s, including existing real helper/process, transport safety, account lifecycle, delegated checkpoints/recovery and new joint test. Delegated package had no matching tests in this first filter; cmd has no test files. Log `targeted.log`.
+- `go test -p 1 ./internal/application/delegated ./internal/config ./internal/api -run 'TestCurrentAuthority|MCP|Delegated' -count=3 -timeout=8m`: PASS; delegated capability-intersection and config unsafe-plaintext tests ran. API had no matching tests (its full suite ran below). Log `security.log`.
+- `go test -p 1 ./internal/bootstrap -run '^TestMCPStdioAcceptedScanSurvivesEOFAndExplicitCancel$' -count=5 -timeout=5m -v`: PASS all five (18.108s), each reporting completed offline scan and explicit-cancel terminal status across fresh helpers. Log `joint-repeat.log`.
+- `go test -p 1 ./... -count=1 -timeout=10m`: FAIL solely in `internal/application/diskjobs.TestWriteSeriesComicInfoUsesPersistedMetadata`, Windows archive rename `Access is denied`. Other packages passed, including API (483.659s), bootstrap (11.509s), delegated, runtime, scanning, task and taskstore. Log `backend.log`. No controlled baseline comparison, so not labeled baseline failure.
+- Exact failure rerun: `go test -p 1 ./internal/application/diskjobs -run '^TestWriteSeriesComicInfoUsesPersistedMetadata$' -count=3 -timeout=3m`: PASS all three (1.570s), log `diskjobs-rerun.log`. Complete suite not rerun; no all-green full backend gate claimed for this delta.
+- `gofmt -l ./cmd ./internal`: empty (`format.log`). `golangci-lint run`: `0 issues.` (`lint.log`). `git diff --check`: PASS.
+- No frontend, SQL, generated contracts, dependencies or public behavior changed; corresponding build/generation gates not applicable.
+
+### Remaining risks / integration ownership
+
+Both joint lifecycle checkboxes checked; statuses remain ready-for-agent until parent commit/review. This delta does not repair or establish safety for 03's separately reported concurrent transport EOF race; dedicated 03 repair agent owns it. It proves accepted-before-EOF lifecycle, not in-flight admission/response races, forcible kill, server restart auto-resume or cancellation of already-issued external calls. Explicit cancellation here is queued cancellation; running safe-checkpoint revocation remains covered by existing delegated tests. No substantive product defect found or repaired here. Parent must reconcile its advanced integration tip and independent 03 repair, and may rerun the complete backend gate after integration.
