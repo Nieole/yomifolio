@@ -27,6 +27,8 @@ type RunOrder string
 const (
 	// OrderSequenceAsc 由旧到新，队列放行按它取最先排上的那一条。
 	OrderSequenceAsc RunOrder = "sequence_asc"
+	// OrderIDDesc is stable admission order for cursor pagination.
+	OrderIDDesc RunOrder = "id_desc"
 	// OrderSequenceDesc 由新到旧，任务中心的列表按它取最近活动的那一页。
 	OrderSequenceDesc RunOrder = "sequence_desc"
 	// OrderLiveFirst 是任务中心第一页的定序：仍会变化的运行（**活动态**与**排队中**）在前，
@@ -51,6 +53,9 @@ const (
 type RunFilter struct {
 	// TaskID 为 0 表示不按任务筛。
 	TaskID int64
+	// Variant and BeforeID support bounded, attribution-isolated history pages.
+	Variant  *Variant
+	BeforeID int64
 	// Statuses 为空表示不按状态筛。
 	Statuses []RunStatus
 

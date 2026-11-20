@@ -27,4 +27,4 @@ references: [mm-adr-0014, mm-runtime]
 
 ## MCP 能力绑定
 
-`Open` 用同一数据库构建 `delegated.SQLStore` 与 `delegated.Service`，经 `AdministrationDependencies.Delegated` 显式注入管理员 HTTP 及 MCP 协议适配。协议适配器不获得数据库、运行时或独立资源关闭权；请求开放与排空沿原有 Host 生命周期，不启动第二个应用运行时。
+`Open` 用同一数据库构建 `delegated.SQLStore` 与 `delegated.Service`，并注入同一 Runtime 的 Engine、Scans 和资料库窄查询能力；经 `AdministrationDependencies.Delegated` 显式注入管理员 HTTP 及 MCP 协议适配。协议适配器不获得数据库、运行时或独立资源关闭权；请求开放与排空沿原有 Host 生命周期，不启动第二个应用运行时。

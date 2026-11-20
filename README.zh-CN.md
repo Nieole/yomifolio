@@ -108,6 +108,6 @@
 
 管理员在 **设置 → MCP 访问** 为真实账户签发独立凭据，查看、收紧资料库与五项独立能力限制，并可撤销。资料库不选即无访问权；普通用户仍只读，不能获得管理或付费模型权限。修改或重置密码会撤销该用户的全部 MCP 凭据；密钥仅在签发时显示一次，请安全保存。
 
-服务器配置 `mcp.public_url` 为规范 HTTPS origin，通用 Streamable HTTP 客户端连接 `<origin>/mcp`，发送 `Authorization: Bearer <密钥>`。这不是 OAuth，不提供授权服务器发现或交互登录。当前工具仅有 `library_get_series`，参数如 `{ "series_id": 123 }`，仅返回授权资料库内系列的身份字段；其他能力不启用尚未实现的工具。已实测官方 Go SDK v1.8.0 客户端与 `2025-11-25` 协议，不保证特定 agent 产品或未测试版本的兼容性。
+服务器配置 `mcp.public_url` 为规范 HTTPS origin，通用 Streamable HTTP 客户端连接 `<origin>/mcp`，发送 `Authorization: Bearer <密钥>`。这不是 OAuth，不提供授权服务器发现或交互登录。`library_get_series` 参数如 `{ "series_id": 123 }`，仅返回授权资料库内系列的身份字段；扫描控制凭据还可调用 `library_start_scan`（library_id）、`library_get_run`、`library_wait_run`、`library_cancel_run`（run_id）及分页 `library_list_runs`。运行仅对所属凭据及当前限制可见。等待最长 30 秒，超时或断线不取消已接纳工作；撤权在排队放行前或执行安全检查点停止后续工作，不回滚已提交内容。准备扫描不串联独立封面/哈希任务。重试发起不是幂等保证，只有已有排队任务可能合并；重启保留中断历史但不自动重跑委托工作。元数据写入、模型及清理工具尚未实现。已实测官方 Go SDK v1.8.0 客户端与 `2025-11-25` 协议，不保证特定 agent 产品或未测试版本的兼容性。
 
 局域网明文必须显式设置 `mcp.allow_lan_http: true`，且 HTTP origin 使用字面的 private/loopback IP 或 localhost，仅接受 private/loopback 客户端。**内网流量被截获即可泄露密钥。** 不接受公网 HTTP 或明文 DNS 主机名。HTTPS 反向代理须保留配置的 Host、清除客户端转发头，正确设置协议和真实客户端 IP，并仅将实际代理地址加入 `server.trusted_proxies`；不能直接公开绕过代理的后端。LAN HTTP 经可信代理时也须报告私网客户端地址。不要在 URL、代理日志、调试请求/响应体中记录密钥，尤其不要记录 Authorization 和签发响应。Cookie Secure 的覆盖设置不能放宽 MCP 明文范围。

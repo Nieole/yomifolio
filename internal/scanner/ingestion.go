@@ -21,6 +21,7 @@ type ingestionPlan struct {
 	existing    map[string]bookScanSnapshot
 	renames     *renameIndex
 	queueSize   int
+	skipCovers  bool
 }
 
 // ingest owns discovery, bounded interpretation and the sole writer's drain.
@@ -29,7 +30,11 @@ func (s *Scanner) ingest(ctx context.Context, plan ingestionPlan, metrics *scanM
 	jobs := make(chan archiveCandidate, plan.queueSize)
 	results := make(chan interpretedArchive, plan.queueSize)
 	interpreter := &archiveInterpreter{rootPath: plan.libraryRoot, options: plan.options, metrics: metrics, progress: progress, currentConfig: s.currentConfig, diskWork: s.diskWork, openArchive: s.openArchive}
-	writer := &ingestionWriter{store: s.store, libraryID: plan.libraryID, metrics: metrics, progress: progress, renames: plan.renames, refreshInterval: s.dirtyRefreshInterval, onBatch: s.onBatchIngested, enqueueCovers: func(ctx context.Context, jobs []coverJob) { s.enqueueCoverJobs(ctx, covers, metrics, jobs) }}
+	writer := &ingestionWriter{store: s.store, libraryID: plan.libraryID, metrics: metrics, progress: progress, renames: plan.renames, refreshInterval: s.dirtyRefreshInterval, onBatch: s.onBatchIngested, enqueueCovers: func(ctx context.Context, jobs []coverJob) {
+		if !plan.skipCovers {
+			s.enqueueCoverJobs(ctx, covers, metrics, jobs)
+		}
+	}}
 	var workers sync.WaitGroup
 	workerCount := WorkerCount(s.currentConfig(), plan.libraryRoot, plan.options)
 	for n := 0; n < workerCount; n++ {
