@@ -4995,6 +4995,108 @@
         "LICENSES/go-runtime/go1.27.4/LICENSE",
         "LICENSES/go-runtime/go1.27.4/PATENTS"
       ]
+    },
+    {
+      "ecosystem": "Go",
+      "name": "cloud.google.com/go/compute/metadata",
+      "version": "v0.3.0",
+      "scope": "full module graph; not linkage proof",
+      "source": "https://proxy.golang.org/cloud.google.com/go/compute/metadata/@v/v0.3.0.zip",
+      "files": [
+        "LICENSES/go/cloud.google.com/go/compute/metadata@v0.3.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "Go",
+      "name": "github.com/golang-jwt/jwt/v5",
+      "version": "v5.3.1",
+      "scope": "full module graph; not linkage proof",
+      "source": "https://proxy.golang.org/github.com/golang-jwt/jwt/v5/@v/v5.3.1.zip",
+      "files": [
+        "LICENSES/go/github.com/golang-jwt/jwt/v5@v5.3.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "Go",
+      "name": "github.com/google/go-cmp",
+      "version": "v0.7.0",
+      "scope": "full module graph; not linkage proof",
+      "source": "https://proxy.golang.org/github.com/google/go-cmp/@v/v0.7.0.zip",
+      "files": [
+        "LICENSES/go/github.com/google/go-cmp@v0.7.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "Go",
+      "name": "github.com/google/jsonschema-go",
+      "version": "v0.4.3",
+      "scope": "full module graph; not linkage proof",
+      "source": "https://proxy.golang.org/github.com/google/jsonschema-go/@v/v0.4.3.zip",
+      "files": [
+        "LICENSES/go/github.com/google/jsonschema-go@v0.4.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "Go",
+      "name": "github.com/modelcontextprotocol/go-sdk",
+      "version": "v1.8.0",
+      "scope": "full module graph; not linkage proof",
+      "source": "https://proxy.golang.org/github.com/modelcontextprotocol/go-sdk/@v/v1.8.0.zip",
+      "files": [
+        "LICENSES/go/github.com/modelcontextprotocol/go-sdk@v1.8.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "Go",
+      "name": "github.com/segmentio/asm",
+      "version": "v1.1.3",
+      "scope": "full module graph; not linkage proof",
+      "source": "https://proxy.golang.org/github.com/segmentio/asm/@v/v1.1.3.zip",
+      "files": [
+        "LICENSES/go/github.com/segmentio/asm@v1.1.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "Go",
+      "name": "github.com/segmentio/encoding",
+      "version": "v0.5.4",
+      "scope": "full module graph; not linkage proof",
+      "source": "https://proxy.golang.org/github.com/segmentio/encoding/@v/v0.5.4.zip",
+      "files": [
+        "LICENSES/go/github.com/segmentio/encoding@v0.5.4/LICENSE",
+        "LICENSES/go/github.com/segmentio/encoding@v0.5.4/json/fuzz/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "Go",
+      "name": "github.com/yosida95/uritemplate/v3",
+      "version": "v3.0.2",
+      "scope": "full module graph; not linkage proof",
+      "source": "https://proxy.golang.org/github.com/yosida95/uritemplate/v3/@v/v3.0.2.zip",
+      "files": [
+        "LICENSES/go/github.com/yosida95/uritemplate/v3@v3.0.2/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "Go",
+      "name": "golang.org/x/oauth2",
+      "version": "v0.35.0",
+      "scope": "full module graph; not linkage proof",
+      "source": "https://proxy.golang.org/golang.org/x/oauth2/@v/v0.35.0.zip",
+      "files": [
+        "LICENSES/go/golang.org/x/oauth2@v0.35.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "Go",
+      "name": "golang.org/x/time",
+      "version": "v0.15.0",
+      "scope": "full module graph; not linkage proof",
+      "source": "https://proxy.golang.org/golang.org/x/time/@v/v0.15.0.zip",
+      "files": [
+        "LICENSES/go/golang.org/x/time@v0.15.0/LICENSE",
+        "LICENSES/go/golang.org/x/time@v0.15.0/PATENTS"
+      ]
     }
   ],
   "files": [
@@ -7629,6 +7731,90 @@
       "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
       "source": "https://proxy.golang.org/golang.org/x/text/@v/v0.44.0.zip!/golang.org/x/text@v0.44.0/PATENTS",
       "collected": "2026-11-16"
+    },
+    {
+      "file": "LICENSES/go/cloud.google.com/go/compute/metadata@v0.3.0/LICENSE",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "source": "https://proxy.golang.org/cloud.google.com/go/compute/metadata/@v/v0.3.0.zip!/cloud.google.com/go/compute/metadata@v0.3.0/LICENSE",
+      "collected": "2026-12-02"
+    },
+    {
+      "file": "LICENSES/go/github.com/golang-jwt/jwt/v5@v5.3.1/LICENSE",
+      "bytes": 1100,
+      "sha256": "fe26ca41577b9b2b4448050a24b25e5753af66b5d5945d5d36094e7790bfcb2f",
+      "source": "https://proxy.golang.org/github.com/golang-jwt/jwt/v5/@v/v5.3.1.zip!/github.com/golang-jwt/jwt/v5@v5.3.1/LICENSE",
+      "collected": "2026-12-02"
+    },
+    {
+      "file": "LICENSES/go/github.com/google/go-cmp@v0.7.0/LICENSE",
+      "bytes": 1479,
+      "sha256": "17b5d209ba8f9684257ecfcff87df6ceda6194143a8fbd074f29727cff6f0c40",
+      "source": "https://proxy.golang.org/github.com/google/go-cmp/@v/v0.7.0.zip!/github.com/google/go-cmp@v0.7.0/LICENSE",
+      "collected": "2026-12-02"
+    },
+    {
+      "file": "LICENSES/go/github.com/google/jsonschema-go@v0.4.3/LICENSE",
+      "bytes": 1087,
+      "sha256": "2d56c53449691d85d9aea245eb8dac12713e9075d70d5557b82ae1e94805b357",
+      "source": "https://proxy.golang.org/github.com/google/jsonschema-go/@v/v0.4.3.zip!/github.com/google/jsonschema-go@v0.4.3/LICENSE",
+      "collected": "2026-12-02"
+    },
+    {
+      "file": "LICENSES/go/github.com/modelcontextprotocol/go-sdk@v1.8.0/LICENSE",
+      "bytes": 12223,
+      "sha256": "af679003d933f045393a6a029f43da113f9ae364eac651d9ae268392985580f5",
+      "source": "https://proxy.golang.org/github.com/modelcontextprotocol/go-sdk/@v/v1.8.0.zip!/github.com/modelcontextprotocol/go-sdk@v1.8.0/LICENSE",
+      "collected": "2026-12-02"
+    },
+    {
+      "file": "LICENSES/go/github.com/segmentio/asm@v1.1.3/LICENSE",
+      "bytes": 1064,
+      "sha256": "e2a78de21d6d8ded2dff0f3189cd32e011630d785da127ebfbc8949012c0947b",
+      "source": "https://proxy.golang.org/github.com/segmentio/asm/@v/v1.1.3.zip!/github.com/segmentio/asm@v1.1.3/LICENSE",
+      "collected": "2026-12-02"
+    },
+    {
+      "file": "LICENSES/go/github.com/segmentio/encoding@v0.5.4/LICENSE",
+      "bytes": 1073,
+      "sha256": "d6d71a1f7dc6539e371120cc7af6e3257e55ca79634d473211f217b8965b0f16",
+      "source": "https://proxy.golang.org/github.com/segmentio/encoding/@v/v0.5.4.zip!/github.com/segmentio/encoding@v0.5.4/LICENSE",
+      "collected": "2026-12-02"
+    },
+    {
+      "file": "LICENSES/go/github.com/segmentio/encoding@v0.5.4/json/fuzz/LICENSE",
+      "bytes": 11357,
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+      "source": "https://proxy.golang.org/github.com/segmentio/encoding/@v/v0.5.4.zip!/github.com/segmentio/encoding@v0.5.4/json/fuzz/LICENSE",
+      "collected": "2026-12-02"
+    },
+    {
+      "file": "LICENSES/go/github.com/yosida95/uritemplate/v3@v3.0.2/LICENSE",
+      "bytes": 1546,
+      "sha256": "0761aadfb1921103752869ee942d4a71bdd54494697684d4b13dc17ad9781191",
+      "source": "https://proxy.golang.org/github.com/yosida95/uritemplate/v3/@v/v3.0.2.zip!/github.com/yosida95/uritemplate/v3@v3.0.2/LICENSE",
+      "collected": "2026-12-02"
+    },
+    {
+      "file": "LICENSES/go/golang.org/x/oauth2@v0.35.0/LICENSE",
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "source": "https://proxy.golang.org/golang.org/x/oauth2/@v/v0.35.0.zip!/golang.org/x/oauth2@v0.35.0/LICENSE",
+      "collected": "2026-12-02"
+    },
+    {
+      "file": "LICENSES/go/golang.org/x/time@v0.15.0/LICENSE",
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "source": "https://proxy.golang.org/golang.org/x/time/@v/v0.15.0.zip!/golang.org/x/time@v0.15.0/LICENSE",
+      "collected": "2026-12-02"
+    },
+    {
+      "file": "LICENSES/go/golang.org/x/time@v0.15.0/PATENTS",
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "source": "https://proxy.golang.org/golang.org/x/time/@v/v0.15.0.zip!/golang.org/x/time@v0.15.0/PATENTS",
+      "collected": "2026-12-02"
     }
   ],
   "gaps": [
@@ -7642,9 +7828,9 @@
     "Installed NPM package has no collected legal file: saxes@6.0.0 (node_modules/saxes)"
   ],
   "inputs": {
-    "go.mod": "e3f745daab352cb2e3d676aa1d64d631366936f08a9d1ea281602cbb550ca068",
+    "go.mod": "cfbe52c69ccd545c4cb545f299d87ebad0aae9223bb91f4dc137753c93c0c3af",
     "web/package-lock.json": "8d1c349ff3c3f22efd703d8ebd658636352b0840609976419bd0e66329536c5c",
-    "go.sum": "c1019a97a15e5de2fdec4a609a17f7fd13dac91edff7fdde43513eed043c35c0",
+    "go.sum": "f66af9e64a3f83ead3b55893eaa2702174da0cc16916f9854255c681138b507e",
     "web/package.json": "16d3a0b5bdf0f15eb2ef21d4a138223bc4ea4a1929412d2a24d98412cbab7640"
   }
 }

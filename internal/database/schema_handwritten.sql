@@ -185,3 +185,15 @@ CREATE TABLE IF NOT EXISTS reading_operations (
  occurred_at_ns INTEGER NOT NULL,
  PRIMARY KEY (user_id,operation_id)
 );
+
+-- Independent delegated credentials. The token plaintext is never persisted.
+CREATE TABLE IF NOT EXISTS mcp_credentials (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    library_ids TEXT NOT NULL,
+    capabilities TEXT NOT NULL,
+    revoked BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE INDEX IF NOT EXISTS idx_mcp_credentials_user ON mcp_credentials(user_id);

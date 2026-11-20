@@ -7,7 +7,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { SettingsProvider, useSettings } from '../features/settings-editor';
 import { SettingsPublicationNotice } from './settings/SettingsPublicationNotice';
 
-type SettingsSectionKey = 'overview' | 'appearance' | 'library' | 'media' | 'ai' | 'koreader' | 'connections' | 'tags' | 'users' | 'maintenance';
+type SettingsSectionKey = 'overview' | 'appearance' | 'library' | 'media' | 'ai' | 'koreader' | 'connections' | 'tags' | 'users' | 'mcp' | 'maintenance';
 
 function getSectionKey(pathname: string): SettingsSectionKey {
   if (pathname.startsWith('/settings/appearance')) return 'appearance';
@@ -17,6 +17,7 @@ function getSectionKey(pathname: string): SettingsSectionKey {
   if (pathname.startsWith('/settings/koreader')) return 'koreader';
   if (pathname.startsWith('/settings/connections')) return 'connections';
   if (pathname.startsWith('/settings/tags')) return 'tags';
+  if (pathname.startsWith('/settings/mcp')) return 'mcp';
   if (pathname.startsWith('/settings/users')) return 'users';
   if (pathname.startsWith('/settings/maintenance')) return 'maintenance';
   return 'overview';
@@ -81,6 +82,7 @@ function SettingsLayoutInner() {
     ];
     // 用户管理仅管理员可见。
     if (isAdmin) {
+      items.push({ key: 'mcp', label: t('mcp.title'), path: '/settings/mcp', icon: <Link2 className="h-4 w-4" /> });
       items.push({ key: 'users', label: t('settings.nav.users'), path: '/settings/users', icon: <Users className="h-4 w-4" /> });
     }
     items.push({ key: 'maintenance', label: t('settings.nav.maintenance'), path: '/settings/maintenance', icon: <Wrench className="h-4 w-4" /> });

@@ -14,12 +14,16 @@ import (
 
 	"yomifolio/internal/api"
 	"yomifolio/internal/application/configuration"
+	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/config"
 )
 
 // targets 是纳入生成的契约结构体（顺序即输出顺序）。被引用的具名结构体也必须在此列出
 // （如 ValidationResult 引用 ValidationIssue，故两者都要在此）。
 var targets = []reflect.Type{
+	reflect.TypeOf(delegated.Restrictions{}),
+	reflect.TypeOf(delegated.Credential{}),
+	reflect.TypeOf(delegated.IssuedCredential{}),
 	reflect.TypeOf(api.SearchResult{}),
 	reflect.TypeOf(api.SearchHit{}),
 	reflect.TypeOf(api.SearchHitFields{}),

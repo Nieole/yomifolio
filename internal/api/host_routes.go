@@ -4,6 +4,9 @@ import "github.com/go-chi/chi/v5"
 
 func (c *Host) SetupRoutes(r chi.Router) {
 	f, admin := c.families, c.administration
+	if c.mcp != nil {
+		r.Handle("/mcp", c.mcp)
+	}
 	r.Route("/api", func(r chi.Router) {
 		// 多用户会话鉴权（Cookie session + CSRF + 角色）。必须在挂载任何子路由之前 Use，
 		// 中间件内部会放行公开鉴权端点（/api/auth/status|setup|login）与阅读协议前缀 /api/mihon/，

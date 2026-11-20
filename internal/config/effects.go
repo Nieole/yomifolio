@@ -15,6 +15,7 @@ type FieldEffect struct {
 }
 
 var fieldScopes = map[string]string{
+	"mcp.public_url": "immediate", "mcp.allow_lan_http": "immediate",
 	"server.host": "restart", "server.port": "restart", "server.allowed_origins": "restart",
 	"server.trusted_proxies": "immediate", "server.cookie_secure": "immediate",
 	"database.path": "restart", "library.paths": "managed",

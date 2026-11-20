@@ -6,6 +6,7 @@ import "context"
 type AccountPasswordWrite interface {
 	GetUser(context.Context, int64) (User, error)
 	ReplacePassword(context.Context, int64, string, bool) error
+	// RevokeSessions also revokes independent MCP credentials in this transaction.
 	RevokeSessions(context.Context, int64) error
 }
 type accountPasswordWrite struct{ db DBTX }
@@ -21,6 +22,9 @@ func (w accountPasswordWrite) ReplacePassword(ctx context.Context, id int64, has
 	return err
 }
 func (w accountPasswordWrite) RevokeSessions(ctx context.Context, id int64) error {
-	_, err := w.db.ExecContext(ctx, `DELETE FROM sessions WHERE user_id = ?`, id)
+	if _, err := w.db.ExecContext(ctx, `DELETE FROM sessions WHERE user_id = ?`, id); err != nil {
+		return err
+	}
+	_, err := w.db.ExecContext(ctx, `UPDATE mcp_credentials SET revoked = TRUE WHERE user_id = ?`, id)
 	return err
 }

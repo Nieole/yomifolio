@@ -28,3 +28,11 @@ references: [mm-adr-0001, mm-adr-0005, mm-adr-0013, mm-adr-0014]
 维护扫描错误传播由真实 HTTP 回归 `TestSearchMaintenanceMissingLibraryFailsHTTP` 守卫；有效归档成功路径由 `TestSearchFullMaintenanceWithRealArchiveHTTP` 守卫。
 
 已知限制：系统级重建与单库扫描具有不同任务身份，仍可能同时扫描同一库；资料库清理刻意脱离取消，以完成收尾；待执行封面批保存在无固定上界的内存队列中。
+
+## 受限委托访问
+
+`delegated.Service` 拥有独立凭据管理及受限系列读取；`delegated.SQLStore` 是由装配根创建的持久端口实现，不向协议适配器交出 SQL。管理用例在事务内重新检查当前管理员及目标用户，签发绑定真实用户、显式资料库集合与五项独立能力（read、metadata_write、scan_control、internal_llm、cleanup）的凭据。空集合不表示全部；已有凭据只能移除资料库或能力，不能换用户、改名、恢复已撤销项或扩权，扩权须另签发。原始 256-bit 随机 Bearer 密钥只在签发结果出现一次，库内仅保留 SHA-256 摘要；撤销状态持久保留，密码变更的事务失效规则归 `mm-database`。
+
+`delegated.Subject` 只携带 user_id 与 credential_id，供后续运行与操作持久归属；它不是授权快照，不应接受 agent 自报的身份。`Authenticate` 从密钥解析当前主语；`Authorize` 每次查询当前凭据、用户存在性、改密要求与角色，求当前账号许可、凭据资料库及能力的交集。当前账户模型没有额外的用户资料库 ACL，普通用户已有全库目录读权限，但委托只读凭据仍受所选资料库限制；非 read 能力一律还要求当前管理员身份，普通用户不获得管理或付费权限。
+
+`GetSeries` 对实际系列所属资料库重新授权；未知与越界标识均拒绝，返回的白名单仅含 id、library_id、name、title，不含宿主路径或阅读信息。当前仅实现此只读用例，凭据中的其他能力不表示已有扫描、写入、LLM 或清理工具。后续用例须以同一 Subject 在准入、安全检查点、写入及付费调用前重新鉴权；本只读入口不提供后台撤销传播或事务内写入授权的替代保证。

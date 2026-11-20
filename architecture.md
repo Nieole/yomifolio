@@ -57,3 +57,7 @@ Yomifolio 的 Go 模块为 `yomifolio`。单进程 Go 服务使用 chi 接收 HT
 领域概念只在 `mm-domain-language` 定义；跨功能的身份、准入、恢复、事务裁决、宿主装配及内容发布理由归本节点引用的 ADR，不另复制论证。
 
 `mm-adr-0008` 已实施，重启入参与声明标签的边界及逐次有损合并事件保证归该决定。`mm-adr-0002` 已被 `mm-adr-0005` 取代，以 deprecated 节点保留历史且不作为当前约束。`.scratch/` 中的实施规划和验收记录作为输入，不提升为长期节点。
+
+## MCP 委托访问边界
+
+`bootstrap → application/delegated → database/sql` 组装独立凭据与当前授权用例，`api → application/delegated` 适配管理员网页和 Streamable HTTP；协议层不获得数据库入口，也不复制应用运行时。统一迁移安装凭据 DDL，账号密码事务共同撤销浏览器会话与委托凭据。现有网页、OPDS、Mihon 与 KOReader 的认证入口不复用 MCP Bearer，也不因委托资料库限制改变网页目录读取。主语、能力交集及扩展约束归 `mm-application`，协议与安全代理约束归 `mm-api`；ADR 0016 仍为 draft，不将静态凭据或未来额度声明解释为已实现的 OAuth/人工审批。

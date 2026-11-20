@@ -78,6 +78,10 @@ func ValidateConfigValues(cfg *Config) ValidationResult {
 		}
 	}
 
+	if _, err := cfg.MCP.Origin(); err != nil {
+		issues = append(issues, ValidationIssue{Field: "mcp.public_url", Message: err.Error(), Severity: "error"})
+	}
+
 	if cfg.Server.Port < 1 || cfg.Server.Port > 65535 {
 		issues = append(issues, ValidationIssue{Field: "server.port", Message: "端口必须在 1 到 65535 之间。", Severity: "error"})
 	}

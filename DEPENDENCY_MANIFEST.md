@@ -2,10 +2,20 @@
 
 Generated 2026-11-16. Labels come from lock metadata, not legal conclusions. Missing entries are explicit; a link is not a replacement for required license text.
 
-Current inventory: 373 package entries (44 Go modules, 328 NPM dependency locations, one Go 1.27.4 runtime); 376 legal files including root LICENSE/NOTICE and four upstream codec texts. Superseded Go 1.26.10 runtime texts are not included. NPM `installed` records directory presence, not a complete installation; six present directories lack package.json, so their versions cannot be locally verified.
+Current inventory: 383 package entries (54 Go modules, 328 NPM dependency locations, one Go 1.27.4 runtime); 388 legal files including root LICENSE/NOTICE and four upstream codec texts. Superseded Go 1.26.10 runtime texts are not included. NPM `installed` records directory presence, not a complete installation; six present directories lack package.json, so their versions cannot be locally verified.
 
 | Ecosystem | Package/version | Scope | Source | Texts |
 |---|---|---|---|---|
+| Go | cloud.google.com/go/compute/metadata v0.3.0 | full module graph; not linkage proof | https://proxy.golang.org/cloud.google.com/go/compute/metadata/@v/v0.3.0.zip | [LICENSE](LICENSES/go/cloud.google.com/go/compute/metadata@v0.3.0/LICENSE) |
+| Go | github.com/golang-jwt/jwt/v5 v5.3.1 | full module graph; not linkage proof | https://proxy.golang.org/github.com/golang-jwt/jwt/v5/@v/v5.3.1.zip | [LICENSE](LICENSES/go/github.com/golang-jwt/jwt/v5@v5.3.1/LICENSE) |
+| Go | github.com/google/go-cmp v0.7.0 | full module graph; not linkage proof | https://proxy.golang.org/github.com/google/go-cmp/@v/v0.7.0.zip | [LICENSE](LICENSES/go/github.com/google/go-cmp@v0.7.0/LICENSE) |
+| Go | github.com/google/jsonschema-go v0.4.3 | full module graph; not linkage proof | https://proxy.golang.org/github.com/google/jsonschema-go/@v/v0.4.3.zip | [LICENSE](LICENSES/go/github.com/google/jsonschema-go@v0.4.3/LICENSE) |
+| Go | github.com/modelcontextprotocol/go-sdk v1.8.0 | full module graph; not linkage proof | https://proxy.golang.org/github.com/modelcontextprotocol/go-sdk/@v/v1.8.0.zip | [LICENSE](LICENSES/go/github.com/modelcontextprotocol/go-sdk@v1.8.0/LICENSE) |
+| Go | github.com/segmentio/asm v1.1.3 | full module graph; not linkage proof | https://proxy.golang.org/github.com/segmentio/asm/@v/v1.1.3.zip | [LICENSE](LICENSES/go/github.com/segmentio/asm@v1.1.3/LICENSE) |
+| Go | github.com/segmentio/encoding v0.5.4 | full module graph; not linkage proof | https://proxy.golang.org/github.com/segmentio/encoding/@v/v0.5.4.zip | [LICENSE](LICENSES/go/github.com/segmentio/encoding@v0.5.4/LICENSE), [LICENSE](LICENSES/go/github.com/segmentio/encoding@v0.5.4/json/fuzz/LICENSE) |
+| Go | github.com/yosida95/uritemplate/v3 v3.0.2 | full module graph; not linkage proof | https://proxy.golang.org/github.com/yosida95/uritemplate/v3/@v/v3.0.2.zip | [LICENSE](LICENSES/go/github.com/yosida95/uritemplate/v3@v3.0.2/LICENSE) |
+| Go | golang.org/x/oauth2 v0.35.0 | full module graph; not linkage proof | https://proxy.golang.org/golang.org/x/oauth2/@v/v0.35.0.zip | [LICENSE](LICENSES/go/golang.org/x/oauth2@v0.35.0/LICENSE) |
+| Go | golang.org/x/time v0.15.0 | full module graph; not linkage proof | https://proxy.golang.org/golang.org/x/time/@v/v0.15.0.zip | [LICENSE](LICENSES/go/golang.org/x/time@v0.15.0/LICENSE), [PATENTS](LICENSES/go/golang.org/x/time@v0.15.0/PATENTS) |
 | Go | github.com/chai2010/webp v1.4.0 | full module graph; not linkage proof | https://proxy.golang.org/github.com/chai2010/webp/@v/v1.4.0.zip | [LICENSE](LICENSES/go/github.com/chai2010/webp@v1.4.0/LICENSE), [AUTHORS](LICENSES/go/github.com/chai2010/webp@v1.4.0/internal/libwebp-1.4.0/AUTHORS), [COPYING](LICENSES/go/github.com/chai2010/webp@v1.4.0/internal/libwebp-1.4.0/COPYING), [PATENTS](LICENSES/go/github.com/chai2010/webp@v1.4.0/internal/libwebp-1.4.0/PATENTS) |
 | Go | github.com/disintegration/imaging v1.6.2 | full module graph; not linkage proof | https://proxy.golang.org/github.com/disintegration/imaging/@v/v1.6.2.zip | [LICENSE](LICENSES/go/github.com/disintegration/imaging@v1.6.2/LICENSE) |
 | Go | github.com/dustin/go-humanize v1.1.0 | full module graph; not linkage proof | https://proxy.golang.org/github.com/dustin/go-humanize/@v/v1.1.0.zip | [LICENSE](LICENSES/go/github.com/dustin/go-humanize@v1.1.0/LICENSE) |

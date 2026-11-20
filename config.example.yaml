@@ -103,3 +103,11 @@ koreader:
     allow_registration: false
     match_mode: binary_hash
     path_ignore_extension: false
+
+# MCP is disabled until a canonical origin is configured. Endpoint: <origin>/mcp.
+# 公网使用 HTTPS；反向代理须保留 Host、清除客户端转发头并设置可信代理。
+# LAN example: public_url: http://192.168.1.20:8080 (literal private IP only).
+# 明文可能导致凭据被截获；显式启用也不允许公网 HTTP。
+mcp:
+    public_url: ""
+    allow_lan_http: false

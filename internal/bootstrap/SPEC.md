@@ -24,3 +24,7 @@ references: [mm-adr-0014, mm-runtime]
 ## 核对入口
 
 `Open`、`Process.Shutdown`；`bootstrap_test.go`、`recovery_test.go`、各 HTTP 家庭集成测试及 `sse_shutdown_test.go` 验证真实生产组合，而非另一套测试专用装配。
+
+## MCP 能力绑定
+
+`Open` 用同一数据库构建 `delegated.SQLStore` 与 `delegated.Service`，经 `AdministrationDependencies.Delegated` 显式注入管理员 HTTP 及 MCP 协议适配。协议适配器不获得数据库、运行时或独立资源关闭权；请求开放与排空沿原有 Host 生命周期，不启动第二个应用运行时。

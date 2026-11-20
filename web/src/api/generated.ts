@@ -4,6 +4,32 @@
  * 重新生成：`go run ./cmd/tsgen`；CI 会校验其与源一致。
  */
 
+export interface Restrictions {
+  user_id: number;
+  name: string;
+  library_ids: number[];
+  capabilities: string[];
+}
+
+export interface Credential {
+  id: string;
+  user_id: number;
+  name: string;
+  library_ids: number[];
+  capabilities: string[];
+  revoked: boolean;
+}
+
+export interface IssuedCredential {
+  id: string;
+  user_id: number;
+  name: string;
+  library_ids: number[];
+  capabilities: string[];
+  revoked: boolean;
+  token: string;
+}
+
 export interface SearchResult {
   hits: SearchHit[];
   total_hits: number;

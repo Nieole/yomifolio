@@ -36,3 +36,9 @@ references: [mm-adr-0003]
 系列索引升级与重建证据：`book_search_migration_test.go`、`series_search_migration_test.go`、`search_normalize_test.go`、`series_search_readers_test.go`；跨入口实际行为由 `internal/api/series_normalized_search_test.go` 与 `internal/api/book_rank_search_test.go` 验证。
 
 `Store`、`SqlStore`、`ExecTx`、`Migrate`、`schemaSQL`；`store_exectx_test.go` 的 `TestExecTxAlwaysFinishesTransaction`，`migration_test.go` 的 `TestMigrateSetsSchemaVersionAndSkipsRebackfill`，以及 `users_case_test.go`、`pagination_total_order_test.go`、`store_search_dualpath_test.go`。
+
+## 委托凭据持久化与密码事务
+
+`schema_handwritten.sql` 的 mcp_credentials 由统一迁移安装，外键绑定真实 users 并在删除账户时级联清除；凭据授权裁决归 `mm-application`。它不进入 sqlc 的模型输入，SQL 与 JSON 列只保存摘要和授权限制，不保存原始 Bearer 密钥。
+
+`accountPasswordWrite.RevokeSessions` 在同一个 `WithAccountPassword` 事务中删除浏览器会话并撤销该用户全部 MCP 凭据，与 ReplacePassword 不可分割。任一步失败都回滚密码、网页会话与委托撤销；提交后 Basic 缓存失效仍沿原有路径。改密或管理员重置后的成功响应不能早于这次事务提交，不能用提交后内存回调代替持久撤销。

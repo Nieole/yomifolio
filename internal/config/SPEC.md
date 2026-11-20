@@ -30,3 +30,7 @@ parent: mm-architecture
 ## 证据
 
 `Manager`、`UpdateSession`、`CloneConfig`、`ResolveStoragePolicy`；`config_extra_test.go` 的 `TestSnapshotIsDeepCopy`、`TestResolveStoragePolicyDoesNotMutateInput`，`runtime_test.go` 的 `TestResolveStoragePolicyUsesMostSpecificPathOverride`，以及 `watcher_test.go`。
+
+## MCP 安全配置
+
+`MCPConfig.Origin` 统一验证可选 mcp.public_url：空值禁用 MCP 协议入口，非空值为无用户信息、查询或业务路径的 HTTPS origin；HTTP 必须显式 allow_lan_http 且主机为 localhost 或字面 private/loopback IP，不以 DNS 解析结果放宽明文范围。两个字段发布后对新请求立即生效；请求级 TLS、host、origin 与可信代理检查归 `mm-api`，显式允许局域网明文不等于允许公网明文。

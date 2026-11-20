@@ -60,7 +60,13 @@ func AtomicWriteFile(path string, data []byte, perm os.FileMode) error {
 	return os.Rename(tmpName, path)
 }
 
+type MCPConfig struct {
+	PublicURL    string `yaml:"public_url" json:"public_url"`
+	AllowLANHTTP bool   `yaml:"allow_lan_http" json:"allow_lan_http"`
+}
+
 type Config struct {
+	MCP    MCPConfig `yaml:"mcp" json:"mcp"`
 	Server struct {
 		Host           string   `yaml:"host" json:"host"`
 		Port           int      `yaml:"port" json:"port"`

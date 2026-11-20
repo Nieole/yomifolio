@@ -103,3 +103,11 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and safe reporting guid
 ## License
 
 [Apache License 2.0](LICENSE) · Yomifolio contributors. Third-party components retain their own licenses; see [notices and outstanding release checks](THIRD_PARTY_NOTICES.md). The code license does not grant rights to third-party comics or artwork.
+
+### Scoped MCP access
+
+Administrators can issue, inspect, narrow and revoke independent credentials at **Settings → MCP access**. Each credential belongs to a real account and explicitly selected libraries and capabilities; an empty library selection grants no access. Regular users remain read-only, without management or paid-model permissions. Password changes and resets revoke that account's MCP credentials. Save the secret at issuance: it cannot be viewed again.
+
+Set `mcp.public_url` to the service's canonical HTTPS origin, then connect a Streamable HTTP MCP client to `<origin>/mcp` using `Authorization: Bearer <secret>`. This is static credential authentication, **not OAuth**; there is no authorization-server discovery or interactive authorization flow. The current tool is `library_get_series` with `{ "series_id": 123 }`, returning only identity fields from an authorized library. Other capabilities reserve independent restrictions; they do not enable unimplemented tools. The official Go SDK v1.8.0 client has been exercised with protocol `2025-11-25`; product-specific clients and other versions are not compatibility guarantees.
+
+For LAN plaintext, explicitly set `mcp.allow_lan_http: true` and use a literal private/loopback IP (or localhost) in the HTTP origin. Only private/loopback clients are accepted. **Anyone intercepting LAN traffic can steal the credential.** Public HTTP and plaintext DNS hostnames are rejected. HTTPS reverse proxies must preserve the configured Host, strip untrusted forwarding headers, set accurate protocol/client-IP headers, and be narrowly listed under `server.trusted_proxies`; otherwise forwarded HTTPS is not trusted. LAN HTTP via a trusted proxy requires a private client IP header. Do not publish the backend around the proxy, put credentials in URLs, or log Authorization headers, request/response bodies or issuance responses in proxies/debug tooling. Cookie secure overrides do not enable MCP plaintext.

@@ -17,6 +17,10 @@ Distribute this file, `DEPENDENCY_MANIFEST.md`, root `LICENSE`, root `NOTICE`, a
 
 This deliberately conservative collection includes build/test/optional dependencies that may not be shipped in the production Web bundle. Presence here does not establish runtime linkage; absence of a lockfile license marker does not establish absence of licensing obligations.
 
+## MCP dependency amendment
+
+The MCP adapter adds the official Go SDK v1.8.0 (MIT) and its module-graph dependencies. Verbatim available module-cache legal texts and exact versions are included in `LICENSES/manifest.json` and `DEPENDENCY_MANIFEST.md`, including JSON schema, URI templates, segmentio encoding/asm, OAuth/time support and graph test dependencies. Inclusion of OAuth support code does not mean this server implements OAuth. Existing release/notice limitations remain unchanged.
+
 ## Go libraries
 
 The current direct dependencies and their reviewed license families are:
