@@ -1,71 +1,83 @@
-# Yomifolio product screenshots
+# Product screenshots and comic credits
 
-These four PNGs are **real browser captures of the current application**, not UI mockups or the README proposal. Captured on **2026-11-16 (UTC, capture machine clock)** from source revision `a9a37b99` with the existing, up-to-date `web/dist`.
+The four `yomifolio-*.png` files are direct browser captures of the real application, using an isolated library of authorized comic samples. No business DOM, API responses, covers, or reader controls were substituted. The screenshot library is a fixture, **not a bundled or downloadable manga collection**.
 
-| File | View | CSS viewport / PNG pixels | Size |
-| --- | --- | --- | --- |
-| `yomifolio-library.png` | Library browsing, 12 fictional series | 1440 × 1000 | 381,731 bytes |
-| `yomifolio-series.png` | The Lantern Atlas: metadata, progress and three books | 1440 × 1000 | 500,755 bytes |
-| `yomifolio-reader-desktop.png` | Fit-screen, paged, double-page reading | 1440 × 1000 | 463,144 bytes |
-| `yomifolio-reader-mobile.png` | Touch viewport, single-column continuous reading | 390 × 844 | 181,210 bytes |
+## Views and provenance
 
-Device scale factor is 1. The mobile image uses Chrome touch/device emulation, not a physical phone. UI language is English and the application theme is Midnight. Reader toolbars are the application's own controls. Screenshots are direct CDP PNG output, without retouching, compositing, cropping or substituted business DOM/API responses. This provenance statement applies to the four files above; no third-party comic artwork is included in this screenshot set.
+| File | Content | Viewport / PNG pixels |
+| --- | --- | --- |
+| `yomifolio-library.png` | Four works, actual covers, saved reading progress | 1280 × 820 |
+| `yomifolio-series.png` | Pepper&Carrot metadata and two episode archives | 1280 × 1100 |
+| `yomifolio-reader-desktop.png` | Pepper&Carrot, paged double-page reading | 1440 × 1000 |
+| `yomifolio-reader-mobile.png` | Pepper&Carrot, continuous vertical reading | 390 × 844 |
 
-## Original demonstration material
+UI: English, Midnight theme, device scale factor 1. The mobile image uses Chrome touch emulation, not a physical phone. The browser produced the PNGs directly; they were not retouched, composited, or cropped afterward. Cover framing and reader scaling are the application's normal behavior. Capture machine clock: 2026-11-20 UTC; application source base: `3e8226cf`, with current `web/dist`.
 
-`scripts/demo-art.mjs` draws original geometric comic illustrations with browser Canvas: a lantern-lit city, bridges, a scarf-wearing traveler, night skies, ink-like architectural lines and narrative panels. Series vary in palette, skyline, celestial motifs and character position; the three featured covers also vary by book. Each archive contains a cover and six illustrated story pages, with fictional narration/dialogue. This is deliberately stylized procedural comic art, not a reproduction of published manga.
+Four real works produce five local CBZ samples. The fixture includes complete Pepper&Carrot episode stories, excerpts of the other independent comics, and a **cover-only sample** of the Japanese manga. Page counts reflect these samples, not the lengths of the published books. Summaries identify the samples; no ratings or publication history were invented. ComicInfo imports, cover generation, metadata edits, and progress all use the real scanner/application APIs. Directly placed archives appear as standalone books, not nested volumes.
 
-The twelve fictional works are:
+## Artwork licenses and attribution
 
-- The Lantern Atlas
-- Cloudline Courier
-- The Quiet Observatory
-- Moss & Mercury
-- Tideglass Station
-- Paper Moon Orchard
-- The Copper Heron
-- Winter Signal
-- A Garden Above
-- The Last Tram Home
-- Inkstone Harbor
-- Small Hours Society
+The application's [Apache-2.0 license](../LICENSE) does **not** relicense these comics. Reusing a screenshot must respect the licenses of every artwork visible in it, including attribution and applicable ShareAlike conditions. The credits below are part of the screenshot attribution; keep them with redistributed images. Licensors do not endorse Yomifolio.
 
-“Rowan Vale”, “Paper Lantern Studio”, the stories and their metadata are fictional demo identities. There are 17 CBZ books in total; The Lantern Atlas has three. Archives are placed directly under each series directory, so the real UI correctly labels them standalone books, not nested volumes. ComicInfo.xml is imported by the real scanner. The featured summary, tags, rating, author and reading progress are saved through authenticated application APIs, not injected into the screenshot.
+### Pepper&Carrot — David Revoy
 
-These are project-original demonstration assets; no real manga IP, personal reading library, personal account or personal configuration was used. No external image/font downloads, scraper, LLM or AI image-upscaling service was used. This note records provenance, not a separate license grant; consult the repository's licensing terms for reuse.
+- Work: [Pepper&Carrot](https://www.peppercarrot.com/), by **David Revoy**. Artwork and scenario: David Revoy; English proofreading for Episode 1: Amireeti and Alex Gryson. Further episode credits appear on the linked source pages.
+- License: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), confirmed on the [official license page](https://www.peppercarrot.com/en/license/index.html).
+- Sources: [Episode 1: The Potion of Flight](https://www.peppercarrot.com/en/webcomic/ep01_Potion-of-Flight.html), [Episode 2: Rainbow Potions](https://www.peppercarrot.com/en/webcomic/ep02_Rainbow-potions.html), and David Revoy's [Book One cover artwork](https://www.peppercarrot.com/0_sources/0ther/artworks/low-res/2016-02-24_vertical-cover_remake_by-David-Revoy.jpg).
+- Processing: official English low-resolution JPEG pages, in original story order. The first archive uses the official cover artwork followed by Episode 1's three story pages; the second uses Episode 2's two story pages. Episode title/credit sheets are not included in the reading samples; attribution is provided here. No panels were redrawn, recolored, or rearranged.
 
-## Reproduce
+### ブラックジャックによろしく — 佐藤秀峰
 
-Prerequisites: Windows, Node.js 24+ (native WebSocket/fetch), Python 3 (standard-library `zipfile` only), Go, and Chrome. No Playwright, Puppeteer, Pillow or additional npm package is needed. The captured run used Node 24.21.0, Go 1.27.4 and Chrome 157.0.8103.51. Prepare current `web/dist` using the project's normal frontend build if it is missing or stale; the script builds `./cmd/server` from current source.
+**ブラックジャックによろしく 佐藤秀峰 / Give My Regards to Black Jack / SHUHO SATO**
 
-From the repository root, in PowerShell with Node, Python and Go on PATH:
+- Source: the author's [Complete Edition release announcement](https://note.com/shuho_sato/n/n4a30c9db7916), using its [standalone Complete Edition 1 cover](https://assets.st-note.com/img/1719392768210-KcrhLzZSb1.jpg?width=1200).
+- Permission: the author's [official secondary-use terms](https://www.densho810.com/free/index.html). This is a **custom permission, not a Creative Commons license**. It permits commercial and noncommercial reproduction, public transmission, and adaptation of this work, subject to its conditions. The sequel is excluded; electronic bookstores/Kindle have separate restrictions.
+- Processing: the author-published cover JPEG was packaged unchanged into a one-image local CBZ. The complete volume was **not** downloaded or included. Official downloadable archives were unavailable during capture; the source is the author's own announcement, not a scan of a printed edition.
+- **Publication follow-up:** send the public URL, description of this README/screenshot use, and contact information to `info@densho810.com` **within one month after publication**, as required by the terms. Preparation of these files is not proof that this report has been sent. The repository maintainer must complete it when publishing.
+
+### Coffee For You — SacredVisionsStudio / Avery Nakashima
+
+- Work, author download, and license declaration: [Coffee For You](https://sacredvisionsstudio.itch.io/coffeeforyou), by **SacredVisionsStudio / Avery Nakashima**.
+- License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- Processing: pages 1–9 of the author's 10-page PDF, including the real front cover, rendered as full-page 1200-pixel-wide images with MuPDF and converted to JPEG using FFmpeg. Original page order and artwork are preserved; this is an excerpt, not a complete edition.
+
+### Les aventures inutiles de Superflu — Gee
+
+- Work and publisher download: [Les aventures inutiles de Superflu](https://editions.ptilouk.net/superflu/), by **Gee**, Ptilouk Éditions; [source PDF](https://editions.ptilouk.net/files/les_aventures_inutiles_de_superflu_-_gee.pdf).
+- License: [CC BY-SA 2.0 France](https://creativecommons.org/licenses/by-sa/2.0/fr/).
+- Processing: pages 1–9 of the publisher's 51-page PDF, including the real front cover, rendered and converted as above. Original page order and artwork are preserved; this is an excerpt.
+
+## Reproduce with your own authorized samples
+
+Prerequisites: Windows, Node.js 24+ (native WebSocket/fetch), Python 3 (standard library), Go, and Chrome. Prepare current `web/dist` with the normal frontend build. PDF rendering tools are needed only when preparing PDF-sourced images; **the application imports CBZ images, not PDFs**.
+
+Download artwork from the credited sources and comply with its current terms. Create a local JSON manifest; image paths are relative to that manifest. Each series supplies `title`, `author`, `language`, `summary`, `tags`, and `books`; each book supplies `title`, optional `number`, and an ordered `pages` array. Set `focus: true` on the series to show in the detail/reader captures. For example:
+
+```json
+[
+  {
+    "title": "Your authorized sample",
+    "author": "Actual author",
+    "language": "en",
+    "summary": "Accurate description and sample scope.",
+    "tags": ["Fantasy"],
+    "focus": true,
+    "books": [
+      {"title": "Episode 1", "number": 1, "pages": ["cover.jpg", "page-01.jpg"]}
+    ]
+  }
+]
+```
+
+From the repository root, with Node, Python, and Go on PATH:
 
 ```powershell
-$env:GOCACHE = Join-Path (Get-Location) '.gocache' # optional; an existing shared cache is also suitable
 $env:CHROME_PATH = 'C:/Program Files/Google/Chrome/Application/chrome.exe' # default
-node scripts/capture-demo.mjs
+node scripts/capture-demo.mjs .tmp/authorized-comics/capture-manifest.json
 ```
 
-The script refuses occupied ports and an existing `.tmp/yomifolio-demo` directory. For another run, first move that **demo directory only** to an unused name under `.tmp`; it never deletes/reuses an existing library. The four screenshot destinations above are intentionally overwritten on success.
+The manifest and source downloads are deliberately untracked. The script refuses occupied ports or an existing `.tmp/yomifolio-demo` directory. For another run, move **that demo directory only** to an unused name under `.tmp`. It overwrites the four named screenshots; it does not delete or reuse an existing library.
 
-All runtime paths are explicit absolute paths beneath gitignored `.tmp/yomifolio-demo`: a new YAML configuration, SQLite database, cache, logs, generated artwork/CBZ library, server executable and independent Chrome profile. `-data-dir` alone does **not** isolate the database/cache; the script sets those separately. The server binds only `127.0.0.1:18080`, Chrome debugging only `127.0.0.1:19222`; protocols remain disabled. The browser blocks requests outside the local origin (data/blob images excepted) and disables background services/DNS resolution for outside hosts. The script does not run `cmd/sampledata`, touch normal application configuration or connect to an existing browser.
+The script sets explicit database, cache, configuration, logs, executable, and browser-profile paths under `.tmp/yomifolio-demo`; `-data-dir` alone would isolate only logs. Server and Chrome debugging bind to loopback (`18080` and `19222`); integrations remain disabled. Browser requests outside the local origin are blocked, apart from data/blob URLs. No normal configuration, private library, or existing browser is used.
 
-The foreground orchestrator starts the server and Chrome, creates a fresh demo administrator, imports CBZs through the library API, waits for scan and independent cover tasks to complete, sets real metadata/progress, then visits `/library/{id}`, `/series/{id}` and `/reader/{id}`. It waits for visible images to have nonzero natural dimensions, rather than relying on network-idle with SSE. Both child processes are stopped in `finally`; do not detach the orchestrator. Runtime evidence stays in `.tmp/yomifolio-demo/{capture,tasks}.json` and `process.log`. No demo credentials are needed outside this disposable fixture.
-
-## Checks for this capture
-
-- Real scan: 17 archives processed, zero failed; independent cover generation: 17 covers, zero failed; both tasks `completed`.
-- All four final files were opened and visually inspected: populated UI/artwork, no error/login/loading screen or modal dialog.
-- PNG dimensions match the table; every file is below 0.5 MiB. Server/debugging ports were closed after capture.
-- Scripts pass `node --check`; only new screenshot/material documentation and reusable scripts were added.
-
-SHA-256:
-
-```text
-34aedd89fa014f94a476db7d0889a3455ea570b952a9c8ba2d889e206d872597  yomifolio-library.png
-0a136247ddac30c9e9eb429810a3738ab69976211c0dd67a369af08fbf68ee4e  yomifolio-series.png
-490fe8bb295ce8498fd9229f76cd2f8adc4081ff663cb88372686e8954944205  yomifolio-reader-desktop.png
-af56ab2e067983d14d3a869d8bf03a16dd3a88da350e47fb6d9d54be5637093b  yomifolio-reader-mobile.png
-```
-
-Reproduction follows the same process/content but is not promised to be byte-identical across browser versions, system fonts, scan scheduling or persisted reading progress.
+The real scan and cover tasks must complete before capture; visible images must load. Both child processes stop in `finally`. Local evidence remains in `.tmp/yomifolio-demo/{capture,tasks}.json` and `process.log`. The recorded run processed five archives and generated five covers with zero failures. All four images were opened and visually inspected. Reproduction is not promised to be byte-identical across browser versions, fonts, or reading-state timing.
