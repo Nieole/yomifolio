@@ -105,6 +105,43 @@ type SeriesAuthor struct {
 
 // SeriesMetadata 供多数据源统一返回的内部使用的数据承载对象
 type SeriesMetadata struct {
+	MatchEvidence *MatchEvidence `json:",omitempty"`
+	Title         string
+	OriginalTitle string // 原名/别名
+	Summary       string
+	Publisher     string
+	Status        string
+	CoverURL      string
+	Rating        float64
+	Tags          []string
+	Authors       []SeriesAuthor // 作者/绘师等参与人员
+	SourceID      int            // 外部数据源条目 ID（如 Bangumi subject ID）
+	SourceURL     string
+	Provider      string
+	Confidence    float64
+	ReleaseDate   string // 发行日期
+	VolumeCount   int    // 册数/卷数
+}
+
+// MatchEvidence is a short, inspectable decision record, never hidden model reasoning.
+// Source metadata is evidence only; cover/link presence does not add proposal fields.
+type MatchEvidence struct {
+	Summary           string                   `json:"summary"`
+	Query             string                   `json:"query"`
+	UserID            int64                    `json:"user_id"`
+	CredentialID      string                   `json:"credential_id"`
+	IdentityConfirmed bool                     `json:"identity_confirmed"`
+	EditionConfirmed  bool                     `json:"edition_confirmed"`
+	Fields            map[string]FieldEvidence `json:"fields"`
+}
+type FieldEvidence struct {
+	CandidateID string      `json:"candidate_id"`
+	Source      string      `json:"source"`
+	Metadata    SourceFacts `json:"metadata"`
+}
+
+// SourceFacts retains source values without recursively embedding decision records.
+type SourceFacts struct {
 	Title         string
 	OriginalTitle string // 原名/别名
 	Summary       string

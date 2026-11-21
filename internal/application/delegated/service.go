@@ -78,10 +78,11 @@ type Store interface {
 	Series(context.Context, int64) (Series, error)
 }
 type Service struct {
-	store   Store
-	content *bookcontent.Service
-	access  bookcontent.LibraryAccess
-	runs    *RunAccess
+	store    Store
+	content  *bookcontent.Service
+	access   bookcontent.LibraryAccess
+	runs     *RunAccess
+	matching *MatchingAccess
 }
 
 func New(store Store) *Service { return &Service{store: store} }

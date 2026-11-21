@@ -30,3 +30,8 @@ func (s ExternalSources) ai(provider, apiMode, baseURL, requestPath, model, apiK
 func (s ExternalSources) configuredAI(cfg config.Config) metadata.AIProvider {
 	return s.ai(cfg.LLM.Provider, cfg.LLM.APIMode, cfg.LLM.BaseURL, cfg.LLM.RequestPath, cfg.LLM.Model, cfg.LLM.APIKey, cfg.LLM.Timeout)
 }
+
+// MetadataProvider resolves the same production source factory for application use cases.
+func (s ExternalSources) MetadataProvider(cfg config.Config, name string) metadata.Provider {
+	return s.metadata(cfg, name)
+}
