@@ -52,6 +52,7 @@ type Source struct {
 	ID             int64
 	LibraryID      int64
 	Path           string
+	CoverPath      string
 	FileModifiedAt time.Time
 	Size           int64
 	PageCount      int64

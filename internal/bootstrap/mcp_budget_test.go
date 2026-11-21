@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -37,7 +40,24 @@ func (a budgetAI) TestLLM(ctx context.Context, _ string) (string, error) {
 }
 
 func TestMCPModelBudgetPersistsWithoutReplay(t *testing.T) {
-	ctx := context.Background()
+	runMCPModelBudgetPersists(t, false)
+}
+
+func TestMCPModelBudgetStdioReconnectWithoutReplay(t *testing.T) {
+	runMCPModelBudgetPersists(t, true)
+}
+
+func runMCPModelBudgetPersists(t *testing.T, stdio bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	defer cancel()
+	var binary string
+	if stdio {
+		binary = filepath.Join(t.TempDir(), "mcp-proxy.exe")
+		build := exec.CommandContext(ctx, "go", "build", "-o", binary, "../../cmd/mcp-proxy")
+		if out, err := build.CombinedOutput(); err != nil {
+			t.Fatalf("build: %v %s", err, out)
+		}
+	}
 	store, cfg := fixture(t)
 	lib, err := store.CreateLibrary(ctx, database.CreateLibraryParams{Name: "Budget", Path: t.TempDir(), ScanMode: "none"})
 	if err != nil {
@@ -70,11 +90,24 @@ func TestMCPModelBudgetPersistsWithoutReplay(t *testing.T) {
 	connect := func(p *bootstrap.Process) (*httptest.Server, *mcp.ClientSession) {
 		router := chi.NewRouter()
 		p.HTTP.SetupRoutes(router)
-		server := httptest.NewTLSServer(router)
+		var server *httptest.Server
+		if stdio {
+			server = httptest.NewServer(router)
+		} else {
+			server = httptest.NewTLSServer(router)
+		}
 		snapshot := cfg.Snapshot()
 		snapshot.MCP.PublicURL = server.URL
+		snapshot.MCP.AllowLANHTTP = stdio
 		cfg.Replace(&snapshot)
-		session, e := mcp.NewClient(&mcp.Implementation{Name: "budget", Version: "1"}, nil).Connect(ctx, &mcp.StreamableClientTransport{Endpoint: server.URL + "/mcp", HTTPClient: &http.Client{Transport: &bearerTransport{base: server.Client().Transport, token: issued.Token}}}, nil)
+		var transport mcp.Transport = &mcp.StreamableClientTransport{Endpoint: server.URL + "/mcp", HTTPClient: &http.Client{Transport: &bearerTransport{base: server.Client().Transport, token: issued.Token}}}
+		if stdio {
+			cmd := exec.CommandContext(ctx, binary, "--url", server.URL, "--allow-lan-http")
+			cmd.Dir = t.TempDir() // No application config/database in the helper's working directory.
+			cmd.Env = append(os.Environ(), "YOMIFOLIO_MCP_TOKEN="+issued.Token)
+			transport = &mcp.CommandTransport{Command: cmd}
+		}
+		session, e := mcp.NewClient(&mcp.Implementation{Name: "budget", Version: "1"}, nil).Connect(ctx, transport, nil)
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -110,6 +143,23 @@ func TestMCPModelBudgetPersistsWithoutReplay(t *testing.T) {
 	}
 	call("library_assess_match", map[string]any{"search_id": search["search_id"], "allowance": 2}, true)
 	call("library_find_series", map[string]any{"library_ids": []int64{lib.ID}}, false)
+	session.Close()
+	sessionClient := mcp.NewClient(&mcp.Implementation{Name: "budget-reconnect", Version: "1"}, nil)
+	var reconnectTransport mcp.Transport = &mcp.StreamableClientTransport{Endpoint: server.URL + "/mcp", HTTPClient: &http.Client{Transport: &bearerTransport{base: server.Client().Transport, token: issued.Token}}}
+	if stdio {
+		cmd := exec.CommandContext(ctx, binary, "--url", server.URL, "--allow-lan-http")
+		cmd.Dir = t.TempDir()
+		cmd.Env = append(os.Environ(), "YOMIFOLIO_MCP_TOKEN="+issued.Token)
+		reconnectTransport = &mcp.CommandTransport{Command: cmd}
+	}
+	session, err = sessionClient.Connect(ctx, reconnectTransport, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reconnected := call("library_assess_match", map[string]any{"search_id": search["search_id"], "allowance": 1}, false)
+	if reconnected["operation_id"] != started["operation_id"] || reconnected["run_id"] != started["run_id"] || reconnected["used"] != float64(1) || reconnected["remaining"] != float64(0) || calls.Load() != 1 {
+		t.Fatal("helper reconnect reset ownership/usage", reconnected, calls.Load())
+	}
 	hold.Store(true)
 	pendingSearch := call("library_search_sources", map[string]any{"series_id": series.ID, "query": "Local"}, false)
 	call("library_wait_run", map[string]any{"run_id": pendingSearch["run"].(map[string]any)["run_id"], "timeout_ms": 30000}, false)

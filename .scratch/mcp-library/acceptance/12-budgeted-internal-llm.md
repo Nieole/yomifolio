@@ -2,8 +2,9 @@
 
 ## 工作树与结论
 
-- 唯一修改树：`C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-12`，分支 `mcp-model-budget`，HEAD `b3083e4bd2e608521519f05fb1467fead8e0f6e8`。接续已有未提交实现，未删除/重做；所有变更仍未提交。未修改08或父树/TODO。
-- 完成12实现及下述验证；工单仍为 ready-for-agent，供父级审阅/集成，ADR0016仍 draft。不等于整个 MCP effort 或08验收完成。
+- 唯一修改树：`C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-12`，分支 `mcp-model-budget`。独立 merger 核验 HEAD `d6c92649062a0e265f568f215b0b26389680bf1c`；待完成的合入为 `implement-mcp-library` / MERGE_HEAD `46d06126df577d1c772c4781165772277a01ac1d`，merge-base `b3083e4bd2e608521519f05fb1467fead8e0f6e8`。
+- 本次仅逐段协调 CHANGELOG 与 api/SPEC 冲突、复用预算验收增加真实 stdio helper 重连测试、更新12记录；其余05自动合入文件保持。未 stage/commit/merge/reset/abort；索引仍显示两个 UU，由父级检查、stage并完成已有 merge。
+- 12 **merge-ready（内容与门禁）**；工单仍 ready-for-agent，ADR0016仍 draft。不等于整个 MCP effort 或08完成。05 RAR共享锁取消的另树窄修不由本票处理，也不以本轮绿色冒充该缺陷已修。
 
 ## API 与记账边界
 
@@ -17,7 +18,7 @@
 - 新服务端搜索可成为新的明确声明操作；按ADR0016接受 agent 转述，不独立核验真实用户批准，不承诺阻止恶意 agent 伪造新指令，不是货币成本上限或受信任人工审批。
 - 只保存 consistent/different/uncertain/failed/invalid_response/unknown 标签；不保存模型原始输出/内部推理/生成评分，不写系列、不自动确认歧义或建提案。仍须07显式确认及字段来源。额度表不充当08元数据审计/撤销表。
 
-## 实际验证
+## Worker 历史验证（合并前）
 
 环境：`GOTOOLCHAIN=go1.26.10`；共享01内容寻址 GOCACHE；本树 `.tmp/budget12-resume` GOTMPDIR 与独立 lintcache。无真实付费来源，无测试 sleep。
 
@@ -35,6 +36,32 @@
 ## 复用与未覆盖边界
 
 - 复用：`delegated.Subject`、`PrepareRun`、`Checkpoint`、`AuthorizeTx`、`ExternalSources.ConfiguredAI`、`Runs.Start`；新增 `CallBudgetedModel` 供可信应用用例复用原子预留，`WithSingleModelRequest` 防止生产模型请求隐式重放。外部注入 AI 工厂属于可信系统接缝，须自身遵守单请求及取消契约。
-- 本票没有新增独立 stdio 子进程预算烟测；stdio为同一HTTP的代理，没有本地运行时/计数，完整后端中既有代理回归通过，预算重连/重启语义在通用HTTP客户端边界验证。没有做真实进程强杀/真实收费实验；重开服务与取消屏障验证持久记账，不承诺外部效果 exactly-once。
+- 独立 merger 已补真实 stdio 子进程预算验收（见下）；未做进程强杀或真实收费实验。票12要求跨请求/断线重连/重启记账，不要求强杀；通过重开生产服务与取消屏障检查持久消耗，不承诺外部效果 exactly-once。
 - 准入、run_id关联与网络调用不是分布式原子事务；中途故障可停留 not_started/unknown，保守消耗不退款，客户端应查询而非自动重发。运行历史裁剪、元数据审计/undo、清理UI等不在12实现范围。
 - 建议 subject：`feat(mcp): enforce durable per-operation internal model allowances`。
+
+## 独立 merger 实际检查（05+07+12 组合树）
+
+环境：`GOTOOLCHAIN=go1.26.10`（未用默认1.27.4）；`GOCACHE=C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-01/.tmp/merger01/gocache126`；本树 `.tmp/review12` GOTMPDIR、独立 `.tmp/review12/lintcache`。下面均为本次实际命令，不引用旧reviewer的lint结果。
+
+- 阅读 worker-guide、AGENTS、effort spec、票12、原acceptance、ADR0016及 application/api/metadata/bootstrap/database/architecture/proxy 长期契约，按真实diff逐项检查。未发现12功能阻塞。永久归属/不可变额度、实际事务内当前授权及原子预留、失败不退款/同item不重试、重启不恢复付费发送均保留。
+- 三个生产来源的统一发送点均经 `modelRequest`；上下文外直接沿原 `client.Do`，上下文内复制 client 但复用 Transport，不新运行时、不修改共享client；禁重定向及清除GetBody防止h2重放。真实TLS/h2 REFUSED_STREAM回归与普通调用兼容测试均实际通过。可信注入工厂的契约不是对任意恶意替身的网络拦截保证。
+- `Subject` 来源仍是服务端认证；所有模型协议错误经 `publicMCPToolError` 转通用错误，持久化只有白名单标签，不透传provider错误/SQL/path。模型辅助不写系列、不生成评分或持久推理；额度声明不被当作独立人工批准。
+- api冲突逐段合并：图片与模型工具同时列出，保留07工具；05图片请求取消与已接纳后台运行断线继续语义不混淆。所有工具经过最终256KiB响应硬限；生产默认来源工厂与同一runtime绑定未丢失。
+- 新 `TestMCPModelBudgetStdioReconnectWithoutReplay` 复用原预算持久化 fixture/屏障，通过通用SDK `CommandTransport` 启动真实构建的 `cmd/mcp-proxy`，helper在空临时目录工作。跨请求消费后关闭helper、启动新helper连同一生产服务，重复声明返回相同 operation_id/run_id/used/remaining，AI调用仍为1；随后在进行中AI屏障处关闭helper与服务，再重开bootstrap/第三个helper读取，消耗保留、unknown/unprocessed准确、不重发。无sleep、无新业务实现。原HTTP持久化测试保留并复用同一验收体。
+
+实际命令及结果（日志均在 `.tmp/review12/`）：
+
+1. `go test -p 1 ./internal/metadata ./internal/bootstrap -run 'Test.*(Model|Budget)' -count=1 -timeout=3m`：通过，`targeted.log`。
+2. `go test -p 1 ./internal/metadata -count=2 -timeout=3m`、`go test -p 1 ./internal/bootstrap -run 'Test.*(Model|Budget)' -count=2 -timeout=3m`：两轮通过，`metadata-two.log`、`budget-two.log`。
+3. `go test -p 1 ./internal/bootstrap ./internal/api ./internal/application/delegated ./cmd/mcp-proxy -run 'Test.*MCP' -count=2 -timeout=5m`：两轮通过，`mcp-two.log`（后两个包无匹配测试/无测试文件，如实保留输出）。
+4. 一次组合完整后端：`go test -p 1 ./... -count=1 -timeout=10m`，外层1800s，全部通过，退出0，`full.log`/`full.exit`。无失败盲重试或删测试。
+5. `gofmt -l ./cmd ./internal` 输出空；本次独立 `golangci-lint run` 为 `0 issues.`，`gofmt.log`/`lint.log`。
+6. `go run ./cmd/tsgen` 生成32 types，`git diff --exit-code -- web/src/api/generated.ts` 无漂移，`drift.log`。`sql/query.sql` 与新 `schema_model_budget.sql` 均ASCII；sqlc输入未变，无需sqlc。未触及UI，不跑前端门禁。
+7. 最终 `git diff --check` 通过（`diff-check.log`）；冲突文本标记为零。最初检查发现本次Python文本写入把两个冲突文档误转CRLF，已恢复原LF；不是既有功能失败，没有因此重跑后端。Go文件未随之改变。
+
+### 真正剩余门禁
+
+- 父级审阅本树内容后，stage两个已解决文本冲突并完成当前merge；本子任务禁止索引/历史变更，因此UU仍存在，不表示内容冲突尚存。
+- 父级接入05共享RAR锁取消窄修、08及任何后续变动后，需在最终组合树重新验收；本报告不批准尚未见到的变更，也不宣称整个effort交付。
+- 不存在12特有未完成验收：stdio预算子进程缺口已补；进程强杀/真实收费不属本票必需门禁。ADR0016仍draft，正式决策审阅归父级/维护者。
