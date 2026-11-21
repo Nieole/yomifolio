@@ -29,3 +29,5 @@ parent: mm-architecture
 - `provider.go`、`locale.go`、`provider_budget.go`、`errors.go`：公开结果、状态出口、请求预算及错误处理。
 - `llm_status_test.go`、`prompts_locale_test.go`、`provider_routing_test.go`：状态缺省、语言与 LLM 路由。
 - `provider_budget_test.go`、`retry_loop_test.go`、`errors_test.go`：跨实例并发、重试取消、请求体重建与脱敏截断。
+
+委托额度路径通过 `WithSingleModelRequest` 限定一次准入上下文只能发送一次实际 HTTP 模型请求；三个生产模型来源在 client.Do 前执行实时检查，拒绝同上下文第二次发送并禁用重定向，且仅在该路径移除请求体重放配方，阻止 Go HTTP/2 在 REFUSED_STREAM/GOAWAY 后透明重发已经发送的 POST；尚未发送的连接选择不消耗额外次数，避免隐藏重复付费 POST。没有该上下文的网页/既有智能用例保持原行为。来源不拥有额度数据库、不退款、不恢复或重试委托操作；额度准入及证据规则归 `mm-application`。

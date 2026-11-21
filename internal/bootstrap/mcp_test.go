@@ -251,6 +251,7 @@ func assertMCPToolDiscovery(t *testing.T, result *mcp.ListToolsResult, err error
 		"library_list_books": true, "library_get_book_clues": true,
 		"library_search_sources": false, "library_get_source_search": true,
 		"library_propose_match": false, "library_get_match_proposal": true,
+		"library_assess_match": false, "library_get_model_operation": true,
 		"library_start_scan": false, "library_get_run": true,
 		"library_list_runs": true, "library_wait_run": true, "library_cancel_run": false,
 	}
