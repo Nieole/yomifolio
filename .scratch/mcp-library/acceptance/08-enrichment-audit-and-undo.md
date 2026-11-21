@@ -138,3 +138,10 @@ Go 1.26.10、约定共享 GOCACHE、本树 GOTMPDIR、独立 `.tmp/08/lintcache-
 
 - **已知 12 正常运行历史 pruning 后预算操作投影失败尚在本组合代码中**：GetModelOperation 仍依赖 GetRun，历史裁剪后持久额度不能正常公开投影。用户已安排 12 专属树修复；本轮不重复实施，也不以全量绿灯宣称该未覆盖场景已修复。父级须稍后组合该窄修及其回归后再批准整个组合。
 - 无本轮新发现的实质阻塞；08 failed-undo 收据原子性阻塞已由先前窄修解决，本轮再次验证。父负责索引冲突标记、完成 merge/提交及 request_review。09/10/11/13 和真实浏览器像素/收费实验仍不在此次完成范围。
+
+### Final integration and independent review
+
+- `baaae3a0` completes integration with the independently approved 12 pruning fix. Latest enrichment/delegated/bootstrap full package tests passed; all merge markers removed.
+- Host `request_review` rejected the initial call because no change set had been attached to this step; this rejection is not an approval. A fresh read-only reviewer instead inspected the exact complete range `de3a7e56..baaae3a0` (44 files), including the failed-undo receipt fix, and returned **Approve** with no new blocking findings.
+- Independent Go1.26.10 enrichment/seriesmeta/bootstrap/metadata targeted tests passed, frontend operation-history tests passed 5/5, exact diff whitespace and related Go formatting checks passed. This reviewer did not repeat full-project gates or paid model calls; those remain the separately recorded combination checks above.
+- Ticket08 is complete. Subsequent09/10/11/13 and final14 acceptance remain open; no actual browser screenshot was produced.

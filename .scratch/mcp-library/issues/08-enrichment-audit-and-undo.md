@@ -4,7 +4,7 @@
 
 **Blocked by:** 07 检索多来源候选并形成有依据的提案。
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 描述只补空，保留非空值及锁定字段；筛选内容标签后追加、不删除已有成员、不纳入个人标记与来源噪声，补充来源链接。
 - [x] 缺失评分使用有效站点评分统一为十分制后等权平均，一个来源即采用其值；保存原分数、尺度与公式，不覆盖现有评分，不引入个人评分或模型自评。
@@ -18,6 +18,8 @@
 
 
 ## Comments
+
+- Final closure: integrated `baaae3a0` includes 12 pruning repair; latest relevant full packages pass. Host review initially refused a missing change set (not counted as approval); a fresh independent read-only reviewer inspected all44 files in `de3a7e56..baaae3a0`, returned Approve, and passed targeted Go plus5/5 webpage tests. Full combination backend/frontend gates are recorded in acceptance. Earlier pending notes below are historical.
 
 - 接续实施（mcp-enrichment-audit，起点 b3083e4b）：保留前代理全部未提交功能改动，独立检查后补冲突审计完整性、批量响应预算、Settings 类型接线与实际测试缺口。保持 ready-for-agent，未 stage/commit；由父代理审阅和集成。
 - 验收与真实失败/修复记录见 `../acceptance/08-enrichment-audit-and-undo.md`。作者、封面、LLM、撤销材料清理均未扩展；未编辑 12 工作树或父树。
