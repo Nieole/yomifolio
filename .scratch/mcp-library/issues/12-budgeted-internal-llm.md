@@ -4,7 +4,7 @@
 
 **Blocked by:** 07 检索多来源候选并形成有依据的提案。
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 内部 LLM 必须同时满足当前用户权限、凭据独立模型能力及本次明确次数额度；缺少任一条件均不调用，其他获准查询仍可使用。
 - [x] 按 mm-adr-0016 草案记录的已选边界，接受 agent 转述额度，不新增受信任人工审批渠道，也不把计数当作独立用户批准证明；agent 声明不能扩大凭据权限。
@@ -16,6 +16,8 @@
 - [x] 后端门禁及受影响契约生成检查通过，明确记录用量保证与委托信任的区别，ADR 不因实现者自行判断而转 active。
 
 ## Comments
+
+- Final closure: `1e5995b0` integrates the pruning correction for `rc_69896dd6`. Independent re-review approved durable projections, unchanged current authorization, HTTP/stdio regressions and the full backend/format/Go1.26.10 lint gates. Historical pending implementation notes below are superseded; ADR0016 remains draft.
 
 - Worker mcp-model-budget: HEAD/merge-base verified b3083e4b; implementing uncommitted. Confirmed seam: production bootstrap + generic MCP client + deterministic external AI factory, plus production provider HTTP boundary for no hidden reissue. No UI. Budget operations use a separate model-budget namespace/table, not metadata audit.
 
