@@ -15,12 +15,25 @@ import (
 	"yomifolio/internal/api"
 	"yomifolio/internal/application/configuration"
 	"yomifolio/internal/application/delegated"
+	"yomifolio/internal/application/enrichment"
 	"yomifolio/internal/config"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/seriesmeta"
 )
 
 // targets 是纳入生成的契约结构体（顺序即输出顺序）。被引用的具名结构体也必须在此列出
 // （如 ValidationResult 引用 ValidationIssue，故两者都要在此）。
 var targets = []reflect.Type{
+	reflect.TypeOf(enrichment.Operation{}),
+	reflect.TypeOf(enrichment.Page{}),
+	reflect.TypeOf(enrichment.State{}),
+	reflect.TypeOf(enrichment.FieldAudit{}),
+	reflect.TypeOf(delegated.Subject{}),
+	reflect.TypeOf(metadata.FieldEvidence{}),
+	reflect.TypeOf(metadata.SourceFacts{}),
+	reflect.TypeOf(metadata.SiteRating{}),
+	reflect.TypeOf(metadata.SeriesAuthor{}),
+	reflect.TypeOf(seriesmeta.Link{}),
 	reflect.TypeOf(delegated.Restrictions{}),
 	reflect.TypeOf(delegated.Credential{}),
 	reflect.TypeOf(delegated.IssuedCredential{}),
@@ -135,7 +148,13 @@ func emitFields(t reflect.Type, known map[string]bool, usedNulls map[string]bool
 			}
 		}
 		optional := omitempty || f.Type.Kind() == reflect.Pointer
+		if t == reflect.TypeOf(enrichment.State{}) {
+			optional = false
+		}
 		tsT := tsType(f.Type, known, usedNulls)
+		if t == reflect.TypeOf(enrichment.State{}) && f.Type.Kind() == reflect.Pointer {
+			tsT += " | null"
+		}
 		opt := ""
 		if optional {
 			opt = "?"

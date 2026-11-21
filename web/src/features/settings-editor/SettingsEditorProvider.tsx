@@ -9,7 +9,7 @@ import { applySectionSnapshot, type ConfigSectionKey, type EditorSectionKey } fr
 import type { KOReaderForm, KOReaderStatus } from '../koreader-settings/types';
 import { EditSession } from './EditSession';
 
-export type SettingsSectionKey = EditorSectionKey | 'overview' | 'appearance' | 'tags' | 'users' | 'mcp' | 'maintenance';
+export type SettingsSectionKey = EditorSectionKey | 'overview' | 'appearance' | 'tags' | 'users' | 'mcp' | 'metadata-operations' | 'maintenance';
 
 interface EditorValue {
   config: Config | null;

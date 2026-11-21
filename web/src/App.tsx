@@ -30,6 +30,7 @@ const SettingsAIPage = lazy(() => import('./pages/settings/SettingsAIPage').then
 const SettingsKOReaderPage = lazy(() => import('./pages/settings/SettingsKOReaderPage').then((module) => ({ default: module.SettingsKOReaderPage })));
 const SettingsConnectionsPage = lazy(() => import('./pages/settings/SettingsConnectionsPage').then((module) => ({ default: module.SettingsConnectionsPage })));
 const SettingsTagsPage = lazy(() => import('./pages/settings/SettingsTagsPage').then((module) => ({ default: module.SettingsTagsPage })));
+const SettingsMetadataOperationsPage = lazy(() => import('./pages/settings/SettingsMetadataOperationsPage').then((module) => ({ default: module.SettingsMetadataOperationsPage })));
 const SettingsMCPPage = lazy(() => import('./pages/settings/SettingsMCPPage').then((module) => ({ default: module.SettingsMCPPage })));
 const SettingsUsersPage = lazy(() => import('./pages/settings/SettingsUsersPage').then((module) => ({ default: module.SettingsUsersPage })));
 const SettingsMaintenancePage = lazy(() => import('./pages/settings/SettingsMaintenancePage').then((module) => ({ default: module.SettingsMaintenancePage })));
@@ -130,6 +131,7 @@ function App() {
             <Route path="koreader" element={withRouteFallback(<SettingsKOReaderPage />)} />
             <Route path="connections" element={withRouteFallback(<SettingsConnectionsPage />)} />
             <Route path="tags" element={withRouteFallback(<SettingsTagsPage />)} />
+            <Route path="metadata-operations" element={withRouteFallback(<SettingsMetadataOperationsPage />)} />
             <Route path="mcp" element={withRouteFallback(<SettingsMCPPage />)} />
             <Route path="users" element={withRouteFallback(<SettingsUsersPage />)} />
             <Route path="maintenance" element={withRouteFallback(<SettingsMaintenancePage />)} />

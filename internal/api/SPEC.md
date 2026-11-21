@@ -66,3 +66,8 @@ MCP 安全入口仅接受 `mcp.public_url` 配置的精确 authority；有 Origi
 发现工具只映射应用用例与结构化结果，查询条件、分页、证据及响应上限归 `mm-application`；工具描述提供条件交集、默认页长、硬上限与后继用法。不提供路径参数、任意磁盘读取或整书下载。
 
 匹配工具只映射 `delegated.Service` 的完整用例；输入确认、来源白名单、分页/字节上限、临时证据寿命、持久提案证据及读/写能力映射归 `mm-application`。只返回结构化数据，文本不再复制一份候选；底层来源/SQL 错误统一脱敏。
+
+
+## 受限补充和操作历史
+
+MCP 的 enrichment state、单项/批量补充、操作查询/按系列分页与撤销工具直接委托 `enrichment.Service`，身份来自认证凭据，不接受调用者自报。工具声明只读或幂等提示，但最终以事务授权和持久重放结果为准。管理员网页 `GET /api/mcp/operations`、`GET /api/mcp/operations/{operationId}`、`POST /api/mcp/operations/{operationId}/undo` 复用网页认证和 CSRF，命令携带 request_key；普通用户不可管理或撤销。审计、响应预算、预期值与回滚契约归 `mm-application`。

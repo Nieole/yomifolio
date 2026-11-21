@@ -234,3 +234,20 @@ func TestNormalizeLocaleAndContext(t *testing.T) {
 		t.Errorf("LocaleFromContext(en) = %q, want en-US", got)
 	}
 }
+
+func TestBangumiSearchPreservesNativeSiteScore(t *testing.T) {
+	p := NewBangumiProvider()
+	p.httpClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		return metaJSONResponse(req, `{"total":2,"data":[{"id":1,"name":"Scored","rating":{"score":7.6}},{"id":2,"name":"Unrated"}]}`), nil
+	})}
+	rows, _, err := p.SearchMetadata(t.Context(), "score", 2, 0)
+	if err != nil || len(rows) != 2 {
+		t.Fatalf("%+v %v", rows, err)
+	}
+	if rows[0].SiteRating == nil || rows[0].SiteRating.Value != 7.6 || rows[0].SiteRating.Scale != 10 || rows[0].Rating != 7.6 {
+		t.Fatalf("native score: %+v", rows[0])
+	}
+	if rows[1].SiteRating != nil || rows[1].Rating != 0 {
+		t.Fatalf("unrated source invented score: %+v", rows[1])
+	}
+}

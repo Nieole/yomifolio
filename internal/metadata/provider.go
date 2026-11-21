@@ -112,6 +112,7 @@ type SeriesMetadata struct {
 	Publisher     string
 	Status        string
 	CoverURL      string
+	SiteRating    *SiteRating `json:",omitempty"`
 	Rating        float64
 	Tags          []string
 	Authors       []SeriesAuthor // 作者/绘师等参与人员
@@ -148,6 +149,7 @@ type SourceFacts struct {
 	Publisher     string
 	Status        string
 	CoverURL      string
+	SiteRating    *SiteRating `json:",omitempty"`
 	Rating        float64
 	Tags          []string
 	Authors       []SeriesAuthor // 作者/绘师等参与人员
@@ -157,4 +159,18 @@ type SourceFacts struct {
 	Confidence    float64
 	ReleaseDate   string // 发行日期
 	VolumeCount   int    // 册数/卷数
+}
+
+func siteScore(value, scale float64) *SiteRating {
+	if value <= 0 {
+		return nil
+	}
+	return &SiteRating{Value: value, Scale: scale}
+}
+
+// SiteRating preserves a public catalogue score on its original zero-based scale.
+// Nil means absent; it is never a personal or model-generated evaluation.
+type SiteRating struct {
+	Value float64 `json:"value"`
+	Scale float64 `json:"scale"`
 }

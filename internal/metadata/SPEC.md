@@ -29,3 +29,6 @@ parent: mm-architecture
 - `provider.go`、`locale.go`、`provider_budget.go`、`errors.go`：公开结果、状态出口、请求预算及错误处理。
 - `llm_status_test.go`、`prompts_locale_test.go`、`provider_routing_test.go`：状态缺省、语言与 LLM 路由。
 - `provider_budget_test.go`、`retry_loop_test.go`、`errors_test.go`：跨实例并发、重试取消、请求体重建与脱敏截断。
+
+
+`SiteRating` 保留公共站点原始分数和零基尺度，`SourceFacts` 随确认提案保留它。AniList averageScore 为 100 分制，Bangumi score 与 MyAnimeList mean 为 10 分制；来源的 0/缺失表示未提供，不伪造有效评分。已有 `Rating` 十分制转换不变，MangaDex、ComicVine 与 LLM 不新增推测站点评分。综合评分策略不在来源适配器内执行。

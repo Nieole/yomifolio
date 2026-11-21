@@ -71,6 +71,9 @@ func TestAniListSearchMetadataParsesFixture(t *testing.T) {
 		t.Errorf("CoverURL = %q, want extraLarge", m.CoverURL)
 	}
 	assertMetaFloat(t, "Rating", m.Rating, 8.8)
+	if m.SiteRating == nil || m.SiteRating.Value != 88 || m.SiteRating.Scale != 100 {
+		t.Fatalf("native site rating lost: %+v", m.SiteRating)
+	}
 	// genres 全部 + tag rank>=60；rank40 的 Minor 应被过滤。
 	wantTags := map[string]bool{"Action": true, "Adventure": true, "Pirates": true}
 	if len(m.Tags) != 3 {

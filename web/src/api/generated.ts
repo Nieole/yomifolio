@@ -4,6 +4,94 @@
  * 重新生成：`go run ./cmd/tsgen`；CI 会校验其与源一致。
  */
 
+export interface Operation {
+  version: number;
+  id: string;
+  request_key: string;
+  actor: Subject;
+  series_id: number;
+  library_id: number;
+  kind: string;
+  parent_id?: string;
+  created_at: string;
+  outcome: string;
+  reason: string;
+  before: State;
+  after: State;
+  fields: FieldAudit[];
+  undone_by?: string;
+  applied: boolean;
+  replayed: boolean;
+}
+
+export interface Page {
+  operations: Operation[];
+  next_before?: number;
+}
+
+export interface State {
+  title: string | null;
+  summary: string | null;
+  publisher: string | null;
+  status: string | null;
+  rating: number | null;
+  tags: string[];
+  links: Link[];
+}
+
+export interface FieldAudit {
+  field: string;
+  changed: boolean;
+  reason: string;
+  sources: FieldEvidence[];
+  formula?: string;
+}
+
+export interface Subject {
+  user_id: number;
+  credential_id: string;
+}
+
+export interface FieldEvidence {
+  candidate_id: string;
+  source: string;
+  metadata: SourceFacts;
+}
+
+export interface SourceFacts {
+  Title: string;
+  OriginalTitle: string;
+  Summary: string;
+  Publisher: string;
+  Status: string;
+  CoverURL: string;
+  SiteRating?: SiteRating;
+  Rating: number;
+  Tags: string[];
+  Authors: SeriesAuthor[];
+  SourceID: number;
+  SourceURL: string;
+  Provider: string;
+  Confidence: number;
+  ReleaseDate: string;
+  VolumeCount: number;
+}
+
+export interface SiteRating {
+  value: number;
+  scale: number;
+}
+
+export interface SeriesAuthor {
+  Name: string;
+  Role: string;
+}
+
+export interface Link {
+  name: string;
+  url: string;
+}
+
 export interface Restrictions {
   user_id: number;
   name: string;

@@ -313,6 +313,7 @@ func (b *BangumiProvider) convertToSeriesMetadata(best bangumiSubjectResult, ran
 		Summary:       best.Summary,
 		Publisher:     publisher,
 		CoverURL:      coverURL,
+		SiteRating:    siteScore(rating, 10),
 		Rating:        rating,
 		Tags:          tags,
 		Authors:       authors,

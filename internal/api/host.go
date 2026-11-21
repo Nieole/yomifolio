@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"yomifolio/internal/application/delegated"
+	"yomifolio/internal/application/enrichment"
 
 	"sync"
 	"time"
@@ -79,6 +80,7 @@ type LibraryDependencies struct {
 // AdministrationDependencies supplies configuration publication, not a Runtime.
 type AdministrationDependencies struct {
 	Delegated     *delegated.Service
+	Enrichment    *enrichment.Service
 	Configuration *configuration.Service
 	Store         AdministrationStore
 	Manager       *config.Manager
@@ -206,7 +208,7 @@ func (t *Transport) Bind(d HostDependencies) *Host {
 		readingLists: organization.readingLists, loadCollectionViews: organization.loadCollectionViews,
 		loadStaticCollectionSeries: organization.loadStaticCollectionSeries, loadSmartCollectionSeries: organization.loadSmartCollectionSeries, getSmartFilterByID: organization.getSmartFilterByID}
 	invalidate := d.Reading.Statistics.InvalidateAll
-	return &Host{mcp: newMCPHandler(d.Administration.Delegated, t.cfg), reader: reader, organizationHTTP: organization, administration: admin, content: media, events: t.events,
+	return &Host{mcp: newMCPHandler(d.Administration.Delegated, d.Administration.Enrichment, t.cfg), reader: reader, organizationHTTP: organization, administration: admin, content: media, events: t.events,
 		catalogue: &catalogMaintenanceHTTP{store: d.Catalogue, engine: e.engine, openPath: openPathInDefaultFileManager, invalidateDashboardStatsCache: invalidate},
 		covers:    &coverHTTP{store: d.CoverQueries, scanner: d.Libraries.Scanner, invalidateDashboardStatsCache: invalidate}, providers: providers,
 		families: bindHTTPFamilies(d.Libraries, d.Reading.Content, snapshot, e, t.clients.getMetadataFetcher, d.Administration.Configuration.DatabasePath, invalidate)}

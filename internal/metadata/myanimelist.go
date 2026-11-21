@@ -242,6 +242,7 @@ func (m *MyAnimeListProvider) convertToSeriesMetadata(node malMangaNode, rank in
 		Summary:     node.Synopsis,
 		Status:      mapMALStatus(node.Status),
 		CoverURL:    coverURL,
+		SiteRating:  siteScore(node.Mean, 10),
 		Rating:      node.Mean,
 		Tags:        tags,
 		Authors:     authors,

@@ -9,6 +9,7 @@ import (
 	"yomifolio/internal/accounts"
 	"yomifolio/internal/application/configuration"
 	"yomifolio/internal/application/delegated"
+	"yomifolio/internal/application/enrichment"
 	"yomifolio/internal/config"
 	"yomifolio/internal/database"
 	"yomifolio/internal/koreader"
@@ -42,6 +43,7 @@ type AdministrationStore interface {
 // administrationHTTP owns the administration transport family, not an application graph.
 type administrationHTTP struct {
 	delegated      *delegated.Service
+	enrichment     *enrichment.Service
 	sources        ExternalSources
 	initialization *accounts.Initialization
 	management     *accounts.Management
@@ -64,7 +66,7 @@ func (c *administrationHTTP) currentConfig() config.Config {
 
 func newAdministration(d AdministrationDependencies, auth *authState, warning *sync.Once) *administrationHTTP {
 	return &administrationHTTP{
-		delegated: d.Delegated, store: d.Store, config: d.Manager, configuration: d.Configuration, koreader: d.KOReader,
+		delegated: d.Delegated, enrichment: d.Enrichment, store: d.Store, config: d.Manager, configuration: d.Configuration, koreader: d.KOReader,
 		auth: auth, untrustedProtoWarnOnce: warning,
 		initialization: accounts.NewInitialization(d.Store, hashPassword),
 		management:     accounts.NewManagement(d.Store, hashPassword),

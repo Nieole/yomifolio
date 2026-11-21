@@ -69,6 +69,9 @@ func TestMyAnimeListSearchMetadataParsesFixture(t *testing.T) {
 		t.Errorf("CoverURL = %q, want large", m.CoverURL)
 	}
 	assertMetaFloat(t, "Rating", m.Rating, 7.98)
+	if m.SiteRating == nil || m.SiteRating.Value != 7.98 || m.SiteRating.Scale != 10 {
+		t.Fatalf("native site rating lost: %+v", m.SiteRating)
+	}
 	if len(m.Tags) != 2 {
 		t.Errorf("Tags = %v", m.Tags)
 	}

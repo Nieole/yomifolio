@@ -42,3 +42,8 @@ references: [mm-adr-0003]
 `schema_handwritten.sql` 的 mcp_credentials 由统一迁移安装，外键绑定真实 users 并在删除账户时级联清除；凭据授权裁决归 `mm-application`。它不进入 sqlc 的模型输入，SQL 与 JSON 列只保存摘要和授权限制，不保存原始 Bearer 密钥。
 
 `accountPasswordWrite.RevokeSessions` 在同一个 `WithAccountPassword` 事务中删除浏览器会话并撤销该用户全部 MCP 凭据，与 ReplacePassword 不可分割。任一步失败都回滚密码、网页会话与委托撤销；提交后 Basic 缓存失效仍沿原有路径。改密或管理员重置后的成功响应不能早于这次事务提交，不能用提交后内存回调代替持久撤销。
+
+
+## 元数据操作日志
+
+`schema_handwritten.sql` 的 metadata_operations 与 `MetadataJournal` 保存版本化完整应用收据，读取和插入绑定实际元数据事务。它独立于最新字段来源，不自动过期，不用级联删除抹去历史；身份 ID 保留，不保存 Bearer 密钥。用户/凭据/请求键唯一，成功撤销父操作唯一；sequence 支持稳定降序 keyset 查询。授权、补充与撤销裁决归 `mm-application`，持久层不另造工作流。

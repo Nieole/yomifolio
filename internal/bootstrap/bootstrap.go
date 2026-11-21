@@ -6,6 +6,7 @@ import (
 	"context"
 	"time"
 	"yomifolio/internal/application/delegated"
+	"yomifolio/internal/application/enrichment"
 
 	"yomifolio/internal/api"
 	"yomifolio/internal/application/runtime"
@@ -56,6 +57,8 @@ func Open(ctx context.Context, store database.Store, cfg *config.Manager, option
 	}
 	stats := dashboard.New()
 	reader := api.NewReaderCapabilities(store, app.Relations, app.Proposals, app.Engine, func() { stats.InvalidateVolatile("reading") })
+	delegatedService := delegated.NewWithDiscoveryAndRuns(delegated.NewSQLStore(store.DB()), content, app.Engine, delegated.RunAccess{Engine: app.Engine, Scans: app.Scans, Libraries: store}).WithMatching(&delegated.MatchingAccess{Store: store, Config: cfg.Snapshot, Source: options.Sources.MetadataProvider, Start: app.Runs.Start})
+	enrichmentService := enrichment.New(store.DB(), delegatedService, func() { effects.InvalidateStats("metadata_enrichment"); effects.Publish("refresh") })
 	host := transport.Bind(api.HostDependencies{
 		Catalogue: store, CoverQueries: store,
 		Reading: api.ReadingDependencies{ContentQueries: store, StatisticsQueries: store, Capabilities: reader, Content: content, ImageCache: memory, Statistics: stats, Recommendations: recommendation.New(24 * time.Hour)},
@@ -67,7 +70,7 @@ func Open(ctx context.Context, store database.Store, cfg *config.Manager, option
 			UnmatchedCount: store.CountUnmatchedKOReaderProgress, KOReaderEnabled: func() bool { return cfg.Snapshot().KOReader.Enabled }, Publish: effects.Publish,
 		},
 		Libraries:      api.LibraryDependencies{Removal: store, Initials: store, Queries: store, ComicInfo: store, Management: app.LibraryManagement, Scans: app.Scans, Maintenance: app.Maintenance, Moves: app.Moves, Disk: app.Disk, Intelligence: app.Intelligence, External: app.External, Relocation: app.Relocation, Scanner: app.Scanner, Runs: api.RunDependencies{Engine: app.Engine, Runs: app.Runs, Store: app.Tasks, Registry: app.Registry}},
-		Administration: api.AdministrationDependencies{Delegated: delegated.NewWithDiscoveryAndRuns(delegated.NewSQLStore(store.DB()), content, app.Engine, delegated.RunAccess{Engine: app.Engine, Scans: app.Scans, Libraries: store}).WithMatching(&delegated.MatchingAccess{Store: store, Config: cfg.Snapshot, Source: options.Sources.MetadataProvider, Start: app.Runs.Start}), Configuration: app.Configuration, Store: store, Manager: cfg, KOReader: app.KOReader},
+		Administration: api.AdministrationDependencies{Delegated: delegatedService, Enrichment: enrichmentService, Configuration: app.Configuration, Store: store, Manager: cfg, KOReader: app.KOReader},
 		Lifecycle:      app,
 	})
 	if err := app.Start(ctx); err != nil {

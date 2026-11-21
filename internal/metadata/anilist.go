@@ -296,6 +296,7 @@ func (a *AniListProvider) convertToSeriesMetadata(m anilistMedia, rank int) *Ser
 		Summary:       summary,
 		CoverURL:      coverURL,
 		Status:        anilistMapStatus(m.Status),
+		SiteRating:    siteScore(float64(m.AverageScore), 100),
 		Rating:        rating,
 		Tags:          tags,
 		Authors:       authors,

@@ -29,3 +29,10 @@ parent: mm-architecture
 - `manual.go`、`proposal.go`、`scan.go`、`scan_associations.go`、`bulk.go`、`version.go`、`comicinfo.go`：各入口与事务能力范围。
 - `manual_test.go`、`proposal_test.go`、`proposal_compat_test.go`：版本冲突、回滚、未选与显式空集合、锁及来源沿革。
 - `scan_test.go`、`bulk_test.go`：扫描锁矩阵与追加容错、批量先增后删及跨分块整体回滚。
+
+
+## 委托补充策略
+
+`ContentTags` 以保守内容类型词表筛除个人阅读标记、来源名、年份与未知自由标签，调用方追加而不替换旧成员。`EnrichmentRating` 只接受 Bangumi、AniList、MyAnimeList 的原始站点评分及有效尺度，同来源只计一次，换算十分制后等权平均；返回参与的完整来源和可重算公式，无有效评分返回缺失，不回落到 LLM 或已有归一化 Rating。实际来源适配器的原始尺度归 `mm-metadata`；单系列事务及审计归 `mm-application`。这些入口不改写手工、扫描或普通提案原有规则。
+
+`State` 定义受限补充/撤销使用的字段快照；`EnrichmentLocked` 解释当前字段锁，`WriteEnrichmentState` 通过窄事务查询端口写入已准备状态及实际改变的集合并刷新统计。应用调用方必须先在同一事务核对当前权限、锁和相关预期值，任一步失败整体回滚；写入器不持有事务或协议身份。

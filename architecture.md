@@ -61,3 +61,6 @@ Yomifolio 的 Go 模块为 `yomifolio`。单进程 Go 服务使用 chi 接收 HT
 ## MCP 委托访问边界
 
 `bootstrap → application/delegated → database/sql` 组装独立凭据与当前授权用例，`application/delegated → bookcontent` 组合按稳定书 ID 的受限本地证据读取；`api → application/delegated` 适配管理员网页和 Streamable HTTP；协议层不获得数据库入口，也不复制应用运行时。统一迁移安装凭据 DDL，账号密码事务共同撤销浏览器会话与委托凭据。现有网页、OPDS、Mihon 与 KOReader 的认证入口不复用 MCP Bearer，也不因委托资料库限制改变网页目录读取。主语、能力交集及扩展约束归 `mm-application`，协议与安全代理约束归 `mm-api`；ADR 0016 仍为 draft，不将静态凭据或未来额度声明解释为已实现的 OAuth/人工审批。
+
+
+`bootstrap → application/enrichment → delegated、seriesmeta、database` 组合确认提案证据、来源补充策略、实际事务授权和持久收据；`api → application/enrichment` 为网页及 MCP 提供相同补充/查询/撤销用例。撤销材料与最新来源沿革分离；不启动第二个 Runtime，不改普通手工、扫描或提案写入规则，具体契约归 `mm-application`。

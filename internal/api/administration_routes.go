@@ -7,6 +7,9 @@ func (h *Host) SetupAdministrationRoutes(r chi.Router) {
 	r.Route("/api", func(r chi.Router) { r.Use(h.administration.authGate); h.administration.mount(r) })
 }
 func (c *administrationHTTP) mount(r chi.Router) {
+	r.Get("/mcp/operations", c.listMetadataOperations)
+	r.Get("/mcp/operations/{operationId}", c.getMetadataOperation)
+	r.Post("/mcp/operations/{operationId}/undo", c.undoMetadataOperation)
 	r.Get("/mcp/credentials", c.listMCPCredentials)
 	r.Post("/mcp/credentials", c.issueMCPCredential)
 	r.Patch("/mcp/credentials/{credentialId}", c.narrowMCPCredential)

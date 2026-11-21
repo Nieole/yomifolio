@@ -197,3 +197,23 @@ CREATE TABLE IF NOT EXISTS mcp_credentials (
     revoked BOOLEAN NOT NULL DEFAULT FALSE
 );
 CREATE INDEX IF NOT EXISTS idx_mcp_credentials_user ON mcp_credentials(user_id);
+
+-- Complete immutable metadata operation receipts and undo material. No automatic expiry.
+-- Identity columns intentionally survive deletion of users, credentials and targets.
+CREATE TABLE IF NOT EXISTS metadata_operations (
+    sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+    id TEXT NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL,
+    credential_id TEXT NOT NULL,
+    request_key TEXT NOT NULL,
+    request_hash TEXT NOT NULL,
+    series_id INTEGER NOT NULL,
+    library_id INTEGER NOT NULL,
+    parent_id TEXT NOT NULL DEFAULT '',
+    outcome TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    UNIQUE(user_id, credential_id, request_key)
+);
+CREATE INDEX IF NOT EXISTS idx_metadata_operations_series ON metadata_operations(series_id, sequence);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_metadata_operations_undo ON metadata_operations(parent_id)
+    WHERE parent_id <> '' AND outcome = 'changed';

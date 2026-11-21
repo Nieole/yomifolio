@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"yomifolio/internal/application/delegated"
+	"yomifolio/internal/application/enrichment"
 	"yomifolio/internal/config"
 )
 
@@ -129,7 +130,7 @@ func mcpRequestAllowed(r *http.Request, cfg config.Config) bool {
 	return privateMCPHost(peer)
 }
 
-func newMCPHandler(service *delegated.Service, manager *config.Manager) http.Handler {
+func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Service, manager *config.Manager) http.Handler {
 	if service == nil {
 		return nil
 	}
@@ -172,6 +173,9 @@ func newMCPHandler(service *delegated.Service, manager *config.Manager) http.Han
 			registerDiscoveryTools(server, service, subject)
 			registerMCPRuns(server, service, subject)
 			registerMCPMatching(server, service, subject)
+			if enrichmentService != nil {
+				registerMCPEnrichment(server, enrichmentService, subject)
+			}
 			return server
 		}, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true, DisableLocalhostProtection: true})
 		r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
