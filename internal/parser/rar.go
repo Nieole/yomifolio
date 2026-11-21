@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"sync"
 
 	"github.com/nwaples/rardecode/v2"
 )
@@ -30,7 +29,7 @@ type RarArchive struct {
 	path          string
 	releaseBorrow func()
 
-	mu     sync.Mutex
+	mu     rarSessionMutex
 	closed bool                  // Close 后置位：句柄进入终态，任何读取直接报错而非静默重开
 	rr     *rardecode.ReadCloser // 持久游标；nil 表示未打开
 	atEOF  bool                  // 游标已扫到 EOF

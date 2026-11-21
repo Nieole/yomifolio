@@ -70,3 +70,36 @@ Logs: ignored `.tmp/merger05/budget-*.log`; toolchain/cache configuration from e
 - `golangci-lint run` — 0 issues (`budget-lint-final.log`); `gofmt -l ./cmd ./internal` — empty (`budget-gofmt-final.log`).
 - `go run ./cmd/tsgen` — generated 32 types, no generated.ts diff (`budget-tsgen.log`); `git diff --check` — PASS (`budget-diffcheck.log`). No SQL or frontend source changes.
 - Existing pre-maintenance `.tmp/merger05/full.exit` is `0`; that historical full run is not a post-fix full gate. No additional full-suite rerun was attempted. Latest combined-tree gate and parent integration remain open.
+
+
+## Independent review rc_dbbdcc9b — cancellable ordinary-session acquisition
+
+Scope: only this finding, on dedicated `mcp-library-05` / `mcp-image-evidence`, HEAD `46d06126df577d1c772c4781165772277a01ac1d`. All changes remain unstaged/uncommitted. No parent-tree edits, index/history changes, TODO edits or other ticket changes. Issue 05 remains `ready-for-agent`, awaiting parent integration and independent re-review. Read the worker guide, AGENTS, 05/effort specs, parser/BookContent contracts and TDD guidance before implementation. The explicitly requested seams are the public limited parser APIs and `Service.Evidence`, with a test-only ordinary-session mutex barrier.
+
+### Lifecycle decision
+
+`RarArchive.Close` closes the persistent reader, clears mutable cursor/cache state, sets terminal `closed`, and returns a direct-reader borrow under the same session mutex as ordinary reads. Moving evidence outside that mutex would require a separate lifetime protocol. Instead, the zero-value private `rarSessionMutex` retains existing `Lock`/`Unlock` serialization and adds context-select acquisition for **both** limited APIs. It uses one lazily initialized channel token, not goroutines or TryLock polling. Cancellation is checked before acquisition and after receiving the token, returning it if cancellation won concurrently. After acquisition the existing closed check and defer ordering remain: independent reader closes before unlocking. Thus concurrent Close still waits for readers and closed handles cannot be reopened by evidence. Ordinary reading/scanning/cache behavior and every byte/dictionary/response budget remain unchanged. Evidence may still serialize behind ordinary IO when not cancelled; this fix does not claim parallel RAR reading.
+
+### Deterministic red → green
+
+Logs are ignored `.tmp/review05/`, with environment in `env.sh` / `environment.log`.
+
+- `red.log`: first new `TestEvidenceCancellationDoesNotWaitForOrdinaryRarSession` failed for **directory and selected-page**, each reporting cancellation waiting for the held ordinary mutex. The context barrier pauses after a successful preflight snapshot, so this cannot pass merely by pre-cancelling before API entry. The ordinary lock is released only after failure is recorded for cleanup, never to establish success. `green.log` / `final-green.log` pass after the fix.
+- `content-queued-red.log`: temporarily restoring only the old acquisitions (automatically restored in `finally`) makes the queued-cancellation regression fail for both APIs. `TestEvidenceQueuedCancellationWithConcurrentClose` observes entry into the acquisition select, cancels while ordinary IO and Close remain blocked, then checks terminal closed behavior. This tests actual queued cancellation, not just cancellation before acquisition.
+- `content-red.log`: the real public `Service.Evidence` call, using the **same pooled RAR handle** held by the ordinary borrower, failed `content cancellation waited for ordinary RAR IO` with old acquisition. `TestEvidenceSessionCancellationReturnsContentResources` passes with the fix. At the manifest checkpoint it has library admission, a real configured single-reader IO lease and an extra archive borrow. Before releasing the ordinary mutex it verifies library admission/IO lease returned, archive borrow restored to the one deliberately retained ordinary borrower, and **both evidence slots reusable** by admitting two new requests concurrently. The fixture is a temporary copy of the committed normal RAR; no large/exceptional payload. A test-only exported helper provides the requested held mutex without adding a production API or unsafe/reflection access.
+- All barriers are channel/checkpoint based; timers are bounded failure watchdogs, not sleeps or success proof. The final IO assertion explicitly configures HDD concurrency 1 and checks that the lease really was held, avoiding a vacuous zero-limit assertion.
+
+### Actual checks
+
+All commands run from this dedicated tree with `GOTOOLCHAIN=go1.26.10`, the guide's shared GOCACHE and this tree's own `.tmp/review05/{tmp,lint}`. Actual `go version`: **go1.26.10 windows/amd64**. Installed lint is 2.12.2 (binary built with go1.27.2); its actual run under the selected target toolchain succeeded. Reviewer-local timeout/toolchain failures are not reused as either success or failure evidence here.
+
+- `go test -p 1 ./internal/parser ./internal/bookcontent ./internal/images ./internal/application/delegated ./internal/bootstrap -count=1 -timeout=10m` — PASS, complete package suites (`related.log`, then `related-final.log` after strengthening the real IO-lease assertion). Includes existing content/publication/path/handle and production HTTP/TLS/actual stdio resource regressions.
+- `go test -p 1 ./internal/bootstrap ./cmd/mcp-proxy -run MCP -count=2 -timeout=10m` — PASS, **two MCP rounds**, including actual stdio production proxy (`mcp-two-rounds.log`). Proxy command package itself has no tests; the subprocess tests live in bootstrap.
+- `go test -p 1 ./... -count=1 -timeout=10m`, outer timeout **1800 seconds** — PASS, one complete backend run (`full.log`, `full.exit=0`), including API 134.149s, bootstrap 18.019s, scanner 17.295s and parser. This full run preceded only the test-only strengthening to explicitly require a held configured IO lease; the final complete related-package rerun includes that stronger assertion. No backend failure was retried or reclassified.
+- `go test -race ./internal/parser -run 'TestEvidenceCancellationDoesNotWaitForOrdinaryRarSession|TestEvidenceQueuedCancellationWithConcurrentClose|TestEvidenceSessionCancellationReturnsContentResources' -count=1 -timeout=2m` — PASS (`race.log`).
+- `gofmt -l ./cmd ./internal` — empty (`gofmt-final.log`).
+- `golangci-lint run` — **0 issues** (`lint-final.log`).
+- `go run ./cmd/tsgen` — generated 32 types, no `web/src/api/generated.ts` diff (`tsgen.log`). No schema/SQL/frontend/dependency changes.
+- `git diff --check` — PASS (`diffcheck.log`); final documentation changes preserve existing LF endings.
+
+Remaining: parent integrates this uncommitted delta and requests independent re-review. No known missing acceptance for rc_dbbdcc9b. Existing bounded synchronous image/OS-read cancellation limitations are unchanged; this fix specifically makes session-lock acquisition cancellable, not arbitrary filesystem syscalls interruptible. Suggested parent commit subject: `fix(parser): cancel evidence waiting for RAR session`.

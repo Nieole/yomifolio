@@ -39,7 +39,9 @@ func ReadPageLimited(ctx context.Context, arc Archive, name string, limit int64)
 			}
 		}
 	case *RarArchive:
-		a.mu.Lock()
+		if err := a.mu.lockContext(ctx); err != nil {
+			return nil, err
+		}
 		defer a.mu.Unlock()
 		if a.closed {
 			return nil, ErrArchiveClosed
