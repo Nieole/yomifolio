@@ -35,3 +35,8 @@ func (s ExternalSources) configuredAI(cfg config.Config) metadata.AIProvider {
 func (s ExternalSources) MetadataProvider(cfg config.Config, name string) metadata.Provider {
 	return s.metadata(cfg, name)
 }
+
+// ConfiguredAI resolves the shared production AI factory at call time.
+func (s ExternalSources) ConfiguredAI(cfg config.Config) metadata.AIProvider {
+	return s.configuredAI(cfg)
+}

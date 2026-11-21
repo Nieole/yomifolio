@@ -32,3 +32,5 @@ parent: mm-architecture
 
 
 `SiteRating` 保留公共站点原始分数和零基尺度，`SourceFacts` 随确认提案保留它。AniList averageScore 为 100 分制，Bangumi score 与 MyAnimeList mean 为 10 分制；来源的 0/缺失表示未提供，不伪造有效评分。已有 `Rating` 十分制转换不变，MangaDex、ComicVine 与 LLM 不新增推测站点评分。综合评分策略不在来源适配器内执行。
+
+委托额度路径通过 `WithSingleModelRequest` 限定一次准入上下文只能发送一次实际 HTTP 模型请求；三个生产模型来源在 client.Do 前执行实时检查，拒绝同上下文第二次发送并禁用重定向，且仅在该路径移除请求体重放配方，阻止 Go HTTP/2 在 REFUSED_STREAM/GOAWAY 后透明重发已经发送的 POST；尚未发送的连接选择不消耗额外次数，避免隐藏重复付费 POST。没有该上下文的网页/既有智能用例保持原行为。来源不拥有额度数据库、不退款、不恢复或重试委托操作；额度准入及证据规则归 `mm-application`。

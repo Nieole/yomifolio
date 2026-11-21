@@ -109,3 +109,32 @@ Go 1.26.10、约定共享 GOCACHE、本树 GOTMPDIR、独立 `.tmp/08/lintcache-
 - 未改 schema/query.sql，不需重跑 sqlc；手写 savepoint SQL 为 ASCII。未改 frontend，不重跑 test/build/lint；merger 前端全套证据仍是前节记录，不冒称本轮重跑。未重跑整个仓库全量后端：按此次窄修要求运行相关全包，父后续组合再做最终全量。
 
 边界：常规 SQLite ABORT 与日志 INSERT 失败已实证；没有宣称穷尽硬件 I/O、进程崩溃或所有并发调度，savepoint/commit 不可用按错误路径处理，不伪造成功或持久承诺。作者09/封面10/裁决11/清理13及12均未扩实现。建议提交标题（仅供父使用）：`fix: persist failed metadata undo receipts atomically`。
+
+
+## 最终组合 merger：55e5f6e3 + 待完成 b4900a65
+
+**08 合并内容与本轮门禁 merge-ready；整批最终批准仍等待已知 12 pruning 修复。** 唯一编辑树为 `C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-08`，分支 `mcp-enrichment-audit`；HEAD `55e5f6e3f968d02f778e37739599aefb83a6a292`，MERGE_HEAD `b4900a659245eb28bba2738e7a79675f3abcd288`。未 stage/commit/merge/reset/abort，未编辑父树或其他树。9 个 UU 的工作区冲突标记已全部逐段消除；索引仍为 UU，留父级确认并完成现有 merge。
+
+### 合并与复查
+
+- CHANGELOG 保留 05 字典预算及取消锁、07、08 补充/撤销及失败收据、12 模型额度；API/application/bootstrap/database/metadata 契约同时保留两方行为，去掉已不准确的“无 LLM/元数据写入”限制。API 公开名单完整含 08 六工具和 12 两工具。
+- `mcp.go` 在同一认证注册路径保留 discovery/images/runs/matching/enrichment/model budgets；精确工具发现与只读注解测试包含全部 23 工具，没有删除已有断言。HTTP 与真实 stdio helper 均运行生产 bootstrap。
+- `bootstrap.Open` 只创建一个 delegated 实例，在该实例绑定 MatchingAccess + ModelBudgetAccess，并把同一实例交给 enrichment 与 HTTP；12 继续使用同一数据库、配置、Runs.Start 和 ExternalSources.ConfiguredAI。保留统一 Migrate 安装模型表、三个生产来源实际 HTTP guard/单请求计数、05 RAR 可取消会话锁及资源寿命测试。03/04/06 的已合入 done/closure 原样保留，08 仍 ready-for-agent。
+- 独立审查 Undo：写入、派生统计全部使用同一 tx-bound Queries，savepoint 覆盖完整写入；只有 ROLLBACK TO 与 RELEASE 均成功才保存 failed 收据。原操作/撤销材料不改，唯一成功 parent 关联只看 changed。同一授权事务内记录，无双事务窗口；固定理由脱敏。日志插入或 commit 错误直接返回，defer Rollback 中止整个外层事务，不发布 refresh 或声称收据持久。现有真实 DELETE/INSERT trigger、同键重放/异意图、拒权、并发另一键成功、重开查询回归均通过。此次不改 Undo 实现或扩展重构；不声称穷尽硬件/崩溃故障。
+
+### 本轮实际 checks
+
+日志统一在 `.tmp/08/final-combination/`。Go `go1.26.10`，约定共享 GOCACHE；本树该目录下 GOTMPDIR=`gotmp`、独立 GOLANGCI_LINT_CACHE=`lintcache`。Node `26.13.1` / npm `11.20.0`。
+
+1. `go test -p 1 ./internal/application/enrichment ./internal/application/delegated ./internal/bootstrap ./internal/api ./internal/seriesmeta ./internal/database ./internal/metadata ./internal/parser -run 'Enrichment|MCP|Model|Budget|Evidence' -count=2 -timeout=5m`：两轮通过，`focused-two.log`/exit 0。包括生产 bootstrap 所有 MCP 测试、真实 stdio/模型重连、事务失败及图片预算/取消；delegated/database 此 pattern 无匹配，下面全量确实运行其测试。
+2. **完整后端仅一次**：`go test -p 1 ./... -count=1 -timeout=10m`，外层 1800s，全部通过，`full.log`/exit 0。没有未知 rename/迁移故障或盲重试、弱化测试。
+3. `gofmt -l ./cmd ./internal` 输出空，`gofmt.log`；`golangci-lint run` 为 **0 issues.**，`lint.log`/exit 0。
+4. 前端完整 `npm test -- --maxWorkers=2`：**121 files / 1151 tests** 通过，`frontend-tests-configured.log`；`npm run build`、`npm run lint` 均通过，`frontend-{build,lint}.log`。初次 bash 未初始化 fnm，npm not found（exit 127，`frontend-tests.log`），没有执行到测试；按 worker-guide 初始化 fnm/use 后才执行上述成功全套，未把环境失败隐藏成测试成功。
+5. `go run ./cmd/tsgen` 生成 42 types，生成前后 SHA-256 完全一致（`tsgen{,-before,-after}.log`），无响应契约漂移。
+6. `git diff HEAD` 确认 sqlc 输入 `sql/query.sql`、`internal/database/schema.sql` 及生成 `models.go`/`query.sql.go` 无变化；本轮未重复 sqlc。新增模型 DDL 是合入的独立 handwritten 输入，统一迁移与全部数据库/bootstrap/系列事务回归通过，证明现有生成绑定与实际 schema 兼容。query.sql、schema_handwritten.sql、schema_model_budget.sql 均 ASCII；savepoint SQL 亦 ASCII。
+7. 最终 `git diff --check HEAD` 通过，冲突文本标记为零。长期规格只合并/调和当前能力归属，不改变 ADR0016 draft。
+
+### Remaining / 父级动作
+
+- **已知 12 正常运行历史 pruning 后预算操作投影失败尚在本组合代码中**：GetModelOperation 仍依赖 GetRun，历史裁剪后持久额度不能正常公开投影。用户已安排 12 专属树修复；本轮不重复实施，也不以全量绿灯宣称该未覆盖场景已修复。父级须稍后组合该窄修及其回归后再批准整个组合。
+- 无本轮新发现的实质阻塞；08 failed-undo 收据原子性阻塞已由先前窄修解决，本轮再次验证。父负责索引冲突标记、完成 merge/提交及 request_review。09/10/11/13 和真实浏览器像素/收费实验仍不在此次完成范围。

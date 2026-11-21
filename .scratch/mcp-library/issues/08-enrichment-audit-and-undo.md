@@ -26,3 +26,6 @@
 - **尚非 merge-ready**：真实 SQLite 探针确认 Undo 存储失败安全回滚但缺失败收据，完整持久实际结果审计项重开；按要求仅报告未扩修。Status 保持 ready-for-agent。未 stage/commit/merge 或操作其他树；父处理索引 UU 和后续集成。12 及另树 05 后续修复不在本次组合内。
 
 - 独立失败撤销审计窄修：按生产 bootstrap + 真实 SQLite DELETE trigger 先红后绿；Undo 改为同一授权事务内 savepoint 回滚完整写入并保存 failed 收据，不采用双事务补记。覆盖身份/原操作/key、脱敏、网页/MCP 查询、同键失败重放与不同意图拒绝、日志自身故障、拒权无收据、并发失败重放与另一键成功、重新打开后可查。具体门禁见 acceptance 最新节；审计项按实际重新勾选。仍 ready-for-agent 待父 review，不代表已合并；保留现有未完成 merge 与索引 UU，未执行任何索引/历史变更。
+
+
+- 最终组合 merger：在 HEAD 55e5f6e3 / 待合入 b4900a65 逐段解决 9 个工作区冲突，保留 05 预算+取消锁、07、08 及失败撤销收据、12 生产工厂/guard/数据库初始化与实际调用计数接线，以及03/04/06 closure。08 六工具与12两工具均进入完整23工具发现守卫；同一 delegated 实例供 enrichment 与预算复用。Go1.26.10 相关回归两轮、组合完整后端一次（外层1800s）、独立 lint 0 issues/gofmt、前端121 files/1151 tests/build/lint、42 types tsgen无漂移、SQL ASCII及生成物兼容均通过。Undo savepoint与外层日志失败回滚审查无新增阻塞，未改其实现。08内容 merge-ready，Status保持 ready-for-agent；整体批准仍待父组合12另树正在修的正常run历史pruning预算投影缺陷，未重复修。索引UU留父处理，未stage/commit/merge或编辑其他树；详见acceptance08最新节。

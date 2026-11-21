@@ -256,6 +256,7 @@ func assertMCPToolDiscovery(t *testing.T, result *mcp.ListToolsResult, err error
 		"library_get_metadata_operation": true, "library_list_metadata_operations": true,
 		"library_undo_metadata_operation": false,
 		"library_start_scan":              false, "library_get_run": true,
+		"library_assess_match": false, "library_get_model_operation": true,
 		"library_list_runs": true, "library_wait_run": true, "library_cancel_run": false,
 	}
 	seen := map[string]bool{}

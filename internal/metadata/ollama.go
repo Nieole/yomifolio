@@ -78,7 +78,7 @@ func (o *OllamaProvider) sendRequest(ctx context.Context, prompt string, require
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := o.client.Do(req)
+	resp, err := modelRequest(o.client, req)
 	if err != nil {
 		return "", fmt.Errorf("ollama: request failed (is Ollama running at %s?): %w", o.Endpoint, sanitizeTransportError(err))
 	}

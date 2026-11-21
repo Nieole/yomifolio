@@ -4,7 +4,7 @@
 
 **Blocked by:** 04 筛选待整理系列并读取本地识别线索。
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 通用 MCP 客户端能读取授权范围内封面和指定页缩略图；工具契约明确每次页数、图片尺寸及整体响应体积硬上限。
 - [x] 越界页码、过多页、过大响应、无效对象与非授权资料库请求得到明确结果，不回退为原始归档或任意文件下载。
@@ -16,6 +16,8 @@
 父集成复核：补齐 RAR 创建期字典限制后，整合 `b3083e4b` 的 07 功能；完整后端、两轮 MCP（含真实 stdio）、lint、格式及 tsgen 无漂移全部通过，日志 `.tmp/combined05/`。此前中止的审阅未计为通过；仍待提交后的独立步骤审阅。
 
 ## Comments
+
+- Final closure: `a3f80ec3` integrates the cancellable shared-RAR-session fix. Independent re-review approved after resolving `rc_dbbdcc9b`; cancellation releases evidence resources while preserving Close serialization. Related package suites, targeted race, formatting and compatible-toolchain lint passed. Earlier review/pending notes remain historical.
 
 - Worker 05 claimed implementation in dedicated mcp-image-evidence worktree at 0d9ef6ce; status remains ready-for-agent pending parent integration/review. Acceptance seam: production bootstrap + generic MCP client (HTTP and actual stdio proxy), supplemented by public BookContent resource-lifetime regressions.
 

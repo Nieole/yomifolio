@@ -110,7 +110,9 @@ func GetPagesLimited(ctx context.Context, arc Archive) ([]PageMetadata, error) {
 			}
 		}
 	case *RarArchive:
-		a.mu.Lock()
+		if err := a.mu.lockContext(ctx); err != nil {
+			return nil, err
+		}
 		defer a.mu.Unlock()
 		if a.closed {
 			return nil, ErrArchiveClosed

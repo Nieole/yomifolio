@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 通过受限凭据连接 HTTP MCP 并读取系列。
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 经 MCP 发起必要扫描、查询进度、受限等待及取消；耗时操作及时返回运行标识，列表和直接控制均执行当前资料库与能力授权。
 - [x] 使用现有任务、运行、作用域和生命周期，委托工作持久保留必要的用户、凭据及权限归属，供后续来源和写入用例复用。
@@ -15,6 +15,8 @@
 - [x] 不新增常驻 agent、元数据维护状态机或第二套任务引擎；保留队列、终态及 shutdown/drain 回归，后端门禁通过。
 
 ## Comments
+
+- Final closure: delegated-run implementation, typed public errors and actual helper EOF/reconnect/explicit-cancel joint acceptance are independently approved. Later integrated complete backend and two-round MCP gates passed, including the 05/07/12 combination. Historical pending closure notes below are superseded; no assertion is made that all intermittent Windows timing failures are resolved.
 
 - Before joint acceptance, independent merger found no blocking server-side defect and verified HTTP disconnect/reconnect, authority checkpoints and lifecycle tests. Real stdio accepted-run continuation, reconnect to the same run and explicit cancellation remain joint 03/06 acceptance work; the corresponding checkbox was left open pending that evidence.
 

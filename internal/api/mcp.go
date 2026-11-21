@@ -177,6 +177,7 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 			if enrichmentService != nil {
 				registerMCPEnrichment(server, enrichmentService, subject)
 			}
+			registerMCPModelBudgets(server, service, subject)
 			return server
 		}, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true, DisableLocalhostProtection: true})
 		r.Body = http.MaxBytesReader(w, r.Body, 64<<10)

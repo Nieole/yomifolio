@@ -83,6 +83,7 @@ type Service struct {
 	access   bookcontent.LibraryAccess
 	runs     *RunAccess
 	matching *MatchingAccess
+	models   *ModelBudgetAccess
 }
 
 func New(store Store) *Service { return &Service{store: store} }
