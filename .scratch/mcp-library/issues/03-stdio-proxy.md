@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 通过受限凭据连接 HTTP MCP 并读取系列。
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 真实客户端完成 stdio 初始化、工具发现及至少一次授权系列查询；代理对后续服务工具扩展无需另造业务实现。
 - [x] 辅助进程仅连接正在运行的服务，无数据库配置或访问资格也能工作，不启动另一套应用运行时。
@@ -14,6 +14,8 @@
 - [x] 对接生产组装的同一服务测试，不复制业务测试环境；后端门禁通过，记录可复现的接入方式及已核验兼容边界。
 
 ## Comments
+
+- Final closure: implementation and joint EOF/cancel review are approved. The integrated watcher fix and later complete backend/MCP gates passed, including actual stdio helper acceptance in the 05/07/12 combination. Historical pending notes below are superseded; no claim is made that every intermittent Windows rename issue is eliminated.
 
 - Worker 03: implementing in mcp-library-03; status remains ready-for-agent until parent integration. Seam: real stdio subprocess + generic SDK client against bootstrap.Open; long-run disconnect acceptance deferred to 06/14.
 - Implementation and transport acceptance complete; evidence: `../acceptance/03-stdio-proxy.md`. Full backend rerun passed, formatting empty, lint 0 issues. First full run had two external-transfer timing failures, preserved honestly in evidence (not labeled baseline).
