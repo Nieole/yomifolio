@@ -42,3 +42,5 @@ references: [mm-adr-0003]
 `schema_handwritten.sql` 的 mcp_credentials 由统一迁移安装，外键绑定真实 users 并在删除账户时级联清除；凭据授权裁决归 `mm-application`。它不进入 sqlc 的模型输入，SQL 与 JSON 列只保存摘要和授权限制，不保存原始 Bearer 密钥。
 
 `accountPasswordWrite.RevokeSessions` 在同一个 `WithAccountPassword` 事务中删除浏览器会话并撤销该用户全部 MCP 凭据，与 ReplacePassword 不可分割。任一步失败都回滚密码、网页会话与委托撤销；提交后 Basic 缓存失效仍沿原有路径。改密或管理员重置后的成功响应不能早于这次事务提交，不能用提交后内存回调代替持久撤销。
+
+`schema_model_budget.sql` 由统一 Migrate 安装，不进入 sqlc 输入。mcp_model_operations 与 mcp_model_calls 只保存独立命名空间的模型操作归属、冻结来源证据、不可变额度、准入消耗和白名单结果标签；唯一凭据/搜索及操作/item 约束防止重复额度/消费，used 受 allowance CHECK 约束。不与元数据变更审计共用表，不存模型内部推理；应用在实际事务内执行当前权限护栏。记录不随临时搜索缓存、运行历史裁剪或重启删除，用户/凭据失效仍由当前授权拒绝访问；不是通用审计或清理功能。

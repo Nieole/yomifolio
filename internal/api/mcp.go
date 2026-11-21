@@ -172,6 +172,7 @@ func newMCPHandler(service *delegated.Service, manager *config.Manager) http.Han
 			registerDiscoveryTools(server, service, subject)
 			registerMCPRuns(server, service, subject)
 			registerMCPMatching(server, service, subject)
+			registerMCPModelBudgets(server, service, subject)
 			return server
 		}, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true, DisableLocalhostProtection: true})
 		r.Body = http.MaxBytesReader(w, r.Body, 64<<10)

@@ -91,7 +91,7 @@ func (o *OpenAIProvider) sendRequest(ctx context.Context, prompt string, require
 		req.Header.Set("Authorization", "Bearer "+o.APIKey)
 	}
 
-	resp, err := o.client.Do(req)
+	resp, err := modelRequest(o.client, req)
 	if err != nil {
 		return "", fmt.Errorf("openai: request failed: %w", sanitizeTransportError(err))
 	}
