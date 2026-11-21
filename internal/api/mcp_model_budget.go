@@ -14,7 +14,7 @@ func registerMCPModelBudgets(server *mcp.Server, service *delegated.Service, sub
 	type input struct {
 		OperationID string `json:"operation_id"`
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "library_get_model_operation", Description: "Read owning credential's durable model-budget operation after reconnect/restart. used counts conservative admissions, NOT money or proof of approval. unknown means an admitted call has no safely stored outcome. remaining does not permit retries. No automatic recovery reissues. Query/cancel run_id using run tools.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true}}, func(ctx context.Context, _ *mcp.CallToolRequest, in input) (*mcp.CallToolResult, delegated.ModelOperation, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_get_model_operation", Description: "Read owning credential's durable model-budget operation after reconnect/restart. used counts conservative admissions, NOT money or proof of approval. unknown means an admitted call has no safely stored outcome. remaining does not permit retries. No automatic recovery reissues. status=history_unavailable means run history is absent, not a known run outcome; durable allowance, usage and item outcomes remain available. Query/cancel run_id using run tools only while history exists.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true}}, func(ctx context.Context, _ *mcp.CallToolRequest, in input) (*mcp.CallToolResult, delegated.ModelOperation, error) {
 		out, err := service.GetModelOperation(ctx, subject, in.OperationID)
 		return discoveryResult(), out, publicMCPToolError(err, "invalid model operation", "model operation unavailable")
 	})

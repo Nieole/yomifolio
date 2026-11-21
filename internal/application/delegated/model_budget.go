@@ -38,19 +38,29 @@ type ModelItem struct {
 	Outcome     string `json:"outcome"`
 }
 
+// ModelOperationStatus is a run status, not_started before run association, or
+// history_unavailable when the associated run history no longer exists.
+// History unavailability says nothing about the run's terminal outcome.
+type ModelOperationStatus string
+
+const (
+	ModelNotStarted         ModelOperationStatus = "not_started"
+	ModelHistoryUnavailable ModelOperationStatus = "history_unavailable"
+)
+
 // ModelOperation reports conservative admissions, not a bill or proof of approval.
 // Unknown calls were admitted but their external outcome is not safely known.
 type ModelOperation struct {
-	OperationID string      `json:"operation_id"`
-	Type        string      `json:"type"`
-	SeriesID    int64       `json:"series_id"`
-	RunID       int64       `json:"run_id"`
-	Allowance   int         `json:"allowance"`
-	Used        int         `json:"used"`
-	Remaining   int         `json:"remaining"`
-	Status      string      `json:"status"`
-	Items       []ModelItem `json:"items"`
-	Unprocessed []string    `json:"unprocessed"`
+	OperationID string               `json:"operation_id"`
+	Type        string               `json:"type"`
+	SeriesID    int64                `json:"series_id"`
+	RunID       int64                `json:"run_id"`
+	Allowance   int                  `json:"allowance"`
+	Used        int                  `json:"used"`
+	Remaining   int                  `json:"remaining"`
+	Status      ModelOperationStatus `json:"status"`
+	Items       []ModelItem          `json:"items"`
+	Unprocessed []string             `json:"unprocessed"`
 }
 type modelRecord struct {
 	ModelOperation
@@ -151,13 +161,26 @@ func (s *Service) GetModelOperation(ctx context.Context, subject Subject, id str
 		}
 		out.Items = append(out.Items, ModelItem{CandidateID: candidate.ID, Outcome: outcome})
 	}
-	out.Status = "not_started"
+	out.Status = ModelNotStarted
 	if r.RunID > 0 {
-		run, err := s.GetRun(ctx, subject, r.RunID)
-		if err != nil {
-			return ModelOperation{}, err
+		if s.runs == nil {
+			return ModelOperation{}, ErrDenied
 		}
-		out.Status = string(run.Status)
+		// The operation row owns durable identity and authorization. Only a
+		// missing history row may degrade status; never swallow visible's denial.
+		snap, err := s.runs.Engine.SnapshotOf(ctx, r.RunID)
+		switch {
+		case errors.Is(err, task.ErrRunNotFound):
+			out.Status = ModelHistoryUnavailable
+		case err != nil:
+			return ModelOperation{}, err
+		default:
+			run, err := s.visible(ctx, subject, snap)
+			if err != nil {
+				return ModelOperation{}, err
+			}
+			out.Status = ModelOperationStatus(run.Status)
+		}
 	}
 	if err = s.checkModelAuthority(ctx, subject, r); err != nil {
 		return ModelOperation{}, err

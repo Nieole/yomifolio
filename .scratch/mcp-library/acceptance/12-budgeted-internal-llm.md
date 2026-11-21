@@ -1,5 +1,29 @@
 # 12 — 内部模型次数额度验收
 
+## request_review rc_69896dd6 修复：正常历史裁剪后的持久投影
+
+本节为当前结果，下方 merger/worker 记录是历史证据，不代表当前索引状态。
+
+- 唯一修改树 `C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-12` / `mcp-model-budget`；起点 HEAD `0018c90c`。未 stage/commit/merge，未编辑父树、计划或05/08内容；票12仍 ready-for-agent。
+- 原缺陷确实存在：正常 retention 删除完成运行后，预算查询依赖 `GetRun`，仍在 DB 的计数/结果也不可读。现在 `GetModelOperation` 保留预算读事务中的当前授权、真实用户/凭据归属、系列实际资料库检查及最终权限复查；关联历史使用引擎公开 `SnapshotOf`，**仅** `task.ErrRunNotFound` 降级到具体 `ModelOperationStatus` 的 `ModelHistoryUnavailable`（JSON `history_unavailable`）。存在的运行仍经 `visible` 当前授权/归属检查；拒权、其他存储错误不吞掉。
+- 不新增表/迁移、不修改 retention、不永久保留 run；原 operation_id/run_id/allowance/used/remaining/逐项结果不变。缺失历史不伪造 completed/interrupted 等终态、不声称可继续查询/取消该 run；重复声明仍只读原操作，不重启、不重置、不重发。
+- 复用既有 HTTP/真实 stdio helper 共用验收体：经生产 bootstrap + 通用 MCP SDK 创建并等待完成操作，确定 allowance=1/used=1/remaining=0、首项 uncertain、两项 unprocessed；仅将该完成历史的 finished_at 置于100天前，调用真实 `taskstore.Store.PruneRuns(TerminalAge=90天)`，断言恰好删除1条、run工具不可读。随后 lookup 与同额度声明全字段相同，仅 status 改为 history_unavailable，改变额度仍拒绝，AI调用数不增；重开服务后再次验证，并保留进行中消耗的 unknown/不重放验收。
+- 重开后同用户其他凭据、其他管理员用户凭据不能查询/重申原操作；原用户降级、系列移出原资料库、移除 internal_llm、清空库范围后仍拒绝，恢复用户/系列实际归属后可再次读取原投影。移除模型能力后普通系列读取仍成功。同步沿现有模型屏障/运行等待，无 sleep、真实费用或新业务宿主。
+
+### 本次实际红绿与门禁
+
+环境：`GOTOOLCHAIN=go1.26.10`；共享 `GOCACHE=C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-01/.tmp/merger01/gocache126`；本树 `.tmp/review12-pruning/tmp` 和独立 `lintcache`。日志均在 `.tmp/review12-pruning/`。
+
+1. 红：新增裁剪回归对原生产实现运行 `go test -p 1 ./internal/bootstrap -run '^TestMCPModelBudgetPersistsWithoutReplay$' -count=1 -timeout=3m`，真实删除历史后 `library_get_model_operation` IsError=true（`red.log`）。初次测试安排误写表名 task_runs 已修为实际 runs，不作为实质红测；首次修复误匹配 sql.ErrNoRows，检查存储端口后改为真正的 task.ErrRunNotFound。
+2. 绿：HTTP/stdio 两种预算持久化验收通过（`green.log`）；补全当前授权反例后再次通过。重开管理会话最初误用首次setup helper触发409，已改为重开服务上的真实登录，不掩盖为产品失败。
+3. `go test -p 1 ./internal/metadata ./internal/application/delegated ./internal/bootstrap -count=1 -timeout=10m`：全部通过，覆盖预算/metadata/delegated/bootstrap全包（`packages.log`）。
+4. `go test -p 1 ./internal/bootstrap ./internal/api ./internal/application/delegated ./cmd/mcp-proxy -run 'Test.*(MCP|ModelBudget)' -count=2 -timeout=5m`：MCP两轮通过，delegated无匹配、proxy无测试文件如实保留（`mcp-two.log`）。
+5. 一次完整后端 `go test -p 1 ./... -count=1 -timeout=10m`：全部通过，退出0（`full.log`/`full.exit`），包括本次实际 relocating 包；不引用旧review relocation/timeout结果。
+6. `gofmt -l ./cmd ./internal` 空输出；本树独立 `golangci-lint run` 为 `0 issues.`（`gofmt.log`、`lint.log`）；`go run ./cmd/tsgen` 生成32 types，生成文件无diff（`tsgen.log`）；`git diff --check` 通过。
+
+边界：run历史被裁剪后只知道历史缺失，无法恢复原运行终态；预算结果仍是已持久化结果，unknown不被猜测为成功。无新SQL输入/生成目标/前端改动，不跑sqlc或UI门禁。05取消锁与08undo收据仍由父级并行处理；父级集成提交后应立即独立重审。本节不批准未见到的后续组合变更，ADR0016仍draft。
+
+
 ## 工作树与结论
 
 - 唯一修改树：`C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-12`，分支 `mcp-model-budget`。独立 merger 核验 HEAD `d6c92649062a0e265f568f215b0b26389680bf1c`；待完成的合入为 `implement-mcp-library` / MERGE_HEAD `46d06126df577d1c772c4781165772277a01ac1d`，merge-base `b3083e4bd2e608521519f05fb1467fead8e0f6e8`。
@@ -37,7 +61,7 @@
 
 - 复用：`delegated.Subject`、`PrepareRun`、`Checkpoint`、`AuthorizeTx`、`ExternalSources.ConfiguredAI`、`Runs.Start`；新增 `CallBudgetedModel` 供可信应用用例复用原子预留，`WithSingleModelRequest` 防止生产模型请求隐式重放。外部注入 AI 工厂属于可信系统接缝，须自身遵守单请求及取消契约。
 - 独立 merger 已补真实 stdio 子进程预算验收（见下）；未做进程强杀或真实收费实验。票12要求跨请求/断线重连/重启记账，不要求强杀；通过重开生产服务与取消屏障检查持久消耗，不承诺外部效果 exactly-once。
-- 准入、run_id关联与网络调用不是分布式原子事务；中途故障可停留 not_started/unknown，保守消耗不退款，客户端应查询而非自动重发。运行历史裁剪、元数据审计/undo、清理UI等不在12实现范围。
+- 准入、run_id关联与网络调用不是分布式原子事务；中途故障可停留 not_started/unknown，保守消耗不退款，客户端应查询而非自动重发。运行历史裁剪后的预算投影现由上方 rc_69896dd6 回归覆盖；元数据审计/undo、清理UI等不在12实现范围。
 - 建议 subject：`feat(mcp): enforce durable per-operation internal model allowances`。
 
 ## 独立 merger 实际检查（05+07+12 组合树）

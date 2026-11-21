@@ -4,7 +4,7 @@
 
 **Blocked by:** 07 检索多来源候选并形成有依据的提案。
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 内部 LLM 必须同时满足当前用户权限、凭据独立模型能力及本次明确次数额度；缺少任一条件均不调用，其他获准查询仍可使用。
 - [x] 按 mm-adr-0016 草案记录的已选边界，接受 agent 转述额度，不新增受信任人工审批渠道，也不把计数当作独立用户批准证明；agent 声明不能扩大凭据权限。
@@ -17,8 +17,12 @@
 
 ## Comments
 
+- Final closure: `1e5995b0` integrates the pruning correction for `rc_69896dd6`. Independent re-review approved durable projections, unchanged current authorization, HTTP/stdio regressions and the full backend/format/Go1.26.10 lint gates. Historical pending implementation notes below are superseded; ADR0016 remains draft.
+
 - Worker mcp-model-budget: HEAD/merge-base verified b3083e4b; implementing uncommitted. Confirmed seam: production bootstrap + generic MCP client + deterministic external AI factory, plus production provider HTTP boundary for no hidden reissue. No UI. Budget operations use a separate model-budget namespace/table, not metadata audit.
 
 - 接续完成：保留原未提交实现；复查发现并以真实TLS/h2 REFUSED_STREAM测试证明Do外围守卫会漏算透明重试（2次POST），仅在额度路径去除GetBody重放配方后变为1次。最终完整后端、gofmt、lint、tsgen漂移检查通过；具体证据、保守消耗/委托信任边界及未覆盖实验见 `../acceptance/12-budgeted-internal-llm.md`。仍ready-for-agent，等待父级审阅/集成，未stage/commit。
 
 - 独立merger：HEAD d6c92649 + 待合入46d06126，merge-base b3083e4b。逐段合并CHANGELOG/api规格，保留05+07+12全部工具、最终JSON256KiB、来源默认及取消/断连边界。复用原fixture补真实SDK+stdio helper跨进程重连预算验收；metadata/预算及MCP各两轮、一次组合全后端（外层1800s）、Go1.26.10 gofmt/lint/tsgen漂移/SQLASCII均实际通过。12内容merge-ready，仍ready-for-agent；父级stage并完成已有merge，05共享RAR锁取消窄修与08不归本票。ADR0016仍draft。详见acceptance12独立检查及真正剩余门禁。
+
+- request_review rc_69896dd6：在 HEAD 0018c90c 上修复正常历史retention后预算投影不可读；仅 task.ErrRunNotFound 返回 history_unavailable，当前授权/归属不依赖已裁剪run，原用量/结果及不可重申重置语义保留。生产HTTP/stdio裁剪红绿、重开、拒权反例、全后端/MCP两轮/lint/生成漂移实际通过，详见acceptance12顶部。工单仍ready-for-agent，未stage/commit，等父集成后立即独立重审；不编辑05/08。

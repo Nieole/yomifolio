@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -20,6 +22,8 @@ import (
 	"yomifolio/internal/config"
 	"yomifolio/internal/database"
 	"yomifolio/internal/metadata"
+	"yomifolio/internal/task"
+	"yomifolio/internal/taskstore"
 )
 
 type budgetAI struct {
@@ -134,7 +138,7 @@ func runMCPModelBudgetPersists(t *testing.T, stdio bool) {
 	started := call("library_assess_match", map[string]any{"search_id": search["search_id"], "allowance": 1}, false)
 	call("library_wait_run", map[string]any{"run_id": started["run_id"], "timeout_ms": 30000}, false)
 	details := call("library_get_model_operation", map[string]any{"operation_id": started["operation_id"]}, false)
-	if details["used"] != float64(1) || details["remaining"] != float64(0) || len(details["unprocessed"].([]any)) != 2 || calls.Load() != 1 {
+	if details["allowance"] != float64(1) || details["used"] != float64(1) || details["remaining"] != float64(0) || details["status"] != "completed" || details["items"].([]any)[0].(map[string]any)["outcome"] != "uncertain" || len(details["unprocessed"].([]any)) != 2 || calls.Load() != 1 {
 		t.Fatal(details, calls.Load())
 	}
 	repeated := call("library_assess_match", map[string]any{"search_id": search["search_id"], "allowance": 1}, false)
@@ -160,6 +164,37 @@ func runMCPModelBudgetPersists(t *testing.T, stdio bool) {
 	if reconnected["operation_id"] != started["operation_id"] || reconnected["run_id"] != started["run_id"] || reconnected["used"] != float64(1) || reconnected["remaining"] != float64(0) || calls.Load() != 1 {
 		t.Fatal("helper reconnect reset ownership/usage", reconnected, calls.Load())
 	}
+	// Age completed history past the normal retention threshold, then use the
+	// production pruning path (not a direct DELETE or synthetic lookup error).
+	if _, err = store.DB().ExecContext(ctx, `UPDATE runs SET finished_at=? WHERE id=?`, time.Now().Add(-100*24*time.Hour).UnixMilli(), started["run_id"]); err != nil {
+		t.Fatal(err)
+	}
+	pruned, err := taskstore.New(store.DB()).PruneRuns(ctx, task.RetentionPolicy{TerminalAge: 90 * 24 * time.Hour})
+	if err != nil || pruned.Runs != 1 {
+		t.Fatalf("normal history pruning: %+v %v", pruned, err)
+	}
+	call("library_get_run", map[string]any{"run_id": started["run_id"]}, true)
+	assertPruned := func() {
+		t.Helper()
+		for _, got := range []map[string]any{
+			call("library_get_model_operation", map[string]any{"operation_id": started["operation_id"]}, false),
+			call("library_assess_match", map[string]any{"search_id": search["search_id"], "allowance": 1}, false),
+		} {
+			want := make(map[string]any, len(details))
+			for k, v := range details {
+				want[k] = v
+			}
+			want["status"] = "history_unavailable"
+			if !reflect.DeepEqual(got, want) {
+				t.Fatalf("pruning lost durable operation: got=%+v want=%+v", got, want)
+			}
+		}
+		call("library_assess_match", map[string]any{"search_id": search["search_id"], "allowance": 2}, true)
+	}
+	assertPruned()
+	if calls.Load() != 1 {
+		t.Fatal("pruned operation replayed", calls.Load())
+	}
 	hold.Store(true)
 	pendingSearch := call("library_search_sources", map[string]any{"series_id": series.ID, "query": "Local"}, false)
 	call("library_wait_run", map[string]any{"run_id": pendingSearch["run"].(map[string]any)["run_id"], "timeout_ms": 30000}, false)
@@ -180,6 +215,7 @@ func runMCPModelBudgetPersists(t *testing.T, stdio bool) {
 	server, session = connect(process)
 	defer server.Close()
 	defer session.Close()
+	assertPruned()
 	details = call("library_get_model_operation", map[string]any{"operation_id": started["operation_id"]}, false)
 	if details["used"] != float64(1) || calls.Load() != 2 {
 		t.Fatal(details, calls.Load())
@@ -195,6 +231,88 @@ func runMCPModelBudgetPersists(t *testing.T, stdio bool) {
 	resumed := call("library_assess_match", map[string]any{"search_id": pendingSearch["search_id"], "allowance": 3}, false)
 	if resumed["operation_id"] != pending["operation_id"] || calls.Load() != 2 {
 		t.Fatal("restart replayed paid work", resumed, calls.Load())
+	}
+
+	// Missing run history must not turn durable-operation reads into a bypass.
+	adminRouter := chi.NewRouter()
+	process.HTTP.SetupRoutes(adminRouter)
+	var adminCookie *http.Cookie
+	var adminSession struct {
+		CSRF string `json:"csrf_token"`
+	}
+	manage := func(method, path, body string, status int) *httptest.ResponseRecorder {
+		t.Helper()
+		req := httptest.NewRequest(method, "/api"+path, strings.NewReader(body))
+		if adminCookie != nil {
+			req.AddCookie(adminCookie)
+			req.Header.Set("X-CSRF-Token", adminSession.CSRF)
+		}
+		rec := httptest.NewRecorder()
+		adminRouter.ServeHTTP(rec, req)
+		if rec.Code != status {
+			t.Fatalf("%s %s: %d %s", method, path, rec.Code, rec.Body.String())
+		}
+		return rec
+	}
+	login := manage("POST", "/auth/login", `{"username":"admin","password":"correct horse battery staple"}`, 200)
+	adminCookie = login.Result().Cookies()[0]
+	if err = json.Unmarshal(login.Body.Bytes(), &adminSession); err != nil {
+		t.Fatal(err)
+	}
+	otherUser, err := store.CreateUser(ctx, database.CreateUserParams{Username: "other-budget-admin", Role: database.RoleAdmin})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, user := range []int64{1, otherUser.ID} {
+		var other struct{ ID, Token string }
+		response := manage("POST", "/mcp/credentials", fmt.Sprintf(`{"user_id":%d,"name":"other-budget","library_ids":[%d],"capabilities":["read","internal_llm"]}`, user, lib.ID), 200)
+		if err = json.Unmarshal(response.Body.Bytes(), &other); err != nil {
+			t.Fatal(err)
+		}
+		otherSession, e := mcp.NewClient(&mcp.Implementation{Name: "other-budget", Version: "1"}, nil).Connect(ctx, &mcp.StreamableClientTransport{Endpoint: server.URL + "/mcp", HTTPClient: &http.Client{Transport: &bearerTransport{base: server.Client().Transport, token: other.Token}}}, nil)
+		if e != nil {
+			t.Fatal(e)
+		}
+		ownerSession := session
+		session = otherSession
+		call("library_get_model_operation", map[string]any{"operation_id": started["operation_id"]}, true)
+		call("library_assess_match", map[string]any{"search_id": search["search_id"], "allowance": 1}, true)
+		session = ownerSession
+		otherSession.Close()
+	}
+	denyOriginal := func() {
+		t.Helper()
+		call("library_get_model_operation", map[string]any{"operation_id": started["operation_id"]}, true)
+		call("library_assess_match", map[string]any{"search_id": search["search_id"], "allowance": 1}, true)
+	}
+	// A changed current user role is independent of the credential and history.
+	if err = store.UpdateUserProfile(ctx, 1, "", database.RoleRegular); err != nil {
+		t.Fatal(err)
+	}
+	denyOriginal()
+	if err = store.UpdateUserProfile(ctx, 1, "", database.RoleAdmin); err != nil {
+		t.Fatal(err)
+	}
+	assertPruned()
+	movedLibrary, err := store.CreateLibrary(ctx, database.CreateLibraryParams{Name: "Moved budget series", Path: t.TempDir(), ScanMode: "none"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = store.DB().ExecContext(ctx, `UPDATE series SET library_id=? WHERE id=?`, movedLibrary.ID, series.ID); err != nil {
+		t.Fatal(err)
+	}
+	denyOriginal()
+	if _, err = store.DB().ExecContext(ctx, `UPDATE series SET library_id=? WHERE id=?`, lib.ID, series.ID); err != nil {
+		t.Fatal(err)
+	}
+	assertPruned()
+	manage("PATCH", "/mcp/credentials/"+issued.ID, fmt.Sprintf(`{"user_id":1,"name":"budget","library_ids":[%d],"capabilities":["read"]}`, lib.ID), 200)
+	denyOriginal()
+	call("library_get_series", map[string]any{"series_id": series.ID}, false)
+	manage("PATCH", "/mcp/credentials/"+issued.ID, `{"user_id":1,"name":"budget","library_ids":[],"capabilities":["read"]}`, 200)
+	denyOriginal()
+	if calls.Load() != 2 {
+		t.Fatal("history/authority checks reissued a model call", calls.Load())
 	}
 
 }
