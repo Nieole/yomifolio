@@ -87,15 +87,17 @@ type EnrichmentQueries interface {
 	RefreshSeriesStats(context.Context, int64) error
 }
 
-// WriteEnrichmentState writes a prepared state in the caller's transaction.
-// Callers must check current locks and relevant expected values before this call,
-// and roll back the transaction on any error. It also refreshes derived statistics.
 func enrichmentNullString(v *string) sql.NullString {
 	if v == nil {
 		return sql.NullString{}
 	}
 	return sql.NullString{String: *v, Valid: true}
 }
+
+// WriteEnrichmentState writes a prepared state in the caller's transaction.
+// Callers must check current locks and relevant expected values before this call,
+// and roll back all its writes on any error (transaction or encompassing savepoint).
+// It also refreshes derived statistics.
 func WriteEnrichmentState(ctx context.Context, q EnrichmentQueries, current database.Series, state State, fields []string) error {
 	rating := sql.NullFloat64{}
 	if state.Rating != nil {

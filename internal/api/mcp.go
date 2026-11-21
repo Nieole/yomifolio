@@ -171,6 +171,7 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 				return discoveryResult(), out, nil
 			})
 			registerDiscoveryTools(server, service, subject)
+			registerMCPImages(server, service, subject, r.Context())
 			registerMCPRuns(server, service, subject)
 			registerMCPMatching(server, service, subject)
 			if enrichmentService != nil {
@@ -179,6 +180,6 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 			return server
 		}, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true, DisableLocalhostProtection: true})
 		r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
-		handler.ServeHTTP(w, r)
+		serveBoundedMCP(w, r, handler)
 	})
 }

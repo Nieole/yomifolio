@@ -216,6 +216,131 @@ func TestProductionMCPEnrichmentAuditUndo(t *testing.T) {
 	if _, err = store.DB().Exec(`DROP TRIGGER enrichment_test_failure`); err != nil {
 		t.Fatal(err)
 	}
+	// Undo must retain a durable failed attempt, not just roll back the data. A tag
+	// deletion fails after the scalar update, exercising a genuinely partial write.
+	undoFailure := makeSeries("UndoStorageFailure")
+	pundo := propose(undoFailure, "bangumi")
+	undoOriginal := call("library_enrich_metadata", map[string]any{"request_key": "undo-fill", "series_id": undoFailure, "proposal_ids": []any{pundo}, "fields": []string{"summary", "tags"}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": undoFailure})})
+	if _, err = store.DB().Exec(fmt.Sprintf(`CREATE TRIGGER undo_test_failure BEFORE DELETE ON series_tags WHEN OLD.series_id=%d BEGIN SELECT RAISE(ABORT,'private-trigger /private/path secret-value'); END`, undoFailure)); err != nil {
+		t.Fatal(err)
+	}
+	undoRequest := map[string]any{"request_key": "undo-storage-failure", "operation_id": undoOriginal["id"]}
+	failedUndo := call("library_undo_metadata_operation", undoRequest)
+	if failedUndo["outcome"] != "failed" || failedUndo["applied"] != false || failedUndo["parent_id"] != undoOriginal["id"] || failedUndo["request_key"] != "undo-storage-failure" {
+		t.Fatal(failedUndo)
+	}
+	actor := failedUndo["actor"].(map[string]any)
+	if actor["user_id"] != float64(1) || actor["credential_id"] != issued.ID {
+		t.Fatal("lost undo identity", actor)
+	}
+	encoded, _ := json.Marshal(failedUndo)
+	for _, private := range []string{"private-trigger", "/private/path", "secret-value", "RAISE", "DELETE"} {
+		if strings.Contains(string(encoded), private) {
+			t.Fatal("storage diagnostics leaked", string(encoded))
+		}
+	}
+	if fmt.Sprint(failedUndo["before"]) != fmt.Sprint(failedUndo["after"]) {
+		t.Fatal("failed receipt claims changes", failedUndo)
+	}
+	for _, field := range failedUndo["fields"].([]any) {
+		if field.(map[string]any)["changed"] != false {
+			t.Fatal("failed field claims change", field)
+		}
+	}
+	if current := call("library_get_enrichment_state", map[string]any{"series_id": undoFailure}); current["summary"] != "Space journey" || len(current["tags"].([]any)) != 2 {
+		t.Fatal("partial undo survived", current)
+	}
+	originalBeforeRetry := call("library_get_metadata_operation", map[string]any{"operation_id": undoOriginal["id"]})
+	if originalBeforeRetry["undone_by"] != nil || originalBeforeRetry["after"].(map[string]any)["summary"] != "Space journey" {
+		t.Fatal("lost reversal material", originalBeforeRetry)
+	}
+	if saved := call("library_get_metadata_operation", map[string]any{"operation_id": failedUndo["id"]}); saved["outcome"] != "failed" {
+		t.Fatal(saved)
+	}
+	if history := web("GET", "/mcp/operations", nil, 200); !strings.Contains(string(history), failedUndo["id"].(string)) {
+		t.Fatal(string(history))
+	}
+	// Failure-receipt storage can itself fail. The public result must be an error,
+	// not a fabricated durable failed receipt; the original data remains intact.
+	if _, err = store.DB().Exec(`CREATE TRIGGER undo_journal_failure BEFORE INSERT ON metadata_operations WHEN NEW.request_key='undo-journal-unavailable' BEGIN SELECT RAISE(ABORT,'private-journal-error'); END`); err != nil {
+		t.Fatal(err)
+	}
+	unavailable, e := session.CallTool(ctx, &mcp.CallToolParams{Name: "library_undo_metadata_operation", Arguments: map[string]any{"request_key": "undo-journal-unavailable", "operation_id": undoOriginal["id"]}})
+	if e != nil || !unavailable.IsError {
+		t.Fatalf("journal failure claimed durability: %+v %v", unavailable, e)
+	}
+	publicError, _ := json.Marshal(unavailable)
+	if strings.Contains(string(publicError), "private-journal-error") {
+		t.Fatal("journal error leaked", string(publicError))
+	}
+	if _, err = store.DB().Exec(`DROP TRIGGER undo_journal_failure; UPDATE users SET role='user' WHERE id=1`); err != nil {
+		t.Fatal(err)
+	}
+	unauthorized, e := session.CallTool(ctx, &mcp.CallToolParams{Name: "library_undo_metadata_operation", Arguments: map[string]any{"request_key": "undo-denied-no-audit", "operation_id": undoOriginal["id"]}})
+	if e != nil || !unauthorized.IsError {
+		t.Fatalf("unauthorized undo became an audit probe: %+v %v", unauthorized, e)
+	}
+	if _, err = store.DB().Exec(`UPDATE users SET role='admin' WHERE id=1`); err != nil {
+		t.Fatal(err)
+	}
+	if history := web("GET", "/mcp/operations", nil, 200); strings.Contains(string(history), "undo-journal-unavailable") || strings.Contains(string(history), "undo-denied-no-audit") {
+		t.Fatal("fabricated receipt", string(history))
+	}
+	if current := call("library_get_enrichment_state", map[string]any{"series_id": undoFailure}); current["summary"] != "Space journey" || len(current["tags"].([]any)) != 2 {
+		t.Fatal("failure handling changed data", current)
+	}
+	// Removing the fault makes re-execution observable: replay must still fail,
+	// preserve the original ID and leave the metadata untouched.
+	if _, err = store.DB().Exec(`DROP TRIGGER undo_test_failure`); err != nil {
+		t.Fatal(err)
+	}
+	if replay := call("library_undo_metadata_operation", undoRequest); replay["id"] != failedUndo["id"] || replay["outcome"] != "failed" || replay["replayed"] != true || replay["applied"] != false {
+		t.Fatal(replay)
+	}
+	if current := call("library_get_enrichment_state", map[string]any{"series_id": undoFailure}); current["summary"] != "Space journey" {
+		t.Fatal("replay wrote metadata", current)
+	}
+	mismatch, e := session.CallTool(ctx, &mcp.CallToolParams{Name: "library_undo_metadata_operation", Arguments: map[string]any{"request_key": "undo-storage-failure", "operation_id": applied["id"]}})
+	if e != nil || !mismatch.IsError {
+		t.Fatalf("changed undo intent accepted: %+v %v", mismatch, e)
+	}
+	// A concurrent replay of the failed identity cannot hide a different-key success.
+	type undoResult struct {
+		result *mcp.CallToolResult
+		err    error
+	}
+	results := make(chan undoResult, 2)
+	for _, key := range []string{"undo-storage-failure", "undo-after-failure"} {
+		go func() {
+			result, e := session.CallTool(ctx, &mcp.CallToolParams{Name: "library_undo_metadata_operation", Arguments: map[string]any{"request_key": key, "operation_id": undoOriginal["id"]}})
+			results <- undoResult{result, e}
+		}()
+	}
+	var successfulUndoID string
+	for range 2 {
+		result := <-results
+		if result.err != nil || result.result.IsError {
+			t.Fatalf("concurrent undo: %+v %v", result.result, result.err)
+		}
+		raw, _ := json.Marshal(result.result.StructuredContent)
+		var op map[string]any
+		if err = json.Unmarshal(raw, &op); err != nil {
+			t.Fatal(err)
+		}
+		if op["request_key"] == "undo-storage-failure" {
+			if op["id"] != failedUndo["id"] || op["outcome"] != "failed" || op["replayed"] != true {
+				t.Fatal(op)
+			}
+		} else {
+			if op["outcome"] != "changed" || op["after"].(map[string]any)["summary"] != nil {
+				t.Fatal(op)
+			}
+			successfulUndoID = op["id"].(string)
+		}
+	}
+	if original := call("library_get_metadata_operation", map[string]any{"operation_id": undoOriginal["id"]}); successfulUndoID == "" || original["undone_by"] != successfulUndoID {
+		t.Fatal("failed receipt hid successful undo", original)
+	}
 	// Whole tag-group changes and current locks block all selected undo fields.
 	undoTool := func(key string) map[string]any {
 		return call("library_undo_metadata_operation", map[string]any{"operation_id": applied["id"], "request_key": key})
@@ -369,6 +494,10 @@ func TestProductionMCPEnrichmentAuditUndo(t *testing.T) {
 	process.HTTP.SetupRoutes(router)
 	server = httptest.NewTLSServer(router)
 	defer server.Close()
+	var persistedFailure map[string]any
+	if err = json.Unmarshal(web("GET", fmt.Sprintf("/mcp/operations/%s", failedUndo["id"]), nil, 200), &persistedFailure); err != nil || persistedFailure["outcome"] != "failed" || persistedFailure["actor"].(map[string]any)["credential_id"] != actor["credential_id"] {
+		t.Fatal(persistedFailure, err)
+	}
 	persisted := web("GET", "/mcp/operations", nil, 200)
 	if !strings.Contains(string(persisted), "undone_by") || !strings.Contains(string(persisted), "batch-b") {
 		t.Fatal(string(persisted))

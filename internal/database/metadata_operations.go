@@ -24,6 +24,25 @@ type MetadataReceipt struct {
 // MetadataJournal binds all receipt reads and inserts to the actual metadata transaction.
 type MetadataJournal struct{ Tx *sql.Tx }
 
+// TryChange isolates metadata writes while retaining the outer authorization and
+// journal transaction. failed means a write error was fully rolled back; only then
+// may the caller commit a failed receipt. Transaction/savepoint failures return an
+// error instead: durability is not guaranteed and the outer transaction must abort.
+// The callback must not commit, roll back, or otherwise control the transaction.
+func (j MetadataJournal) TryChange(ctx context.Context, write func() error) (failed bool, err error) {
+	if _, err = j.Tx.ExecContext(ctx, `SAVEPOINT metadata_change`); err != nil {
+		return false, err
+	}
+	if writeErr := write(); writeErr != nil {
+		if _, err = j.Tx.ExecContext(ctx, `ROLLBACK TO metadata_change`); err != nil {
+			return false, err
+		}
+		failed = true
+	}
+	_, err = j.Tx.ExecContext(ctx, `RELEASE metadata_change`)
+	return failed, err
+}
+
 const metadataReceiptColumns = `sequence,id,user_id,credential_id,request_key,request_hash,series_id,library_id,parent_id,outcome,payload`
 
 func scanMetadataReceipt(row interface{ Scan(...any) error }) (MetadataReceipt, error) {

@@ -1,5 +1,7 @@
 # 08 安全元数据补充、审计及撤销验收
 
+> 原实施及独立 merger 记录保留为历史；最新失败撤销窄修与门禁结论见文末。
+
 ## 工作树与范围
 
 - 唯一工作树：`C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-08`；分支 `mcp-enrichment-audit`，HEAD `b3083e4bd2e608521519f05fb1467fead8e0f6e8`。
@@ -49,3 +51,61 @@
 长期行为更新到 architecture、application、database、seriesmeta、metadata、api、bootstrap、web 的所属规格及 CHANGELOG；未改 ADR 状态或工单 triage 为 done。`enrichment.Service` 提供 State/Apply/Batch/Get/List/Undo，供同一生产图的网页及 MCP 复用；`MetadataJournal` 绑定真实写事务；授权继续复用 delegated.Subject/AuthorizeTx，不存授权快照；ContentTags/EnrichmentRating 是来源策略函数；State、EnrichmentLocked、WriteEnrichmentState 把字段锁解释和事务绑定写入归口 seriesmeta，应用只编排授权、预期值、收据与提交。最后做这项边界归位后，`.tmp/08/domain-boundary.log` 中 enrichment/bootstrap/seriesmeta 的 Enrichment/MCP 定向回归通过，tsgen SHA-256 仍一致，最终 lint 0 issues；不冒称这之后又全量测试。12 合并时共享装配/契约/CHANGELOG 文件可能冲突，父代理应合并而非覆盖。
 
 无已知票 08 未满足项。限制：此轮未跑真实浏览器截图/像素测试，HTML 为概念示意；不宣称所有潜在并发顺序均已穷尽。清理、作者、封面与 LLM 是后续票范围，不是本票已实现能力。建议 commit subject：`feat: add audited metadata enrichment and safe undo`。
+
+
+## 独立 merger：4b7265ab + 待完成合并 46d06126
+
+**结论：存在具体阻塞，尚非 merge-ready。** 仅操作本票工作树；HEAD `4b7265ab9a60408998764f765763eaa86189be3b`，MERGE_HEAD `46d06126df577d1c772c4781165772277a01ac1d`。CHANGELOG 逐段保留 08、05（含 RAR 预算记录）、07，去除冲突标记，未整文件 ours/theirs。未 stage/commit/merge/reset/abort，索引仍显示 UU，须父代理确认并 stage。
+
+### 独立发现：失败撤销缺持久实际结果审计
+
+`Service.Undo` 中 `WriteEnrichmentState` 返回存储错误时直接返回，安全回滚，但不像 Apply.failed 保存失败收据。无法通过操作历史查询该次撤销的身份、request_key、前后与实际失败结果，同键重试也无失败结果可重放。完整持久实际结果审计尚有缺口。**不会误标已撤销、不会丢撤销材料，也不是半撤销或数据损坏。** 按本轮要求仅报告，不扩修生产功能。
+
+真实 SQLite 公开应用探针 `.tmp/08/undo-probe/undo_test.go`：补 summary 成功后安装 BEFORE UPDATE ON series 的 RAISE(ABORT) 触发器，Undo 返回错误；State 仍为补充后值、原操作 UndoneBy 为空、List 只有原 enrich，缺 failed-undo 收据。`go test -v ./.tmp/08/undo-probe -count=1` 通过（表示缺口被证实，不是该行为验收通过）；日志 `.tmp/08/merger-undo-failure-probe.log`。需父代理修复/裁决此项后再核验。
+
+### 核对范围及实际门禁
+
+独立复查补空与锁、保守标签词表追加、链接、原始站点评分及等权公式、多来源确认、实际事务 AuthorizeTx/相关字段比较/整组标签、逐系列部分成功、持久身份/前后/重试 digest、真实重开、当前授权查询与撤销。网页仍挂在原认证及 CSRF 树；普通手工/扫描/提案入口语义未改。图片、匹配、运行及六个 enrichment 工具均留在同一注册路径；bootstrap 同一资源图注入 enrichment 应用服务，协议无新增 SQL 直连。作者/封面未擅自加入 08。
+
+Go 1.26.10、约定共享 GOCACHE、本树 GOTMPDIR、独立 `.tmp/08/lintcache-merger`；Node 26.13.1。本次无门禁失败、无盲重试。以下日志均在 `.tmp/08/`：
+
+- **最终组合完整后端一次**：`go test -p 1 ./... -count=1 -timeout=10m`，外层 1800s，全部通过；`merger-full-backend.log`。覆盖之前 domain-boundary 归位及此次 05 自动接线，不再仅依赖旧定向记录。
+- **MCP/Enrichment 定向两轮**：`go test -p 1 ./internal/application/enrichment ./internal/application/delegated ./internal/bootstrap ./internal/api ./internal/seriesmeta -run 'Enrichment|MCP' -count=1 -timeout=3m` 均通过；`merger-focused-{1,2}.log`。delegated 包此 pattern 无匹配测试，完整后端已实际运行其测试。
+- `npm test -- --maxWorkers=2`：**121 files / 1151 tests**；完整 `npm run build`、`npm run lint` 均通过；`merger-frontend-{tests,build,lint}.log`。未新增真实浏览器截图验收。
+- `gofmt -l ./cmd ./internal` 空；`golangci-lint run` **0 issues.**；`git diff --check HEAD` 通过；`merger-{gofmt,lint}.log`。
+- `go run ./cmd/tsgen` 42 类型，生成前后 SHA-256 一致；`merger-tsgen*.log`。PowerShell `sqlc generate` 退出 **0**，生成代码无 diff；`merger-sqlc.log`。SQL 未修改，未反复生成。query.sql 与 schema_handwritten.sql 均 ASCII。
+
+### 09/10/11/13 复用及集成限制
+
+- 09：复用 Subject/AuthorizeTx、单系列事务、MetadataJournal、expected-value/undo 结构；当前 State、白名单和写入器**没有作者关联组**，不是已实现作者校正。
+- 10：复用同一事务/审计边界与 05 只读图片资格；**没有封面准备、旧图片保留引用或文字+封面原子提交协议**，现有 Undo 不恢复封面。
+- 11：复用 MatchEvidence、提案 ID 和审计关联；Apply **不消费/关闭提案，不建立补充后关闭终态**，须继续复用普通提案终态事务保护。
+- 13：复用操作身份、Journal 查询和独立 cleanup 授权基础；**无清理 API/清理状态/材料删除机制**，不能删除 payload 后仍宣称可恢复。上述失败撤销审计缺口应先处理。
+- 核验时 implement-mcp-library 已前进到 `0018c90c`，本树仍只待合并指定 `46d06126`；**未集成或核验 12、另树的 05 RAR 取消锁后续修复**，全量绿灯仅覆盖本树实际组合。父代理负责后续安全集成和共享接线复核。
+
+
+## Undo 失败审计窄修（待父 review）
+
+仅在本票唯一工作树、现有 HEAD `4b7265ab` / 待完成合并 `46d06126` 上修复独立 probe 指出的阻塞；未修改计划、其他票或其他树，未 stage/commit/merge/reset/abort。CHANGELOG 仍保留原 05/07/08 文本且索引 UU 留给父处理。当前 Status 仍 ready-for-agent，前述“尚非 merge-ready”是修复前历史结论，不冒称父 review 已通过。
+
+### 实现及可观察行为
+
+- `enrichment.Undo` 在已读取当前权限、锁、after-state、请求键的同一事务中，通过 `MetadataJournal.TryChange` 建立包住全部元数据/集合/统计写入的 savepoint。常规写入错误整体回滚这些写入，再于该外层事务保存 failed-undo 收据并提交。没有 rollback 后另开事务的竞态窗口，也不将失败事务标记为 changed。
+- 收据保留真实 user/credential 身份、原 operation 关联、request_key 和请求意图 hash；before/after 相同，fields.changed/applied 均 false，通用固定失败理由不保存 SQL、trigger 诊断、路径或 secret。原操作的 after/撤销材料不变，UndoneBy 不会指向失败尝试。
+- 同 key 同 intent 返回同 ID、failed/replayed=true/applied=false，不再写入；同 key 不同原 operation 拒绝。不同 key 后续仍可撤销；失败重放与另一 key 并发成功时，原操作仅关联真实成功收据。
+- 授权拒绝发生在尝试之前，不创建可供未经授权对象探测的失败审计。savepoint、日志写入或 commit 自身失败不承诺持久失败收据，返回不可用错误；外层事务回滚。无法在存储本身不可用时承诺审计一定持久。
+- 复用既有网页/MCP Get/List、失败投影和文案，不新增响应字段、UI、SQL schema 或 sqlc 查询。检查现有 UI：仅 outcome=changed 才标原项 undone，failed 使用现有失败文案且原操作仍可撤销，因此无需 UI 兼容改动。
+
+### 红绿与实际门禁
+
+主接缝沿用已同意的生产 `bootstrap.Open` + 临时真实 SQLite + 通用 Go MCP SDK / 管理员 HTTP，不 mock 内部事务。扩展 `TestProductionMCPEnrichmentAuditUndo`：DELETE series_tags 的真实 RAISE(ABORT) trigger 在标量更新之后失败，断言标量/标签均保持补充后状态、撤销材料不变、failed receipt 身份及 key/parent 对应、字段无实际变化、无私密诊断、公开查询、去除故障后的同键仍不执行、换 intent 拒绝、不同 key 合法成功、失败重放并发不遮盖成功、关闭原连接并重开生产图后仍可查。另用日志 INSERT trigger 验证记录自身故障返回公开错误且无虚假收据；当前降权也返回拒绝且不留尝试收据。已有撤权/锁/标签整组 CAS/无关字段守卫未削弱。
+
+环境：Go1.26.10，约定共享 GOCACHE，本树 `.tmp/08/gotmp`、独立 `.tmp/08/lintcache-undo-fix`。日志均在 `.tmp/08/`。
+
+- **先红**：`go test -p 1 ./internal/bootstrap -run TestProductionMCPEnrichmentAuditUndo -count=1 -timeout=3m`，真实写错误仍返回 IsError、无 failed 收据，新增公开断言失败（`undo-fix-red.log`）。
+- **再绿**：同命令通过（`undo-fix-green.log`）。后增日志故障/拒权/并发/重开覆盖后，最终 MCP/Enrichment 两轮通过：`go test -p 1 ./internal/application/enrichment ./internal/application/delegated ./internal/bootstrap ./internal/api ./internal/seriesmeta ./internal/database -run 'Enrichment|MCP' -count=1 -timeout=3m`（`undo-fix-focused-{2,3}.log`；第一轮扩展前通过另见 `undo-fix-focused-1.log`）。此 pattern 在 delegated/database 无匹配，以下相关全包运行确实覆盖它们。
+- **相关六包全部测试**：上述六包不加 -run，`-count=1 -timeout=10m` 全通过（`undo-fix-packages.log`），含 API 全包 132.5s。
+- `gofmt -l ./cmd ./internal` 空（`undo-fix-gofmt.log`）；Go1.26.10 `golangci-lint run` **0 issues.**（`undo-fix-lint.log`）。`go run ./cmd/tsgen` 42 types，生成前后 SHA-256 完全一致（`undo-fix-tsgen*.log`）。`git diff --check HEAD` 最终通过；编辑器曾产生 CRLF 全文件 diff，已仅对本次修改文档恢复 LF，无无关整文件改动。
+- 未改 schema/query.sql，不需重跑 sqlc；手写 savepoint SQL 为 ASCII。未改 frontend，不重跑 test/build/lint；merger 前端全套证据仍是前节记录，不冒称本轮重跑。未重跑整个仓库全量后端：按此次窄修要求运行相关全包，父后续组合再做最终全量。
+
+边界：常规 SQLite ABORT 与日志 INSERT 失败已实证；没有宣称穷尽硬件 I/O、进程崩溃或所有并发调度，savepoint/commit 不可用按错误路径处理，不伪造成功或持久承诺。作者09/封面10/裁决11/清理13及12均未扩实现。建议提交标题（仅供父使用）：`fix: persist failed metadata undo receipts atomically`。

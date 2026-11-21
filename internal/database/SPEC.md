@@ -47,3 +47,5 @@ references: [mm-adr-0003]
 ## 元数据操作日志
 
 `schema_handwritten.sql` 的 metadata_operations 与 `MetadataJournal` 保存版本化完整应用收据，读取和插入绑定实际元数据事务。它独立于最新字段来源，不自动过期，不用级联删除抹去历史；身份 ID 保留，不保存 Bearer 密钥。用户/凭据/请求键唯一，成功撤销父操作唯一；sequence 支持稳定降序 keyset 查询。授权、补充与撤销裁决归 `mm-application`，持久层不另造工作流。
+
+`MetadataJournal.TryChange` 用同一外层事务内的 savepoint 包住元数据写入；仅当失败写入已完整回滚且 savepoint 释放成功时报告 failed，供应用保存脱敏失败收据。事务/savepoint 错误要求外层中止，不把已 rollback 的数据记为 changed；不使用另一个事务补记撤销失败来假装原子性。

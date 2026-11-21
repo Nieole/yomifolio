@@ -21,3 +21,8 @@
 
 - 接续实施（mcp-enrichment-audit，起点 b3083e4b）：保留前代理全部未提交功能改动，独立检查后补冲突审计完整性、批量响应预算、Settings 类型接线与实际测试缺口。保持 ready-for-agent，未 stage/commit；由父代理审阅和集成。
 - 验收与真实失败/修复记录见 `../acceptance/08-enrichment-audit-and-undo.md`。作者、封面、LLM、撤销材料清理均未扩展；未编辑 12 工作树或父树。
+
+- 独立 merger：保留 CHANGELOG 的 05/07/08，最终组合完整后端一次、MCP/Enrichment 两轮、前端 121 files/1151 tests/build/lint、Go1.26.10 lint 0 issues、gofmt、SQL/tsgen/ASCII 均通过，证据见验收文末。
+- **尚非 merge-ready**：真实 SQLite 探针确认 Undo 存储失败安全回滚但缺失败收据，完整持久实际结果审计项重开；按要求仅报告未扩修。Status 保持 ready-for-agent。未 stage/commit/merge 或操作其他树；父处理索引 UU 和后续集成。12 及另树 05 后续修复不在本次组合内。
+
+- 独立失败撤销审计窄修：按生产 bootstrap + 真实 SQLite DELETE trigger 先红后绿；Undo 改为同一授权事务内 savepoint 回滚完整写入并保存 failed 收据，不采用双事务补记。覆盖身份/原操作/key、脱敏、网页/MCP 查询、同键失败重放与不同意图拒绝、日志自身故障、拒权无收据、并发失败重放与另一键成功、重新打开后可查。具体门禁见 acceptance 最新节；审计项按实际重新勾选。仍 ready-for-agent 待父 review，不代表已合并；保留现有未完成 merge 与索引 UU，未执行任何索引/历史变更。

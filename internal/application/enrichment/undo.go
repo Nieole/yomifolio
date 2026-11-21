@@ -165,8 +165,22 @@ func (s *Service) Undo(ctx context.Context, actor delegated.Subject, in UndoInpu
 		}
 	}
 	if out.Applied {
-		if err = seriesmeta.WriteEnrichmentState(ctx, q, current, out.After, changedFields(out.Fields)); err != nil {
-			return Operation{}, err
+		// Keep the receipt in the same authorized transaction. A second transaction
+		// could race a successful undo or observe different authority/state.
+		failed, e := j.TryChange(ctx, func() error {
+			return seriesmeta.WriteEnrichmentState(ctx, q, current, out.After, changedFields(out.Fields))
+		})
+		if e != nil {
+			return Operation{}, e
+		}
+		if failed {
+			out.Applied = false
+			out.Outcome = "failed"
+			out.Reason = "metadata undo write failed; nothing changed"
+			out.After = out.Before
+			for i := range out.Fields {
+				out.Fields[i].Changed = false
+			}
 		}
 	}
 	if err = save(ctx, j, out, digest); err != nil {
