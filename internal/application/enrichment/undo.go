@@ -141,7 +141,10 @@ func (s *Service) Undo(ctx context.Context, actor delegated.Subject, in UndoInpu
 	if err != nil {
 		return Operation{}, err
 	}
-	if original.Kind != "enrich" || original.Outcome != "changed" || undone != "" {
+	if original.UndoUnavailable {
+		out.Outcome = "unavailable"
+		out.Reason = "rollback material explicitly cleaned; recovery unavailable"
+	} else if original.Kind != "enrich" || original.Outcome != "changed" || undone != "" {
 		out.Reason = "operation has no remaining reversible change"
 	} else {
 		for _, field := range original.Fields {

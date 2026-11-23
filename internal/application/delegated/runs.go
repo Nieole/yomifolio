@@ -95,7 +95,7 @@ func (s *Service) ListRuns(ctx context.Context, subject Subject, library, before
 		return nil, ErrInvalid
 	}
 	if err := s.Authorize(ctx, subject, library, ScanControl); err != nil {
-		if readErr := s.Authorize(ctx, subject, library, Read); readErr != nil {
+		if readErr := s.Authorize(ctx, subject, library, Read); readErr != nil && s.Authorize(ctx, subject, library, Cleanup) != nil {
 			return nil, readErr
 		}
 	}

@@ -5,6 +5,8 @@
  */
 
 export interface Operation {
+  undo_unavailable?: boolean;
+  cleaned_by?: string;
   cover_selection?: CoverSelection;
   old_cover_material?: string;
   new_cover_material?: string;
@@ -25,6 +27,22 @@ export interface Operation {
   undone_by?: string;
   applied: boolean;
   replayed: boolean;
+}
+
+export interface CleanupResult {
+  id: string;
+  operation_id: string;
+  actor: Subject;
+  created_at: string;
+  outcome: string;
+  undo_unavailable: boolean;
+  materials: MaterialResult[];
+  replayed: boolean;
+}
+
+export interface MaterialResult {
+  key: string;
+  outcome: string;
 }
 
 export interface CoverSelection {

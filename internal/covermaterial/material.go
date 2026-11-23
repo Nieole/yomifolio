@@ -1,6 +1,7 @@
 // Package covermaterial prepares immutable cover resources before database publication.
 // Its namespace is excluded from ordinary thumbnail cleanup; only committed references
-// may be served. Failed or interrupted publications retain inaccessible orphan material.
+// may be served. Orphans have no automatic expiry; explicit receipt-scoped cleanup
+// must durably fence publication before removing any resource.
 package covermaterial
 
 import (

@@ -84,3 +84,10 @@ MCP 的 enrichment state、单项/批量补充、操作查询/按系列分页与
 作者校正复用同一 enrichment 工具与操作查询/撤销路径；输入可选择 authors，`author_corrections` 使用精确 from/to name、role 与短 reason，不接受自由作者事实。state 与收据 before/after 返回作者组，协议层不执行共享身份重命名。系列内例外、当前事务保护和字段补空限制归 `mm-application`。
 
 补充命令的 expected schema 来自独立 `enrichment.ExpectedState`，authors 可省略（含批量嵌套输入）；不因响应 State 增加字段而要求旧客户端补送新字段。持久摘要版本与兼容规则归 `mm-application`。
+
+
+## 撤销材料清理入口
+
+`library_cleanup_metadata_operation` 映射有界单项 Cleanup，`library_start_metadata_cleanup` 映射显式同库列表的共享异步运行，`library_get_metadata_cleanup(request_key)` 读取本凭据持久结果。独立 cleanup 权限不隐含 metadata_write/read，运行 Get/Wait/Cancel 和列表仍按原归属及该运行 cleanup 能力检查。工具不管理或扩大凭据。同步单项合并真实入口取消；异步接纳后断连不取消。幂等、partial/pending 与恢复损失规则归 mm-application。
+
+管理员网页 `POST /api/mcp/operations/{operationId}/cleanup` 与 `GET /api/mcp/cleanups/{cleanupId}` 保留原 Cookie、CSRF（写命令）、当前角色和改密守卫，响应 no-store。不增加逐批确认参数。操作投影 undo_unavailable/cleaned_by 明示快照已裁剪，不能把 cleaned outcome 或失败/缺失文件翻译成安全 Undo 成功。

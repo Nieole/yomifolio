@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiClient, getApiErrorMessage } from '../../api/client';
-import type { Operation, Page, State } from '../../api/generated';
+import type { CleanupResult, Operation, Page, State } from '../../api/generated';
 import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n/LocaleProvider';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
@@ -35,6 +35,7 @@ function OperationHistory() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const cleanupKeys = useRef(new Map<string, string>());
   const [undo, setUndo] = useState<{ operation: Operation; key: string } | null>(null);
   useEffect(() => {
     alive.current = true;
@@ -67,8 +68,22 @@ function OperationHistory() {
     } catch (err) { if (alive.current) setError(getApiErrorMessage(err, t('audit.failed'))); }
     finally { if (alive.current) setBusy(false); }
   }
+  async function clean(row: Operation) {
+    if (busy) return;
+    const key = cleanupKeys.current.get(row.id) ?? crypto.randomUUID();
+    cleanupKeys.current.set(row.id, key);
+    setBusy(true); setError(''); setNotice('');
+    try {
+      const { data } = await apiClient.post<CleanupResult>(`/api/mcp/operations/${row.id}/cleanup`, { request_key: key });
+      if (!alive.current) return;
+      setNotice(t(data.outcome === 'partial' ? 'audit.cleanup.partial' : data.outcome === 'pending' ? 'audit.cleanup.pending' : 'audit.cleanup.complete'));
+      setRows((old) => old.map((item) => item.id === row.id ? { ...item, undo_unavailable: data.undo_unavailable, cleaned_by: data.id, old_cover_material: undefined, new_cover_material: undefined, fields: [] } : item));
+    } catch (err) { if (alive.current) setError(getApiErrorMessage(err, t('audit.failed'))); }
+    finally { if (alive.current) setBusy(false); }
+  }
   return <div className="space-y-6">
     <SettingsPageIntro title={t('audit.title')} description={t('audit.description')} />
+    <p className="text-sm text-amber-200">{t('audit.cleanup.warning')}</p>
     {error && <p role="alert" className="text-red-300">{error}</p>}
     {notice && <p role="status" className="text-amber-200">{notice}</p>}
     {!loading && rows.length === 0 && <p>{t('audit.empty')}</p>}
@@ -80,7 +95,7 @@ function OperationHistory() {
       <p className="break-all text-sm text-gray-400">{row.id} · {t('audit.actor')} #{row.actor.user_id} · {row.actor.credential_id || t('audit.web')}</p>
       {row.parent_id && <p className="break-all text-sm">{t('audit.reversal')}: {row.parent_id}</p>}
       {row.reason && <p>{row.reason}</p>}
-      {row.fields.map((field) => <div key={field.field} className="space-y-2 border-t border-gray-700 pt-3">
+      {!row.undo_unavailable && row.fields.map((field) => <div key={field.field} className="space-y-2 border-t border-gray-700 pt-3">
         <h4 className="font-medium">{t(`audit.field.${field.field}`)}</h4>
         {field.field === 'cover' && field.changed && <div className="flex gap-4">
           {coverImage(row.old_cover_material) && <img className="h-40 max-w-[45%] object-contain" src={coverImage(row.kind === 'undo' ? row.new_cover_material : row.old_cover_material)} alt={t('audit.cover.before')} />}
@@ -98,7 +113,8 @@ function OperationHistory() {
         </li>)}</ul>
       </div>)}
       {row.fields.some((field) => field.field === 'cover' && field.changed) && <p className="text-sm text-amber-200">{t('audit.cover.risk')}</p>}
-      {row.undone_by ? <p className="text-emerald-300">{t('audit.undone')}</p> : row.kind === 'enrich' && row.outcome === 'changed' && <button className={buttonClass} disabled={busy} onClick={() => setUndo({ operation: row, key: crypto.randomUUID() })}>{t('audit.undo')}</button>}
+      {row.undo_unavailable ? <p className="text-amber-200">{t('audit.cleanup.unavailable')}</p> : row.undone_by ? <p className="text-emerald-300">{t('audit.undone')}</p> : row.kind === 'enrich' && row.outcome === 'changed' && <button className={buttonClass} disabled={busy} onClick={() => setUndo({ operation: row, key: crypto.randomUUID() })}>{t('audit.undo')}</button>}
+      {!row.undo_unavailable && <button className={buttonClass} disabled={busy} onClick={() => void clean(row)}>{t('audit.cleanup.action')}</button>}
     </section>)}
     {loading && <p>{t('audit.loading')}</p>}
     {next && <button className={buttonClass} disabled={loading} onClick={() => void more()}>{t('audit.more')}</button>}

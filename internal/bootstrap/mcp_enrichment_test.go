@@ -152,6 +152,9 @@ func TestProductionMCPEnrichmentAuditUndo(t *testing.T) {
 		return out["proposal_id"]
 	}
 	verifyCoversAfterReopen := verifyAtomicCovers(t, store, cfg, session, router, process.Application.Engine, issued.Token, wrapped.gate, func() error { return process.Application.Scans.CleanupThumbnails(ctx, nil) }, call, web, propose)
+	cleanupProposal := propose(c, "bangumi")
+	cleanupOp := call("library_enrich_metadata", map[string]any{"request_key": "cleanup13-source", "series_id": c, "proposal_ids": []any{cleanupProposal}, "fields": []string{"summary"}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": c})})
+	verifyCleanup(t, session, call, web, cleanupOp)
 	pa, pb := propose(a, "bangumi"), propose(a, "anilist")
 	input := map[string]any{"request_key": "first", "series_id": a, "proposal_ids": []any{pa, pb}, "fields": []string{"summary", "rating", "tags", "source_links"}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": a})}
 	applied := call("library_enrich_metadata", input)
