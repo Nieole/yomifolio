@@ -144,6 +144,7 @@ type Store interface {
 	RefreshSeriesDerivedData(ctx context.Context, seriesID int64) error
 	// ForEachReferencedCoverPath 流式遍历被引用的封面路径（见 cover_paths.go 的契约注释）。
 	ForEachReferencedCoverPath(ctx context.Context, fn func(path string) error) error
+	CoverMaterialVisible(context.Context, string) (bool, error)
 	// SampleCandidateSeriesForAI 随机取候选系列供 AI 推荐（见 ai_candidates.go）。
 	SampleCandidateSeriesForAI(ctx context.Context, userID int64, limit int64) ([]CandidateSeriesForAI, error)
 	// CountSmartCollectionSeries 与智能书架列表共用同一份查询，保证计数与列表口径一致。

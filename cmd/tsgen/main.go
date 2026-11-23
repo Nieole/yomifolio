@@ -25,6 +25,8 @@ import (
 // （如 ValidationResult 引用 ValidationIssue，故两者都要在此）。
 var targets = []reflect.Type{
 	reflect.TypeOf(enrichment.Operation{}),
+	reflect.TypeOf(enrichment.CoverSelection{}),
+	reflect.TypeOf(seriesmeta.CoverState{}),
 	reflect.TypeOf(enrichment.Page{}),
 	reflect.TypeOf(enrichment.State{}),
 	reflect.TypeOf(enrichment.FieldAudit{}),
@@ -148,11 +150,11 @@ func emitFields(t reflect.Type, known map[string]bool, usedNulls map[string]bool
 			}
 		}
 		optional := omitempty || f.Type.Kind() == reflect.Pointer
-		if t == reflect.TypeOf(enrichment.State{}) {
+		if t == reflect.TypeOf(enrichment.State{}) && !omitempty {
 			optional = false
 		}
 		tsT := tsType(f.Type, known, usedNulls)
-		if t == reflect.TypeOf(enrichment.State{}) && f.Type.Kind() == reflect.Pointer {
+		if t == reflect.TypeOf(enrichment.State{}) && !omitempty && f.Type.Kind() == reflect.Pointer {
 			tsT += " | null"
 		}
 		opt := ""

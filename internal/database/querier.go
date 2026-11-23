@@ -81,6 +81,7 @@ type Querier interface {
 	GetConnectedSeriesRelations(ctx context.Context, startSeriesID int64) ([]GetConnectedSeriesRelationsRow, error)
 	GetContinueReadingSequels(ctx context.Context) ([]GetContinueReadingSequelsRow, error)
 	GetDashboardCoreStats(ctx context.Context, sinceDate string) (GetDashboardCoreStatsRow, error)
+	GetEnrichmentCoverBook(ctx context.Context, seriesID int64) (Book, error)
 	GetFranchiseRebuildState(ctx context.Context) (FranchiseRebuildState, error)
 	GetLibrary(ctx context.Context, id int64) (Library, error)
 	GetLinksForSeries(ctx context.Context, seriesID int64) ([]SeriesLink, error)

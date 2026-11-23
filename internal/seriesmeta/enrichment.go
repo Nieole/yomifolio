@@ -55,13 +55,14 @@ func EnrichmentRating(input []metadata.FieldEvidence) (*float64, []metadata.Fiel
 
 // State holds the metadata involved in safe enrichment and reversal.
 type State struct {
-	Title     *string  `json:"title"`
-	Summary   *string  `json:"summary"`
-	Publisher *string  `json:"publisher"`
-	Status    *string  `json:"status"`
-	Rating    *float64 `json:"rating"`
-	Tags      []string `json:"tags"`
-	Links     []Link   `json:"links"`
+	Cover     *CoverState `json:"cover,omitempty"`
+	Title     *string     `json:"title"`
+	Summary   *string     `json:"summary"`
+	Publisher *string     `json:"publisher"`
+	Status    *string     `json:"status"`
+	Rating    *float64    `json:"rating"`
+	Tags      []string    `json:"tags"`
+	Links     []Link      `json:"links"`
 }
 
 // EnrichmentLocked checks current source-specific field protections.

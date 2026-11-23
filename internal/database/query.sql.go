@@ -1605,6 +1605,45 @@ func (q *Queries) GetDashboardCoreStats(ctx context.Context, sinceDate string) (
 	return i, err
 }
 
+const getEnrichmentCoverBook = `-- name: GetEnrichmentCoverBook :one
+SELECT b.id, b.series_id, b.library_id, b.name, b.path, b.size, b.file_modified_at, b.volume, b.title, b.summary, b.number, b.sort_number, b.page_count, b.cover_path, b.cover_locked, b.last_read_page, b.last_read_at, b.is_read, b.file_hash, b.quick_hash, b.path_fingerprint, b.path_fingerprint_no_ext, b.filename_fingerprint, b.created_at, b.updated_at FROM books b JOIN series s ON s.id=b.series_id AND s.library_id=b.library_id
+WHERE b.series_id=? AND coalesce(b.cover_path,'')<>''
+ORDER BY b.sort_number,b.name,b.id LIMIT 1
+`
+
+func (q *Queries) GetEnrichmentCoverBook(ctx context.Context, seriesID int64) (Book, error) {
+	row := q.db.QueryRowContext(ctx, getEnrichmentCoverBook, seriesID)
+	var i Book
+	err := row.Scan(
+		&i.ID,
+		&i.SeriesID,
+		&i.LibraryID,
+		&i.Name,
+		&i.Path,
+		&i.Size,
+		&i.FileModifiedAt,
+		&i.Volume,
+		&i.Title,
+		&i.Summary,
+		&i.Number,
+		&i.SortNumber,
+		&i.PageCount,
+		&i.CoverPath,
+		&i.CoverLocked,
+		&i.LastReadPage,
+		&i.LastReadAt,
+		&i.IsRead,
+		&i.FileHash,
+		&i.QuickHash,
+		&i.PathFingerprint,
+		&i.PathFingerprintNoExt,
+		&i.FilenameFingerprint,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getFranchiseRebuildState = `-- name: GetFranchiseRebuildState :one
 SELECT id, desired_version, applied_version, has_success, last_attempt_version, last_attempt_at_ms, failures, next_retry_at_ms, last_error FROM franchise_rebuild_state WHERE id = 1
 `

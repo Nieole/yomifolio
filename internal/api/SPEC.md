@@ -65,7 +65,7 @@ MCP 安全入口仅接受 `mcp.public_url` 配置的精确 authority；有 Origi
 
 发现工具只映射应用用例与结构化结果，查询条件、分页、证据及响应上限归 `mm-application`；工具描述提供条件交集、默认页长、硬上限与后继用法。不提供路径参数、任意磁盘读取或整书下载。
 
-图片工具只调用应用完整用例，以 SDK v1.8.0 `ImageContent.Data` 的原始字节字段交付真实 `image/jpeg`，让 SDK 执行 base64 序列化，不能预先 base64 后二次编码。结构化元数据与 image content 顺序一致，不在文本重复图片。stateless SDK 的工具上下文不自行代表 HTTP 请求生命周期：图片工具显式合并请求取消上下文，HTTP 断线、stdio EOF 取消上游后，在 IO 等待时也归还资格；这不改变已接纳后台运行的断线后继续语义。
+图片工具只调用应用完整用例，以 SDK v1.8.0 `ImageContent.Data` 的原始字节字段交付真实 `image/jpeg`，让 SDK 执行 base64 序列化，不能预先 base64 后二次编码。结构化元数据与 image content 顺序一致，不在文本重复图片。stateless SDK 的工具上下文不自行代表 HTTP 请求生命周期：图片工具和单项/批量同步补充工具显式合并请求取消上下文，HTTP 断线、stdio EOF 取消上游后，在封面准备的 IO 等待时也归还读资格及图片/准备槽；同步补充沿用同一合并上下文直至事务提交，不在准备后脱离取消；这不改变已接纳后台运行的断线后继续语义。
 
 所有 MCP JSON HTTP 响应在写入网络前受 256 KiB 最终响应体硬上限约束，包含 SDK framing、调用方 JSON-RPC ID 与 base64/JSON 开销；有界缓冲溢出后返回短 HTTP 413，不发出部分图片 JSON。应用预留不是任意长请求 ID 的豁免。该接口仍为 stateless JSON，不用此缓冲提供 SSE 会话恢复；stdio 代理沿同一 HTTP 契约转发。
 
@@ -77,3 +77,6 @@ MCP 安全入口仅接受 `mcp.public_url` 配置的精确 authority；有 Origi
 ## 受限补充和操作历史
 
 MCP 的 enrichment state、单项/批量补充、操作查询/按系列分页与撤销工具直接委托 `enrichment.Service`，身份来自认证凭据，不接受调用者自报。工具声明只读或幂等提示，但最终以事务授权和持久重放结果为准。管理员网页 `GET /api/mcp/operations`、`GET /api/mcp/operations/{operationId}`、`POST /api/mcp/operations/{operationId}/undo` 复用网页认证和 CSRF，命令携带 request_key；普通用户不可管理或撤销。审计、响应预算、预期值与回滚契约归 `mm-application`。
+
+
+补充工具的 cover 字段选择与故障一致性归 mm-application，仍复用同一 enrichment 工具/管理历史/Undo，不新增图片宿主或任意 URL 获取工具。原 cover 路由支持已提交的虚拟材料键；原 thumbnail 路由须检查当前书或持久保留引用后读取材料私有根。普通缩略图文件使用 os.Root 约束在普通缓存根，保留内容与条件请求语义；未提交虚拟键、Windows 大小写/尾点等实体目录别名均不能公开准备材料。

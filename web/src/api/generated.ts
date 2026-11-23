@@ -5,6 +5,9 @@
  */
 
 export interface Operation {
+  cover_selection?: CoverSelection;
+  old_cover_material?: string;
+  new_cover_material?: string;
   version: number;
   id: string;
   request_key: string;
@@ -24,12 +27,27 @@ export interface Operation {
   replayed: boolean;
 }
 
+export interface CoverSelection {
+  book_id: number;
+  page: number;
+  quality_compared: boolean;
+  reason: string;
+}
+
+export interface CoverState {
+  book_id: number;
+  path: string;
+  locked: boolean;
+  automatic: boolean;
+}
+
 export interface Page {
   operations: Operation[];
   next_before?: number;
 }
 
 export interface State {
+  cover?: CoverState;
   title: string | null;
   summary: string | null;
   publisher: string | null;

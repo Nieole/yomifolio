@@ -12,7 +12,7 @@ import (
 	"yomifolio/internal/application/enrichment"
 )
 
-func registerMCPEnrichment(server *mcp.Server, service *enrichment.Service, subject delegated.Subject) {
+func registerMCPEnrichment(server *mcp.Server, service *enrichment.Service, subject delegated.Subject, transportCtx context.Context) {
 	type target struct {
 		SeriesID int64 `json:"series_id"`
 	}
@@ -33,11 +33,15 @@ func registerMCPEnrichment(server *mcp.Server, service *enrichment.Service, subj
 		out, err := service.State(ctx, subject, in.SeriesID)
 		return discoveryResult(), out, publicMCPToolError(err, "invalid target", "metadata state unavailable")
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_enrich_metadata", Description: "Atomically supplement ONE series using persisted explicitly identity/edition-confirmed proposal_ids. Select title/summary/publisher/status/rating/tags/source_links. Scalars only fill empty values; tags append conservative content genres; site scores use equal-weight ten-point normalization. Requires expected values for selected fields; current locks reject the whole series. request_key (1-80 printable ASCII) identifies this exact request forever for this credential: retry returns original outcome, replayed=true, applied=false; changed payload with same key rejected. No authors or covers.", Annotations: write}, func(ctx context.Context, _ *mcp.CallToolRequest, in enrichment.Input) (*mcp.CallToolResult, enrichment.Operation, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_enrich_metadata", Description: "Atomically supplement ONE series using persisted explicitly identity/edition-confirmed proposal_ids. Select title/summary/publisher/status/rating/tags/source_links. Scalars only fill empty values; tags append conservative content genres; site scores use equal-weight ten-point normalization. Requires expected values for selected fields; current locks reject the whole series. request_key (1-80 printable ASCII) identifies this exact request forever for this credential: retry returns original outcome, replayed=true, applied=false; changed payload with same key rejected. Cover selection accepts only an authorized same-series archive book_id/page, quality_compared=true and a short comparison reason. Select cover with expected.cover to improve only the unlocked archive-generated catalogue cover. Cover and text commit together; manual/upload covers are protected. No arbitrary URL or path; no authors.", Annotations: write}, func(ctx context.Context, _ *mcp.CallToolRequest, in enrichment.Input) (*mcp.CallToolResult, enrichment.Operation, error) {
+		ctx, cancel := imageRequestContext(ctx, transportCtx)
+		defer cancel()
 		out, err := service.Apply(ctx, subject, in)
 		return discoveryResult(), out, publicMCPToolError(err, "invalid enrichment request or reused key", "metadata operation unavailable")
 	})
 	mcp.AddTool(server, &mcp.Tool{Name: "library_enrich_metadata_batch", Description: "Process 1-20 independent series operations in order; NOT batch atomic. Results distinguish changed/no-change/conflict/failed/unprocessed. Each input has its own unique request_key. Cancelled or response-budget-exhausted remainder is unprocessed; query uncertain receipts before retrying.", Annotations: write}, func(ctx context.Context, _ *mcp.CallToolRequest, in batch) (*mcp.CallToolResult, enrichment.BatchResult, error) {
+		ctx, cancel := imageRequestContext(ctx, transportCtx)
+		defer cancel()
 		out, err := service.Batch(ctx, subject, in.Operations)
 		return discoveryResult(), out, publicMCPToolError(err, "invalid enrichment batch", "metadata operation unavailable")
 	})

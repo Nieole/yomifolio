@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"yomifolio/internal/config"
+	"yomifolio/internal/covermaterial"
 	"yomifolio/internal/images"
 	"yomifolio/internal/parser"
 	"yomifolio/internal/storageio"
@@ -74,7 +75,11 @@ func (s *Service) Evidence(ctx context.Context, id, libraryID int64, pages []int
 				return nil, ErrSourceMissing
 			}
 			// The server-owned cache key cannot escape the configured cache, even via symlinks.
-			root, err := os.OpenRoot(config.ThumbnailDir(s.config()))
+			dir := config.ThumbnailDir(s.config())
+			if covermaterial.IsPath(source.CoverPath) {
+				dir = covermaterial.RootDir(dir)
+			}
+			root, err := os.OpenRoot(dir)
 			if err != nil {
 				return nil, err
 			}

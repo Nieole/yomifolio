@@ -2,6 +2,7 @@ package api
 
 import (
 	"container/heap"
+	"context"
 	"crypto/sha1"
 	"errors"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 
 	"yomifolio/internal/bookcontent"
 	"yomifolio/internal/config"
+	"yomifolio/internal/covermaterial"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -385,6 +387,9 @@ func (c *contentHTTP) serveCoverImage(w http.ResponseWriter, r *http.Request) {
 		thumbDir := config.ThumbnailDir(c.currentConfig())
 
 		fullPath := filepath.Join(thumbDir, coverPath)
+		if covermaterial.IsPath(coverPath) {
+			fullPath = covermaterial.FilePath(thumbDir, coverPath)
+		}
 		if info, err := os.Stat(fullPath); err == nil {
 			// 基于封面路径 + 文件修改时间 + 大小生成弱 ETag：缩略图重建覆盖文件时 ETag 必变、
 			// 不会复读旧封面；内容不变则客户端可凭 If-None-Match 命中 304，省去整图重传。
@@ -512,20 +517,46 @@ func (c *contentHTTP) getPagesByBook(w http.ResponseWriter, r *http.Request) {
 func (c *contentHTTP) serveThumbnailImage(w http.ResponseWriter, r *http.Request) {
 	thumbDir := config.ThumbnailDir(c.currentConfig())
 	filename := chi.URLParam(r, "*")
-	fullPath := filepath.Join(thumbDir, filename)
-	w.Header().Set("Cache-Control", pageImageCacheControl)
-	// 图片资源不依赖 Origin，清除 CORS 中间件写入的 Vary: Origin，
-	// 否则浏览器以 (URL+Origin) 为缓存 key，同源 <img> 请求无法命中缓存。
-	w.Header().Del("Vary")
-
-	if info, err := os.Stat(fullPath); err == nil && !info.IsDir() {
-		etag := weakETag(fmt.Sprintf("thumbnail-%s-%d-%d", filename, info.ModTime().UnixNano(), info.Size()))
-		w.Header().Set("ETag", etag)
-		if r.Header.Get("If-None-Match") == etag {
-			w.WriteHeader(http.StatusNotModified)
+	if covermaterial.IsPath(filename) {
+		gate, ok := c.store.(interface {
+			CoverMaterialVisible(context.Context, string) (bool, error)
+		})
+		if !ok {
+			http.NotFound(w, r)
 			return
 		}
+		key := filepath.ToSlash(filepath.Clean(filename))
+		visible, err := gate.CoverMaterialVisible(r.Context(), key)
+		if err != nil || !visible {
+			http.NotFound(w, r)
+			return
+		}
+		thumbDir = covermaterial.RootDir(thumbDir)
 	}
-
-	http.ServeFile(w, r, fullPath)
+	root, err := os.OpenRoot(thumbDir)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	defer root.Close()
+	file, err := root.Open(filename)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err != nil || info.IsDir() {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Cache-Control", pageImageCacheControl)
+	w.Header().Del("Vary")
+	etag := weakETag(fmt.Sprintf("thumbnail-%s-%d-%d", filename, info.ModTime().UnixNano(), info.Size()))
+	w.Header().Set("ETag", etag)
+	if r.Header.Get("If-None-Match") == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	http.ServeContent(w, r, filename, info.ModTime(), file)
 }

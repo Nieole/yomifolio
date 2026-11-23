@@ -3,6 +3,8 @@ package enrichment
 import (
 	"context"
 	"yomifolio/internal/application/delegated"
+	"yomifolio/internal/config"
+	"yomifolio/internal/covermaterial"
 	"yomifolio/internal/database"
 	"yomifolio/internal/seriesmeta"
 )
@@ -147,11 +149,28 @@ func (s *Service) Undo(ctx context.Context, actor delegated.Subject, in UndoInpu
 				continue
 			}
 			out.Fields = append(out.Fields, field)
-			if seriesmeta.EnrichmentLocked(current, field.Field) || !same(before, original.After, field.Field) {
+			if seriesmeta.EnrichmentLocked(current, field.Field) || !same(before, original.After, field.Field) || (field.Field == "cover" && (before.Cover == nil || before.Cover.Locked)) {
 				out.Outcome = "conflict"
 				out.Reason = "current field or lock differs from operation after-state"
 			}
 			copyField(&out.After, original.Before, field.Field)
+			if field.Field == "cover" {
+				if original.OldCoverMaterial == "" {
+					return Operation{}, delegated.ErrInvalid
+				}
+				restored := *original.Before.Cover
+				restored.Path = original.OldCoverMaterial
+				restored.Automatic = true
+				out.After.Cover = &restored
+				out.OldCoverMaterial = original.OldCoverMaterial
+				out.NewCoverMaterial = original.NewCoverMaterial
+				if s.covers == nil {
+					return Operation{}, delegated.ErrInvalid
+				}
+				if _, e := covermaterial.Read(ctx, config.ThumbnailDir(s.covers.Config()), restored.Path); e != nil {
+					return Operation{}, e
+				}
+			}
 		}
 		if out.Outcome != "conflict" {
 			out.Outcome = "changed"
@@ -168,7 +187,7 @@ func (s *Service) Undo(ctx context.Context, actor delegated.Subject, in UndoInpu
 		// Keep the receipt in the same authorized transaction. A second transaction
 		// could race a successful undo or observe different authority/state.
 		failed, e := j.TryChange(ctx, func() error {
-			return seriesmeta.WriteEnrichmentState(ctx, q, current, out.After, changedFields(out.Fields))
+			return writeState(ctx, tx, q, current, out.After, changedFields(out.Fields))
 		})
 		if e != nil {
 			return Operation{}, e

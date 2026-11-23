@@ -175,7 +175,7 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 			registerMCPRuns(server, service, subject)
 			registerMCPMatching(server, service, subject)
 			if enrichmentService != nil {
-				registerMCPEnrichment(server, enrichmentService, subject)
+				registerMCPEnrichment(server, enrichmentService, subject, r.Context())
 			}
 			registerMCPModelBudgets(server, service, subject)
 			return server

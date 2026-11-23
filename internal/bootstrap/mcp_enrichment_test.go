@@ -151,6 +151,7 @@ func TestProductionMCPEnrichmentAuditUndo(t *testing.T) {
 		out := call("library_propose_match", map[string]any{"search_id": search["search_id"], "identity_confirmed": true, "edition_confirmed": true, "summary": "Same series and edition confirmed from directory and release", "fields": map[string]string{"summary": source + ":0", "tags": source + ":0", "rating": source + ":0"}})
 		return out["proposal_id"]
 	}
+	verifyCoversAfterReopen := verifyAtomicCovers(t, store, cfg, session, router, process.Application.Engine, issued.Token, wrapped.gate, func() error { return process.Application.Scans.CleanupThumbnails(ctx, nil) }, call, web, propose)
 	pa, pb := propose(a, "bangumi"), propose(a, "anilist")
 	input := map[string]any{"request_key": "first", "series_id": a, "proposal_ids": []any{pa, pb}, "fields": []string{"summary", "rating", "tags", "source_links"}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": a})}
 	applied := call("library_enrich_metadata", input)
@@ -494,6 +495,7 @@ func TestProductionMCPEnrichmentAuditUndo(t *testing.T) {
 	process.HTTP.SetupRoutes(router)
 	server = httptest.NewTLSServer(router)
 	defer server.Close()
+	verifyRestoredCover := verifyCoversAfterReopen(web)
 	var persistedFailure map[string]any
 	if err = json.Unmarshal(web("GET", fmt.Sprintf("/mcp/operations/%s", failedUndo["id"]), nil, 200), &persistedFailure); err != nil || persistedFailure["outcome"] != "failed" || persistedFailure["actor"].(map[string]any)["credential_id"] != actor["credential_id"] {
 		t.Fatal(persistedFailure, err)
@@ -506,4 +508,24 @@ func TestProductionMCPEnrichmentAuditUndo(t *testing.T) {
 	if !strings.Contains(string(undo), `"outcome":"changed"`) {
 		t.Fatal(string(undo))
 	}
+	server.Close()
+	process.Close()
+	if err = reopened.Close(); err != nil {
+		t.Fatal(err)
+	}
+	reopened, err = database.NewStore(cfg.Snapshot().Database.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reopened.Close()
+	process, err = bootstrap.Open(ctx, reopened, cfg, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	router = chi.NewRouter()
+	process.HTTP.SetupRoutes(router)
+	server = httptest.NewTLSServer(router)
+	defer server.Close()
+	verifyRestoredCover(web)
+
 }

@@ -45,3 +45,39 @@ it('retains the same request identity when a network failure makes undo uncertai
  await screen.findByText('Undone');
  expect(mocks.post.mock.calls[0]).toEqual(mocks.post.mock.calls[1]);
 });
+it('shows retained cover comparison and warns that undo also restores text subject to current locks', async () => {
+ const cover = { book_id: 8, path: 'ab/original.png', locked: false, automatic: true };
+ mocks.get.mockResolvedValue({ data: { operations: [{ ...row, old_cover_material: 'metadata-covers/old.png', new_cover_material: 'metadata-covers/new.jpg', before: { ...state, cover }, after: { ...state, summary: 'Space journey', cover: { ...cover, path: 'metadata-covers/new.jpg' } }, fields: [{ field: 'cover', changed: true, reason: 'Upright complete artwork', sources: [] }, ...row.fields] }] } });
+ setup();
+ expect((await screen.findByRole('img', { name: 'Previous cover' })).getAttribute('src')).toBe('/api/thumbnails/metadata-covers/old.png');
+ expect(screen.getByRole('img', { name: 'Selected cover' }).getAttribute('src')).toBe('/api/thumbnails/metadata-covers/new.jpg');
+ expect(screen.getByText('Upright complete artwork')).toBeTruthy();
+ expect(screen.getByText(/Cover and text are restored together/)).toBeTruthy();
+ fireEvent.click(screen.getByRole('button', { name: 'Undo operation' }));
+ expect(screen.getAllByText(/later manual cover/).length).toBeGreaterThan(0);
+});
+it('shows the authoritative cover undo in reverse direction and marks only successful restoration undone', async () => {
+ const cover = { book_id: 8, path: 'metadata-covers/new.jpg', locked: false, automatic: true };
+ const original = { ...row, old_cover_material: 'metadata-covers/old.png', new_cover_material: 'metadata-covers/new.jpg', before: { ...state, cover: { ...cover, path: 'ab/original.png' } }, after: { ...state, cover, summary: 'Space journey' }, fields: [{ field: 'cover', changed: true, reason: 'Compared artwork', sources: [] }, ...row.fields] };
+ mocks.get.mockResolvedValue({ data: { operations: [original] } });
+ mocks.post.mockResolvedValue({ data: { ...original, id: 'undo-cover', kind: 'undo', parent_id: original.id, before: original.after, after: { ...state, cover: { ...cover, path: original.old_cover_material } }, applied: true } });
+ setup(); await screen.findByRole('img', { name: 'Previous cover' });
+ fireEvent.click(screen.getByRole('button', { name: 'Undo operation' }));
+ fireEvent.click(screen.getByRole('button', { name: 'Confirm undo' }));
+ await screen.findByText('Undone');
+ expect(screen.getAllByRole('img', { name: 'Previous cover' })[0].getAttribute('src')).toBe('/api/thumbnails/metadata-covers/new.jpg');
+ expect(screen.getAllByRole('img', { name: 'Selected cover' })[0].getAttribute('src')).toBe('/api/thumbnails/metadata-covers/old.png');
+ expect(screen.queryByRole('button', { name: 'Undo operation' })).toBeNull();
+});
+it('does not present a failed cover undo as a restored image or discard the original undo option', async () => {
+ const original = { ...row, old_cover_material: 'metadata-covers/old.png', new_cover_material: 'metadata-covers/new.jpg', fields: [{ field: 'cover', changed: true, reason: 'Compared artwork', sources: [] }] };
+ mocks.get.mockResolvedValue({ data: { operations: [original] } });
+ mocks.post.mockResolvedValue({ data: { ...original, id: 'failed-cover', kind: 'undo', parent_id: original.id, outcome: 'failed', before: original.after, after: original.after, fields: [{ ...original.fields[0], changed: false }], applied: false } });
+ setup(); await screen.findByRole('img', { name: 'Previous cover' });
+ fireEvent.click(screen.getByRole('button', { name: 'Undo operation' }));
+ fireEvent.click(screen.getByRole('button', { name: 'Confirm undo' }));
+ await screen.findByRole('status');
+ expect(screen.queryByText('Undone')).toBeNull();
+ expect(screen.getAllByRole('img')).toHaveLength(2);
+ expect(screen.getByRole('button', { name: 'Undo operation' })).toBeTruthy();
+});

@@ -51,3 +51,6 @@ references: [mm-adr-0003]
 `MetadataJournal.TryChange` 用同一外层事务内的 savepoint 包住元数据写入；仅当失败写入已完整回滚且 savepoint 释放成功时报告 failed，供应用保存脱敏失败收据。事务/savepoint 错误要求外层中止，不把已 rollback 的数据记为 changed；不使用另一个事务补记撤销失败来假装原子性。
 
 `schema_model_budget.sql` 由统一 Migrate 安装，不进入 sqlc 输入。mcp_model_operations 与 mcp_model_calls 只保存独立命名空间的模型操作归属、冻结来源证据、不可变额度、准入消耗和白名单结果标签；唯一凭据/搜索及操作/item 约束防止重复额度/消费，used 受 allowance CHECK 约束。不与元数据变更审计共用表，不存模型内部推理；应用在实际事务内执行当前权限护栏。记录不随临时搜索缓存、运行历史裁剪或重启删除，用户/凭据失效仍由当前授权拒绝访问；不是通用审计或清理功能。
+
+
+`metadata_cover_materials` 是 handwritten DDL，由统一 Migrate 安装，保存 operation_id/path 多对多保留引用并索引 path；它不进入 sqlc 模型输入。收据和引用同事务插入，只有 changed 操作建立可公开保留引用；失败收据中出现的准备键不是公开授权。`CoverMaterialVisible` 同时检查当前书引用与保留引用，供原有文件名图片路由作提交可见性判定。`GetEnrichmentCoverBook` 的 sqlc 查询只取同库系列的首个封面书，按 sort_number/name/id 有界读取。未来清理不得按单条操作删除仍被别条记录/当前封面引用的文件；跨文件发布与清理竞争协议归 mm-application。

@@ -66,3 +66,6 @@ Yomifolio 的 Go 模块为 `yomifolio`。单进程 Go 服务使用 chi 接收 HT
 `bootstrap → application/enrichment → delegated、seriesmeta、database` 组合确认提案证据、来源补充策略、实际事务授权和持久收据；`api → application/enrichment` 为网页及 MCP 提供相同补充/查询/撤销用例。撤销材料与最新来源沿革分离；不启动第二个 Runtime，不改普通手工、扫描或提案写入规则，具体契约归 `mm-application`。
 
 `application/delegated → metadata` 的模型辅助复用生产 AI 工厂与同一 Runs；统一数据库迁移安装独立次数额度表，不与 enrichment 收据共用操作命名空间。当前授权、原子预留和不恢复付费请求的用例契约归 `mm-application`，实际 HTTP 单请求守卫归 `mm-metadata`。
+
+
+委托归档封面改善由 enrichment 编排：复用 delegated 的有界本地归档图片资格、seriesmeta 的受限封面写入和 MetadataJournal；covermaterial 只准备/读取不可变私有资源。API 原图片路由依据数据库当前/保留引用解析虚拟键，普通文件限制在普通缓存根；SQLite 引用是公开切换点，非单库事务对任意文件写入的原子承诺。持久材料引用及未来清理互斥边界归 mm-application/mm-database，不由扫描缓存清理接管。

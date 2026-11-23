@@ -217,3 +217,11 @@ CREATE TABLE IF NOT EXISTS metadata_operations (
 CREATE INDEX IF NOT EXISTS idx_metadata_operations_series ON metadata_operations(series_id, sequence);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_metadata_operations_undo ON metadata_operations(parent_id)
     WHERE parent_id <> '' AND outcome = 'changed';
+
+-- Immutable cover retention references. A resource may belong to several receipts.
+CREATE TABLE IF NOT EXISTS metadata_cover_materials (
+ operation_id TEXT NOT NULL REFERENCES metadata_operations(id),
+ path TEXT NOT NULL,
+ PRIMARY KEY(operation_id,path)
+);
+CREATE INDEX IF NOT EXISTS idx_metadata_cover_materials_path ON metadata_cover_materials(path);

@@ -10,6 +10,9 @@ const buttonClass = 'rounded-lg border border-gray-700 px-4 py-2 text-sm text-wh
 function safeLink(value: string) {
   try { const url = new URL(value); return ['https:', 'http:'].includes(url.protocol) ? url.href : undefined; } catch { return undefined; }
 }
+function coverImage(key?: string) {
+  return key?.startsWith('metadata-covers/') && /^metadata-covers\/[a-zA-Z0-9.-]+$/.test(key) ? `/api/thumbnails/${key}` : undefined;
+}
 function fieldValue(state: State, field: string) {
   const value = state[field === 'source_links' ? 'links' : field as keyof State];
   if (value === null || value === undefined) return '∅';
@@ -78,6 +81,10 @@ function OperationHistory() {
       {row.reason && <p>{row.reason}</p>}
       {row.fields.map((field) => <div key={field.field} className="space-y-2 border-t border-gray-700 pt-3">
         <h4 className="font-medium">{t(`audit.field.${field.field}`)}</h4>
+        {field.field === 'cover' && field.changed && <div className="flex gap-4">
+          {coverImage(row.old_cover_material) && <img className="h-40 max-w-[45%] object-contain" src={coverImage(row.kind === 'undo' ? row.new_cover_material : row.old_cover_material)} alt={t('audit.cover.before')} />}
+          {coverImage(row.new_cover_material) && <img className="h-40 max-w-[45%] object-contain" src={coverImage(row.kind === 'undo' ? row.old_cover_material : row.new_cover_material)} alt={t('audit.cover.after')} />}
+        </div>}
         <div className="grid gap-3 text-sm md:grid-cols-2">
           <div><span className="text-gray-400">{t('audit.before')}</span><p className="whitespace-pre-wrap break-words">{fieldValue(row.before, field.field)}</p></div>
           <div><span className="text-gray-400">{t('audit.after')}</span><p className="whitespace-pre-wrap break-words">{fieldValue(row.after, field.field)}</p></div>
@@ -89,10 +96,11 @@ function OperationHistory() {
           {source.metadata.SiteRating && <span> · {source.metadata.SiteRating.value} / {source.metadata.SiteRating.scale}</span>}
         </li>)}</ul>
       </div>)}
+      {row.fields.some((field) => field.field === 'cover' && field.changed) && <p className="text-sm text-amber-200">{t('audit.cover.risk')}</p>}
       {row.undone_by ? <p className="text-emerald-300">{t('audit.undone')}</p> : row.kind === 'enrich' && row.outcome === 'changed' && <button className={buttonClass} disabled={busy} onClick={() => setUndo({ operation: row, key: crypto.randomUUID() })}>{t('audit.undo')}</button>}
     </section>)}
     {loading && <p>{t('audit.loading')}</p>}
     {next && <button className={buttonClass} disabled={loading} onClick={() => void more()}>{t('audit.more')}</button>}
-    <ConfirmDialog open={!!undo} title={t('audit.undo')} description={t('audit.confirmDescription')} confirmLabel={t('audit.confirm')} loading={busy} onClose={() => setUndo(null)} onConfirm={() => void restore()} />
+    <ConfirmDialog open={!!undo} title={t('audit.undo')} description={t(undo?.operation.fields.some((field) => field.field === 'cover' && field.changed) ? 'audit.cover.risk' : 'audit.confirmDescription')} confirmLabel={t('audit.confirm')} loading={busy} onClose={() => setUndo(null)} onConfirm={() => void restore()} />
   </div>;
 }

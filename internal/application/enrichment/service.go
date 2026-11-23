@@ -31,11 +31,12 @@ type Evidence interface {
 type State = seriesmeta.State
 
 type Input struct {
-	RequestKey  string   `json:"request_key"`
-	SeriesID    int64    `json:"series_id"`
-	ProposalIDs []int64  `json:"proposal_ids"`
-	Fields      []string `json:"fields"`
-	Expected    State    `json:"expected"`
+	RequestKey  string          `json:"request_key"`
+	SeriesID    int64           `json:"series_id"`
+	ProposalIDs []int64         `json:"proposal_ids"`
+	Fields      []string        `json:"fields"`
+	Expected    State           `json:"expected"`
+	Cover       *CoverSelection `json:"cover,omitempty"`
 }
 type UndoInput struct {
 	RequestKey  string `json:"request_key"`
@@ -49,23 +50,26 @@ type FieldAudit struct {
 	Formula string                   `json:"formula,omitempty"`
 }
 type Operation struct {
-	Version    int               `json:"version"`
-	ID         string            `json:"id"`
-	RequestKey string            `json:"request_key"`
-	Actor      delegated.Subject `json:"actor"`
-	SeriesID   int64             `json:"series_id"`
-	LibraryID  int64             `json:"library_id"`
-	Kind       string            `json:"kind"`
-	ParentID   string            `json:"parent_id,omitempty"`
-	CreatedAt  string            `json:"created_at"`
-	Outcome    string            `json:"outcome"`
-	Reason     string            `json:"reason"`
-	Before     State             `json:"before"`
-	After      State             `json:"after"`
-	Fields     []FieldAudit      `json:"fields"`
-	UndoneBy   string            `json:"undone_by,omitempty"`
-	Applied    bool              `json:"applied"`
-	Replayed   bool              `json:"replayed"`
+	CoverSelection   *CoverSelection   `json:"cover_selection,omitempty"`
+	OldCoverMaterial string            `json:"old_cover_material,omitempty"`
+	NewCoverMaterial string            `json:"new_cover_material,omitempty"`
+	Version          int               `json:"version"`
+	ID               string            `json:"id"`
+	RequestKey       string            `json:"request_key"`
+	Actor            delegated.Subject `json:"actor"`
+	SeriesID         int64             `json:"series_id"`
+	LibraryID        int64             `json:"library_id"`
+	Kind             string            `json:"kind"`
+	ParentID         string            `json:"parent_id,omitempty"`
+	CreatedAt        string            `json:"created_at"`
+	Outcome          string            `json:"outcome"`
+	Reason           string            `json:"reason"`
+	Before           State             `json:"before"`
+	After            State             `json:"after"`
+	Fields           []FieldAudit      `json:"fields"`
+	UndoneBy         string            `json:"undone_by,omitempty"`
+	Applied          bool              `json:"applied"`
+	Replayed         bool              `json:"replayed"`
 }
 type Page struct {
 	Operations []Operation `json:"operations"`
@@ -81,6 +85,7 @@ type Service struct {
 	db       *sql.DB
 	evidence Evidence
 	publish  func()
+	covers   *CoverAccess
 }
 
 func New(db *sql.DB, evidence Evidence, publish func()) *Service {
@@ -145,10 +150,13 @@ func readState(ctx context.Context, q *database.Queries, id int64) (database.Ser
 	sort.Slice(state.Links, func(i, j int) bool {
 		return state.Links[i].Name+"\x00"+state.Links[i].Url < state.Links[j].Name+"\x00"+state.Links[j].Url
 	})
-	return current, state, nil
+	state.Cover, err = readCover(ctx, q, id)
+	return current, state, err
 }
 func value(s State, field string) any {
 	switch field {
+	case "cover":
+		return s.Cover
 	case "title":
 		return s.Title
 	case "summary":
@@ -183,6 +191,8 @@ func same(a, b State, f string) bool {
 }
 func copyField(dst *State, src State, f string) {
 	switch f {
+	case "cover":
+		dst.Cover = src.Cover
 	case "title":
 		dst.Title = src.Title
 	case "summary":
@@ -235,7 +245,20 @@ func save(ctx context.Context, j database.MetadataJournal, out Operation, digest
 	if len(b) > 200<<10 {
 		return delegated.ErrInvalid
 	}
-	return j.Insert(ctx, database.MetadataReceipt{ID: out.ID, UserID: out.Actor.UserID, CredentialID: out.Actor.CredentialID, RequestKey: out.RequestKey, RequestHash: digest, SeriesID: out.SeriesID, LibraryID: out.LibraryID, ParentID: out.ParentID, Outcome: out.Outcome, Payload: string(b)})
+	err = j.Insert(ctx, database.MetadataReceipt{ID: out.ID, UserID: out.Actor.UserID, CredentialID: out.Actor.CredentialID, RequestKey: out.RequestKey, RequestHash: digest, SeriesID: out.SeriesID, LibraryID: out.LibraryID, ParentID: out.ParentID, Outcome: out.Outcome, Payload: string(b)})
+	if err != nil {
+		return err
+	}
+	if out.Outcome == "changed" {
+		for _, key := range []string{out.OldCoverMaterial, out.NewCoverMaterial} {
+			if key != "" {
+				if _, err = j.Tx.ExecContext(ctx, `INSERT INTO metadata_cover_materials(operation_id,path) VALUES(?,?)`, out.ID, key); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }
 func retry(ctx context.Context, j database.MetadataJournal, actor delegated.Subject, key, digest string) (Operation, bool, error) {
 	r, err := j.Retry(ctx, actor.UserID, actor.CredentialID, key)
@@ -275,15 +298,21 @@ func (s *Service) State(ctx context.Context, actor delegated.Subject, series int
 // Apply requires selected fields and explicitly confirmed evidence. Identical retries
 // return the original immutable outcome with replayed=true and applied=false.
 func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) (Operation, error) {
-	if !validKey(in.RequestKey) || in.SeriesID <= 0 || len(in.Fields) < 1 || len(in.Fields) > 7 || len(in.ProposalIDs) < 1 || len(in.ProposalIDs) > 10 {
+	if !validKey(in.RequestKey) || in.SeriesID <= 0 || len(in.Fields) < 1 || len(in.Fields) > 8 || len(in.ProposalIDs) > 10 {
 		return Operation{}, delegated.ErrInvalid
 	}
 	seen := map[string]bool{}
 	for _, f := range in.Fields {
-		if seen[f] || !slices.Contains([]string{"title", "summary", "publisher", "status", "rating", "tags", "source_links"}, f) {
+		if seen[f] || !slices.Contains([]string{"title", "summary", "publisher", "status", "rating", "tags", "source_links", "cover"}, f) {
 			return Operation{}, delegated.ErrInvalid
 		}
 		seen[f] = true
+	}
+	if (len(in.Fields) > 1 || !seen["cover"]) && len(in.ProposalIDs) == 0 {
+		return Operation{}, delegated.ErrInvalid
+	}
+	if seen["cover"] != (in.Cover != nil) {
+		return Operation{}, delegated.ErrInvalid
 	}
 	if out, found, err := s.existing(ctx, actor, in.SeriesID, in.RequestKey, hash(in)); err != nil || found {
 		return out, err
@@ -317,6 +346,14 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 			}
 		}
 	}
+	var prepared *preparedCover
+	if in.Cover != nil {
+		var err error
+		prepared, err = s.prepareCover(ctx, actor, in)
+		if err != nil {
+			return Operation{}, err
+		}
+	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return Operation{}, err
@@ -337,10 +374,22 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 	out := operation(actor, in.RequestKey, current.ID, current.LibraryID, "enrich")
 	out.Before = before
 	out.After = before
+	if prepared != nil {
+		out.CoverSelection = in.Cover
+		out.OldCoverMaterial = prepared.old
+		out.NewCoverMaterial = prepared.new
+	}
 	for _, f := range in.Fields {
-		if seriesmeta.EnrichmentLocked(current, f) || !same(before, in.Expected, f) {
+		if seriesmeta.EnrichmentLocked(current, f) || !same(before, in.Expected, f) || (f == "cover" && !eligibleCover(before.Cover)) {
 			out.Outcome = "conflict"
 			out.Reason = "current field or lock differs"
+		}
+		if f == "cover" {
+			if before.Cover != nil {
+				out.After.Cover = &seriesmeta.CoverState{BookID: before.Cover.BookID, Path: prepared.new, Automatic: true}
+			}
+			out.Fields = append(out.Fields, FieldAudit{Field: f, Changed: true, Reason: in.Cover.Reason, Sources: []metadata.FieldEvidence{}})
+			continue
 		}
 		sources := evidence[f]
 		if len(sources) == 0 {
@@ -421,10 +470,25 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 			}
 		}
 	}
+	if in.Cover != nil {
+		source, e := q.GetBook(ctx, in.Cover.BookID)
+		if e != nil || source.SeriesID != current.ID || source.LibraryID != current.LibraryID {
+			return Operation{}, delegated.ErrDenied
+		}
+	}
 	if out.Applied {
-		if err = seriesmeta.WriteEnrichmentState(ctx, q, current, out.After, changedFields(out.Fields)); err != nil {
-			_ = tx.Rollback()
-			return s.failed(ctx, actor, in, out, err)
+		failed, e := j.TryChange(ctx, func() error { return writeState(ctx, tx, q, current, out.After, changedFields(out.Fields)) })
+		if e != nil {
+			return Operation{}, e
+		}
+		if failed {
+			out.Applied = false
+			out.Outcome = "failed"
+			out.Reason = "metadata write failed; nothing changed"
+			out.After = out.Before
+			for i := range out.Fields {
+				out.Fields[i].Changed = false
+			}
 		}
 	}
 	if err = save(ctx, j, out, hash(in)); err != nil {
@@ -452,34 +516,6 @@ func (s *Service) existing(ctx context.Context, actor delegated.Subject, series 
 		return Operation{}, false, err
 	}
 	return retry(ctx, database.MetadataJournal{Tx: tx}, actor, key, digest)
-}
-func (s *Service) failed(ctx context.Context, actor delegated.Subject, in Input, out Operation, cause error) (Operation, error) {
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return Operation{}, cause
-	}
-	defer tx.Rollback()
-	current, err := database.New(tx).GetSeries(ctx, in.SeriesID)
-	if err != nil {
-		return Operation{}, cause
-	}
-	if err = authorize(ctx, tx, actor, current.LibraryID, true); err != nil {
-		return Operation{}, err
-	}
-	out.Applied = false
-	out.Outcome = "failed"
-	out.Reason = "metadata transaction failed; nothing committed"
-	out.After = out.Before
-	for i := range out.Fields {
-		out.Fields[i].Changed = false
-	}
-	if err = save(ctx, database.MetadataJournal{Tx: tx}, out, hash(in)); err != nil {
-		return Operation{}, cause
-	}
-	if err = tx.Commit(); err != nil {
-		return Operation{}, err
-	}
-	return out, nil
 }
 
 // Batch reports independent series results, never whole-batch atomicity.

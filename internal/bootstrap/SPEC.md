@@ -33,3 +33,6 @@ references: [mm-adr-0014, mm-runtime]
 `Open` 同时从同一数据库与 delegated 实例装配 `enrichment.Service`，经 `AdministrationDependencies.Enrichment` 显式绑定网页和 MCP；提交后通过现有效果端口失效统计及发布刷新，不创建独立运行时或后台维护任务。
 
 内部模型额度操作另绑定 `ModelBudgetAccess` 到同一数据库、配置快照、`Runs.Start` 和 `ExternalSources.ConfiguredAI`（01 的生产 AI 工厂）；未注入替身时沿用既有 OpenAI Responses、Chat Completions 或 Ollama 来源，不新建付费客户端体系或运行时。AI 工厂替身属于可信外部边界，须遵守单次调用不隐藏重试的契约并响应 context 取消；生产 HTTP 来源额外执行每请求守卫。额度、不可变操作与故障语义归 `mm-application`。
+
+
+`enrichment.WithCovers` 绑定同一 delegated 实例及配置快照，复用现有图片/内容资格，不注入第二份图片宿主、运行时或网络客户端。不可变材料先准备/事务引用切换没有启动期文件重发或发布队列，故障与重开策略归 mm-application。

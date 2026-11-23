@@ -1784,3 +1784,8 @@ UPDATE franchise_rebuild_state
 SET last_attempt_version = sqlc.arg(version), last_attempt_at_ms = sqlc.arg(at_ms),
     failures = failures + 1, next_retry_at_ms = sqlc.arg(retry_at_ms), last_error = sqlc.arg(error)
 WHERE id = 1 AND applied_version < sqlc.arg(version) AND last_attempt_version <= sqlc.arg(version);
+
+-- name: GetEnrichmentCoverBook :one
+SELECT b.* FROM books b JOIN series s ON s.id=b.series_id AND s.library_id=b.library_id
+WHERE b.series_id=? AND coalesce(b.cover_path,'')<>''
+ORDER BY b.sort_number,b.name,b.id LIMIT 1;
