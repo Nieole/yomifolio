@@ -60,6 +60,9 @@ func readComicInfo(ctx context.Context, path string) ComicInfoClue {
 	}
 	defer release()
 	raw, err := parser.ReadMetadataLimited(ctx, arc, "ComicInfo.xml", 64<<10)
+	if errors.Is(err, parser.ErrRarEvidenceUnsupported) {
+		return ComicInfoClue{Status: "unavailable"}
+	}
 	if errors.Is(err, parser.ErrMetadataNotFound) {
 		return ComicInfoClue{Status: "missing"}
 	}

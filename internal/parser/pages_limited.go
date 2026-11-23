@@ -49,6 +49,10 @@ func (f pageContextFS) Open(name string) (fs.File, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := preflightRarEvidence(f.ctx, file); err != nil {
+		_ = file.Close()
+		return nil, err
+	}
 	return pageContextFile{File: file, ctx: f.ctx}, nil
 }
 
@@ -61,8 +65,8 @@ func (f pageContextFile) Read(p []byte) (int, error) {
 	return (pageContextReader{f.ctx, f.File}).Read(p)
 }
 
-// skipBoundedPage drains explicitly rather than allowing Next to invisibly decode
-// solid predecessors. Each skip has the same byte ceiling and cancellation checks
+// skipBoundedPage drains SDK-visible output after preflight excludes solid
+// archives. Each skip has the same byte ceiling and cancellation checks
 // as a selected entry, and retains no decompressed input buffer.
 func skipBoundedPage(ctx context.Context, rr io.Reader, declared, limit int64) error {
 	budget := boundedRarDrain{remaining: limit}
@@ -70,7 +74,7 @@ func skipBoundedPage(ctx context.Context, rr io.Reader, declared, limit int64) e
 }
 
 // boundedRarDrain caps cumulative predecessor work for one independent reader.
-// Explicit draining prevents Next from doing unaccounted solid decompression.
+// Preflight excludes solid archives; SDK-visible bytes are counted here.
 type boundedRarDrain struct{ remaining int64 }
 
 func (b *boundedRarDrain) skip(ctx context.Context, rr io.Reader, declared, perEntry int64) error {

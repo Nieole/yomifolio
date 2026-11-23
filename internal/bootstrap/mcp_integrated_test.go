@@ -310,6 +310,32 @@ func runIntegratedAcceptance(t *testing.T, stdio bool, finalCapability string) {
 	if clue := call("library_get_book_clues", map[string]any{"book_id": rarBook.ID}, false); clue["comic_info"].(map[string]any)["status"] != "available" {
 		t.Fatal(clue)
 	}
+	// Real compressed solid stream with a CRC-valid undersized first declaration:
+	// public clues must say unavailable, and images must not decode or fall back.
+	hostilePath := filepath.Join(lib.Path, "solid-undersized.cbr")
+	hostileBytes, err := os.ReadFile("../parser/testdata/solid-undersized.cbr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(hostilePath, hostileBytes, 0600); err != nil {
+		t.Fatal(err)
+	}
+	hostileBook, err := store.CreateBook(ctx, database.CreateBookParams{LibraryID: lib.ID, SeriesID: target, Name: "solid-undersized.cbr", Path: hostilePath, Size: int64(len(hostileBytes)), FileModifiedAt: modified, PageCount: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if clue := call("library_get_book_clues", map[string]any{"book_id": hostileBook.ID}, false); clue["comic_info"].(map[string]any)["status"] != "unavailable" {
+		t.Fatal(clue)
+	}
+	rejected, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_page_thumbnails", Arguments: map[string]any{"series_id": target, "book_id": hostileBook.ID, "pages": []int{1}}})
+	if err != nil || !rejected.IsError {
+		t.Fatalf("hostile solid image: %+v %v", rejected, err)
+	}
+	for _, content := range rejected.Content {
+		if _, ok := content.(*mcp.ImageContent); ok {
+			t.Fatal("hostile solid returned image")
+		}
+	}
 	acceptedIDs := map[int64]string{}
 	assertRunPages := func(wantCapability string) {
 		t.Helper()

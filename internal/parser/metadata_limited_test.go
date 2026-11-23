@@ -95,18 +95,22 @@ func TestComicInfoRealRarBudgets(t *testing.T) {
 						t.Fatal(err)
 					}
 					defer arc.Close()
-					data, err := ReadMetadataLimited(context.Background(), arc, "ComicInfo.xml", 64<<10)
-					if !errors.Is(err, tc.want) {
-						t.Fatalf("metadata bytes=%d error=%v want=%v", len(data), err, tc.want)
+					want := tc.want
+					if solid {
+						want = ErrRarEvidenceUnsupported
 					}
-					if tc.want == nil && len(data) != 12 {
+					data, err := ReadMetadataLimited(context.Background(), arc, "ComicInfo.xml", 64<<10)
+					if !errors.Is(err, want) {
+						t.Fatalf("metadata bytes=%d error=%v want=%v", len(data), err, want)
+					}
+					if want == nil && len(data) != 12 {
 						t.Fatalf("bytes=%d", len(data))
 					}
 					if tc.name == "dictionary" || tc.name == "cumulative-drain" {
-						if _, err := GetPagesLimited(context.Background(), arc); !errors.Is(err, ErrMetadataTooLarge) {
+						if _, err := GetPagesLimited(context.Background(), arc); !errors.Is(err, want) {
 							t.Fatalf("directory: %v", err)
 						}
-						if _, err := ReadPageLimited(context.Background(), arc, "ComicInfo.xml", 16<<20); !errors.Is(err, ErrMetadataTooLarge) {
+						if _, err := ReadPageLimited(context.Background(), arc, "ComicInfo.xml", 16<<20); !errors.Is(err, want) {
 							t.Fatalf("selected: %v", err)
 						}
 					}
