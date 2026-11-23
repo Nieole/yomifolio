@@ -17,3 +17,7 @@
 ## Comments
 
 - 在专属 mcp-library-11 / mcp-proposal-adjudication 实施；保持 ready-for-agent，未提交，等待父独立 merger/review。验收证据归 acceptance/11-existing-proposal-adjudication.md，勾选仅代表实测，不代表父批准。完整后端唯一一次运行在 TestMCPStdioSaturatedEOF 的代理构建处失败，最终门禁项保持未勾；未盲重跑或放宽测试。
+
+- Fresh merger（7a082c16）：完整backend本轮一次通过、定向两轮及前端/生成/lint通过；但真实HTTP与stdio均复现撤掉read保留metadata_write后同键裁决重放仍返回完整收据。首项重新打开，交父freshfix，不自行改业务代码；当前BLOCKED，详见acceptance的Fresh章节。唯一代码增量仅增加饱和EOF测试构建elapsed/context/error/output诊断，不改预算或测试条件。
+
+- Freshfix（7a082c16，未提交）：按持久裁决收据在同一retry事务重查当前Read；永久HTTP/真实stdio撤权红绿、最终定向两轮及相关六包全测通过，原摘要/终态重放保留。首项据实勾回；唯一一次完整backend在配置并发编辑save的Windows rename Access is denied失败，非本轮stdio失败，不冒称baseline、不盲重跑；最终门禁框仍不勾，ready-for-agent，待父独立review/门禁。历史页仅定向10tests通过，未重跑merger已绿的完整frontend/build/lint。详见acceptance Freshfix节。

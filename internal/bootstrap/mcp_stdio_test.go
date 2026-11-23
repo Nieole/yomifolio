@@ -243,8 +243,11 @@ func TestMCPStdioSaturatedEOF(t *testing.T) {
 	defer cancel()
 	binary := filepath.Join(t.TempDir(), "mcp-proxy.exe")
 	build := exec.CommandContext(ctx, "go", "build", "-o", binary, "../../cmd/mcp-proxy")
-	if out, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build: %v %s", err, out)
+	buildStarted := time.Now()
+	out, buildErr := build.CombinedOutput()
+	t.Logf("proxy build: elapsed=%s context=%v err=%v output=%q", time.Since(buildStarted), ctx.Err(), buildErr, out)
+	if buildErr != nil {
+		t.FailNow()
 	}
 	// Hold transport requests open; no application run or business cancellation is involved.
 	entered, released := make(chan string, 32), make(chan struct{}, 32)

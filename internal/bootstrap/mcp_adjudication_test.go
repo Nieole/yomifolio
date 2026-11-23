@@ -22,6 +22,7 @@ func verifyProposalAdjudication(t *testing.T, store database.Store, makeSeries f
 	if op["outcome"] != "changed" || op["adjudication"].(map[string]any)["status"] != "pending" {
 		t.Fatal(op)
 	}
+	verifyAdjudicationReceiptAuthority(t, store, session, call, partialInput, op)
 	input["request_key"] = "adjudicate-close"
 	input["fields"] = []string{"tags"}
 	input["expected"] = call("library_get_enrichment_state", map[string]any{"series_id": id})
@@ -177,6 +178,12 @@ func verifyProposalAdjudication(t *testing.T, store database.Store, makeSeries f
 		read := reopenedCall("library_get_match_proposal", map[string]any{"series_id": id, "proposal_id": p})
 		if read["status"] != "supplemented_closed" || read["accepted"] != true {
 			t.Fatal("lost persistent adjudication", read)
+		}
+		// The newly issued credential has valid read/write grants, but does not own
+		// the original credential's permanent request-key namespace.
+		peer := reopenedCall("library_enrich_metadata", partialInput)
+		if peer["replayed"] == true || peer["id"] == op["id"] || peer["outcome"] != "conflict" {
+			t.Fatal("new credential borrowed the original replay receipt")
 		}
 		receipt := reopenedCall("library_get_metadata_operation", map[string]any{"operation_id": closed["id"]})
 		if receipt["adjudication"].(map[string]any)["status"] != "supplemented_closed" {
@@ -340,6 +347,93 @@ func verifyAdjudicationRaces(t *testing.T, store database.Store, makeSeries func
 				}
 			}
 		})
+	}
+}
+
+// Exercise persisted grants through the same production HTTP/stdio session, not a
+// synthetic subject. A receipt is data even when replay performs no new write.
+func verifyAdjudicationReceiptAuthority(t *testing.T, store database.Store, session *mcp.ClientSession, call func(string, any) map[string]any, input, receipt map[string]any) {
+	t.Helper()
+	credential := receipt["actor"].(map[string]any)["credential_id"]
+	var caps, libraries string
+	if err := store.DB().QueryRow(`SELECT capabilities,library_ids FROM mcp_credentials WHERE id=?`, credential).Scan(&caps, &libraries); err != nil {
+		t.Fatal(err)
+	}
+	exec := func(t *testing.T, query string, args ...any) {
+		t.Helper()
+		if _, err := store.DB().Exec(query, args...); err != nil {
+			t.Fatal(err)
+		}
+	}
+	denied := func(t *testing.T, name string, args any) {
+		t.Helper()
+		result, err := session.CallTool(t.Context(), &mcp.CallToolParams{Name: name, Arguments: args})
+		if err != nil || result == nil || !result.IsError {
+			t.Fatalf("%s returned data after authority withdrawal (transport error: %v)", name, err)
+		}
+		raw, err := json.Marshal(result)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, private := range []string{receipt["id"].(string), "Space journey", "Accept verified missing description", credential.(string)} {
+			if strings.Contains(string(raw), private) {
+				t.Fatalf("%s leaked receipt data", name)
+			}
+		}
+	}
+	for _, test := range []struct {
+		name, query string
+		value       any
+		readDenied  bool
+	}{
+		{"read-revoked", `UPDATE mcp_credentials SET capabilities=? WHERE id=?`, `["metadata_write"]`, true},
+		{"write-revoked", `UPDATE mcp_credentials SET capabilities=? WHERE id=?`, `["read"]`, false},
+		{"library-revoked", `UPDATE mcp_credentials SET library_ids=? WHERE id=?`, `[]`, true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			exec(t, test.query, test.value, credential)
+			defer exec(t, `UPDATE mcp_credentials SET capabilities=?,library_ids=? WHERE id=?`, caps, libraries, credential)
+			denied(t, "library_enrich_metadata", input)
+			changed := map[string]any{}
+			for k, v := range input {
+				changed[k] = v
+			}
+			delete(changed, "adjudication")
+			denied(t, "library_enrich_metadata", changed)
+			changed["request_key"] = "adjudication-denied-new"
+			changed["adjudication"] = input["adjudication"]
+			denied(t, "library_enrich_metadata", changed)
+			if test.readDenied {
+				denied(t, "library_get_metadata_operation", map[string]any{"operation_id": receipt["id"]})
+				denied(t, "library_list_metadata_operations", map[string]any{"series_id": input["series_id"]})
+			}
+		})
+	}
+	t.Run("user-demoted", func(t *testing.T) {
+		exec(t, `UPDATE users SET role='user' WHERE id=1`)
+		defer exec(t, `UPDATE users SET role='admin' WHERE id=1`)
+		denied(t, "library_enrich_metadata", input)
+	})
+	changed := map[string]any{}
+	for k, v := range input {
+		changed[k] = v
+	}
+	delete(changed, "adjudication")
+	denied(t, "library_enrich_metadata", changed)
+	replayed := call("library_enrich_metadata", input)
+	if replayed["id"] != receipt["id"] || replayed["replayed"] != true || replayed["applied"] != false {
+		t.Fatal("restored read did not replay original receipt")
+	}
+	for _, field := range []string{"before", "after", "fields", "adjudication"} {
+		want, _ := json.Marshal(receipt[field])
+		got, _ := json.Marshal(replayed[field])
+		if string(got) != string(want) {
+			t.Fatalf("replay changed original %s snapshot", field)
+		}
+	}
+	proposal := call("library_get_match_proposal", map[string]any{"series_id": input["series_id"], "proposal_id": input["proposal_ids"].([]any)[0]})
+	if proposal["status"] != "pending" || len(proposal["fields"].([]any)) != 3 {
+		t.Fatal("replay consumed proposal fields again")
 	}
 }
 

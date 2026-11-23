@@ -151,6 +151,6 @@ agent 必须显式确认所选候选属于同一系列及相同版本，并提�
 
 实际写事务通过 proposal 的待裁决/剩余字段守卫重读当前提案及原证据；终态或已消费字段导致整项持久 conflict。元数据、最新来源沿革、实际字段消费、状态和操作收据同事务提交；常规写失败由同一 savepoint 全部回滚，再保存 failed。日志/事务自身不可用仍返回错误，不伪造成功收据。没有隐式竞争重试；SQLite busy/snapshot 错误可明确返回不可用，调用方先查原请求键。部分应用不会重复消费；纯关闭也在提交后发布 refresh。
 
-提案生命周期以 pending + 持久接受标记、applied、supplemented_closed、rejected 区分结果，具体标记归 mm-proposal。收据 adjudication 保存 proposal_id、原命令 mode、短 reason、当时 status 与 accepted；此前已有接受的 reject 最终显示 supplemented_closed 而非全部拒绝。相同键永久重放原收据，即使提案后来关闭也不改写先前 pending 收据；最新提案状态另由 GetMatchProposal 查询。新意图以显式可选 V1 adjudication={mode,reason} 编入摘要，缺失时完全省略，08/09/10 原字节不变；不序列化整个响应 State。
+提案生命周期以 pending + 持久接受标记、applied、supplemented_closed、rejected 区分结果，具体标记归 mm-proposal。收据 adjudication 保存 proposal_id、原命令 mode、短 reason、当时 status 与 accepted；此前已有接受的 reject 最终显示 supplemented_closed 而非全部拒绝。相同键永久重放原收据，即使提案后来关闭也不改写先前 pending 收据；最新提案状态另由 GetMatchProposal 查询。重放仍须当前用户、凭据与实际资料库的 metadata_write 授权；持久收据带 adjudication 时，还在同一收据事务重查当前 read，不以本次输入是否带 adjudication 决定。该检查位于提案终态预检之前，保留成功后的终态重放，不再次消费字段；异载荷仍拒绝且不返回收据。Get/List 仍按实际目标的当前 read 查询历史，不新增普通收据的写权限要求。新意图以显式可选 V1 adjudication={mode,reason} 编入摘要，缺失时完全省略，08/09/10 原字节不变；不序列化整个响应 State。
 
 Undo 仍是实际改动字段的独立单系列恢复，不恢复提案状态或字段行，也不清除接受历史；来源归口的已撤销最新引用仅在仍属于原提案时移除，不伪造未知的更早来源。原收据及来源/理由保持不变。普通人工 Apply/Reject、集合替换及 fill_empty 语义不改；无 adjudication 的来源补充不隐式消费提案或建立接受标记。

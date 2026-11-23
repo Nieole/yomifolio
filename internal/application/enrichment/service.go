@@ -301,6 +301,21 @@ func retry(ctx context.Context, j database.MetadataJournal, actor delegated.Subj
 		return Operation{}, false, delegated.ErrInvalid
 	}
 	out, err := decode(r)
+	if err != nil {
+		return Operation{}, false, err
+	}
+	// Replay precedes proposal terminal checks, but is still a disclosure of the
+	// persisted operation. Use its policy, never the caller's optional command:
+	// omitting adjudication or racing another commit must not bypass current read.
+	if out.Adjudication != nil {
+		current, e := database.New(j.Tx).GetSeries(ctx, r.SeriesID)
+		if e != nil {
+			return Operation{}, false, delegated.ErrDenied
+		}
+		if e = authorize(ctx, j.Tx, actor, current.LibraryID, false); e != nil {
+			return Operation{}, false, e
+		}
+	}
 	out.Applied = false
 	out.Replayed = true
 	out.UndoneBy, _ = j.UndoneBy(ctx, out.ID)
