@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 通过 stdio 辅助进程连接同一服务；11 裁决已有提案并关闭剩余差异；12 按本次额度调用内部 LLM；13 独立授权清理撤销材料。
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 双传输均验证初始化、工具发现和实际调用；stdio 真实子进程连接生产组装服务，复用同一业务验收宿主，不另造应用运行时。
 - [x] 完整链路包含受限凭据、组合筛选、本地和图片线索、多来源匹配、歧义不写入、补充与作者校正、文字封面一致性、提案关闭和逐系列结果报告。
@@ -16,6 +16,8 @@
 - [x] 全量后端测试、Go 格式与 lint、前端测试、构建与 lint、SQL 和响应契约生成漂移检查及规格图检查通过；用户可见变化记录到变更日志。任一门禁受环境阻断须明确记录，不能冒称通过。
 
 ## Comments
+
+- Independent step review: APPROVE for combined production-host HTTP/stdio acceptance and documentation; both transport scenarios passed twice and full bootstrap passed. All required acceptance boxes are met; final whole-branch review remains the separate integration closeout task.
 
 - Parent: integrated `022e480b`; `spec_validate` reports no issues. Required gates are complete; the extra doc-style script remains explicitly environment-blocked. Independent step and final branch reviews still pending; prior graph-pending notes below are historical.
 
