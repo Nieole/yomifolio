@@ -158,3 +158,38 @@
 - 本轮限定的两次有意义完整suite已用完，停止追加重跑。没有TDD最小修复：实际调用链未再红、无可定位自身句柄生命周期缺陷；不从人为holder阳性对照直接造生产retry。
 - 最新状态应记作“13完整门禁实证PASS、历史Windows rename间歇失败未定位”，而非“Windows rename修好了”或“已确认基线不稳”。前端/格式/lint/生成物沿用前轮准确记录，本轮只改notes、不冒称重新执行。
 - 若父要求关闭历史根因，需要**下一次失败当场**的文件打开/关闭/rename时序与进程/holder证据（可用失败点只读RestartManager快照作补充，空结果不排除瞬时/内核访问）。当前没有证据表明必须用户提权采集；若选需管理员的文件事件采集，应先由父/用户明确批准有界方案，不在本轮自行启动。父决定是否接受已知未定位的环境间歇风险并继续集成/独立review；本票仍不自动done。
+
+
+## Canonical review rc_000c6675 fresh 窄修（2026-11-23，本轮权威增量）
+
+**结果：已修复刷新后 pending 清理不可检查/续办的 finding，保持 ready-for-agent，未 done，等待父独立重审。** 唯一写树 mcp-library-13，分支 mcp-undo-material-cleanup，开工/交付 HEAD 均 5e7dfaf0；开工 status 空。未 stage/commit/merge/reset、未改父 TODO、11 或其他树。
+
+### 当前实现与边界
+
+- `useOperationCleanups` 从持久 `Operation.cleaned_by` 去重查询真实清理结果；完整卸载再挂载仍显示 pending，不再因 undo_unavailable 隐藏查询/续办能力。每条结果显示 pending/partial/complete；隔离操作不再创建新键。查询失败可重新读取，同键 POST 失败（含取消样式）可再次续办。原损失警告、无逐批确认、无 Undo/恢复值/旧图片的约束不变；不使用 localStorage。
+- `InspectCleanup` 的可选 `retry_request_key` 仅为**原网页执行者本人**的 pending 请求提供。读取数据库中既有 request_key，并检查原 1–80 字节 printable ASCII 格式、原 V1 cleanupDigest 与 operation_id、当前库/管理员权限；不改变任何已有键、摘要或隔离记录。原 POST 自身仍重查当前权限并用同键摘要拒绝异目标。不会将 agent/其他管理员的 namespace 转给检查者；那些结果可检查，续办仍需原执行者当前获权后原键调用。响应不返回 Bearer/宿主路径/SQL 错误。
+- UI 查询/重试身份归 hook，页面只呈现动作和采用权威结果；没有巨型组件重写。API/application/web owning specs、CHANGELOG、13-after 静态 mockup 已更新，13-before 未改（SHA256 196774ac374cb964a6c5c0dc6c5b6404d3a2613afef3e53fb150bda67d23f199）。
+
+### TDD / 接缝
+
+沿用用户指定的设置页/API 边界及生产 bootstrap + SQLite/真实图片/HTTP/MCP/真实 stdio 接缝，不引入替代业务宿主。
+
+- UI 先红 `ui-red.log`：11 passed/1 failed，完整卸载再挂载无法显示 pending。实现后 `ui-green4.log` 12 passed；追加去重同 result 多操作（只允许绑定 operation 使用 retry identity）、他人 pending 不分配替代键、lookup failure 重读，`ui-additional.log` 15 passed。
+- 后端先红 `backend-red.log`：生产关闭重开后 GET pending 缺 retry identity。实现后 `backend-green.log` PASS。最终生产测试增量：真正 SQLite trigger 令隔离/unlink 后结果写入失败，持久 undo_unavailable/cleaned_by/pending；正常关闭进程宿主和连接、重新 Open，真实管理员 GET 恢复**原** request_key，用该返回键 POST 完成同 ID/replayed=true，并用该键改目标真实 HTTP400。另一个凭据产生的真实 pending 只供管理员检查，不暴露其 retry identity。
+- 双轮保留原跨库拒绝、多引用/当前图片保护、Undo/换封面竞争、真实 stdio、运行中撤权/改密和真实 Windows junction sentinel 保护，未 skip/放宽。
+
+### Actual checks（完整日志 `.tmp/13freshfix/`）
+
+环境实际 Go1.26.10 windows/amd64，共享 guide GOCACHE，本树独立 gotmp/lintcache；fnm Node26.13.1/npm11.20.0。没有把 reviewer 未初始化 fnm 当工具缺失。
+
+1. 相关双轮 `go test -p 1 ./internal/bootstrap ./internal/application/enrichment ./internal/application/delegated ./internal/covermaterial ./internal/api -run 'MCP|Enrichment|Cleanup|Cover|Concurrent|Concurrency|Undo' -count=2 -timeout=10m` **exit0**：bootstrap254.201s/enrichment1.544s/api14.122s。delegated 正则无匹配、covermaterial 无独立测试；实际文件保护在 bootstrap 验证（`focused-twice.log/.exit`）。
+2. **本轮仅一次完整后端** `go test -json -p 1 ./... -count=1 -timeout=10m`，外层1800s，15:31:34→15:40:42，**exit0，38个有测试包PASS，0 fail事件**。生产 `TestProductionMCPEnrichmentAuditUndo` PASS56.75s（`backend-full.jsonl/.exit`）。本轮未出现 Windows rename failure，未盲重试，也不宣称历史间歇失败根因已修复。
+3. 前端完整 `npm test -- --maxWorkers=2` **121 files/1161 tests PASS**（`frontend-full.log/.exit`）；`npm run build` **exit0**（最终 `frontend-build-final.log/.exit`；仅非失败 PLUGIN_TIMINGS 提示）；`npm run lint` **exit0**（`frontend-lint.log/.exit`）。
+4. `gofmt -l ./cmd ./internal` 空；独立 cache `golangci-lint run --allow-parallel-runners` **0 issues**（`gofmt.log`、`lint.log/.exit`）。`git diff --check` exit0。
+5. 实际 `go run ./cmd/tsgen` 47 types；generated.ts 增加可选 retry_request_key，再生成前后 SHA256 均 `9a0ba1c06bd00072b5a9bd088d95136cc465fc3df0b244d0606dfa3f1e25daf6`（`tsgen-drift.log`、`generated-before/after.log`）。无 sqlc 输入/DDL 变更，不需重新生成 SQL bindings；新 SELECT 位于应用现有 handwritten cleanup journal 边界。
+
+### Remaining / 不冒称的覆盖
+
+- UI reload 用真实契约的 API fixture，后端真实持久故障/重开 HTTP 单独覆盖；不是运行浏览器连接后端的端到端截图测试。mockup 是静态示意。
+- 本轮未新增“恰在单项隔离提交后主动断开 HTTP”的确定性屏障；生产重开用结果写入故障稳定制造相同持久 pending，UI 续办 cancel/retry 用 API 拒绝模拟；既有真实排队 cancel/运行中撤权/stdio 行为继续在双轮及完整后端中执行。不能把这些冒称全部取消调度已穷尽。
+- 不扩权为管理员代其他执行者重试，也不自动追扫 terminal partial 或 protected 后失引用材料。历史 Windows rename 间歇失效仍无根因确认。父负责 fresh 独立 review、提交与集成，不自动关票。

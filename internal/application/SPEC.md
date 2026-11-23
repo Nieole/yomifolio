@@ -152,6 +152,8 @@ agent 必须显式确认所选候选属于同一系列及相同版本，并提�
 
 `StartCleanup` 为 1–20 个显式同库 operation/request_key 对创建共享 `Runs.Start` 运行，经同一个 `PrepareRun`/Checkpoint/Cancel 生命周期；不新建 goroutine 宿主、常驻 janitor 或重启恢复配方。排队撤权阻止启动，每项及文件前重查当前授权；已完成项不回滚，余项未处理，逐项结果按请求键查询，历史裁剪不删清理收据。断线不取消已接纳运行。批次重试可创建新 run，但已完成项只重放原效果，不提供批次 exactly-once 或批次原子性。单项同步命令有界且合并入口取消；断连与隔离提交竞争须按原键查询，不推断尚可恢复。
 
+`InspectCleanup` 对 pending 结果可投影 `retry_request_key`：仅原网页执行者本人、当前 cleanup 授权通过、存储键仍符合原 printable ASCII 1–80 字节格式且独立 V1 digest/operation_id 匹配时提供。此字段不是凭据、不持久覆盖原意图；其他用户/委托凭据的结果不转移 retry namespace，仍须原执行者当前获权后原键续办。既有键、摘要与隔离状态不迁移或重写。
+
 ### 目标系列作者校正
 
 `Input.fields` 可选择 authors；`State.authors` 是精确 name/role 身份对的整组快照，忽略顺序与重复，不隐式折叠大小写、空白或不同角色。作者默认追加已确认提案的来源成员，保留未选校正的所有旧关联。可选 `author_corrections` 明确列出 from/to 身份对与非空短理由（最多 50 条）；from 必须属于 expected 作者组，to 必须来自本次确认提案的 authors 来源事实。重复 from、自映射和目标同时被移除的矛盾映射拒绝。多个别名可归并到一个已存在的身份；同名不同角色仍是不同身份。不接受无来源的新作者事实，不做全库合并。

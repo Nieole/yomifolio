@@ -51,3 +51,5 @@ locale 与 theme 提供表现偏好，不混入业务事实或用户在线会话
 
 
 历史页提供每操作的“清理撤销材料”显式命令，常驻说明永久丢弃恢复快照/必要旧图片、无自动到期、最小审计与在用图片保留。不增加逐批确认工作流。保留不确定网络失败的同一请求键重试身份；采用服务器 complete/partial/pending 结果并显示不可恢复提示，partial 不冒充全部文件回收。undo_unavailable 的操作不展示旧图片/前后恢复值或 Undo 按钮；清理不是删除藏书。离页/切用户不回填结果。
+
+`useOperationCleanups` 通过持久 `Operation.cleaned_by` 去重读取清理结果，卸载/刷新后仍显示 pending/partial/complete。仅服务器提供原网页执行者的 `retry_request_key` 且目标匹配时提供 pending 继续按钮；隔离后的操作绝不分配新键，其他执行者的结果只供检查。查询失败可重新读取，取消/网络失败保留原键重试；结果键不写浏览器持久存储。

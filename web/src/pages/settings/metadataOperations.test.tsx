@@ -119,3 +119,53 @@ it('keeps cleanup retry identity after an uncertain network result and never cla
  await screen.findByText(/Rollback material cleaned/);
  expect(mocks.post.mock.calls[0]).toEqual(mocks.post.mock.calls[1]);
 });
+
+it('recovers pending cleanup from durable cleaned_by after full unmount and resumes the original key', async () => {
+ const isolated = { ...row, undo_unavailable: true, cleaned_by: 'cleanup-persisted', fields: [] };
+ const pending = { id: 'cleanup-persisted', operation_id: row.id, outcome: 'pending', undo_unavailable: true, retry_request_key: 'original-server-key', materials: [] };
+ mocks.get.mockImplementation((url: string) => Promise.resolve({ data: url === '/api/mcp/operations' ? { operations: [isolated] } : pending }));
+ setup();
+ await screen.findByText(messages['audit.cleanup.pending']);
+ cleanup(); // component-local request maps cannot survive a reload
+ setup();
+ await screen.findByText(messages['audit.cleanup.pending']);
+ expect(screen.queryByRole('button', { name: 'Undo operation' })).toBeNull();
+ mocks.post.mockRejectedValueOnce(new Error('cancelled')).mockResolvedValueOnce({ data: { ...pending, outcome: 'complete', replayed: true } });
+ fireEvent.click(screen.getByRole('button', { name: 'Resume cleanup' }));
+ await screen.findByRole('alert');
+ fireEvent.click(screen.getByRole('button', { name: 'Resume cleanup' }));
+ await screen.findByText(messages['audit.cleanup.complete']);
+ expect(mocks.post.mock.calls).toEqual([
+  ['/api/mcp/operations/op1/cleanup', { request_key: 'original-server-key' }],
+  ['/api/mcp/operations/op1/cleanup', { request_key: 'original-server-key' }],
+ ]);
+ expect(screen.queryByRole('button', { name: 'Resume cleanup' })).toBeNull();
+});
+
+it('groups durable lookups by cleanup identity without applying its retry key to another target', async () => {
+ const isolated = { ...row, undo_unavailable: true, cleaned_by: 'shared-result', fields: [] };
+ mocks.get.mockImplementation((url: string) => Promise.resolve({ data: url === '/api/mcp/operations' ? { operations: [isolated, { ...isolated, id: 'op2', series_id: 8 }] } : { id: 'shared-result', operation_id: 'op1', outcome: 'pending', retry_request_key: 'only-op1', materials: [] } }));
+ setup();
+ await screen.findAllByText(messages['audit.cleanup.pending']);
+ expect(mocks.get.mock.calls.filter(([url]) => url === '/api/mcp/cleanups/shared-result')).toHaveLength(1);
+ expect(screen.getAllByRole('button', { name: 'Resume cleanup' })).toHaveLength(1);
+ expect(screen.queryByRole('button', { name: 'Clean rollback material' })).toBeNull();
+});
+
+it('inspects another actor pending receipt without allocating a substitute retry key', async () => {
+ mocks.get.mockImplementation((url: string) => Promise.resolve({ data: url === '/api/mcp/operations' ? { operations: [{ ...row, undo_unavailable: true, cleaned_by: 'agent-cleanup', fields: [] }] } : { id: 'agent-cleanup', operation_id: row.id, outcome: 'pending', materials: [] } }));
+ setup(); await screen.findByText(messages['audit.cleanup.pending']);
+ expect(screen.queryByRole('button', { name: 'Resume cleanup' })).toBeNull();
+ expect(screen.queryByRole('button', { name: 'Clean rollback material' })).toBeNull();
+ expect(mocks.post).not.toHaveBeenCalled();
+});
+
+it('allows a failed durable result lookup to be retried without claiming completion', async () => {
+ mocks.get.mockResolvedValueOnce({ data: { operations: [{ ...row, undo_unavailable: true, cleaned_by: 'cleanup3', fields: [] }] } })
+  .mockRejectedValueOnce(new Error('network'))
+  .mockResolvedValueOnce({ data: { id: 'cleanup3', operation_id: row.id, outcome: 'pending', retry_request_key: 'key3', materials: [] } });
+ setup(); await screen.findByRole('alert');
+ expect(screen.queryByText(messages['audit.cleanup.complete'])).toBeNull();
+ fireEvent.click(screen.getByRole('button', { name: 'Reload cleanup result' }));
+ await screen.findByRole('button', { name: 'Resume cleanup' });
+});

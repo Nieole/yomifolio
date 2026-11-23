@@ -91,3 +91,5 @@ MCP 的 enrichment state、单项/批量补充、操作查询/按系列分页与
 `library_cleanup_metadata_operation` 映射有界单项 Cleanup，`library_start_metadata_cleanup` 映射显式同库列表的共享异步运行，`library_get_metadata_cleanup(request_key)` 读取本凭据持久结果。独立 cleanup 权限不隐含 metadata_write/read，运行 Get/Wait/Cancel 和列表仍按原归属及该运行 cleanup 能力检查。工具不管理或扩大凭据。同步单项合并真实入口取消；异步接纳后断连不取消。幂等、partial/pending 与恢复损失规则归 mm-application。
 
 管理员网页 `POST /api/mcp/operations/{operationId}/cleanup` 与 `GET /api/mcp/cleanups/{cleanupId}` 保留原 Cookie、CSRF（写命令）、当前角色和改密守卫，响应 no-store。不增加逐批确认参数。操作投影 undo_unavailable/cleaned_by 明示快照已裁剪，不能把 cleaned outcome 或失败/缺失文件翻译成安全 Undo 成功。
+
+管理员 GET cleanup 响应可为本人原网页 pending 请求返回 `retry_request_key`，供同一 operation 的原 POST 同键续办；不返回其他执行者的 retry identity，不绕过当前库/凭据/capability 或管理员守卫。前端根据 cleaned_by 查询，不以 Undo unavailable 推断回收完成。

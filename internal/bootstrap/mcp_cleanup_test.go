@@ -415,6 +415,17 @@ func verifyCoverCleanup(t *testing.T, store database.Store, cfg *config.Manager,
 	if _, e = store.DB().Exec(`CREATE TRIGGER fail_cleanup_result BEFORE UPDATE ON metadata_cleanup_requests WHEN NEW.payload LIKE '%"deleted"%' BEGIN SELECT RAISE(ABORT,'controlled cleanup result failure'); END`); e != nil {
 		t.Fatal(e)
 	}
+	agentPendingOp := makeCover("cleanup13-agent-pending-source")
+	agentFailure, err := client.CallTool(ctx, &mcp.CallToolParams{Name: "library_cleanup_metadata_operation", Arguments: map[string]any{"request_key": "cleanup13-agent-private-retry", "operation_id": agentPendingOp["id"]}})
+	if err != nil || !agentFailure.IsError {
+		t.Fatal("expected controlled agent result-write failure", agentFailure, err)
+	}
+	var agentPendingAudit, agentPending map[string]any
+	_ = json.Unmarshal(web("GET", "/mcp/operations/"+agentPendingOp["id"].(string), nil, 200), &agentPendingAudit)
+	_ = json.Unmarshal(web("GET", "/mcp/cleanups/"+agentPendingAudit["cleaned_by"].(string), nil, 200), &agentPending)
+	if agentPending["outcome"] != "pending" || agentPending["retry_request_key"] != nil {
+		t.Fatal("admin inspection must not transfer a credential retry namespace", agentPending)
+	}
 	pendingInput := map[string]any{"request_key": "cleanup13-pending-reopen"}
 	web("POST", "/mcp/operations/"+pendingOp["id"].(string)+"/cleanup", pendingInput, 500)
 	if _, e = store.DB().Exec(`DROP TRIGGER fail_cleanup_result`); e != nil {
@@ -482,10 +493,12 @@ func verifyCoverCleanup(t *testing.T, store database.Store, cfg *config.Manager,
 	return func(web func(string, string, any, int) []byte) {
 		var pending map[string]any
 		_ = json.Unmarshal(web("GET", "/mcp/cleanups/"+pendingAudit["cleaned_by"].(string), nil, 200), &pending)
-		if pending["outcome"] != "pending" {
+		if pending["outcome"] != "pending" || pending["retry_request_key"] != "cleanup13-pending-reopen" {
 			t.Fatal(pending)
 		}
-		_ = json.Unmarshal(web("POST", "/mcp/operations/"+pendingOp["id"].(string)+"/cleanup", pendingInput, 200), &pending)
+		// Recovered identities retain the original target binding across reload.
+		web("POST", "/mcp/operations/"+failedOp["id"].(string)+"/cleanup", map[string]any{"request_key": pending["retry_request_key"]}, 400)
+		_ = json.Unmarshal(web("POST", "/mcp/operations/"+pendingOp["id"].(string)+"/cleanup", map[string]any{"request_key": pending["retry_request_key"]}, 200), &pending)
 		if pending["outcome"] != "complete" || pending["replayed"] != true || pending["id"] != pendingAudit["cleaned_by"] {
 			t.Fatal(pending)
 		}

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiClient, getApiErrorMessage } from '../../api/client';
-import type { CleanupResult, Operation, Page, State } from '../../api/generated';
+import type { Operation, Page, State } from '../../api/generated';
 import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n/LocaleProvider';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { useOperationCleanups } from './useOperationCleanups';
 import { SettingsPageIntro, sectionClassName } from './shared';
 
 const buttonClass = 'rounded-lg border border-gray-700 px-4 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-50';
@@ -35,7 +36,7 @@ function OperationHistory() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const cleanupKeys = useRef(new Map<string, string>());
+  const cleanups = useOperationCleanups(rows, t('audit.failed'));
   const [undo, setUndo] = useState<{ operation: Operation; key: string } | null>(null);
   useEffect(() => {
     alive.current = true;
@@ -70,13 +71,11 @@ function OperationHistory() {
   }
   async function clean(row: Operation) {
     if (busy) return;
-    const key = cleanupKeys.current.get(row.id) ?? crypto.randomUUID();
-    cleanupKeys.current.set(row.id, key);
     setBusy(true); setError(''); setNotice('');
     try {
-      const { data } = await apiClient.post<CleanupResult>(`/api/mcp/operations/${row.id}/cleanup`, { request_key: key });
+      const data = await cleanups.clean(row);
       if (!alive.current) return;
-      setNotice(t(data.outcome === 'partial' ? 'audit.cleanup.partial' : data.outcome === 'pending' ? 'audit.cleanup.pending' : 'audit.cleanup.complete'));
+      setNotice('');
       setRows((old) => old.map((item) => item.id === row.id ? { ...item, undo_unavailable: data.undo_unavailable, cleaned_by: data.id, old_cover_material: undefined, new_cover_material: undefined, fields: [] } : item));
     } catch (err) { if (alive.current) setError(getApiErrorMessage(err, t('audit.failed'))); }
     finally { if (alive.current) setBusy(false); }
@@ -85,6 +84,7 @@ function OperationHistory() {
     <SettingsPageIntro title={t('audit.title')} description={t('audit.description')} />
     <p className="text-sm text-amber-200">{t('audit.cleanup.warning')}</p>
     {error && <p role="alert" className="text-red-300">{error}</p>}
+    {cleanups.error && <div role="alert"><p>{cleanups.error}</p><button className={buttonClass} onClick={cleanups.reload}>{t('audit.cleanup.inspect')}</button></div>}
     {notice && <p role="status" className="text-amber-200">{notice}</p>}
     {!loading && rows.length === 0 && <p>{t('audit.empty')}</p>}
     {rows.map((row) => <section key={row.id} className={`${sectionClassName} space-y-4 min-w-0`}>
@@ -114,7 +114,9 @@ function OperationHistory() {
       </div>)}
       {row.fields.some((field) => field.field === 'cover' && field.changed) && <p className="text-sm text-amber-200">{t('audit.cover.risk')}</p>}
       {row.undo_unavailable ? <p className="text-amber-200">{t('audit.cleanup.unavailable')}</p> : row.undone_by ? <p className="text-emerald-300">{t('audit.undone')}</p> : row.kind === 'enrich' && row.outcome === 'changed' && <button className={buttonClass} disabled={busy} onClick={() => setUndo({ operation: row, key: crypto.randomUUID() })}>{t('audit.undo')}</button>}
-      {!row.undo_unavailable && <button className={buttonClass} disabled={busy} onClick={() => void clean(row)}>{t('audit.cleanup.action')}</button>}
+      {row.cleaned_by && cleanups.results[row.cleaned_by] && <p role="status" className="text-amber-200">{t(cleanups.results[row.cleaned_by].outcome === 'pending' ? 'audit.cleanup.pending' : cleanups.results[row.cleaned_by].outcome === 'partial' ? 'audit.cleanup.partial' : 'audit.cleanup.complete')}</p>}
+      {row.cleaned_by && cleanups.results[row.cleaned_by]?.outcome === 'pending' && cleanups.results[row.cleaned_by]?.retry_request_key && cleanups.results[row.cleaned_by]?.operation_id === row.id && <button className={buttonClass} disabled={busy} onClick={() => void clean(row)}>{t('audit.cleanup.resume')}</button>}
+      {!row.undo_unavailable && !row.cleaned_by && <button className={buttonClass} disabled={busy} onClick={() => void clean(row)}>{t('audit.cleanup.action')}</button>}
     </section>)}
     {loading && <p>{t('audit.loading')}</p>}
     {next && <button className={buttonClass} disabled={loading} onClick={() => void more()}>{t('audit.more')}</button>}

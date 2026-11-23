@@ -11,6 +11,8 @@ export const messages: MessageCatalog = {
     "audit.reversal": "Reverses operation",
     "audit.before": "Before",
     "audit.after": "After",
+    "audit.cleanup.resume": "Resume cleanup",
+    "audit.cleanup.inspect": "Reload cleanup result",
     "audit.cleanup.action": "Clean rollback material",
     "audit.cleanup.warning": "Cleanup permanently discards rollback snapshots and necessary old images. No automatic expiry. Minimal audit and in-use covers remain; recovery is no longer guaranteed.",
     "audit.cleanup.unavailable": "Undo unavailable — rollback material explicitly cleaned.",
