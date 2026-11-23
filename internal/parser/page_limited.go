@@ -51,6 +51,7 @@ func ReadPageLimited(ctx context.Context, arc Archive, name string, limit int64)
 			return nil, err
 		}
 		defer rr.Close()
+		drain := boundedRarDrain{remaining: BoundedPageDictionaryBytes}
 		for {
 			if err = ctx.Err(); err != nil {
 				return nil, err
@@ -63,7 +64,7 @@ func ReadPageLimited(ctx context.Context, arc Archive, name string, limit int64)
 				data, err := read(rr, h.UnPackedSize)
 				return data, pageBudgetError(err)
 			}
-			if err := skipBoundedPage(ctx, rr, h.UnPackedSize, limit); err != nil {
+			if err := drain.skip(ctx, rr, h.UnPackedSize, limit); err != nil {
 				return nil, err
 			}
 		}

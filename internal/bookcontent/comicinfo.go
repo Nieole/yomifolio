@@ -47,19 +47,19 @@ func (s *Service) ComicInfo(ctx context.Context, id, libraryID int64, access Lib
 			release()
 			return ComicInfoClue{}, err
 		}
-		clue := readComicInfo(source.Path)
+		clue := readComicInfo(ctx, source.Path)
 		lease.Release()
 		release()
-		return clue, nil
+		return clue, ctx.Err()
 	}
 }
-func readComicInfo(path string) ComicInfoClue {
+func readComicInfo(ctx context.Context, path string) ComicInfoClue {
 	arc, release, err := parser.GetArchiveFromPool(path)
 	if err != nil {
 		return ComicInfoClue{Status: "unavailable"}
 	}
 	defer release()
-	raw, err := parser.ReadMetadataLimited(arc, "ComicInfo.xml", 64<<10)
+	raw, err := parser.ReadMetadataLimited(ctx, arc, "ComicInfo.xml", 64<<10)
 	if errors.Is(err, parser.ErrMetadataNotFound) {
 		return ComicInfoClue{Status: "missing"}
 	}

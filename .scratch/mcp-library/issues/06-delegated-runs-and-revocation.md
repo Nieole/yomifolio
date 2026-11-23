@@ -23,3 +23,8 @@
 - Worker06: implemented in mcp-delegated-runs; production bootstrap/MCP and controlled execution barriers are the agreed test seams. Changes remain uncommitted; Status remains ready-for-agent pending parent review/integration. Evidence: [06 acceptance](../acceptance/06-delegated-runs.md). Full backend rerun passed; first full run had two relocation failures, their focused rerun passed. Real stdio process smoke tests belong to parallel ticket03. Integration advanced to 34eb50dd836b49844b1b4578c4437ed0b43212d4 during work; parent must integrate safely.
 
 - Fresh-context 03/06 joint acceptance on base `02ec9f45`: `TestMCPStdioAcceptedScanSurvivesEOFAndExplicitCancel` proves accepted scan completion after actual helper EOF/reap, same-run fresh-helper query, and distinct explicit cancellation, with cross-library and same-library/different-credential controls denied. Joint lifecycle checkbox checked; status remains ready-for-agent pending parent commit/review. No production behavior changed; parallel 03 concurrent-EOF repair is separate and not claimed here. See [joint evidence](../acceptance/06-delegated-runs.md#0306-fresh-context-joint-acceptance).
+
+
+## Final whole-branch review remediation
+
+See [final-review-remediation](../acceptance/final-review-remediation.md) for the final two-axis findings, focused repairs and actual checks. This is final-review revalidation, not a claim that this ticket caused every finding or that historical Windows rename failures were fixed. Status unchanged; parent owns integration and independent review.

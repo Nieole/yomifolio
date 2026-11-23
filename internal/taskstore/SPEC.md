@@ -15,6 +15,7 @@ references: [mm-adr-0006]
 
 - `New(*sql.DB)` 仅包装已有连接，不建表；`Migrate` 建表并更新存量列与索引，检查 `foreign_keys`，未开启返回 `ErrForeignKeysDisabled`。连接使用方仍须确保各连接启用外键。
 - `EnsureTask` 按身份四要素复用任务。活动运行与排队运行各有一条按任务的部分唯一索引；违例映射为 `ErrRunAlreadyActive`、`ErrRunAlreadyQueued`，允许同任务一条活动与一条排队共存。活动集合由 `ActiveStatuses` 生成，迁移时重建索引。
+- `RunFilter.Variant` 精确匹配不变；`VariantPrefix` 使用绑定参数的字面、区分大小写前缀比较，在 SQL LIMIT 前与作用域及 before-ID 一起筛选，不解释 `%`、`_` 或引号为模式/SQL。
 - 时间以 epoch 毫秒存储、按 UTC 读回，运行主要按序号定序；侧表随运行级联删除。指标的设值与累加分开，Args、Labels 按键合并；裁剪不选择活动或排队运行。
 
 ## 边界与限制

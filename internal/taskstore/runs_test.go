@@ -179,3 +179,35 @@ func TestMaxNthRunSurvivesPruning(t *testing.T) {
 		t.Fatalf("max sequence=%d want 3", sequence)
 	}
 }
+
+func TestRunVariantPrefixIsLiteralAndExactRemainsExact(t *testing.T) {
+	ctx := context.Background()
+	store := newStoreForTest(t)
+	var ids []int64
+	for i, value := range []task.Variant{"delegated:a%_'b:", "delegated:a%_'b:search", "delegated:a%_'b:model", "delegated:ax_'b:search", "delegated:a%_'b2:search"} {
+		identity := libraryIdentity(1)
+		identity.Variant = value
+		owner, err := store.EnsureTask(ctx, identity)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ids = append(ids, createRun(t, store, owner.ID, task.StatusCompleted, int64(i+1)).ID)
+	}
+	prefix := task.Variant("delegated:a%_'b:")
+	exact, err := store.ListRuns(ctx, task.RunFilter{Variant: &prefix})
+	if err != nil || len(exact) != 1 || exact[0].ID != ids[0] {
+		t.Fatalf("exact: %+v %v", exact, err)
+	}
+	var before int64
+	for i := 2; i >= 0; i-- {
+		page, err := store.ListRuns(ctx, task.RunFilter{VariantPrefix: &prefix, BeforeID: before, Order: task.OrderIDDesc, Limit: 1})
+		if err != nil || len(page) != 1 || page[0].ID != ids[i] {
+			t.Fatalf("prefix page: %+v %v", page, err)
+		}
+		before = page[0].ID
+	}
+	page, err := store.ListRuns(ctx, task.RunFilter{VariantPrefix: &prefix, BeforeID: before, Limit: 1})
+	if err != nil || len(page) != 0 {
+		t.Fatalf("end: %+v %v", page, err)
+	}
+}

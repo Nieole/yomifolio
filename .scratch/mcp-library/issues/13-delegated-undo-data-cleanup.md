@@ -25,3 +25,8 @@
 - Fresh 独立审阅在实现 HEAD e2b010ba 补了真实 stdio 异步运行中 HTTP 撤权/重置密码屏障、库预约回收、混库拒绝、同键换目标拒绝及真实 Windows junction 越界保护，定向双轮和前端/生成/lint均过。一次完整后端仍因 relocation_policy_crash_test.go:58/runtime_apply 配置 rename Access denied 失败，未归基线/未盲重试；blocked，保持 ready-for-agent，父负责最终门禁、提交/集成和独立 request_review。见 acceptance13 Fresh 节及 .tmp/13review/ 日志。
 
 - Canonical review rc_000c6675 fresh 窄修：管理页从持久 cleaned_by 恢复 pending 结果，原网页执行者以服务器验证的原 request_key 续办；不生成新键绕过隔离归属，不转移其他执行者 namespace。UI完整卸载/挂载、真实生产结果写入失败/重开/同键续办及异目标拒绝已测；双轮相关后端、一次完整后端（38包）、前端121文件/1161测试、build/lint、Go lint/format/tsgen全部通过。详见 acceptance13 末节及 .tmp/13freshfix/。保持 ready-for-agent，未提交，待父独立重审；未新增单项隔离后HTTP主动cancel的确定性屏障，不冒称穷尽取消调度。
+
+
+## Final whole-branch review remediation
+
+See [final-review-remediation](../acceptance/final-review-remediation.md) for the final two-axis findings, focused repairs and actual checks. This is final-review revalidation, not a claim that this ticket caused every finding or that historical Windows rename failures were fixed. Status unchanged; parent owns integration and independent review.

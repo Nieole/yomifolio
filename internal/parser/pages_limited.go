@@ -65,20 +65,31 @@ func (f pageContextFile) Read(p []byte) (int, error) {
 // solid predecessors. Each skip has the same byte ceiling and cancellation checks
 // as a selected entry, and retains no decompressed input buffer.
 func skipBoundedPage(ctx context.Context, rr io.Reader, declared, limit int64) error {
+	budget := boundedRarDrain{remaining: limit}
+	return budget.skip(ctx, rr, declared, limit)
+}
+
+// boundedRarDrain caps cumulative predecessor work for one independent reader.
+// Explicit draining prevents Next from doing unaccounted solid decompression.
+type boundedRarDrain struct{ remaining int64 }
+
+func (b *boundedRarDrain) skip(ctx context.Context, rr io.Reader, declared, perEntry int64) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+	limit := min(perEntry, b.remaining)
 	if declared > limit {
 		return ErrMetadataTooLarge
 	}
 	n, err := io.Copy(io.Discard, io.LimitReader(pageContextReader{ctx, rr}, limit+1))
+	b.remaining -= n
 	if err != nil {
 		return pageBudgetError(err)
 	}
 	if n > limit {
 		return ErrMetadataTooLarge
 	}
-	return nil
+	return ctx.Err()
 }
 
 // GetPagesLimited enumerates evidence pages with fixed decoder/skip budgets and
@@ -122,6 +133,7 @@ func GetPagesLimited(ctx context.Context, arc Archive) ([]PageMetadata, error) {
 			return nil, err
 		}
 		defer rr.Close()
+		drain := boundedRarDrain{remaining: BoundedPageDictionaryBytes}
 		for {
 			if err := ctx.Err(); err != nil {
 				return nil, err
@@ -136,7 +148,7 @@ func GetPagesLimited(ctx context.Context, arc Archive) ([]PageMetadata, error) {
 			if !h.IsDir {
 				add(h.Name, h.UnPackedSize)
 			}
-			if err := skipBoundedPage(ctx, rr, h.UnPackedSize, BoundedPageDictionaryBytes); err != nil {
+			if err := drain.skip(ctx, rr, h.UnPackedSize, BoundedPageDictionaryBytes); err != nil {
 				return nil, err
 			}
 		}

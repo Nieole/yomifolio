@@ -33,7 +33,7 @@ references: [mm-adr-0004, mm-adr-0005, mm-adr-0006, mm-adr-0007, mm-adr-0008, mm
 
 `Args` 只承载行为输入，环境描述归 `Labels` 或已有 `Limits`，IO 累计量归指标。合并保留原排队声明，比较落盘与本次提交的 `Args`，差异每次记录有损合并事件，无损重复仅首次记录；每次仍累计合并次数。事件明细与兼容规则归 `mm-adr-0008`。
 
-进度等写入失败存在只告警路径，不承诺所有快照与侧数据原子持久化。例外是 `RunSpec.AtomicArgs`：要求落盘实现提供 `CreateRunWithArgs`，将必要归属参数与新运行原子提交；没有该能力或写入失败时拒绝执行。`RunFilter.Variant` 与 `BeforeID` 配合 `OrderIDDesc` 提供按身份隔离、限额前筛选的稳定运行历史分页。
+进度等写入失败存在只告警路径，不承诺所有快照与侧数据原子持久化。例外是 `RunSpec.AtomicArgs`：要求落盘实现提供 `CreateRunWithArgs`，将必要归属参数与新运行原子提交；没有该能力或写入失败时拒绝执行。`RunFilter.Variant` 保留精确匹配；独立 `VariantPrefix` 为区分大小写的字面前缀（不是 LIKE 模式），与 `BeforeID` 配合 `OrderIDDesc` 提供按身份隔离、限额前筛选的稳定运行历史分页。
 
 ## 证据
 

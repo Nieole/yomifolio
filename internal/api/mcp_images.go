@@ -52,7 +52,7 @@ func imageEvidenceResult(out delegated.ImageEvidence, err error) (*mcp.CallToolR
 }
 
 // SDK stateless sessions do not themselves bind tool lifetime to the HTTP body.
-// Images and synchronous cover enrichment must release admission even while
+// Synchronous evidence and cover enrichment must release admission even while
 // waiting on IO after a disconnect. Keep this context through the commit boundary.
 func imageRequestContext(tool, transport context.Context) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(tool)

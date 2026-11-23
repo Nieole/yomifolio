@@ -54,8 +54,10 @@ type RunFilter struct {
 	// TaskID 为 0 表示不按任务筛。
 	TaskID int64
 	// Variant and BeforeID support bounded, attribution-isolated history pages.
-	Variant  *Variant
-	BeforeID int64
+	Variant *Variant
+	// VariantPrefix is a literal, case-sensitive prefix, independent of exact Variant.
+	VariantPrefix *Variant
+	BeforeID      int64
 	// Statuses 为空表示不按状态筛。
 	Statuses []RunStatus
 
