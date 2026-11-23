@@ -14,6 +14,7 @@ function coverImage(key?: string) {
   return key?.startsWith('metadata-covers/') && /^metadata-covers\/[a-zA-Z0-9.-]+$/.test(key) ? `/api/thumbnails/${key}` : undefined;
 }
 function fieldValue(state: State, field: string) {
+  if (field === 'authors') return state.authors?.map((author) => `${author.name} · ${author.role}`).join('\n') || '∅';
   const value = state[field === 'source_links' ? 'links' : field as keyof State];
   if (value === null || value === undefined) return '∅';
   return typeof value === 'string' ? value : JSON.stringify(value);

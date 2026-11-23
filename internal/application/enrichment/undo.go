@@ -129,7 +129,7 @@ func (s *Service) Undo(ctx context.Context, actor delegated.Subject, in UndoInpu
 	if err = authorize(ctx, tx, actor, current.LibraryID, true); err != nil {
 		return Operation{}, err
 	}
-	digest := hash(in)
+	digest := undoDigest(in)
 	if out, found, e := retry(ctx, j, actor, in.RequestKey, digest); e != nil || found {
 		return out, e
 	}

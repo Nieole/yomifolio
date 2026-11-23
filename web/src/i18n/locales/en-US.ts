@@ -25,6 +25,8 @@ export const messages: MessageCatalog = {
     "audit.cover.before": "Previous cover",
     "audit.cover.after": "Selected cover",
     "audit.cover.risk": "Cover and text are restored together. A later manual cover, related text change or current lock prevents undo; unrelated edits remain.",
+
+    "audit.field.authors": "Authors",
     "audit.field.title": "Title",
     "audit.field.summary": "Description",
     "audit.field.publisher": "Publisher",

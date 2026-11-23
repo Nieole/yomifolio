@@ -55,6 +55,7 @@ func EnrichmentRating(input []metadata.FieldEvidence) (*float64, []metadata.Fiel
 
 // State holds the metadata involved in safe enrichment and reversal.
 type State struct {
+	Authors   []Author    `json:"authors"`
 	Cover     *CoverState `json:"cover,omitempty"`
 	Title     *string     `json:"title"`
 	Summary   *string     `json:"summary"`
@@ -79,6 +80,9 @@ func EnrichmentLocked(current database.Series, field string) bool {
 
 // EnrichmentQueries is the transaction-bound persistence for prepared enrichment states.
 type EnrichmentQueries interface {
+	ClearSeriesAuthors(context.Context, int64) error
+	EnsureAuthor(context.Context, string, string) (int64, error)
+	LinkSeriesAuthor(context.Context, database.LinkSeriesAuthorParams) error
 	UpdateSeriesMetadata(context.Context, database.UpdateSeriesMetadataParams) (database.Series, error)
 	ClearSeriesTags(context.Context, int64) error
 	UpsertTag(context.Context, string) (database.Tag, error)
@@ -114,6 +118,19 @@ func WriteEnrichmentState(ctx context.Context, q EnrichmentQueries, current data
 	}
 	for _, f := range fields {
 		switch f {
+		case "authors":
+			if err = q.ClearSeriesAuthors(ctx, current.ID); err != nil {
+				return err
+			}
+			for _, author := range state.Authors {
+				id, e := q.EnsureAuthor(ctx, author.Name, author.Role)
+				if e != nil {
+					return e
+				}
+				if e = q.LinkSeriesAuthor(ctx, database.LinkSeriesAuthorParams{SeriesID: current.ID, AuthorID: id}); e != nil {
+					return e
+				}
+			}
 		case "tags":
 			if err = q.ClearSeriesTags(ctx, current.ID); err != nil {
 				return err

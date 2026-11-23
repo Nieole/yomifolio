@@ -203,6 +203,125 @@ func verifyAtomicCovers(t *testing.T, store database.Store, cfg *config.Manager,
 			t.Fatal("failed operation published cover")
 		}
 	}
+
+	// Combined 09+10 command: author correction, cover and text are one unit.
+	execSQL := func(query string, args ...any) {
+		t.Helper()
+		if _, e := store.DB().Exec(query, args...); e != nil {
+			t.Fatal(e)
+		}
+	}
+	execSQL(`INSERT INTO authors(name,role) VALUES('Cover Alias','Artist'),('Canonical','Writer')`)
+	execSQL(`INSERT INTO series_authors SELECT ?,id FROM authors WHERE name='Cover Alias'`, series.ID)
+	combined := func(key string) map[string]any {
+		in := makeInput(key)
+		in["fields"] = []string{"cover", "summary", "authors"}
+		in["author_corrections"] = []any{map[string]any{"from": map[string]string{"name": "Cover Alias", "role": "Artist"}, "to": map[string]string{"name": "Canonical", "role": "Writer"}, "reason": "Printed canonical credit"}}
+		return in
+	}
+	assertAuthors := func(name, role string) {
+		t.Helper()
+		state := call("library_get_enrichment_state", map[string]any{"series_id": series.ID})
+		raw, _ := json.Marshal(state["authors"])
+		want, _ := json.Marshal([]map[string]string{{"name": name, "role": role}})
+		if !bytes.Equal(raw, want) {
+			t.Fatalf("combined author group: %s != %s", raw, want)
+		}
+	}
+
+	assertCombinedImage := func(blue bool) {
+		t.Helper()
+		decoded, _, e := image.Decode(bytes.NewReader(web("GET", fmt.Sprintf("/covers/%d", book.ID), nil, 200)))
+		if e != nil {
+			t.Fatal(e)
+		}
+		red, _, b, _ := decoded.At(20, 20).RGBA()
+		if (b > red) != blue {
+			t.Fatalf("combined public cover: blue=%v, want %v", b > red, blue)
+		}
+	}
+	// Current whole-author group and related text CAS each reject without publishing cover.
+	for _, field := range []string{"authors", "summary"} {
+		reset()
+		in := combined("combined-cas-" + field)
+		if field == "authors" {
+			execSQL(`INSERT INTO series_authors SELECT ?,id FROM authors WHERE name='Canonical'`, series.ID)
+		} else {
+			execSQL(`UPDATE series SET summary='Later text' WHERE id=?`, series.ID)
+		}
+		result := call("library_enrich_metadata", in)
+		if result["outcome"] != "conflict" {
+			t.Fatal(result)
+		}
+		execSQL(`DELETE FROM series_authors WHERE series_id=? AND author_id IN (SELECT id FROM authors WHERE name='Canonical')`, series.ID)
+		reset()
+		unchanged()
+		assertAuthors("Cover Alias", "Artist")
+	}
+	// Force the last association write to fail after cover and scalar writes.
+	reset()
+	execSQL(`CREATE TRIGGER combined_author_failure BEFORE INSERT ON series_authors BEGIN SELECT RAISE(ABORT,'controlled author failure'); END`)
+	failedCombined := call("library_enrich_metadata", combined("combined-author-failure"))
+	execSQL(`DROP TRIGGER combined_author_failure`)
+	if failedCombined["outcome"] != "failed" {
+		t.Fatal(failedCombined)
+	}
+	unchanged()
+	assertAuthors("Cover Alias", "Artist")
+	in := combined("combined-success")
+	execSQL(`UPDATE series SET publisher='Unrelated combined edit' WHERE id=?`, series.ID)
+	applied := call("library_enrich_metadata", in)
+	if applied["outcome"] != "changed" {
+		t.Fatal(applied)
+	}
+	assertAuthors("Canonical", "Writer")
+	assertSummary(web, "Space journey")
+	assertCombinedImage(true)
+	// Same key with genuinely different author/cover intention cannot replay.
+	for _, field := range []string{"cover", "author_corrections"} {
+		raw, _ := json.Marshal(in)
+		altered := map[string]any{}
+		_ = json.Unmarshal(raw, &altered)
+		if field == "cover" {
+			altered[field].(map[string]any)["reason"] = "Different quality choice"
+		} else {
+			altered[field].([]any)[0].(map[string]any)["reason"] = "Different correction choice"
+		}
+		reject(altered)
+	}
+	for _, field := range []string{"authors", "summary", "cover"} {
+		if field == "authors" {
+			execSQL(`INSERT INTO series_authors SELECT ?,id FROM authors WHERE name='Cover Alias'`, series.ID)
+		}
+		if field == "summary" {
+			execSQL(`UPDATE series SET summary='Later text' WHERE id=?`, series.ID)
+		}
+		if field == "cover" {
+			execSQL(`UPDATE books SET cover_locked=1 WHERE id=?`, book.ID)
+		}
+		denied := call("library_undo_metadata_operation", map[string]any{"operation_id": applied["id"], "request_key": "combined-undo-conflict-" + field})
+		if denied["outcome"] != "conflict" {
+			t.Fatal(denied)
+		}
+		execSQL(`DELETE FROM series_authors WHERE series_id=? AND author_id IN (SELECT id FROM authors WHERE name='Cover Alias')`, series.ID)
+		execSQL(`UPDATE series SET summary='Space journey' WHERE id=?`, series.ID)
+		execSQL(`UPDATE books SET cover_locked=0 WHERE id=?`, book.ID)
+	}
+	restored := call("library_undo_metadata_operation", map[string]any{"operation_id": applied["id"], "request_key": "combined-undo"})
+	if restored["outcome"] != "changed" {
+		t.Fatal(restored)
+	}
+	assertAuthors("Cover Alias", "Artist")
+	assertSummary(web, "")
+	assertCombinedImage(false)
+	if call("library_get_enrichment_state", map[string]any{"series_id": series.ID})["publisher"] != "Unrelated combined edit" {
+		t.Fatal("undo lost unrelated edit")
+	}
+	// Undo restores retained bytes, not the original mutable cache key.
+	reset()
+	unchanged()
+	execSQL(`DELETE FROM series_authors WHERE series_id=?`, series.ID)
+	execSQL(`UPDATE series SET publisher=NULL WHERE id=?`, series.ID)
 	reset()
 	// Exercise the ordinary human page-cover command, then the delegated refusal.
 	web("POST", fmt.Sprintf("/books/%d/cover", book.ID), map[string]int{"page": 2}, 200)

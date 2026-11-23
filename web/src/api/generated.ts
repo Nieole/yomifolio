@@ -47,6 +47,7 @@ export interface Page {
 }
 
 export interface State {
+  authors: Author[];
   cover?: CoverState;
   title: string | null;
   summary: string | null;
@@ -108,6 +109,11 @@ export interface SeriesAuthor {
 export interface Link {
   name: string;
   url: string;
+}
+
+export interface Author {
+  name: string;
+  role: string;
 }
 
 export interface Restrictions {

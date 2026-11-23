@@ -54,3 +54,7 @@ references: [mm-adr-0003]
 
 
 `metadata_cover_materials` 是 handwritten DDL，由统一 Migrate 安装，保存 operation_id/path 多对多保留引用并索引 path；它不进入 sqlc 模型输入。收据和引用同事务插入，只有 changed 操作建立可公开保留引用；失败收据中出现的准备键不是公开授权。`CoverMaterialVisible` 同时检查当前书引用与保留引用，供原有文件名图片路由作提交可见性判定。`GetEnrichmentCoverBook` 的 sqlc 查询只取同库系列的首个封面书，按 sort_number/name/id 有界读取。未来清理不得按单条操作删除仍被别条记录/当前封面引用的文件；跨文件发布与清理竞争协议归 mm-application。
+
+## 共享作者身份
+
+当前 authors 的唯一身份为精确 `(name, role)`，角色不属于 series_authors 行。`Queries.EnsureAuthor` 只 INSERT ON CONFLICT DO NOTHING 并读取精确身份，供受限系列校正/撤销使用，不触发共享身份 UPDATE，不删无关联旧身份。调用者提供真实事务，目标关联替换和统计与收据原子提交；本包不承担别名认定或全库合并策略。该手写查询不变更 sqlc 模型或 schema。

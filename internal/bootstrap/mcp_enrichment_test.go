@@ -79,7 +79,7 @@ func TestProductionMCPEnrichmentAuditUndo(t *testing.T) {
 				score = 80
 				scale = 100
 			}
-			return []*metadata.SeriesMetadata{{Title: "Space", Summary: "Space journey", Rating: score / scale * 10, SiteRating: &metadata.SiteRating{Value: score, Scale: scale}, Tags: []string{"Science Fiction", "favorite", "2026", "冒险", "Bangumi"}, SourceID: 1, SourceURL: "https://example.org/" + name}}, 1, nil
+			return []*metadata.SeriesMetadata{{Authors: []metadata.SeriesAuthor{{Name: "Canonical", Role: "Writer"}}, Title: "Space", Summary: "Space journey", Rating: score / scale * 10, SiteRating: &metadata.SiteRating{Value: score, Scale: scale}, Tags: []string{"Science Fiction", "favorite", "2026", "冒险", "Bangumi"}, SourceID: 1, SourceURL: "https://example.org/" + name}}, 1, nil
 		}}
 	}}}
 	process, err := bootstrap.Open(ctx, wrapped, cfg, options)
@@ -148,7 +148,7 @@ func TestProductionMCPEnrichmentAuditUndo(t *testing.T) {
 	propose := func(series int64, source string) any {
 		search := call("library_search_sources", map[string]any{"series_id": series, "query": "Space"})
 		call("library_wait_run", map[string]any{"run_id": search["run"].(map[string]any)["run_id"], "timeout_ms": 30000})
-		out := call("library_propose_match", map[string]any{"search_id": search["search_id"], "identity_confirmed": true, "edition_confirmed": true, "summary": "Same series and edition confirmed from directory and release", "fields": map[string]string{"summary": source + ":0", "tags": source + ":0", "rating": source + ":0"}})
+		out := call("library_propose_match", map[string]any{"search_id": search["search_id"], "identity_confirmed": true, "edition_confirmed": true, "summary": "Same series and edition confirmed from directory and release", "fields": map[string]string{"summary": source + ":0", "tags": source + ":0", "rating": source + ":0", "authors": source + ":0"}})
 		return out["proposal_id"]
 	}
 	verifyCoversAfterReopen := verifyAtomicCovers(t, store, cfg, session, router, process.Application.Engine, issued.Token, wrapped.gate, func() error { return process.Application.Scans.CleanupThumbnails(ctx, nil) }, call, web, propose)

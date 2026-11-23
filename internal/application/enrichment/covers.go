@@ -69,7 +69,7 @@ func (s *Service) prepareCover(ctx context.Context, actor delegated.Subject, in 
 	if err != nil {
 		return nil, err
 	}
-	if !same(state, in.Expected, "cover") || !eligibleCover(state.Cover) {
+	if !same(state, in.Expected.state(), "cover") || !eligibleCover(state.Cover) {
 		return nil, delegated.ErrInvalid
 	}
 	dir := config.ThumbnailDir(s.covers.Config())

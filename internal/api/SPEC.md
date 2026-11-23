@@ -80,3 +80,7 @@ MCP 的 enrichment state、单项/批量补充、操作查询/按系列分页与
 
 
 补充工具的 cover 字段选择与故障一致性归 mm-application，仍复用同一 enrichment 工具/管理历史/Undo，不新增图片宿主或任意 URL 获取工具。原 cover 路由支持已提交的虚拟材料键；原 thumbnail 路由须检查当前书或持久保留引用后读取材料私有根。普通缩略图文件使用 os.Root 约束在普通缓存根，保留内容与条件请求语义；未提交虚拟键、Windows 大小写/尾点等实体目录别名均不能公开准备材料。
+
+作者校正复用同一 enrichment 工具与操作查询/撤销路径；输入可选择 authors，`author_corrections` 使用精确 from/to name、role 与短 reason，不接受自由作者事实。state 与收据 before/after 返回作者组，协议层不执行共享身份重命名。系列内例外、当前事务保护和字段补空限制归 `mm-application`。
+
+补充命令的 expected schema 来自独立 `enrichment.ExpectedState`，authors 可省略（含批量嵌套输入）；不因响应 State 增加字段而要求旧客户端补送新字段。持久摘要版本与兼容规则归 `mm-application`。

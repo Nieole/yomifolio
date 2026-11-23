@@ -73,3 +73,53 @@
 - 前端本轮无修改，仅 Node26.13.1 下 `npm test -- src/pages/settings/metadataOperations.test.tsx --maxWorkers=2` — **1文件/8测试通过**（`cancel-ui-history.log`）。上节完整1154测试/build/lint属于前轮既有结果，本轮没有重跑，不能混称本轮全前端门禁。
 - 准备成功到提交的取消一致性：现有 `BeginTx(ctx)` 及全部查询使用同一个 merged ctx，取消会使事务不能正常继续发布；COMMIT 与断连竞争仍可能已经完整提交，因此客户端须同键查询，不能把断连解读为未提交。没有声称通过可抢占的文件 Sync 或拔电实验；已完整准备孤儿仍按原方案保守保留。
 - 本轮取消修复没有改 Input/State/Undo 的 JSON 形状、hash 函数、请求摘要、持久收据版本或重放命名空间，**未新增 commandhash/旧收据兼容变化**；同键审计实测如上。09 的稳定 hash 修复仍在其独立树，由父后续组合并做旧收据兼容验收；本树不提前宣称组合兼容已通过，也未触碰09。
+
+
+## 09 + 10 独立组合 merger 验证（本轮）
+
+### 树与冲突处置
+
+本轮唯一编辑树仍为 `C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-10`，分支 `mcp-atomic-covers`。起点 HEAD **a4170973e12744f709a6cb7d5fc6f55d24940a3e**，已有父发起但未提交的 merge，MERGE_HEAD / integration tip 均为 **a92df90f7a85bba0626d4a3884f45ca01c826172**；结束时 tip 未变化。未 stage、commit、merge、reset、abort，未编辑父/其他树或 TODO。09 工单与验收文件是父已发起 merge 带入的内容，本轮未编辑。10 保持 ready-for-agent。
+
+逐块组合而非整文件 ours/theirs：
+
+- `service.go` 合并 cover 与作者 Input、State 读取/复制/集合比较、字段校正和事务检查；独立 `ExpectedState` 同时含可选 authors/cover，`.state()` 完整传递。9 个获准字段均可选择；cover-only 仍不强求提案，其他字段仍须确认来源。保留 10 的同事务 savepoint/失败收据，删除 09 已不适用的第二事务 failed helper，全部重放/正常/失败收据使用 `applyDigest`。
+- `digest.go` 保留冻结 08/09 命令字段顺序/编码；新增显式 `coverSelectionV1` 与 `coverExpectedV1` 可选扩展，逐项映射 book_id/page/quality_compared/reason 及 expected book_id/path/locked/automatic。缺失时 omitempty，旧无 cover 字节不变。作者 nil/空组同义，非空身份及 from/to/reason 继续参与；无整个 Input/State hash、版本前缀、猜旧意图或宽松旧 hash fallback。
+- `covers.go` 预期比较改用独立 ExpectedState 转换；`seriesmeta/enrichment.go` 同时保留 cover 状态和作者身份组及关联写入。实际当前库、授权、锁、源书归属、相关整组/标量/cover CAS 与所有写入仍在同一真实事务。
+- 自动合并的 `undo.go` 专门对照双方核验：保留 `undoDigest(in)`、当前事务授权/锁/作者整组及 cover after 检查、旧材料恢复，以及 `writeState` + TryChange 同事务组合撤销。未退回只写文字或绕过失败 savepoint。
+- API 保留 single/batch 的真实 `imageRequestContext(ctx, transportCtx)`，工具说明同时描述作者和封面；异步后台 run 断线继续语义未改。tsgen 同时保留 Author/CoverSelection/CoverState，保留 State nullable 与 cover omitempty 的区别，实际重新生成响应，无手写解决 generated.ts。
+- 管理页自动合并后核验作者姓名/角色显示与封面前后/撤销方向/失败反馈共存；双语标签、两边测试、CHANGELOG 和 owning specs 均按段保留。没有添加 11/13 功能。
+
+### 新组合回归与红绿
+
+`verifyAtomicCovers`（生产 `TestProductionMCPEnrichmentAuditUndo`）新增同系列 cover + summary + 明确别名/角色校正：
+
+1. 真实作者整组或 summary 在快照后变化，各自返回 conflict，公开系列、作者组及解码 HTTP 封面不半提交。
+2. 真实 `BEFORE INSERT ON series_authors` 触发失败发生在 cover 和标量写入之后；整项 failed，公开旧图、空 summary、原作者组完整保留。
+3. 成功同时得到 Canonical/Writer、Space journey 与实际解码 HTTP 蓝色封面；相同键不同 cover 比较理由或作者校正理由均被 MCP 拒绝。无关 publisher 在快照后改变不阻提交。
+4. 作者组后改、summary 后改、当前 cover 锁各自阻止整项 Undo；去除冲突后一次 Undo 恢复精确原作者角色及文字/实际解码 HTTP 红色旧图（在测试 reset 之前验证），无关 publisher 保留。原封面读取/重开、manual 来源/归属保护、未提交图不可读、资源预算、真实取消和批次前缀幂等测试继续执行。
+
+新增 `TestEnrichmentDigest09FrozenAndCoverIntent`：可信基准是 **a92df90f 的显式 V1 shape 所定义的固定原始 JSON 字节**，不是当前 structs 生成的 expected。无 cover 的真实作者校正命令仍得到原09 SHA；cover 每个选择/expected 字段及作者身份/角色/理由的变动均改变摘要。保留 `testdata/enrichment-base08.*` 原夹具不变，HTTP 与真实 stdio 重开原08 DB、旧单项/批量请求和 undo 重放继续绿。
+
+红绿日志均在 `.tmp/10/combine/`，不冒充冲突文件尚不可编译时曾跑过旧生产实现：
+
+- 初次组合测试 `combined-first.log` 真失败：宿主用 INSERT SELECT 添加后改作者，但 Canonical 身份尚未创建，插入零行，没有真正制造冲突。显式创建测试身份后 `combined-fixed.log` 通过；未改生产保护或弱化断言。
+- 用只在 `.tmp` 的 Go overlay 故意移除新 cover intent 摘要映射：`red-cover-digest.log` 在首个 cover 变动处失败，exit1。故意从组合 writer 丢掉 authors：`red-combined-authors.log` 在真实作者触发器应 failed 却 changed 处失败，exit1。没有改 index/HEAD/其他树；正常实现的后续两轮与全量均绿。这是新守卫的 mutant red/green 证据，不声称发现两个新的生产缺陷。
+
+### 本轮实际完整门禁
+
+Go **1.26.10**；共享 GOCACHE 按 worker guide，本树 GOTMPDIR=`.tmp/10/combine/gotmp`、独立 lintcache=`.tmp/10/combine/lintcache`。Node **26.13.1** / npm **11.20.0**，使用既有 node_modules 后实际重建 dist。
+
+- **两轮定向**：`go test -p 1 ./internal/bootstrap ./internal/api ./internal/application/delegated ./internal/application/enrichment ./internal/seriesmeta ./internal/bookcontent ./internal/covermaterial ./cmd/mcp-proxy -run 'MCP|Enrichment|Author|Cover|Evidence|Budget|Stdio' -count=2 -timeout=10m`，PASS / exit0，`targeted-two-rounds.log`。覆盖作者、cover、原08兼容、取消、MCP/stdio；covermaterial/proxy 无包内测试，不冒称该两包有定向用例。
+- **完整 backend**：前端 build 后 `go test -p 1 ./... -count=1 -timeout=10m`（外层1800s），全部 PASS / exit0，`backend-full.log`。随后加强组合成功/Undo 的实际 HTTP 图片颜色断言（生产代码未变），先以 `final-exact-images-two-rounds.log` 再跑 enrichment/authors/旧08兼容/取消真实stdio两轮通过，再用同一全量命令 **完整全部通过**，`backend-final-full.log` / exit0。最终全部 Go 代码和测试均在后一次全量运行前完成；这是加强断言后的复验，无未知失败、盲 retry 或 skip。
+- **完整 frontend**：`npm test -- --maxWorkers=2`，**121 文件 / 1155 测试 PASS**；`npm run build`、`npm run lint` 均 exit0，`frontend-{tests,build,lint}.log`。
+- `gofmt -l ./cmd ./internal` 空，`gofmt.log` / `gofmt-final.log`；独立 cache `golangci-lint run` **0 issues.** / exit0，`lint.log` / `lint-final.log`（加强图片断言后再次通过）。
+- `go run ./cmd/tsgen` 45 类型；再次生成前后 SHA-256 均为 `393c2c1f7f397bd995e62531a1e6156173edbd56f95451508f3f0ff70fa46a1b`，`tsgen-{before,after}.log` / `tsgen-final.log`。
+- 本轮未新增 SQL 输入变化，但合并含原10 SQL，仍实际 PowerShell `sqlc generate` exit0；`query.sql.go` / `querier.go` 前后 hash 相同，`sqlc{,-before,-after}.log`。query.sql、schema_handwritten.sql ASCII 已核验，不声称原 schema.sql 全 ASCII。
+- 最终 `git diff --check` 通过；工作文件没有冲突标记（许可证等号分隔线不是冲突）。父禁 stage，故 **git index 仍显示原 UU，这是刻意保留给父标记 resolved 的状态，不是源码仍含冲突**。新增未跟踪 `internal/application/enrichment/digest_test.go` 必须随父提交纳入。
+
+### 11 / 13 可复用接点与 remaining
+
+- 11：`enrichment.Service` / `ExpectedState`、`applyDigest` / `undoDigest` 是明确命令边界；复用实际事务 `AuthorizeTx`、字段/整组 expected 及 `MetadataJournal.TryChange`，不能在协议层另写 SQL 或在补充后以第二事务假装提案原子裁决。既有 `Operation`、Get/List/Undo 与管理页继续是权威收据投影。
+- 13：`covermaterial` 不可变私有材料、`metadata_cover_materials` 多对多保留引用及 `CoverMaterialVisible` 是现有接口；`save` 为 changed 操作建立引用。须保护当前书/其他操作引用与活跃准备/Undo，不能按单条记录/年龄删除共享图。默认不清理，完整准备孤儿仍保守保留；未实现清理 API 或自动过期。
+- 无已知本次组合 blocker；未证明断电/磁盘损坏等平台外保证，不把新的组合用例冒称完整强杀实验。**源码与门禁 merge-ready，父负责 stage/resolved 与提交，再发独立 review；票10仍 ready-for-agent。**

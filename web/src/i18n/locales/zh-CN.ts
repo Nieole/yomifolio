@@ -25,6 +25,8 @@ export const messages: MessageCatalog = {
     "audit.cover.before": "原封面",
     "audit.cover.after": "选定封面",
     "audit.cover.risk": "封面与涉及文字一起恢复。后续人工封面、相关文字变化或当前锁会阻止撤销；无关编辑保留。",
+
+    "audit.field.authors": "作者",
     "audit.field.title": "标题",
     "audit.field.summary": "描述",
     "audit.field.publisher": "出版社",

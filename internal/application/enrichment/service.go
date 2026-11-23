@@ -5,7 +5,6 @@ package enrichment
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
@@ -30,13 +29,33 @@ type Evidence interface {
 // State is the source-specific metadata snapshot used for expected-value checks.
 type State = seriesmeta.State
 
+// ExpectedState is the command snapshot, not the extensible response State.
+// Authors is optional so pre-author MCP requests still validate against the schema.
+// New command fields must also be represented explicitly in applyDigest.
+type ExpectedState struct {
+	Title     *string                `json:"title"`
+	Summary   *string                `json:"summary"`
+	Publisher *string                `json:"publisher"`
+	Status    *string                `json:"status"`
+	Rating    *float64               `json:"rating"`
+	Tags      []string               `json:"tags"`
+	Links     []seriesmeta.Link      `json:"links"`
+	Authors   []seriesmeta.Author    `json:"authors,omitempty"`
+	Cover     *seriesmeta.CoverState `json:"cover,omitempty"`
+}
+
+func (e ExpectedState) state() State {
+	return State{Title: e.Title, Summary: e.Summary, Publisher: e.Publisher, Status: e.Status, Rating: e.Rating, Tags: e.Tags, Links: e.Links, Authors: e.Authors, Cover: e.Cover}
+}
+
 type Input struct {
-	RequestKey  string          `json:"request_key"`
-	SeriesID    int64           `json:"series_id"`
-	ProposalIDs []int64         `json:"proposal_ids"`
-	Fields      []string        `json:"fields"`
-	Expected    State           `json:"expected"`
-	Cover       *CoverSelection `json:"cover,omitempty"`
+	RequestKey        string             `json:"request_key"`
+	SeriesID          int64              `json:"series_id"`
+	ProposalIDs       []int64            `json:"proposal_ids"`
+	Fields            []string           `json:"fields"`
+	Expected          ExpectedState      `json:"expected"`
+	Cover             *CoverSelection    `json:"cover,omitempty"`
+	AuthorCorrections []AuthorCorrection `json:"author_corrections,omitempty"`
 }
 type UndoInput struct {
 	RequestKey  string `json:"request_key"`
@@ -127,11 +146,20 @@ func readState(ctx context.Context, q *database.Queries, id int64) (database.Ser
 	if err != nil {
 		return current, State{}, err
 	}
-	state := State{Title: nullable(current.Title), Summary: nullable(current.Summary), Publisher: nullable(current.Publisher), Status: nullable(current.Status), Tags: []string{}, Links: []seriesmeta.Link{}}
+	state := State{Authors: []seriesmeta.Author{}, Title: nullable(current.Title), Summary: nullable(current.Summary), Publisher: nullable(current.Publisher), Status: nullable(current.Status), Tags: []string{}, Links: []seriesmeta.Link{}}
 	if current.Rating.Valid {
 		r := current.Rating.Float64
 		state.Rating = &r
 	}
+	authors, err := q.GetAuthorsForSeries(ctx, id)
+	if err != nil {
+		return current, state, err
+	}
+	for _, a := range authors {
+		state.Authors = append(state.Authors, seriesmeta.Author{Name: a.Name, Role: a.Role})
+	}
+	state.Authors = seriesmeta.AuthorSet(state.Authors)
+
 	tags, err := q.GetTagsForSeries(ctx, id)
 	if err != nil {
 		return current, state, err
@@ -167,6 +195,8 @@ func value(s State, field string) any {
 		return s.Status
 	case "rating":
 		return s.Rating
+	case "authors":
+		return seriesmeta.AuthorSet(s.Authors)
 	case "tags":
 		v := slices.Clone(s.Tags)
 		if v == nil {
@@ -203,6 +233,8 @@ func copyField(dst *State, src State, f string) {
 		dst.Status = src.Status
 	case "rating":
 		dst.Rating = src.Rating
+	case "authors":
+		dst.Authors = slices.Clone(src.Authors)
 	case "tags":
 		dst.Tags = slices.Clone(src.Tags)
 	case "source_links":
@@ -221,11 +253,6 @@ func scalar(s *State, f string) **string {
 		return &s.Status
 	}
 	return nil
-}
-func hash(in any) string {
-	b, _ := json.Marshal(in)
-	sum := sha256.Sum256(b)
-	return hex.EncodeToString(sum[:])
 }
 func operation(actor delegated.Subject, key string, series, library int64, kind string) Operation {
 	b := make([]byte, 16)
@@ -298,12 +325,12 @@ func (s *Service) State(ctx context.Context, actor delegated.Subject, series int
 // Apply requires selected fields and explicitly confirmed evidence. Identical retries
 // return the original immutable outcome with replayed=true and applied=false.
 func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) (Operation, error) {
-	if !validKey(in.RequestKey) || in.SeriesID <= 0 || len(in.Fields) < 1 || len(in.Fields) > 8 || len(in.ProposalIDs) > 10 {
+	if !validKey(in.RequestKey) || in.SeriesID <= 0 || len(in.Fields) < 1 || len(in.Fields) > 9 || len(in.ProposalIDs) > 10 {
 		return Operation{}, delegated.ErrInvalid
 	}
 	seen := map[string]bool{}
 	for _, f := range in.Fields {
-		if seen[f] || !slices.Contains([]string{"title", "summary", "publisher", "status", "rating", "tags", "source_links", "cover"}, f) {
+		if seen[f] || !slices.Contains([]string{"title", "summary", "publisher", "status", "rating", "tags", "source_links", "cover", "authors"}, f) {
 			return Operation{}, delegated.ErrInvalid
 		}
 		seen[f] = true
@@ -311,10 +338,10 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 	if (len(in.Fields) > 1 || !seen["cover"]) && len(in.ProposalIDs) == 0 {
 		return Operation{}, delegated.ErrInvalid
 	}
-	if seen["cover"] != (in.Cover != nil) {
+	if seen["cover"] != (in.Cover != nil) || len(in.AuthorCorrections) > 50 || (len(in.AuthorCorrections) > 0 && !seen["authors"]) {
 		return Operation{}, delegated.ErrInvalid
 	}
-	if out, found, err := s.existing(ctx, actor, in.SeriesID, in.RequestKey, hash(in)); err != nil || found {
+	if out, found, err := s.existing(ctx, actor, in.SeriesID, in.RequestKey, applyDigest(in)); err != nil || found {
 		return out, err
 	}
 	evidence := map[string][]metadata.FieldEvidence{}
@@ -368,7 +395,7 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 	if err = authorize(ctx, tx, actor, current.LibraryID, true); err != nil {
 		return Operation{}, err
 	}
-	if out, found, e := retry(ctx, j, actor, in.RequestKey, hash(in)); e != nil || found {
+	if out, found, e := retry(ctx, j, actor, in.RequestKey, applyDigest(in)); e != nil || found {
 		return out, e
 	}
 	out := operation(actor, in.RequestKey, current.ID, current.LibraryID, "enrich")
@@ -380,7 +407,7 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 		out.NewCoverMaterial = prepared.new
 	}
 	for _, f := range in.Fields {
-		if seriesmeta.EnrichmentLocked(current, f) || !same(before, in.Expected, f) || (f == "cover" && !eligibleCover(before.Cover)) {
+		if seriesmeta.EnrichmentLocked(current, f) || !same(before, in.Expected.state(), f) || (f == "cover" && !eligibleCover(before.Cover)) {
 			out.Outcome = "conflict"
 			out.Reason = "current field or lock differs"
 		}
@@ -397,6 +424,15 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 		}
 		audit := FieldAudit{Field: f, Reason: reason, Sources: sources}
 		switch f {
+		case "authors":
+			var e error
+			out.After.Authors, e = correctAuthors(in.Expected.Authors, sources, in.AuthorCorrections)
+			if e != nil {
+				return Operation{}, e
+			}
+			for _, correction := range in.AuthorCorrections {
+				audit.Reason += "; " + correction.Reason
+			}
 		case "rating":
 			r, valid, formula := seriesmeta.EnrichmentRating(sources)
 			audit.Sources = valid
@@ -491,7 +527,7 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 			}
 		}
 	}
-	if err = save(ctx, j, out, hash(in)); err != nil {
+	if err = save(ctx, j, out, applyDigest(in)); err != nil {
 		return Operation{}, err
 	}
 	if err = tx.Commit(); err != nil {
