@@ -401,8 +401,14 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 	out := operation(actor, in.RequestKey, current.ID, current.LibraryID, "enrich")
 	out.Before = before
 	out.After = before
-	if prepared != nil {
+	if in.Cover != nil {
 		out.CoverSelection = in.Cover
+		if prepared == nil {
+			out.Outcome = "conflict"
+			out.Reason = "current field or lock differs"
+		}
+	}
+	if prepared != nil {
 		out.OldCoverMaterial = prepared.old
 		out.NewCoverMaterial = prepared.new
 	}
@@ -412,7 +418,7 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 			out.Reason = "current field or lock differs"
 		}
 		if f == "cover" {
-			if before.Cover != nil {
+			if before.Cover != nil && prepared != nil {
 				out.After.Cover = &seriesmeta.CoverState{BookID: before.Cover.BookID, Path: prepared.new, Automatic: true}
 			}
 			out.Fields = append(out.Fields, FieldAudit{Field: f, Changed: true, Reason: in.Cover.Reason, Sources: []metadata.FieldEvidence{}})

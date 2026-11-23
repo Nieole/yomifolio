@@ -116,7 +116,7 @@ agent 必须显式确认所选候选属于同一系列及相同版本，并提�
 
 `enrichment.Apply`/`Batch` 的 `cover` 字段接受显式 `CoverSelection`：本系列已授权归档的 book_id、一基 page、quality_compared=true 与最多 1000 字节的质量比较短理由。不接受 URL、任意宿主路径或上传字节；不下载来源候选的 CoverURL，不增加远程取图/SSRF 边界。封面单独操作允许空 proposal_ids；同时涉及文字仍要求已确认提案。质量优劣由 agent 比较和显式选中，服务端不伪称布尔声明就是客观质量证明，也不以分辨率自动替换。
 
-目标是目录按 sort_number/name/id 选中的首个现有封面书，不是任意书或缺封面的补图入口。`State.cover` 保存 book_id/path/locked/automatic；初始仅认可扫描器 path/mtime/size 自动键，或本能力保留的归档封面材料键。内容寻址的人工手选/上传键即使后来解除锁也不合格；当前 book.cover_locked 或系列 cover 锁均保护。准备后在实际写事务内重读系列/库、源书归属、当前目标封面与所选文字、锁和当前 user ∩ credential ∩ library ∩ metadata_write；预期值不符整项 conflict，无关字段不阻止。
+目标是目录按 sort_number/name/id 选中的首个现有封面书，不是任意书或缺封面的补图入口。`State.cover` 保存 book_id/path/locked/automatic；初始仅认可扫描器 path/mtime/size 自动键，或本能力保留的归档封面材料键。内容寻址的人工手选/上传键即使后来解除锁也不合格；当前 book.cover_locked 或系列 cover 锁均保护。准备后在实际写事务内重读系列/库、源书归属、当前目标封面与所选文字、锁和当前 user ∩ credential ∩ library ∩ metadata_write；预期值不符整项 conflict，无关字段不阻止。 准备前先检查当前授权、源书身份及页码，再比较所选字段/封面状态、锁和自动来源；已发现的业务冲突不读取或准备无用图片，交由最终当前授权事务保存永久 conflict 收据，即使其间状态恢复也不执行该请求。缩略图读取后、材料准备前再次检查；准备后的事务检查仍为最终权威。非法命令/页码、越界源书及权限拒绝不是可查询 conflict；同键重放已提交冲突，换意图仍拒绝。
 
 图片准备沿用 `delegated.PageThumbnails` 的 read 交集、内容准入/句柄与严格预算（384 边、JPEG 65、96 KiB、不放大，源字节/像素与 RAR 预算仍归 mm-bookcontent/mm-images）。这是有界替代封面，不提供任意原图或阅读分辨率。另有两个可取消的整项准备槽，约束旧图读取/验证和准备文件的并发。同步请求的取消贯穿准备和随后的事务，IO 等待取消归还内容读资格及图片/准备槽；已提交的批次前缀及收据不回滚。取消与 COMMIT 竞争时仍须按原键查询持久结果，不以断连断言未提交。当前旧图片原字节有界验证后保留，来源 book/page、比较理由与旧/新材料键进入持久收据。
 

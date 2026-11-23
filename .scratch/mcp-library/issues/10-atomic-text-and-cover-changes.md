@@ -22,3 +22,6 @@
 - 接续 usage-limit 中断的既有 delta；核对历史红/绿日志后扩充公开系列读取、封面切换后的文字失败/savepoint 回滚、失败幂等与重开审计，以及管理页撤销图片方向/失败结果。当前实际完整门禁和限制已记录于 acceptance/10-atomic-covers.md；仍为 ready-for-agent，不自行 done，未改 09/11/13 或其他树。
 
 - 独立审阅 transport 取消阻塞已窄修：单项/批量入口合并真实请求上下文，贯穿封面准备与提交。真实 TCP 断连、stdio EOF 卡卷 IO 红测后转绿；三次连续准备验证读资格/IO等待/图片及cover槽释放，批次已提交文字与审计幂等保留。最终两轮定向回归、完整后端、lint/format/tsgen/diffcheck 与定向历史UI 8测通过；实跑日志及09组合限制见 acceptance10 新节。仍 ready-for-agent，等待父 fresh 独立重审，不自行 done。
+
+
+- canonical 独立 review rc_0b83bbc6 窄修已实施，起点 81229c6f；准备前 stale cover/lock/人工来源与相关字段冲突进入最终当前授权事务持久 conflict，不生成无用材料。真实 HTTP 首次收据、恢复后 HTTP/stdio 同键重放、异载荷拒绝及重开公开审计有回归；非法页码/比较声明/源身份不落收据。最终两轮定向、完整 backend、lint/format/tsgen 与历史 UI 定向均通过，证据见 acceptance10 新节。保持 ready-for-agent；全部未 stage/commit，等待父提交与 fresh request_review，不自标 done。

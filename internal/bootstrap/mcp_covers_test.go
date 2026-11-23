@@ -204,6 +204,125 @@ func verifyAtomicCovers(t *testing.T, store database.Store, cfg *config.Manager,
 		}
 	}
 
+	// A caller snapshot is not admission: stale automatic cover/locks/manual provenance
+	// must create permanent conflicts even before any immutable file preparation.
+	staleIDs := []string{}
+	for _, mutation := range []string{"replace", "book-lock", "series-lock", "manual"} {
+		reset()
+		in := makeInput("preprepare-" + mutation)
+		switch mutation {
+		case "replace", "manual":
+			path := "manual-stale.png"
+			if mutation == "replace" {
+				path = "metadata-covers/stale.png"
+			}
+			base := config.ThumbnailDir(cfg.Snapshot())
+			if mutation == "replace" {
+				base = covermaterial.RootDir(base)
+			}
+			if e := os.MkdirAll(filepath.Dir(filepath.Join(base, path)), 0755); e != nil {
+				t.Fatal(e)
+			}
+			if e := os.WriteFile(filepath.Join(base, path), newImage, 0600); e != nil {
+				t.Fatal(e)
+			}
+			if _, e := store.DB().Exec(`UPDATE books SET cover_path=? WHERE id=?`, path, book.ID); e != nil {
+				t.Fatal(e)
+			}
+		case "book-lock":
+			if _, e := store.DB().Exec(`UPDATE books SET cover_locked=1 WHERE id=?`, book.ID); e != nil {
+				t.Fatal(e)
+			}
+		case "series-lock":
+			if _, e := store.DB().Exec(`UPDATE series SET locked_fields='cover' WHERE id=?`, series.ID); e != nil {
+				t.Fatal(e)
+			}
+		}
+		if mutation == "replace" {
+			// A stale snapshot must not mask malformed input or unauthorized source
+			// identity with an apparently queryable conflict receipt.
+			listInput := map[string]any{"series_id": series.ID, "limit": 50}
+			beforeAudit, _ := json.Marshal(call("library_list_metadata_operations", listInput))
+			for _, invalid := range []string{"page", "comparison", "source"} {
+				raw, _ := json.Marshal(in)
+				var bad map[string]any
+				_ = json.Unmarshal(raw, &bad)
+				bad["request_key"] = "stale-invalid-" + invalid
+				selection := bad["cover"].(map[string]any)
+				switch invalid {
+				case "page":
+					selection["page"] = 900
+				case "comparison":
+					selection["quality_compared"] = false
+				case "source":
+					selection["book_id"] = 999999
+				}
+				reject(bad)
+			}
+			afterAudit, _ := json.Marshal(call("library_list_metadata_operations", listInput))
+			if !bytes.Equal(beforeAudit, afterAudit) {
+				t.Fatal("invalid input produced a receipt")
+			}
+		}
+
+		beforeState := call("library_get_enrichment_state", map[string]any{"series_id": series.ID})
+		beforeImage := web("GET", fmt.Sprintf("/covers/%d", book.ID), nil, 200)
+		// An inaccessible preparation directory makes any Prepare invocation fail;
+		// receiving a committed conflict proves preparation was never attempted.
+		dir := filepath.Join(covermaterial.RootDir(config.ThumbnailDir(cfg.Snapshot())), "metadata-covers")
+		if e := os.Rename(dir, dir+"-stale-saved"); e != nil {
+			t.Fatal(e)
+		}
+		if e := os.WriteFile(dir, []byte("preparation forbidden"), 0600); e != nil {
+			t.Fatal(e)
+		}
+		result, e := session.CallTool(ctx, &mcp.CallToolParams{Name: "library_enrich_metadata", Arguments: in})
+		if e := os.Remove(dir); e != nil {
+			t.Fatal(e)
+		}
+		if e := os.Rename(dir+"-stale-saved", dir); e != nil {
+			t.Fatal(e)
+		}
+		if e != nil || result.IsError {
+			t.Fatalf("stale %s rejected without receipt: %+v %v", mutation, result, e)
+		}
+		raw, _ := json.Marshal(result.StructuredContent)
+		var op map[string]any
+		if e := json.Unmarshal(raw, &op); e != nil {
+			t.Fatal(e)
+		}
+		if op["outcome"] != "conflict" || op["applied"] != false || op["old_cover_material"] != nil || op["new_cover_material"] != nil {
+			t.Fatal(op)
+		}
+		saved := call("library_get_metadata_operation", map[string]any{"operation_id": op["id"]})
+		if saved["outcome"] != "conflict" {
+			t.Fatal(saved)
+		}
+		afterState := call("library_get_enrichment_state", map[string]any{"series_id": series.ID})
+		a, _ := json.Marshal(beforeState)
+		b, _ := json.Marshal(afterState)
+		if !bytes.Equal(a, b) || !bytes.Equal(beforeImage, web("GET", fmt.Sprintf("/covers/%d", book.ID), nil, 200)) {
+			t.Fatal("stale conflict changed public state")
+		}
+		assertSummary(web, "")
+		reset()
+		replay := call("library_enrich_metadata", in)
+		if replay["id"] != op["id"] || replay["outcome"] != "conflict" || replay["replayed"] != true || replay["applied"] != false {
+			t.Fatal(replay)
+		}
+		raw, _ = json.Marshal(in)
+		var altered map[string]any
+		_ = json.Unmarshal(raw, &altered)
+		altered["cover"].(map[string]any)["reason"] = "Different selection intent"
+		reject(altered)
+		unchanged()
+		stdioReplay := coverStdio(t, cfg, router, token, in)
+		if stdioReplay["id"] != op["id"] || stdioReplay["outcome"] != "conflict" || stdioReplay["replayed"] != true {
+			t.Fatal(stdioReplay)
+		}
+		staleIDs = append(staleIDs, op["id"].(string))
+	}
+
 	// Combined 09+10 command: author correction, cover and text are one unit.
 	execSQL := func(query string, args ...any) {
 		t.Helper()
@@ -572,6 +691,13 @@ func verifyAtomicCovers(t *testing.T, store database.Store, cfg *config.Manager,
 				t.Fatal("reopened public cover bytes disagree")
 			}
 		}
+		for _, id := range staleIDs {
+			var saved map[string]any
+			if e := json.Unmarshal(web("GET", "/mcp/operations/"+id, nil, 200), &saved); e != nil || saved["outcome"] != "conflict" {
+				t.Fatal(saved, e)
+			}
+		}
+
 		assertColor(true)
 		assertSummary(web, "Space journey")
 		var persistedFailure map[string]any

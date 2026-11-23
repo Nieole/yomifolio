@@ -53,6 +53,10 @@ func (s *Service) prepareCover(ctx context.Context, actor delegated.Subject, in 
 	if s.covers == nil || s.covers.Images == nil || c.BookID <= 0 || c.Page < 1 || !c.QualityCompared || strings.TrimSpace(c.Reason) == "" || len(c.Reason) > 1000 || !eligibleCover(in.Expected.Cover) {
 		return nil, delegated.ErrInvalid
 	}
+	_, conflict, err := s.coverAdmission(ctx, actor, in)
+	if err != nil || conflict {
+		return nil, err
+	}
 	select {
 	case coverSlots <- struct{}{}:
 		defer func() { <-coverSlots }()
@@ -65,12 +69,9 @@ func (s *Service) prepareCover(ctx context.Context, actor delegated.Subject, in 
 	if err != nil {
 		return nil, err
 	}
-	state, err := s.State(ctx, actor, in.SeriesID)
-	if err != nil {
+	state, conflict, err := s.coverAdmission(ctx, actor, in)
+	if err != nil || conflict {
 		return nil, err
-	}
-	if !same(state, in.Expected.state(), "cover") || !eligibleCover(state.Cover) {
-		return nil, delegated.ErrInvalid
 	}
 	dir := config.ThumbnailDir(s.covers.Config())
 	old, err := covermaterial.Read(ctx, dir, state.Cover.Path)
@@ -89,6 +90,42 @@ func (s *Service) prepareCover(ctx context.Context, actor delegated.Subject, in 
 		return nil, err
 	}
 	return &preparedCover{oldKey, newKey}, nil
+}
+
+// coverAdmission rejects invalid or unauthorized sources before classifying business
+// conflicts. The final write transaction remains authoritative and persists the result.
+func (s *Service) coverAdmission(ctx context.Context, actor delegated.Subject, in Input) (State, bool, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return State{}, false, err
+	}
+	defer tx.Rollback()
+	q := database.New(tx)
+	current, state, err := readState(ctx, q, in.SeriesID)
+	if err != nil {
+		return State{}, false, delegated.ErrDenied
+	}
+	if err = authorize(ctx, tx, actor, current.LibraryID, true); err != nil {
+		return State{}, false, err
+	}
+	if err = authorize(ctx, tx, actor, current.LibraryID, false); err != nil {
+		return State{}, false, err
+	}
+	source, err := q.GetBook(ctx, in.Cover.BookID)
+	if err != nil || source.SeriesID != current.ID || source.LibraryID != current.LibraryID {
+		return State{}, false, delegated.ErrDenied
+	}
+	if in.Cover.Page > source.PageCount {
+		return State{}, false, delegated.ErrInvalid
+	}
+	conflict := !eligibleCover(state.Cover)
+	for _, f := range in.Fields {
+		conflict = conflict || seriesmeta.EnrichmentLocked(current, f) || !same(state, in.Expected.state(), f)
+	}
+	if err = tx.Rollback(); err != nil {
+		return State{}, false, err
+	}
+	return state, conflict, nil
 }
 
 func writeState(ctx context.Context, tx *sql.Tx, q *database.Queries, current database.Series, state State, fields []string) error {

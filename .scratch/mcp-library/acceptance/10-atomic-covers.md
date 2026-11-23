@@ -123,3 +123,38 @@ Go **1.26.10**；共享 GOCACHE 按 worker guide，本树 GOTMPDIR=`.tmp/10/comb
 - 11：`enrichment.Service` / `ExpectedState`、`applyDigest` / `undoDigest` 是明确命令边界；复用实际事务 `AuthorizeTx`、字段/整组 expected 及 `MetadataJournal.TryChange`，不能在协议层另写 SQL 或在补充后以第二事务假装提案原子裁决。既有 `Operation`、Get/List/Undo 与管理页继续是权威收据投影。
 - 13：`covermaterial` 不可变私有材料、`metadata_cover_materials` 多对多保留引用及 `CoverMaterialVisible` 是现有接口；`save` 为 changed 操作建立引用。须保护当前书/其他操作引用与活跃准备/Undo，不能按单条记录/年龄删除共享图。默认不清理，完整准备孤儿仍保守保留；未实现清理 API 或自动过期。
 - 无已知本次组合 blocker；未证明断电/磁盘损坏等平台外保证，不把新的组合用例冒称完整强杀实验。**源码与门禁 merge-ready，父负责 stage/resolved 与提交，再发独立 review；票10仍 ready-for-agent。**
+
+
+## canonical 独立 review rc_0b83bbc6：准备前永久 conflict（本轮窄修）
+
+### 范围与结果
+
+- 唯一编辑树 `C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-10` / `mcp-atomic-covers`，起点及结束 HEAD `81229c6f`（09+10 已组合）；未 stage/commit/merge/reset，未改父树、父 TODO 或其他票。票10仍 **ready-for-agent**，交父提交并重新 request_review，不自行 done。
+- `enrichment/covers.go` 在图片准入前和缩略图读取后、不可变材料准备前，以短读事务检查当前授权、实际源书系列/资料库、页码及所选字段/cover 的 expected、锁与自动来源。业务冲突返回无准备结果而非 ErrInvalid；准入前已知冲突不占用准备槽，两个检查均在材料准备前停止。源书越界/权限拒绝、实际非法命令和页码仍返回错误，不伪造 conflict。
+- `enrichment/service.go` 将无准备结果保留为整项 conflict，进入原有最终写事务重新读取实际系列/库、当前授权、状态与源身份，保存同一 V1 意图的永久收据；即使状态在两个检查间恢复也不执行该请求。cover-selection 意图保留，材料键不存在，所有 Changed/Applied 为 false。原 savepoint/failed 收据、authors/text CAS、额度、取消与槽回收、摘要及08兼容代码均未改。
+- application owning SPEC 明确准备前冲突与非法输入/拒权边界；CHANGELOG 只新增本 finding。
+
+### TDD 与公开可观察性
+
+使用用户指定的生产 HTTP / 真实 stdio 接缝，扩充 `TestProductionMCPEnrichmentAuditUndo` 的 `verifyAtomicCovers`，不是内部 err 单测。
+
+1. 先取 caller 快照，再换成另一自动封面、加书锁、加系列 cover 锁、改为未锁人工路径，各自发生在 Apply/prepare 前。首次真实 HTTP 调用必须返回 conflict；MCP `library_get_metadata_operation` 查询到同一持久结果。普通系列 HTTP summary、完整 State 以及实际 HTTP cover 字节均不变。
+2. 将实际材料目录临时替换为普通文件，使任何 `covermaterial.Prepare` 都必然失败；仍获得持久 conflict、无材料键，证明不是“先准备后发现冲突”。恢复目录后核对旧/新公共图片与状态，无半发布。
+3. 恢复原封面和锁后，同键 HTTP 与真实编译/启动的 mcp-proxy stdio 子进程重放均保持同 ID / conflict / replayed=true / applied=false；换 quality 理由的同键请求拒绝。真实服务关闭、SQLite 重开后，再通过管理员公开 HTTP audit 查询四条原收据仍为 conflict。**重开后验证的是持久 audit；原凭据在既有后续 revoke 测试中被撤销，未冒称重开后还能用它执行 stdio 重放。**
+4. stale 状态下额外提交越界页、quality_compared=false、未知源书，均拒绝；公开操作列表前后一致，无可查询冲突收据。既有人工 expected 非法、foreign-source、prepare/write/commit 故障、组合作者/文字 CAS、Undo、取消及原08真实 DB/stdio 重放继续执行。
+5. Red：`.tmp/10/rc_0b83bbc6/red.log` 在 `stale replace rejected without receipt` 失败（生产未修，exit1）。修复后的 `green.log` 通过。期间曾试图在重开回调使用原凭据做 stdio，因夹具后续确实 revoke 该凭据而 initialize denied；未绕过撤权，改为撤权前真实 stdio 重放、重开后公开管理员审计。最终测试没有该假设，未把这次测试编排错误当生产故障或盲 retry。
+
+### 本轮实际 checks
+
+日志根 `.tmp/10/rc_0b83bbc6/`。Go **1.26.10**（`go-version.log`），guide 指定共享 GOCACHE；本树 `gotmp` 和独立 `lintcache`。
+
+- 最终两轮定向：`go test -p 1 ./internal/bootstrap ./internal/api ./internal/application/delegated ./internal/application/enrichment ./internal/seriesmeta ./internal/bookcontent ./internal/covermaterial ./cmd/mcp-proxy -run 'MCP|Enrichment|Author|Cover|Evidence|Budget|Stdio' -count=2 -timeout=10m` — PASS，`targeted-final-two-rounds.log`。包含真实 HTTP/stdio、取消、额度、authors、08兼容；covermaterial/proxy 无包内测试，不冒称有独立用例。较早版本的 `targeted-two-rounds.log` 亦通过。
+- 最终完整 backend（包含相关完整包）：`go test -p 1 ./... -count=1 -timeout=10m`，外层1800s — 全部 PASS / exit0，`backend-final-full.log`。前一完整版本 `backend-full.log` 也通过；最终结果包含最后的 cover-selection 审计保留及非法输入无收据断言。
+- `gofmt -l ./cmd ./internal` 空，`gofmt-final.log`；本树独立 cache `golangci-lint run` — **0 issues.** / exit0，`lint-final.log`。
+- `go run ./cmd/tsgen` — 45类型；生成前后 SHA256 完全相同，`tsgen.log`、`tsgen-before.log` / `tsgen-after.log`。无 SQL 或生成契约变化。
+- 前端未改；Node26.13.1 下实际 `npm test -- src/pages/settings/metadataOperations.test.tsx --maxWorkers=2` — **1文件/9测试 PASS**，`ui-history.log`。本轮未重跑 full UI/build/lint，不混用前轮全 UI 结果。
+- `git diff --check` — PASS，最终记录 `diffcheck-final.log`；全部工作保持未提交。
+
+### Remaining
+
+仅父负责提交并发起 fresh 独立重审；没有本 finding 的已知遗留 blocker。未扩展到票11/13、未做强杀/断电实验或改变既有不可变孤儿保留保证。预检查不充当写入 fencing；只有原有最终当前授权事务可持久化收据，事务/日志自身失败仍返回不可用而不冒报持久结果。
