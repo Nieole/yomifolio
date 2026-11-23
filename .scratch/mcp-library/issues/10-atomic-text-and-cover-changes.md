@@ -4,7 +4,7 @@
 
 **Blocked by:** 05 读取受限封面和书页缩略图；08 安全补充元数据并支持追溯和撤销。
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 仅允许改善归档自动生成的封面；手选、上传及受当前锁保护的封面不可替换，提交边界再次检查授权、封面归属和预期当前状态。
 - [x] 图片先准备，随后与本次文字一起生效；图片获取或准备失败、字段冲突、锁变化和权限失效均不导致系列半提交。
@@ -16,6 +16,8 @@
 
 
 ## Comments
+
+- Final closure: `3efc7dba` includes the persistent pre-preparation conflict repair for `rc_0b83bbc6`, on top of atomic covers,09 stable receipts and transport cancellation. Independent re-review approved the fix and public HTTP/stdio regressions; full combination/backend and frontend gate evidence remains in acceptance. Earlier pending notes below are historical. Explicit undo-material cleanup remains13, not automatic retention.
 
 - 独立实施树 mcp-library-10 / mcp-atomic-covers，确认 HEAD 与 merge-base 均为 c4540ce4；仅本树未提交改动。沿用已批准 TDD 接缝，采用不可变私有材料 + 同事务引用发布，详见 acceptance/10-atomic-covers.md。保持 ready-for-agent，等待父集成与独立 review。
 
