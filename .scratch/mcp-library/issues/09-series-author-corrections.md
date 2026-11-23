@@ -4,7 +4,7 @@
 
 **Blocked by:** 08 安全补充元数据并支持追溯和撤销。
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 提供目标系列内的作者追加、别名归并及角色校正，明确这是保留既有成员规则的获准例外，不扩展为全库作者归并或其他字段覆盖。
 - [x] 通过调整该系列关联完成校正，不修改共享作者身份行的名称或角色影响其他系列；覆盖多个系列共用同一作者身份的场景。
@@ -15,6 +15,8 @@
 
 
 ## Comments
+
+- Final closure: `be977623` integrates the complete author correction and legacy digest repair. Independent step re-review approved series-local identity isolation, transactional undo and old receipt replay; targeted backend and contract checks passed. Its frontend/lint rerun hit environment limits, not counted as independently green; implementation/fix gate evidence remains in acceptance. The frozen command digest must remain compatible when10 adds cover intent.
 
 - 本专属树实施票09；已确认 HEAD 基于集成 c4540ce4，保留 ready-for-agent 供父级审阅/集成。验证指针见 acceptance/09-series-author-corrections.md，不涉及票10封面、父 TODO 或 ADR0016 状态。
 
