@@ -18,6 +18,7 @@ import (
 	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/database"
 	"yomifolio/internal/metadata"
+	"yomifolio/internal/proposal"
 	"yomifolio/internal/seriesmeta"
 )
 
@@ -439,7 +440,11 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 		if err != nil {
 			return Operation{}, err
 		}
-		out.Adjudication = &AdjudicationResult{ProposalID: in.ProposalIDs[0], Mode: in.Adjudication.Mode, Reason: in.Adjudication.Reason, Status: adjudicated.Status, Accepted: adjudicated.AppliedAt.Valid || adjudicated.Status == "supplemented_closed"}
+		accepted, e := proposal.Accepted(ctx, tx, adjudicated)
+		if e != nil {
+			return Operation{}, e
+		}
+		out.Adjudication = &AdjudicationResult{ProposalID: in.ProposalIDs[0], Mode: in.Adjudication.Mode, Reason: in.Adjudication.Reason, Status: adjudicated.Status, Accepted: accepted}
 		if !pending {
 			out.Outcome = "conflict"
 			out.Reason = "proposal terminal or selected field already consumed"

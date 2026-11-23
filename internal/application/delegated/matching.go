@@ -361,6 +361,10 @@ func (s *Service) GetMatchProposal(ctx context.Context, subject Subject, seriesI
 			return MatchProposal{}, ErrInvalid
 		}
 	}
-	out := MatchProposal{Status: proposal.QueueStatus(record.Row.Status), Accepted: record.Row.AppliedAt.Valid || record.Row.Status == "supplemented_closed", ProposalID: id, Evidence: raw.MatchEvidence, Fields: record.Fields}
+	accepted, err := proposal.Accepted(ctx, tx, record.Row)
+	if err != nil {
+		return MatchProposal{}, err
+	}
+	out := MatchProposal{Status: proposal.QueueStatus(record.Row.Status), Accepted: accepted, ProposalID: id, Evidence: raw.MatchEvidence, Fields: record.Fields}
 	return out, bounded(out)
 }

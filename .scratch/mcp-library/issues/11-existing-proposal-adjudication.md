@@ -12,7 +12,7 @@
 - [x] 严格遵守 mm-adr-0011，在实际写入事务中重读待裁决状态、当前值、锁和已消费字段；终态竞争失败不提交元数据、提案字段或来源沿革。
 - [x] 并发部分应用不得重复消费字段，重放和关闭竞争有明确公开结果；不改变既有人工提案使用方式。
 - [x] 从生产服务验证旧提案输入、作者保护、成功后关闭、先拒绝后应用及部分应用竞争，保留现有真实事务回滚守卫；网页呈现不误报为全部拒绝。
-- [x] 后端与前端门禁及受影响生成物检查通过，更新裁决长期契约但不削弱有效 ADR。
+- [ ] 后端与前端门禁及受影响生成物检查通过，更新裁决长期契约但不削弱有效 ADR。
 
 ## Comments
 
@@ -25,3 +25,7 @@
 - Final fresh merger（HEAD6311bca3 + 父预置MERGE_HEAD5e7dfaf0）：逐块解决9项正文冲突，两票增量与read freshfix均保留；定向两轮、唯一一次完整backend（38包/0fail）、完整frontend121files/1158tests、build/lint、gofmt/golangci-lint、48types tsgen漂移和diff检查全部通过，最终门禁据实勾选。当前组合merge-ready，保持ready-for-agent而非done；索引UU留父stage，父canonical request_review。13另树pending离页恢复后续fix未纳入，不宣称已验收；历史rename故障未定位、不归baseline、不宣称修复。详见acceptance末节。
 
 - 最终parent ef44小增量（HEAD0a634bb9 + 预置MERGE_HEADef44f9b6，含13 approved fix727820e9）：仅CHANGELOG正文冲突已逐块保留双方；自动合并契约/48types+retry_request_key/双语UI/hook/完整remount tests与11三态/read事务重鉴权均核查保留。新定向两轮、唯一一次完整backend38包/0fail、完整frontend121files/1162tests及历史页16tests、build/lint/gofmt/Go lint/tsgen无漂移/diff全部PASS，证据 `.tmp/11/parentef44/`，详见acceptance末节。当前merge-ready，保持ready-for-agent；13已done不改关闭状态。索引UU CHANGELOG留父stage/提交，并对11发canonical request_review；历史Windows rename未定位，不宣称修复。
+
+- Fresh narrow fix（HEAD ab462e9c，未提交）：已复现并集中修复普通网页 fill_empty partial 的 provenance 接受事实遗漏；真实 HTTP/stdio 红绿、最终 transport 双轮及相关定向/全包通过。11 仍 ready-for-agent，完整门禁及当前结论见 acceptance 最新 Fresh narrow fix 节；等待父 fresh 独立 review，不标 done。
+
+- 本轮最终门禁：定向双轮/最终 HTTP+stdio 双轮、相关八包全测、完整 frontend121files/1162tests、build/lint/gofmt/Go lint/tsgen无漂移/diff均通过；唯一一次完整backend失败于 relocation occupied 与 derived_effects 两处Windows rename Access is denied（37包PASS，仅apiFAIL），未盲重跑或归因baseline，最终门禁框重新取消。修复待父fresh独立review和故障诊断，不称merge-ready；详见acceptance最新节与 `.tmp/11/acceptedfix/`。

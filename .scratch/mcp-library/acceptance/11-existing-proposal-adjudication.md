@@ -195,3 +195,37 @@ Go **1.26.10**；guide共享GOCACHE，本树独立 `gotmp` / `lintcache`。fnm N
 ### Remaining / 诚实边界
 
 本轮未发现具体功能缺陷或实测门禁blocker；没有扩修实现。此前Windows rename Access denied本轮未复现，历史根因/holder仍未定位，**不宣称已修复或已证明baseline不稳**，没有retry/sleep/skip/预算放宽。两票安全回归在同一组合生产图执行并经静态边界交叉核查；不冒称穷尽所有取消/崩溃调度或新增浏览器端到端测试。13仍done；11仍ready-for-agent，父负责索引、提交及独立canonical review。
+
+
+## Fresh narrow fix：普通人工 partial 的 provenance 接受事实（HEAD ab462e9c）
+
+本节取代前轮“无已知功能缺口”的当前结论。仅本票树 `C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-11` / `mcp-proposal-adjudication`，起点 HEAD 与父 merge-base 均为 `ab462e9c71b97bd2be1ced1df6e82dfb52a3485e`，起点干净；未 stage/commit/merge/reset、未改父 TODO 或其他树。11 保持 ready-for-agent，待父 fresh 独立 review，不标 done。
+
+### Fix / 真实生产 seam
+
+- `proposal.Accepted` 集中在调用方已授权的同一事务里组合 applied_at、applied / supplemented_closed 终态和现存 review_id provenance。GetMatchProposal、初始/冲突收据、完成裁决收据及关闭判断共用，不再由三个调用点漏掉人工 partial 的来源事实。无需迁移或改变普通人工 Apply/Reject/fill_empty，也不补 applied_at 或伪造 confirmation；保护、锁、noop、当前值相等都不是接受证据。
+- 保留实际写事务的当前授权/剩余字段/CAS、防终态竞争及同键 early receipt 重放顺序；read 撤权重验逻辑、摘要、13 清理实现均未改。收据仍记录当时事实，不重算或回填已持久的旧收据。
+- 生产 `verifyManualPartialAdjudication` 同体由 HTTP 和真实编译 stdio 调用：真实确认 title+summary 提案，已有 title/空 summary，网页 POST `/api/metadata/reviews/bulk-apply` fill_empty 返回 partial；来源为唯一接受依据（实查 applied_at 为空），MCP 读为 pending/accepted=true；对受保护 title 执行无实际变更 partial，真实持久收据及网页 GET 皆 pending/accepted=true，原键重放 ID 不变；网页真实清理该收据后仍保留裁决及来源事实，原键仍重放正确。
+- 关闭生产图与 SQLite 并重开后，合法新凭据读回该 pending/accepted=true 提案和原 immutable partial 收据；随后 reject 返回 supplemented_closed/accepted=true，title 与人工填入 summary 不撤销，原 pending 收据仍不变。原凭据的同键重放在重开前验证；重开为新凭据，不冒称跨凭据借用原键。
+- 增补无人工接受、现值恰等于提案的 noop partial -> pending/accepted=false -> reject/rejected/false，以及 applied 终态 conflict receipt accepted=true。原纯 reject false、部分后拒绝、事务故障、read/write/库撤权及13 cleanup 守卫全部保留。
+- owning proposal/application SPEC 与 CHANGELOG 同步；API/网页响应结构及三态规则不变，无 frontend 源码或 schema 扩张。
+
+### TDD / 检查证据
+
+本轮所有新日志 `.tmp/11/acceptedfix/`；Go1.26.10、guide 共享 GOCACHE，本树独立 gotmp/lintcache；fnm Node26.13.1 / npm11.20.0。
+
+- `red.log` exit1：新增真实 HTTP 与 stdio 均在普通网页 partial 后读出 accepted=false，精确击中缺陷（非 mock provenance）。首次修后 `green.log` 是漏 import proposal 的编译失败，补齐后 `green-fixed.log` PASS（21.931s），不把编译失败算业务红测。
+- 最终新增清理/重开场景专门双轮 `final-transport.log` / exit0：`go test -p 1 ./internal/bootstrap -run '^TestProductionMCPAuthorCorrections(Stdio)?$' -count=2 -timeout=10m`，104.003s。
+- 相关定向两轮 `targeted.log` / exit0：八包 `bootstrap application/enrichment proposal application/delegated seriesmeta api database covermaterial`，regex `TestProductionMCP(AuthorCorrections|Enrichment)|TestEnrichment|Adjudication|Concurrent|Concurrency|TestMCP|TestCurrentAuthority|Cleanup|Cover|Undo`，count2；bootstrap337.699s。此轮启动后追加了清理/重开断言，最终 transport 双轮及随后相关全包/完整 backend 对最终版本覆盖；不把较早轮次冒称最终字节。
+- 相关八包完整 `related-full.log` / exit0，count1：bootstrap117.115s/api155.698s，covermaterial 无独立测试，其生产行为由 bootstrap 覆盖。
+
+- **本轮唯一一次完整 backend FAIL**：`timeout 1800 go test -json -p 1 ./... -count=1 -timeout=10m`，16:49:47→16:59:24 +08:00，`backend-full.exit=1`。37 个有测试包 PASS、仅 api FAIL；bootstrap116.080s PASS。两个实际失败为 `TestRelocationCommitRejectsChangedConfirmationFacts/occupied`（relocation_commit_test.go:496）和 `TestRelocationPolicyCrashRecoversFromActualDurabilityBoundaries/derived_effects`（relocation_policy_crash_test.go:28），均在本树独立 GOTMPDIR 内 source→target 的 Windows rename 返回 **Access is denied**。不是本票裁决断言失败，也不是历史配置 save/stdio 编译失败；相关全包 api 此前通过不证明这次是 baseline。未盲重跑完整套件、未 retry/sleep/skip 或放宽测试、未碰 relocation/配置实现，holder/根因仍未知。`backend-summary.json` 保存事件摘要。**完整门禁项据实重新取消勾选，不能称 merge-ready。**
+- **完整 frontend PASS**：121 files /1162 tests，128.78s；`npm run build` 与 `npm run lint` 均 exit0。本轮真实执行，不借用旧产物/历史结果；无 UI 源码变更，不另造 mockup。
+- `gofmt -l ./cmd ./internal` 输出空；独立缓存 `golangci-lint run --allow-parallel-runners` **0 issues.** /exit0。
+- `go run ./cmd/tsgen` **48 types** /exit0；generated.ts 前后 SHA256 均 `109ab5217b37c3aab46ee9b43bfe71cbf94641263e7d109f6dca02eba325a7d7`，无漂移。response 结构未改。
+- `stable-inputs.log` 空/exit0：冻结 digest 实现/测试、SQL/query/schema/sqlc 生成绑定及 generated.ts 相对本轮 HEAD 不变。仅移动既有参数化 ASCII provenance SQL 至 proposal 共享函数，无 sqlc 输入变更，**无需且未运行 sqlc**，不声称 PowerShell 生成已重跑。
+- 最终 `git diff --check` 通过；文档编辑中间曾由 Windows 文本写入变成 CRLF，已仅规范本轮修改文档回 HEAD 原 LF，最终 diff 为窄行变更，非整页换行 churn。最后仅追加本验收/issue 结果，源码不再修改。
+
+### 当前 remaining / 父 fresh review
+
+功能缺陷已修复，真实生产 provenance-only、noop 收据、清理、重开、拒绝内容保留与反例全部实测。**当前实测 blocker 是上述唯一完整 backend 的两处 Windows rename 拒绝，未定位、未声称修复或 baseline；不是独立批准/merge-ready。** 旧已持久收据按原不可变语义不回填，丢失 provenance 的历史不猜测。父负责新的 fresh 独立 review、Windows 故障诊断/独立完整门禁及提交。11 保持 ready-for-agent，所有改动未 stage/commit，HEAD 不变；其他票/父 TODO 未动。

@@ -97,7 +97,15 @@ func finishAdjudication(ctx context.Context, tx *sql.Tx, q *database.Queries, ro
 	if err != nil {
 		return err
 	}
-	out.Adjudication = &AdjudicationResult{ProposalID: row.ID, Mode: in.Adjudication.Mode, Reason: in.Adjudication.Reason, Status: status, Accepted: row.AppliedAt.Valid || len(changedFields(out.Fields)) > 0 || status == "supplemented_closed"}
+	row, err = q.GetMetadataReview(ctx, row.ID)
+	if err != nil {
+		return err
+	}
+	accepted, err := proposal.Accepted(ctx, tx, row)
+	if err != nil {
+		return err
+	}
+	out.Adjudication = &AdjudicationResult{ProposalID: row.ID, Mode: in.Adjudication.Mode, Reason: in.Adjudication.Reason, Status: status, Accepted: accepted}
 	return nil
 }
 

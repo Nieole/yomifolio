@@ -11,6 +11,7 @@ import (
 
 func verifyProposalAdjudication(t *testing.T, store database.Store, makeSeries func(string) int64, call func(string, any) map[string]any, propose func(int64, string) any, web func(string, string, any, int) []byte, session *mcp.ClientSession, gate func() *enrichmentBarrier) func(func(string, any) map[string]any) {
 	t.Helper()
+	verifyManualAfterReopen := verifyManualPartialAdjudication(t, store, makeSeries, call, web)
 	id := makeSeries("Adjudication")
 	p := propose(id, "bangumi")
 	input := map[string]any{"request_key": "adjudicate-part", "series_id": id, "proposal_ids": []any{p}, "fields": []string{"summary"}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": id}), "adjudication": map[string]any{"mode": "partial", "reason": "Accept verified missing description"}}
@@ -90,7 +91,7 @@ func verifyProposalAdjudication(t *testing.T, store database.Store, makeSeries f
 	rejectedP := propose(rejectedID, "bangumi")
 	reject := map[string]any{"request_key": "adjudication-reject", "series_id": rejectedID, "proposal_ids": []any{rejectedP}, "fields": []string{}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": rejectedID}), "adjudication": map[string]any{"mode": "reject", "reason": "Wrong edition; decline all differences"}}
 	declined := call("library_enrich_metadata", reject)
-	if declined["adjudication"].(map[string]any)["status"] != "rejected" {
+	if declined["adjudication"].(map[string]any)["status"] != "rejected" || declined["adjudication"].(map[string]any)["accepted"] != false {
 		t.Fatal(declined)
 	}
 	delete(reject, "adjudication")
@@ -129,6 +130,11 @@ func verifyProposalAdjudication(t *testing.T, store database.Store, makeSeries f
 	last := call("library_enrich_metadata", map[string]any{"request_key": "adjudication-last-field", "series_id": lastID, "proposal_ids": []any{lastP}, "fields": []string{"summary"}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": lastID}), "adjudication": map[string]any{"mode": "partial", "reason": "Accept the final remaining field"}})
 	if last["adjudication"].(map[string]any)["status"] != "applied" {
 		t.Fatal("empty pending proposal", last)
+	}
+	// An applied terminal is acceptance even in a conflict receipt.
+	lastConflict := call("library_enrich_metadata", map[string]any{"request_key": "adjudication-last-conflict", "series_id": lastID, "proposal_ids": []any{lastP}, "fields": []string{}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": lastID}), "adjudication": map[string]any{"mode": "reject", "reason": "Already applied"}})
+	if a := lastConflict["adjudication"].(map[string]any); lastConflict["outcome"] != "conflict" || a["status"] != "applied" || a["accepted"] != true {
+		t.Fatal(lastConflict)
 	}
 	// Identity evidence on old proposals is absent, not implicitly confirmed.
 	legacyID := makeSeries("Adjudication legacy")
@@ -171,10 +177,28 @@ func verifyProposalAdjudication(t *testing.T, store database.Store, makeSeries f
 			t.Fatal("missing durable decision", status, history)
 		}
 	}
+	// A protected/no-op partial with no earlier acceptance must stay false.
+	noopID := makeSeries("Never accepted protected description")
+	noopP := propose(noopID, "bangumi")
+	if _, err := store.DB().Exec(`UPDATE series SET summary='Space journey' WHERE id=?`, noopID); err != nil {
+		t.Fatal(err)
+	}
+	noopInput := map[string]any{"request_key": "unaccepted-noop", "series_id": noopID, "proposal_ids": []any{noopP}, "fields": []string{"summary"}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": noopID}), "adjudication": map[string]any{"mode": "partial", "reason": "Matching values are not acceptance"}}
+	noop := call("library_enrich_metadata", noopInput)
+	if a := noop["adjudication"].(map[string]any); a["status"] != "pending" || a["accepted"] != false || noop["applied"] != false {
+		t.Fatal(noop)
+	}
+	noopInput["request_key"] = "unaccepted-noop-reject"
+	noopInput["fields"] = []string{}
+	noopInput["adjudication"] = map[string]any{"mode": "reject", "reason": "No fields accepted"}
+	if r := call("library_enrich_metadata", noopInput)["adjudication"].(map[string]any); r["status"] != "rejected" || r["accepted"] != false {
+		t.Fatal(r)
+	}
 	verifyAdjudicationAuthors(t, store, makeSeries, call, propose)
 	verifyAdjudicationFaults(t, store, makeSeries, call, propose, session, web)
 	verifyAdjudicationRaces(t, store, makeSeries, call, propose, web, session, gate)
 	return func(reopenedCall func(string, any) map[string]any) {
+		verifyManualAfterReopen(reopenedCall)
 		read := reopenedCall("library_get_match_proposal", map[string]any{"series_id": id, "proposal_id": p})
 		if read["status"] != "supplemented_closed" || read["accepted"] != true {
 			t.Fatal("lost persistent adjudication", read)
@@ -547,5 +571,91 @@ func verifyAdjudicationFaults(t *testing.T, store database.Store, makeSeries fun
 		if len(projection["provenance"].([]any)) != 0 {
 			t.Fatal("provenance half committed", projection)
 		}
+	}
+}
+
+// The same real HTTP manual workflow feeds both MCP transports. Provenance is
+// the only acceptance evidence here: ordinary partial Apply leaves applied_at nil.
+func verifyManualPartialAdjudication(t *testing.T, store database.Store, makeSeries func(string) int64, call func(string, any) map[string]any, web func(string, string, any, int) []byte) func(func(string, any) map[string]any) {
+	t.Helper()
+	id := makeSeries("Manual partial provenance")
+	if _, err := store.DB().Exec(`UPDATE series SET title='Existing title' WHERE id=?`, id); err != nil {
+		t.Fatal(err)
+	}
+	search := call("library_search_sources", map[string]any{"series_id": id, "query": "Space"})
+	call("library_wait_run", map[string]any{"run_id": search["run"].(map[string]any)["run_id"], "timeout_ms": 30000})
+	p := call("library_propose_match", map[string]any{"search_id": search["search_id"], "identity_confirmed": true, "edition_confirmed": true, "summary": "Same edition", "fields": map[string]string{"title": "bangumi:0", "summary": "bangumi:0"}})["proposal_id"]
+	read := func(c func(string, any) map[string]any) map[string]any {
+		return c("library_get_match_proposal", map[string]any{"series_id": id, "proposal_id": p})
+	}
+	if r := read(call); r["accepted"] != false {
+		t.Fatal("queued is not accepted", r)
+	}
+	var bulk map[string]any
+	if err := json.Unmarshal(web("POST", "/metadata/reviews/bulk-apply", map[string]any{"review_ids": []any{p}, "mode": "fill_empty"}, 200), &bulk); err != nil {
+		t.Fatal(err)
+	}
+	if len(bulk["partial"].([]any)) != 1 {
+		t.Fatal(bulk)
+	}
+	if r := read(call); r["status"] != "pending" || r["accepted"] != true || len(r["fields"].([]any)) != 1 {
+		t.Fatal("manual partial lost acceptance", r)
+	}
+	// Assert the fixture really exercises provenance alone, not a new artificial marker.
+	var marked bool
+	if err := store.DB().QueryRow(`SELECT applied_at IS NOT NULL FROM metadata_reviews WHERE id=?`, p).Scan(&marked); err != nil || marked {
+		t.Fatal("ordinary manual semantics changed", marked, err)
+	}
+	input := map[string]any{"request_key": "manual-partial-noop", "series_id": id, "proposal_ids": []any{p}, "fields": []string{"title"}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": id}), "adjudication": map[string]any{"mode": "partial", "reason": "Preserve existing title"}}
+	op := call("library_enrich_metadata", input)
+	assertPartial := func(r map[string]any) {
+		t.Helper()
+		a := r["adjudication"].(map[string]any)
+		if a["status"] != "pending" || a["accepted"] != true || r["applied"] != false {
+			t.Fatal("wrong immutable partial receipt", r)
+		}
+	}
+	assertPartial(op)
+	replay := call("library_enrich_metadata", input)
+	assertPartial(replay)
+	if replay["id"] != op["id"] || replay["replayed"] != true {
+		t.Fatal(replay)
+	}
+	// Web history consumes exactly this public projection for its partial state.
+	var history map[string]any
+	if err := json.Unmarshal(web("GET", "/mcp/operations/"+op["id"].(string), nil, 200), &history); err != nil {
+		t.Fatal(err)
+	}
+	assertPartial(history)
+	// Cleaning snapshots must retain both the immutable decision and provenance.
+	web("POST", "/mcp/operations/"+op["id"].(string)+"/cleanup", map[string]any{"request_key": "manual-partial-cleanup"}, 200)
+	cleaned := call("library_get_metadata_operation", map[string]any{"operation_id": op["id"]})
+	assertPartial(cleaned)
+	if cleaned["undo_unavailable"] != true {
+		t.Fatal(cleaned)
+	}
+	assertPartial(call("library_enrich_metadata", input))
+	if r := read(call); r["status"] != "pending" || r["accepted"] != true {
+		t.Fatal("cleanup lost provenance acceptance", r)
+	}
+	return func(c func(string, any) map[string]any) {
+		if r := read(c); r["status"] != "pending" || r["accepted"] != true {
+			t.Fatal("reopen lost provenance-only acceptance", r)
+		}
+		assertPartial(c("library_get_metadata_operation", map[string]any{"operation_id": op["id"]}))
+		input["request_key"] = "manual-partial-reject"
+		input["fields"] = []string{}
+		input["adjudication"] = map[string]any{"mode": "reject", "reason": "Discard remaining title difference"}
+		closed := c("library_enrich_metadata", input)
+		if a := closed["adjudication"].(map[string]any); a["status"] != "supplemented_closed" || a["accepted"] != true {
+			t.Fatal(closed)
+		}
+		if state := c("library_get_enrichment_state", map[string]any{"series_id": id}); state["title"] != "Existing title" || state["summary"] != "Space journey" {
+			t.Fatal("reject removed manual content", state)
+		}
+		if r := read(c); r["status"] != "supplemented_closed" || r["accepted"] != true {
+			t.Fatal(r)
+		}
+		assertPartial(c("library_get_metadata_operation", map[string]any{"operation_id": op["id"]}))
 	}
 }

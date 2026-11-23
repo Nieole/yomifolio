@@ -9,6 +9,18 @@ import (
 	"yomifolio/internal/database"
 )
 
+// Accepted projects durable acceptance facts in the caller's authorized transaction.
+// Manual partial Apply records provenance, not applied_at; protected/no-op writes
+// and values merely matching a proposal are not evidence of acceptance.
+func Accepted(ctx context.Context, tx *sql.Tx, row database.MetadataReview) (bool, error) {
+	if row.AppliedAt.Valid || row.Status == "applied" || row.Status == "supplemented_closed" {
+		return true, nil
+	}
+	var accepted bool
+	err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM series_metadata_provenance WHERE review_id=?)`, row.ID).Scan(&accepted)
+	return accepted, err
+}
+
 // AdjudicationPending checks the actual remaining fields in the caller's write
 // transaction. False is a public conflict, never permission to reuse consumed evidence.
 func AdjudicationPending(ctx context.Context, q *database.Queries, id, series int64, selected []string) (database.MetadataReview, bool, error) {
@@ -68,19 +80,14 @@ func ConsumeAdjudication(ctx context.Context, tx *sql.Tx, q *database.Queries, r
 	}
 	if closeRemaining {
 		status = "rejected"
-		if len(changed) > 0 || row.AppliedAt.Valid {
+		accepted, err := Accepted(ctx, tx, row)
+		if err != nil {
+			return "", err
+		}
+		if len(changed) > 0 || accepted {
 			status = "supplemented_closed"
 		}
-		// Ordinary partial applications leave provenance rather than applied_at.
-		if status == "rejected" {
-			var applied bool
-			if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM series_metadata_provenance WHERE review_id=?)`, row.ID).Scan(&applied); err != nil {
-				return "", err
-			}
-			if applied {
-				status = "supplemented_closed"
-			}
-		}
+
 		n, err := q.ResolvePendingMetadataReview(ctx, database.ResolvePendingMetadataReviewParams{ID: row.ID, Status: status})
 		if err != nil {
 			return "", err
