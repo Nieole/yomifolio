@@ -36,3 +36,6 @@ references: [mm-adr-0014, mm-runtime]
 
 
 `enrichment.WithCovers` 绑定同一 delegated 实例及配置快照，复用现有图片/内容资格，不注入第二份图片宿主、运行时或网络客户端。不可变材料先准备/事务引用切换没有启动期文件重发或发布队列，故障与重开策略归 mm-application。
+
+
+`enrichment.WithCleanup` 绑定同一 delegated 实例和 app.Runs.Start；清理运行使用唯一引擎，不启动额外 goroutine 宿主、常驻材料 janitor 或自动恢复。持久隔离与有限文件回收由应用用例负责。

@@ -112,3 +112,25 @@ it('distinguishes partial acceptance, supplement-and-close and complete rejectio
  expect(screen.getAllByRole('button', { name: 'Undo operation' })).toHaveLength(1);
  expect(screen.getByText('Space journey')).toBeTruthy();
 });
+it('warns of permanent rollback loss and cleans without a per-batch confirmation workflow', async () => {
+ mocks.get.mockResolvedValue({ data: { operations: [row] } });
+ mocks.post.mockResolvedValue({ data: { id: 'cleanup1', operation_id: row.id, outcome: 'partial', undo_unavailable: true, materials: [{ key: 'metadata-covers/old.png', outcome: 'failed' }] } });
+ setup(); await screen.findByText('Space journey');
+ expect(screen.getByText(/permanently discards rollback snapshots/)).toBeTruthy();
+ fireEvent.click(screen.getByRole('button', { name: 'Clean rollback material' }));
+ await screen.findByText(/Some files could not be reclaimed/);
+ expect(mocks.post).toHaveBeenCalledWith('/api/mcp/operations/op1/cleanup', expect.objectContaining({ request_key: expect.any(String) }));
+ expect(screen.queryByRole('button', { name: 'Undo operation' })).toBeNull();
+ expect(screen.queryByText('Space journey')).toBeNull();
+ expect(screen.getByText(/Undo unavailable/)).toBeTruthy();
+});
+it('keeps cleanup retry identity after an uncertain network result and never claims lossless recovery', async () => {
+ mocks.get.mockResolvedValue({ data: { operations: [row] } });
+ mocks.post.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce({ data: { id: 'cleanup2', operation_id: row.id, outcome: 'complete', undo_unavailable: true, materials: [] } });
+ setup(); await screen.findByText('Space journey');
+ fireEvent.click(screen.getByRole('button', { name: 'Clean rollback material' }));
+ await screen.findByRole('alert');
+ fireEvent.click(screen.getByRole('button', { name: 'Clean rollback material' }));
+ await screen.findByText(/Rollback material cleaned/);
+ expect(mocks.post.mock.calls[0]).toEqual(mocks.post.mock.calls[1]);
+});

@@ -70,6 +70,8 @@ type FieldAudit struct {
 	Formula string                   `json:"formula,omitempty"`
 }
 type Operation struct {
+	UndoUnavailable  bool                `json:"undo_unavailable,omitempty"`
+	CleanedBy        string              `json:"cleaned_by,omitempty"`
 	Adjudication     *AdjudicationResult `json:"adjudication,omitempty"`
 	CoverSelection   *CoverSelection     `json:"cover_selection,omitempty"`
 	OldCoverMaterial string              `json:"old_cover_material,omitempty"`
@@ -106,6 +108,7 @@ type Service struct {
 	db       *sql.DB
 	evidence Evidence
 	publish  func()
+	cleanup  *CleanupAccess
 	covers   *CoverAccess
 }
 

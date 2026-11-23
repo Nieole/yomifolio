@@ -345,6 +345,10 @@ func Migrate(dbPath string) error {
 		}
 	}
 
+	if _, err := db.Exec(schemaCleanupSQL); err != nil {
+		return err
+	}
+
 	// 给查询规划器提供选择性统计（sqlite_stat1）。series 上有约 20 个 library_id 前缀重叠的复合索引，
 	// 有统计信息时规划器更能在等价候选中挑对索引。analysis_limit=400 限制每个索引的采样行数，
 	// 即便百万级表也能秒级完成；PRAGMA optimize 只会分析确有变化的表，且失败无害（忽略错误）。

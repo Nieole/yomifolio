@@ -23,6 +23,9 @@ var schemaHandwrittenSQL string
 //go:embed schema_model_budget.sql
 var schemaModelBudgetSQL string
 
+//go:embed schema_cleanup.sql
+var schemaCleanupSQL string
+
 // schemaSQL 合并核心 schema 与「仅手写 SQL 访问」的表 schema（series_custom_fields、多用户/每用户进度/
 // 深度统计等）。后者刻意不放进 schema.sql：它们不需 sqlc 查询，而 sqlc 会为其表生成与手写业务结构
 // （SeriesCustomField/User/Session/UserBookProgress/UserSeriesReview 等）重名的模型，造成编译冲突与

@@ -136,3 +136,35 @@ Undo 恢复的是真正改变字段，不是提案状态回退；不会重新生
 ### Remaining / 父 review 输入
 
 已知 read 撤权重放缺陷没有剩余复现；这不是穷尽安全证明，也不替代父独立 review。当前唯一实测门禁阻塞为上述完整backend的配置并发保存 Windows rename 拒绝；不将原先的30秒stdio编译失败与这次不同的失败混为一谈。工单保持 ready-for-agent，最后门禁框未勾；父负责审查、诊断与提交。
+
+
+## Final fresh merger：11 freshfix + 13（本轮当前结论）
+
+**结论：merge-ready（仅本轮组合），保持 ready-for-agent，交父 canonical request_review；不是 done/独立批准。** 唯一编辑树 `C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-11`，分支 `mcp-proposal-adjudication`，HEAD=`6311bca3d6ac36fae264f8651ad43a5fcf885dbf`（含7a082c16实现及read freshfix），父预先启动的 MERGE_HEAD=`5e7dfaf05fbed0d53507c571316653b35d7a657c`。本轮未 stage/commit/merge/reset/abort、未动父TODO或其他树。索引仍有父原先的9项UU，**正文冲突均已解决且无冲突标记**；由父检查并stage完成合并。没有整文件ours/theirs替换。
+
+### 合并与独立核对
+
+- `CHANGELOG.md`、application/api/web SPEC 保留两票新增契约；修正同段“未提供清理/裁决”的过时互斥说明，两者现在并存。有效 ADR0011 不变，ADR0016仍draft。
+- `cmd/tsgen/main.go` 同时登记 AdjudicationResult、CleanupResult、MaterialResult；`service.go` 同时保留 Input.Adjudication、Operation.adjudication、undo_unavailable/cleaned_by 与共享 cleanup runtime 接线。其 `validKey` 以下所有方法与11 freshfix HEAD逐字相同，未在合并时重写授权或业务流程（`service-preservation.log`）。13非冲突接线/清理/测试增量保留。
+- 独立核对 early existing：当前 MetadataWrite授权与 `retry` 均在同一事务；`retry` 先按持久 user+credential+key找收据并核对摘要，再按**持久收据 Adjudication**对收据系列实际当前库检查Read，不依赖本次可篡改输入。错误不带旧Operation。原收据在提案终态/证据预检之前，恢复权限可重放原pending快照而不二次消费。cleanup裁剪也不删该持久裁决标记，不改变此策略。
+- 原HTTP/真实stdio生产回归继续覆盖撤Read、撤MetadataWrite、撤库、降用户角色，同键重放/新键/删adjudication载荷拒绝；Read/库撤销时Get/List不泄露收据，恢复真实持久权限后原key/ID/快照重放；重开后跨凭据不能借用旧命名空间。旧缺证据提案只读/拒绝、作者关联例外与共享身份保护、终态/消费竞争、SQLite savepoint/日志故障回滚、close/reject不撤销已应用内容及Undo不重开提案均保留并过组合门禁。
+- `digest.go`、冻结digest测试、mcp_adjudication/mcp_authors/Base08Replay及proposal并发测试与11 HEAD原字节完全一致（`preserved-11.log`）。普通08/09/10摘要字节/缺省扩展与普通权限未被合并扩大；真实08数据库重开及09/10冻结摘要回归通过。
+- 网页保留服务器 adjudication.status+accepted 的pending partial / supplemented_closed / rejected展示，同时保留13 cleanup警告、固定重试键、partial/pending反馈和清理后不显示恢复值/Undo。两边新增UI测试逐段完整保留。**13另树正在修复的cleanup pending离页恢复不在本次MERGE_HEAD内，本轮没有抢做/宣称该后续修复已验收，父须随后叠加并复验。**
+
+### Actual checks（全部新证据 `.tmp/11/finalmerge/`）
+
+Go **1.26.10**；guide共享GOCACHE，本树独立 `gotmp` / `lintcache`。fnm Node **26.13.1**、npm **11.20.0**。runner=`checks.sh`，各命令独立 `.start/.end/.log/.exit`，未失败后循环重试。
+
+1. **定向两轮 PASS**：`go test -p 1 ./internal/bootstrap ./internal/application/enrichment ./internal/proposal ./internal/application/delegated ./internal/seriesmeta ./internal/api ./internal/database ./internal/covermaterial -run 'TestProductionMCP(AuthorCorrections|Enrichment)|TestEnrichment|Adjudication|Concurrent|Concurrency|TestMCP|TestCurrentAuthority|Cleanup|Cover|Undo' -count=2 -timeout=10m`；`targeted.exit=0`，bootstrap292.166s、api14.580s；含新撤权/裁决/cover/cleanup/stdio，delegated有实际匹配；covermaterial无独立测试，其文件行为由真实bootstrap公开测试验证。
+2. **本组合唯一一次完整backend PASS**：`timeout 1800 go test -json -p 1 ./... -count=1 -timeout=10m`，15:33:19→15:43:49（+08:00），`backend-full.exit=0`；38有测试包PASS、0 fail事件，api206.582s/bootstrap168.027s。原配置并发保存save、relocation crash及stdio饱和EOF在本轮通过；HTTP/stdio的read/write/library撤权子项全部通过。事件摘要=`backend-summary.json`。
+3. **完整frontend PASS**：`npm test -- --maxWorkers=2`，**121 files /1158 tests**，270.12s；`npm run build`、`npm run lint`均exit0。本轮实际重建，不将复制dist当build。
+4. `gofmt -l ./cmd ./internal` 输出空，exit0；`golangci-lint run --allow-parallel-runners` **0 issues.**/exit0，使用本树独立cache，没有豁免新规则。
+5. `go run ./cmd/tsgen` **48 types**/exit0，`tsgen-before.log`/`tsgen-after.log`的SHA256相同，无漂移；generated.ts由生成器重建，非手写冲突合成。
+6. `sql/query.sql`、sqlc schema/config与生成bindings对HEAD及MERGE_HEAD均无差异，两个 `sql-input*-diff.log`为空；新增13 handwritten `schema_cleanup.sql`保留，非sqlc输入，本轮没有再改SQL，**无需且未调用sqlc**。不冒称PowerShell生成已重跑。
+7. `git diff --check` exit0；9项正文已无冲突标记。最后仅追加本验收/issue记录，不改已验证源码。
+
+### 历史诚实边界 / remaining
+
+11初次完整backend已绿；freshfix完整backend曾唯一失败于 `TestConfigFailedUpdatePreservesConcurrentExternalEditor/save` 的Windows rename Access denied。13历史两次不同rename失败及其顺序baseline/13完整green证据仍按13acceptance原样保留。**本轮是新的有效11+13组合验证，不是已定位holder、已修复rename、或已证明baseline不稳；不抹去历史红灯。** 未添加retry/sleep/skip/timeout放宽，也未改配置或relocation实现。
+
+本轮未发现新的已证实非合并业务缺陷，不代表穷尽安全/崩溃调度证明。当前组合门禁无实测blocker；父负责索引解决、提交、独立canonical request_review及后续13pending修复整合。现有11/13静态mockups保留，本轮无新UI功能/浏览器截图主张。

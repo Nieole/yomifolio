@@ -26,6 +26,8 @@ import (
 var targets = []reflect.Type{
 	reflect.TypeOf(enrichment.Operation{}),
 	reflect.TypeOf(enrichment.AdjudicationResult{}),
+	reflect.TypeOf(enrichment.CleanupResult{}),
+	reflect.TypeOf(enrichment.MaterialResult{}),
 	reflect.TypeOf(enrichment.CoverSelection{}),
 	reflect.TypeOf(seriesmeta.CoverState{}),
 	reflect.TypeOf(enrichment.Page{}),

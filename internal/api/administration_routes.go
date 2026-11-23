@@ -10,6 +10,8 @@ func (c *administrationHTTP) mount(r chi.Router) {
 	r.Get("/mcp/operations", c.listMetadataOperations)
 	r.Get("/mcp/operations/{operationId}", c.getMetadataOperation)
 	r.Post("/mcp/operations/{operationId}/undo", c.undoMetadataOperation)
+	r.Post("/mcp/operations/{operationId}/cleanup", c.cleanupMetadataOperation)
+	r.Get("/mcp/cleanups/{cleanupId}", c.inspectMetadataCleanup)
 	r.Get("/mcp/credentials", c.listMCPCredentials)
 	r.Post("/mcp/credentials", c.issueMCPCredential)
 	r.Patch("/mcp/credentials/{credentialId}", c.narrowMCPCredential)

@@ -12,7 +12,7 @@
 - [x] 严格遵守 mm-adr-0011，在实际写入事务中重读待裁决状态、当前值、锁和已消费字段；终态竞争失败不提交元数据、提案字段或来源沿革。
 - [x] 并发部分应用不得重复消费字段，重放和关闭竞争有明确公开结果；不改变既有人工提案使用方式。
 - [x] 从生产服务验证旧提案输入、作者保护、成功后关闭、先拒绝后应用及部分应用竞争，保留现有真实事务回滚守卫；网页呈现不误报为全部拒绝。
-- [ ] 后端与前端门禁及受影响生成物检查通过，更新裁决长期契约但不削弱有效 ADR。
+- [x] 后端与前端门禁及受影响生成物检查通过，更新裁决长期契约但不削弱有效 ADR。
 
 ## Comments
 
@@ -21,3 +21,5 @@
 - Fresh merger（7a082c16）：完整backend本轮一次通过、定向两轮及前端/生成/lint通过；但真实HTTP与stdio均复现撤掉read保留metadata_write后同键裁决重放仍返回完整收据。首项重新打开，交父freshfix，不自行改业务代码；当前BLOCKED，详见acceptance的Fresh章节。唯一代码增量仅增加饱和EOF测试构建elapsed/context/error/output诊断，不改预算或测试条件。
 
 - Freshfix（7a082c16，未提交）：按持久裁决收据在同一retry事务重查当前Read；永久HTTP/真实stdio撤权红绿、最终定向两轮及相关六包全测通过，原摘要/终态重放保留。首项据实勾回；唯一一次完整backend在配置并发编辑save的Windows rename Access is denied失败，非本轮stdio失败，不冒称baseline、不盲重跑；最终门禁框仍不勾，ready-for-agent，待父独立review/门禁。历史页仅定向10tests通过，未重跑merger已绿的完整frontend/build/lint。详见acceptance Freshfix节。
+
+- Final fresh merger（HEAD6311bca3 + 父预置MERGE_HEAD5e7dfaf0）：逐块解决9项正文冲突，两票增量与read freshfix均保留；定向两轮、唯一一次完整backend（38包/0fail）、完整frontend121files/1158tests、build/lint、gofmt/golangci-lint、48types tsgen漂移和diff检查全部通过，最终门禁据实勾选。当前组合merge-ready，保持ready-for-agent而非done；索引UU留父stage，父canonical request_review。13另树pending离页恢复后续fix未纳入，不宣称已验收；历史rename故障未定位、不归baseline、不宣称修复。详见acceptance末节。

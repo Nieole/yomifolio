@@ -5,8 +5,8 @@ import (
 	"database/sql"
 )
 
-// MetadataReceipt stores an immutable operation, separate from latest field provenance.
-// Payload contains the complete versioned application receipt and reversal material.
+// MetadataReceipt stores operation identity and intent separately from latest provenance.
+// Explicit cleanup may replace reversal snapshots with minimal audit; request hashes stay frozen.
 type MetadataReceipt struct {
 	Sequence     int64
 	ID           string

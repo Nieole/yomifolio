@@ -45,7 +45,7 @@ func registerMCPEnrichment(server *mcp.Server, service *enrichment.Service, subj
 		out, err := service.Batch(ctx, subject, in.Operations)
 		return discoveryResult(), out, publicMCPToolError(err, "invalid enrichment batch", "metadata operation unavailable")
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_get_metadata_operation", Description: "Read a complete persistent operation receipt and undo status under current target authority. Not latest field provenance. Undo material has no automatic expiry.", Annotations: read}, func(ctx context.Context, _ *mcp.CallToolRequest, in lookup) (*mcp.CallToolResult, enrichment.Operation, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_get_metadata_operation", Description: "Read a persistent operation receipt and undo status; explicitly cleaned receipts retain only minimal audit and report undo_unavailable=true under current target authority. Not latest field provenance. Undo material has no automatic expiry; independent cleanup permission can explicitly discard it.", Annotations: read}, func(ctx context.Context, _ *mcp.CallToolRequest, in lookup) (*mcp.CallToolResult, enrichment.Operation, error) {
 		out, err := service.Get(ctx, subject, in.OperationID)
 		return discoveryResult(), out, publicMCPToolError(err, "invalid operation", "metadata operation unavailable")
 	})

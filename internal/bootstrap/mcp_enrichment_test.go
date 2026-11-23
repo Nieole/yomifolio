@@ -18,6 +18,7 @@ import (
 	"yomifolio/internal/config"
 	"yomifolio/internal/database"
 	"yomifolio/internal/metadata"
+	"yomifolio/internal/task"
 )
 
 type enrichmentBarrier struct{ entered, release chan struct{} }
@@ -72,7 +73,8 @@ func TestProductionMCPEnrichmentAuditUndo(t *testing.T) {
 	if _, err = store.DB().Exec(`INSERT INTO tags(name) VALUES('Personal shelf'); INSERT INTO series_tags(series_id,tag_id) SELECT ?,id FROM tags WHERE name='Personal shelf'`, a); err != nil {
 		t.Fatal(err)
 	}
-	options := bootstrap.Options{Sources: api.ExternalSources{Metadata: func(_ config.Config, name string) metadata.Provider {
+	cleanupGate := &cleanupProgressGate{}
+	options := bootstrap.Options{Tasks: task.Config{Publish: cleanupGate.publish}, Sources: api.ExternalSources{Metadata: func(_ config.Config, name string) metadata.Provider {
 		return &controlledSource{search: func(context.Context, string, int, int) ([]*metadata.SeriesMetadata, int, error) {
 			score, scale := 9.0, 10.0
 			if name == "anilist" {
@@ -151,7 +153,10 @@ func TestProductionMCPEnrichmentAuditUndo(t *testing.T) {
 		out := call("library_propose_match", map[string]any{"search_id": search["search_id"], "identity_confirmed": true, "edition_confirmed": true, "summary": "Same series and edition confirmed from directory and release", "fields": map[string]string{"summary": source + ":0", "tags": source + ":0", "rating": source + ":0", "authors": source + ":0"}})
 		return out["proposal_id"]
 	}
-	verifyCoversAfterReopen := verifyAtomicCovers(t, store, cfg, session, router, process.Application.Engine, issued.Token, wrapped.gate, func() error { return process.Application.Scans.CleanupThumbnails(ctx, nil) }, call, web, propose)
+	verifyCoversAfterReopen := verifyAtomicCovers(t, store, cfg, session, router, process.Application.Engine, issued.Token, wrapped.gate, cleanupGate, func() error { return process.Application.Scans.CleanupThumbnails(ctx, nil) }, call, web, propose)
+	cleanupProposal := propose(c, "bangumi")
+	cleanupOp := call("library_enrich_metadata", map[string]any{"request_key": "cleanup13-source", "series_id": c, "proposal_ids": []any{cleanupProposal}, "fields": []string{"summary"}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": c})})
+	verifyCleanup(t, session, call, web, cleanupOp)
 	pa, pb := propose(a, "bangumi"), propose(a, "anilist")
 	input := map[string]any{"request_key": "first", "series_id": a, "proposal_ids": []any{pa, pb}, "fields": []string{"summary", "rating", "tags", "source_links"}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": a})}
 	applied := call("library_enrich_metadata", input)

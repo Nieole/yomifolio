@@ -53,8 +53,13 @@ references: [mm-adr-0003]
 `schema_model_budget.sql` 由统一 Migrate 安装，不进入 sqlc 输入。mcp_model_operations 与 mcp_model_calls 只保存独立命名空间的模型操作归属、冻结来源证据、不可变额度、准入消耗和白名单结果标签；唯一凭据/搜索及操作/item 约束防止重复额度/消费，used 受 allowance CHECK 约束。不与元数据变更审计共用表，不存模型内部推理；应用在实际事务内执行当前权限护栏。记录不随临时搜索缓存、运行历史裁剪或重启删除，用户/凭据失效仍由当前授权拒绝访问；不是通用审计或清理功能。
 
 
-`metadata_cover_materials` 是 handwritten DDL，由统一 Migrate 安装，保存 operation_id/path 多对多保留引用并索引 path；它不进入 sqlc 模型输入。收据和引用同事务插入，只有 changed 操作建立可公开保留引用；失败收据中出现的准备键不是公开授权。`CoverMaterialVisible` 同时检查当前书引用与保留引用，供原有文件名图片路由作提交可见性判定。`GetEnrichmentCoverBook` 的 sqlc 查询只取同库系列的首个封面书，按 sort_number/name/id 有界读取。未来清理不得按单条操作删除仍被别条记录/当前封面引用的文件；跨文件发布与清理竞争协议归 mm-application。
+`metadata_cover_materials` 是 handwritten DDL，由统一 Migrate 安装，保存 operation_id/path 多对多保留引用并索引 path；它不进入 sqlc 模型输入。收据和引用同事务插入，只有 changed 操作建立可公开保留引用；失败收据中出现的准备键不是公开授权。`CoverMaterialVisible` 同时检查当前书引用与保留引用，供原有文件名图片路由作提交可见性判定。`GetEnrichmentCoverBook` 的 sqlc 查询只取同库系列的首个封面书，按 sort_number/name/id 有界读取。清理不得按单条操作删除仍被别条记录/当前封面引用的文件；跨文件发布与清理竞争协议归 mm-application。
 
 ## 共享作者身份
 
 当前 authors 的唯一身份为精确 `(name, role)`，角色不属于 series_authors 行。`Queries.EnsureAuthor` 只 INSERT ON CONFLICT DO NOTHING 并读取精确身份，供受限系列校正/撤销使用，不触发共享身份 UPDATE，不删无关联旧身份。调用者提供真实事务，目标关联替换和统计与收据原子提交；本包不承担别名认定或全库合并策略。该手写查询不变更 sqlc 模型或 schema。
+
+
+## 显式撤销材料清理持久边界
+
+`schema_cleanup.sql` 由统一 Migrate 整段安装（包含触发器，不交给分号切分器或 sqlc）。metadata_cleanup_requests 独立保存用户/凭据/键、显式版本意图摘要与有限回收结果；metadata_material_tombstones 永久隔离已确证无引用的规范材料键。发布触发器覆盖 books、series_stats 与 metadata_cover_materials 的插入/引用更新，不允许退休键被并发重新发布。当前和全局保留引用查询、原操作恢复快照裁剪、undo_unavailable 与清理结果初始 pending 在同一应用授权事务提交；最小操作身份、原请求摘要和成功 Undo 关联不删。默认迁移、运行历史 retention 不清材料或 tombstone；回收/崩溃语义归 mm-application，不用数据库事务假装文件 unlink 可回滚。

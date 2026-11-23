@@ -275,6 +275,7 @@ func TestNoReadEndpointLeaksHostPath(t *testing.T) {
 		"{runID}", "1",
 		"{planId}", "1",
 		"{operationId}", "1",
+		"{cleanupId}", "cleanup-result",
 		"/*", "/x",
 	)
 
