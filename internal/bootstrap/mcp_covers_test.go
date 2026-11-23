@@ -28,7 +28,7 @@ import (
 	"yomifolio/internal/task"
 )
 
-func verifyAtomicCovers(t *testing.T, store database.Store, cfg *config.Manager, session *mcp.ClientSession, router http.Handler, engine *task.Engine, token string, gate func() *enrichmentBarrier, cleanup func() error, call func(string, any) map[string]any, web func(string, string, any, int) []byte, propose func(int64, string) any) func(func(string, string, any, int) []byte) func(func(string, string, any, int) []byte) {
+func verifyAtomicCovers(t *testing.T, store database.Store, cfg *config.Manager, session *mcp.ClientSession, router http.Handler, engine *task.Engine, token string, gate func() *enrichmentBarrier, cleanupGate *cleanupProgressGate, cleanup func() error, call func(string, any) map[string]any, web func(string, string, any, int) []byte, propose func(int64, string) any) func(func(string, string, any, int) []byte) func(func(string, string, any, int) []byte) {
 	t.Helper()
 	ctx := t.Context()
 	lib, err := store.CreateLibrary(ctx, database.CreateLibraryParams{Name: "Cover archive", Path: t.TempDir(), ScanMode: "none"})
@@ -168,7 +168,7 @@ func verifyAtomicCovers(t *testing.T, store database.Store, cfg *config.Manager,
 	if r <= b {
 		t.Fatal("undo did not restore old public image")
 	}
-	verifyCleanedAfterReopen := verifyCoverCleanup(t, store, cfg, engine, router, call, web, out, undo, book.ID)
+	verifyCleanedAfterReopen := verifyCoverCleanup(t, store, cfg, engine, router, call, web, out, undo, book.ID, cleanupGate)
 	reset := func() {
 		t.Helper()
 		if _, err := store.DB().Exec(`UPDATE series SET summary=NULL,locked_fields='' WHERE id=?`, series.ID); err != nil {
