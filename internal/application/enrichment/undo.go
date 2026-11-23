@@ -187,7 +187,13 @@ func (s *Service) Undo(ctx context.Context, actor delegated.Subject, in UndoInpu
 		// Keep the receipt in the same authorized transaction. A second transaction
 		// could race a successful undo or observe different authority/state.
 		failed, e := j.TryChange(ctx, func() error {
-			return writeState(ctx, tx, q, current, out.After, changedFields(out.Fields))
+			if err := writeState(ctx, tx, q, current, out.After, changedFields(out.Fields)); err != nil {
+				return err
+			}
+			if original.Adjudication != nil {
+				return seriesmeta.ForgetEnrichmentProvenance(ctx, tx, current.ID, original.Adjudication.ProposalID, changedFields(out.Fields))
+			}
+			return nil
 		})
 		if e != nil {
 			return Operation{}, e

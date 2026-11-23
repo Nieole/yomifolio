@@ -277,24 +277,34 @@ func toFields(rows []database.MetadataReviewField, locked map[string]bool, curre
 }
 
 // Get reads a single proposal with current values and current field locks.
-func (s *Service) Get(ctx context.Context, id int64) (Proposal, error) {
-	row, err := s.db.GetMetadataReview(ctx, id)
+func (s *Service) Get(ctx context.Context, id int64) (Proposal, error) { return Read(ctx, s.db, id) }
+
+// Read projects a proposal using one caller-owned database snapshot, including
+// current values and locks. It performs no authorization or transaction control.
+func Read(ctx context.Context, q interface {
+	GetMetadataReview(context.Context, int64) (database.MetadataReview, error)
+	GetSeries(context.Context, int64) (database.Series, error)
+	GetTagsForSeries(context.Context, int64) ([]database.Tag, error)
+	GetAuthorsForSeries(context.Context, int64) ([]database.Author, error)
+	ListMetadataReviewFieldsByReviews(context.Context, []int64) ([]database.MetadataReviewField, error)
+}, id int64) (Proposal, error) {
+	row, err := q.GetMetadataReview(ctx, id)
 	if err != nil {
 		return Proposal{}, err
 	}
-	series, err := s.db.GetSeries(ctx, row.SeriesID)
+	series, err := q.GetSeries(ctx, row.SeriesID)
 	if err != nil {
 		return Proposal{}, err
 	}
-	tags, err := s.db.GetTagsForSeries(ctx, row.SeriesID)
+	tags, err := q.GetTagsForSeries(ctx, row.SeriesID)
 	if err != nil {
 		return Proposal{}, err
 	}
-	authors, err := s.db.GetAuthorsForSeries(ctx, row.SeriesID)
+	authors, err := q.GetAuthorsForSeries(ctx, row.SeriesID)
 	if err != nil {
 		return Proposal{}, err
 	}
-	fields, err := s.db.ListMetadataReviewFieldsByReviews(ctx, []int64{id})
+	fields, err := q.ListMetadataReviewFieldsByReviews(ctx, []int64{id})
 	if err != nil {
 		return Proposal{}, err
 	}

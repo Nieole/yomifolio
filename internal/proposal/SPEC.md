@@ -34,3 +34,9 @@ references: [mm-adr-0011]
 - `queue_test.go`、`read_test.go`：去重范围、当前锁/当前值、分页及批量读字段。
 - `resolve_test.go`、`fill_empty_test.go`、`replace_test.go`：部分应用、终态抢先、按存值补空、集合替换及关联失败整体回滚。
 - `concurrency_test.go`：事务前拒绝导致部分应用冲突、并发部分应用不重用已消费字段、事务内当前值及锁决策、部分应用失败整体回滚。
+
+## 授权调用方的事务内裁决
+
+`Read` 允许调用方使用同一个事务快照投影当前字段/锁；授权由应用提供。`AdjudicationPending` 在调用方实际写事务重读系列归属、pending 及所选剩余字段；未知/错系列与终态竞争不混为成功。`ConsumeAdjudication` 仅删除实际写入字段行，pending 期间以 applied_at 保存已接受标记，继续部分应用及关闭不重写此时间；最后剩余为空时推进 applied，终态时间沿用既有 CAS 约定；明确关闭剩余差异且有当前/既往接受时推进 supplemented_closed，无接受则 rejected。旧人工部分应用仍有当前 provenance 指向该提案时也能识别已接受，不猜测已丢失的历史。
+
+supplemented_closed 是终态，不是 rejected 的别名；关闭保留未消费差异及已接受内容，Undo 不重新入队或恢复字段行。裁决状态推进采用同一 pending CAS，字段消费、标记、来源写入和收据失败必须由调用方整体回滚。来源保护规则与权限归 mm-application/mm-seriesmeta；普通人工 Apply/Reject 不改用新模式。

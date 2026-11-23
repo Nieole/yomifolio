@@ -26,7 +26,7 @@ func registerMCPMatching(server *mcp.Server, service *delegated.Service, subject
 		SeriesID   int64 `json:"series_id"`
 		ProposalID int64 `json:"proposal_id"`
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "library_get_match_proposal", Description: "Read a proposal and its persisted matching evidence without adjudicating it. Requires series identity; cross-library identifiers cannot bypass read authority.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true}}, func(ctx context.Context, _ *mcp.CallToolRequest, in proposalInput) (*mcp.CallToolResult, delegated.MatchProposal, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_get_match_proposal", Description: "Read a proposal and its persisted matching evidence without adjudicating it. Requires series identity; cross-library identifiers cannot bypass current read AND metadata_write authority. Returns current pending/terminal status, accepted flag, remaining fields and original evidence. Legacy proposals without identity/edition evidence remain readable but may only be explicitly rejected, not automatically applied.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true}}, func(ctx context.Context, _ *mcp.CallToolRequest, in proposalInput) (*mcp.CallToolResult, delegated.MatchProposal, error) {
 		out, err := service.GetMatchProposal(ctx, subject, in.SeriesID, in.ProposalID)
 		return discoveryResult(), out, publicMCPToolError(err, "invalid matching parameters or unconfirmed identity/edition", "source operation unavailable")
 	})

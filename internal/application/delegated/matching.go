@@ -247,6 +247,7 @@ type ConfirmMatchInput struct {
 	Fields            map[string]string `json:"fields"`
 }
 type MatchProposal struct {
+	Accepted        bool                    `json:"accepted"`
 	Status          proposal.QueueStatus    `json:"status"`
 	ProposalID      int64                   `json:"proposal_id,omitempty"`
 	MetadataWritten bool                    `json:"metadata_written"`
@@ -334,17 +335,32 @@ func (s *Service) GetMatchProposal(ctx context.Context, subject Subject, seriesI
 	if err != nil || review.SeriesID != series.ID {
 		return MatchProposal{}, ErrDenied
 	}
-	if err = s.Authorize(ctx, subject, series.LibraryID, Read); err != nil {
-		return MatchProposal{}, err
-	}
-	var raw metadata.SeriesMetadata
-	if err = json.Unmarshal([]byte(review.RawPayload), &raw); err != nil {
-		return MatchProposal{}, ErrInvalid
-	}
-	record, err := proposal.NewService(confirmedProposalStore{Store: s.matching.Store}).Get(ctx, id)
+	tx, err := s.matching.Store.DB().BeginTx(ctx, nil)
 	if err != nil {
 		return MatchProposal{}, err
 	}
-	out := MatchProposal{Status: proposal.QueueStatus(review.Status), ProposalID: id, Evidence: raw.MatchEvidence, Fields: record.Fields}
+	defer tx.Rollback()
+	q := database.New(tx)
+	record, err := proposal.Read(ctx, q, id)
+	if err != nil || record.Row.SeriesID != series.ID {
+		return MatchProposal{}, ErrDenied
+	}
+	current, err := q.GetSeries(ctx, series.ID)
+	if err != nil {
+		return MatchProposal{}, ErrDenied
+	}
+	if err = AuthorizeTx(ctx, tx, subject, current.LibraryID, Read); err != nil {
+		return MatchProposal{}, err
+	}
+	if err = AuthorizeTx(ctx, tx, subject, current.LibraryID, MetadataWrite); err != nil {
+		return MatchProposal{}, err
+	}
+	var raw metadata.SeriesMetadata
+	if strings.TrimSpace(record.Row.RawPayload) != "" {
+		if err = json.Unmarshal([]byte(record.Row.RawPayload), &raw); err != nil {
+			return MatchProposal{}, ErrInvalid
+		}
+	}
+	out := MatchProposal{Status: proposal.QueueStatus(record.Row.Status), Accepted: record.Row.AppliedAt.Valid || record.Row.Status == "supplemented_closed", ProposalID: id, Evidence: raw.MatchEvidence, Fields: record.Fields}
 	return out, bounded(out)
 }

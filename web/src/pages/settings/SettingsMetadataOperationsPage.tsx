@@ -80,6 +80,11 @@ function OperationHistory() {
       <p className="break-all text-sm text-gray-400">{row.id} · {t('audit.actor')} #{row.actor.user_id} · {row.actor.credential_id || t('audit.web')}</p>
       {row.parent_id && <p className="break-all text-sm">{t('audit.reversal')}: {row.parent_id}</p>}
       {row.reason && <p>{row.reason}</p>}
+      {row.adjudication && <div className="space-y-1 border-l-2 border-blue-400 pl-3">
+        <p className="font-medium">{t(`audit.proposal.${row.adjudication.status === 'pending' && row.adjudication.accepted ? 'partial' : row.adjudication.status}`)}</p>
+        <p className="text-sm text-gray-400">{t('audit.proposal')} #{row.adjudication.proposal_id}</p>
+        <p className="text-sm">{row.adjudication.reason}</p>
+      </div>}
       {row.fields.map((field) => <div key={field.field} className="space-y-2 border-t border-gray-700 pt-3">
         <h4 className="font-medium">{t(`audit.field.${field.field}`)}</h4>
         {field.field === 'cover' && field.changed && <div className="flex gap-4">

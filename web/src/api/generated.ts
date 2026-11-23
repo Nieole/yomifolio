@@ -5,6 +5,7 @@
  */
 
 export interface Operation {
+  adjudication?: AdjudicationResult;
   cover_selection?: CoverSelection;
   old_cover_material?: string;
   new_cover_material?: string;
@@ -25,6 +26,14 @@ export interface Operation {
   undone_by?: string;
   applied: boolean;
   replayed: boolean;
+}
+
+export interface AdjudicationResult {
+  accepted: boolean;
+  proposal_id: number;
+  mode: string;
+  reason: string;
+  status: string;
 }
 
 export interface CoverSelection {

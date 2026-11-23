@@ -96,3 +96,19 @@ it('shows series-local author names and roles before and after correction and sa
  await screen.findByRole('status');
  expect(screen.queryByText('Undone')).toBeNull();
 });
+
+it('distinguishes partial acceptance, supplement-and-close and complete rejection without undoing accepted fields', async () => {
+ const adjudication = { proposal_id: 21, mode: 'partial', reason: 'Verified missing description', status: 'pending', accepted: true };
+ mocks.get.mockResolvedValue({ data: { operations: [
+  { ...row, id: 'partial', adjudication },
+  { ...row, id: 'closed', adjudication: { ...adjudication, mode: 'reject', status: 'supplemented_closed', reason: 'Discard only remaining differences' }, outcome: 'no-change', fields: [] },
+  { ...row, id: 'rejected', adjudication: { ...adjudication, mode: 'reject', status: 'rejected', accepted: false, reason: 'Wrong edition' }, outcome: 'no-change', fields: [] },
+ ] } });
+ setup();
+ await screen.findByText('Partially applied; still pending');
+ expect(screen.getByText('Supplemented; remaining differences closed')).toBeTruthy();
+ expect(screen.getByText('All differences rejected')).toBeTruthy();
+ expect(screen.getByText('Discard only remaining differences')).toBeTruthy();
+ expect(screen.getAllByRole('button', { name: 'Undo operation' })).toHaveLength(1);
+ expect(screen.getByText('Space journey')).toBeTruthy();
+});

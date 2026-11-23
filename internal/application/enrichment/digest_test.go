@@ -42,3 +42,27 @@ func commandHashRaw(raw string) string {
 	sum := sha256.Sum256([]byte(raw))
 	return hex.EncodeToString(sum[:])
 }
+
+func TestEnrichmentDigest10FrozenAndAdjudicationIntent(t *testing.T) {
+	in := Input{RequestKey: "ten", SeriesID: 7, ProposalIDs: []int64{}, Fields: []string{"cover"}, Expected: ExpectedState{Cover: &seriesmeta.CoverState{BookID: 4, Path: "auto.png", Automatic: true}}, Cover: &CoverSelection{BookID: 4, Page: 2, QualityCompared: true, Reason: "Complete artwork"}}
+	frozen := `{"request_key":"ten","series_id":7,"proposal_ids":[],"fields":["cover"],"expected":{"title":null,"summary":null,"publisher":null,"status":null,"rating":null,"tags":null,"links":null,"cover":{"book_id":4,"path":"auto.png","locked":false,"automatic":true}},"cover":{"book_id":4,"page":2,"quality_compared":true,"reason":"Complete artwork"}}`
+	if applyDigest(in) != commandHashRaw(frozen) {
+		t.Fatal("10 command byte contract changed")
+	}
+	in = Input{RequestKey: "eleven", SeriesID: 7, ProposalIDs: []int64{3}, Fields: []string{"summary"}}
+	base := applyDigest(in)
+	in.Adjudication = &Adjudication{Mode: "partial", Reason: "Verified same edition"}
+	partial := applyDigest(in)
+	if partial == base {
+		t.Fatal("adjudication omitted from intent")
+	}
+	in.Adjudication.Mode = "supplement_and_close"
+	closed := applyDigest(in)
+	if closed == partial {
+		t.Fatal("closure mode omitted")
+	}
+	in.Adjudication.Reason = "Discard remaining differences"
+	if applyDigest(in) == closed {
+		t.Fatal("decision reason omitted")
+	}
+}

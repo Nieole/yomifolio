@@ -50,7 +50,12 @@ type correctionV1 struct {
 	To     authorV1 `json:"to"`
 	Reason string   `json:"reason"`
 }
+type adjudicationV1 struct {
+	Mode   string `json:"mode"`
+	Reason string `json:"reason"`
+}
 type applyCommandV1 struct {
+	Adjudication      *adjudicationV1   `json:"adjudication,omitempty"`
 	RequestKey        string            `json:"request_key"`
 	SeriesID          int64             `json:"series_id"`
 	ProposalIDs       []int64           `json:"proposal_ids"`
@@ -89,7 +94,11 @@ func applyDigest(in Input) string {
 	if c := in.Expected.Cover; c != nil {
 		expected.Cover = &coverExpectedV1{BookID: c.BookID, Path: c.Path, Locked: c.Locked, Automatic: c.Automatic}
 	}
-	return commandHash(applyCommandV1{RequestKey: in.RequestKey, SeriesID: in.SeriesID, ProposalIDs: in.ProposalIDs, Fields: in.Fields, Expected: expected, AuthorCorrections: corrections, Cover: cover})
+	var adjudication *adjudicationV1
+	if a := in.Adjudication; a != nil {
+		adjudication = &adjudicationV1{Mode: a.Mode, Reason: a.Reason}
+	}
+	return commandHash(applyCommandV1{Adjudication: adjudication, RequestKey: in.RequestKey, SeriesID: in.SeriesID, ProposalIDs: in.ProposalIDs, Fields: in.Fields, Expected: expected, AuthorCorrections: corrections, Cover: cover})
 }
 func undoDigest(in UndoInput) string {
 	return commandHash(undoCommandV1{RequestKey: in.RequestKey, OperationID: in.OperationID})

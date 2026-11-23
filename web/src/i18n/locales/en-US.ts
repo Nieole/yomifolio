@@ -1,6 +1,12 @@
 import type { MessageCatalog } from '../core';
 
 export const messages: MessageCatalog = {
+    "audit.proposal": "Proposal",
+    "audit.proposal.partial": "Partially applied; still pending",
+    "audit.proposal.pending": "Pending adjudication",
+    "audit.proposal.supplemented_closed": "Supplemented; remaining differences closed",
+    "audit.proposal.rejected": "All differences rejected",
+    "audit.proposal.applied": "Applied",
     "audit.title": "Metadata operations",
     "audit.description": "Inspect field sources and before/after values. Undo material is retained without automatic expiry. Current permissions, locks and related values are checked again before restoration.",
     "audit.failed": "Operation failed",

@@ -157,3 +157,21 @@ func WriteEnrichmentState(ctx context.Context, q EnrichmentQueries, current data
 	}
 	return q.RefreshSeriesStats(ctx, current.ID)
 }
+
+// RecordEnrichmentProvenance links an actual supplemented field to its proposal.
+// The receipt retains full evidence; this remains only the latest field origin.
+func RecordEnrichmentProvenance(ctx context.Context, q *database.Queries, series, proposalID int64, field, stored string, source metadata.FieldEvidence) error {
+	_, err := q.UpsertSeriesMetadataProvenance(ctx, database.UpsertSeriesMetadataProvenanceParams{SeriesID: series, FieldName: field, Value: stored, Source: source.Source, SourceUrl: source.Metadata.SourceURL, ReviewID: sql.NullInt64{Int64: proposalID, Valid: true}})
+	return err
+}
+
+// ForgetEnrichmentProvenance clears only the undone operation's latest origins.
+// Prior origins are unknown, not reconstructed from a proposal or stale diff.
+func ForgetEnrichmentProvenance(ctx context.Context, tx *sql.Tx, series, proposalID int64, fields []string) error {
+	for _, field := range fields {
+		if _, err := tx.ExecContext(ctx, `DELETE FROM series_metadata_provenance WHERE series_id=? AND review_id=? AND field_name=?`, series, proposalID, field); err != nil {
+			return err
+		}
+	}
+	return nil
+}

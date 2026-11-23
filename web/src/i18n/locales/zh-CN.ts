@@ -1,6 +1,12 @@
 import type { MessageCatalog } from '../core';
 
 export const messages: MessageCatalog = {
+    "audit.proposal": "提案",
+    "audit.proposal.partial": "部分已应用，仍待裁决",
+    "audit.proposal.pending": "待裁决",
+    "audit.proposal.supplemented_closed": "已补充并关闭剩余差异",
+    "audit.proposal.rejected": "全部差异已拒绝",
+    "audit.proposal.applied": "已应用",
     "audit.title": "元数据操作记录",
     "audit.description": "查看字段来源与前后值。撤销材料默认保留，无自动到期。恢复前重新检查当前权限、字段锁与相关值。",
     "audit.failed": "操作失败",

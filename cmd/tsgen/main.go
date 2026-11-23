@@ -25,6 +25,7 @@ import (
 // （如 ValidationResult 引用 ValidationIssue，故两者都要在此）。
 var targets = []reflect.Type{
 	reflect.TypeOf(enrichment.Operation{}),
+	reflect.TypeOf(enrichment.AdjudicationResult{}),
 	reflect.TypeOf(enrichment.CoverSelection{}),
 	reflect.TypeOf(seriesmeta.CoverState{}),
 	reflect.TypeOf(enrichment.Page{}),

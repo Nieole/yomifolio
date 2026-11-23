@@ -259,9 +259,14 @@ func TestMCPMatchingConfirmedProposal(t *testing.T) {
 	confirm["identity_confirmed"] = false
 	call("library_propose_match", confirm, true)
 	// Proposal evidence belongs to persistent proposal storage, not the search cache.
-	fresh := request("POST", "/mcp/credentials", fmt.Sprintf(`{"user_id":1,"name":"reopen","library_ids":[%d],"capabilities":["read"]}`, lib.ID), 200)
+	fresh := request("POST", "/mcp/credentials", fmt.Sprintf(`{"user_id":1,"name":"reopen","library_ids":[%d],"capabilities":["read","metadata_write"]}`, lib.ID), 200)
 	var reconnect struct{ Token string }
 	if err = json.Unmarshal(fresh.Body.Bytes(), &reconnect); err != nil {
+		t.Fatal(err)
+	}
+	readOnly := request("POST", "/mcp/credentials", fmt.Sprintf(`{"user_id":1,"name":"reopen-read-only","library_ids":[%d],"capabilities":["read"]}`, lib.ID), 200)
+	var readOnlyToken struct{ Token string }
+	if err = json.Unmarshal(readOnly.Body.Bytes(), &readOnlyToken); err != nil {
 		t.Fatal(err)
 	}
 	session.Close()
@@ -284,6 +289,16 @@ func TestMCPMatchingConfirmedProposal(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer next.Close()
+	readOnlyReopen, err := mcp.NewClient(&mcp.Implementation{Name: "reopen-read-only", Version: "1"}, nil).Connect(ctx, &mcp.StreamableClientTransport{Endpoint: nextServer.URL + "/mcp", HTTPClient: &http.Client{Transport: &bearerTransport{base: nextServer.Client().Transport, token: readOnlyToken.Token}}}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer readOnlyReopen.Close()
+	refused, err := readOnlyReopen.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_match_proposal", Arguments: map[string]any{"series_id": series.ID, "proposal_id": queued["proposal_id"]}})
+	if err != nil || !refused.IsError {
+		t.Fatal("reopened proposal bypassed metadata_write", refused, err)
+	}
+
 	persisted, err := next.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_match_proposal", Arguments: map[string]any{"series_id": series.ID, "proposal_id": queued["proposal_id"]}})
 	if err != nil || persisted.IsError {
 		t.Fatal(persisted, err)

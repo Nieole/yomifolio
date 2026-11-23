@@ -49,6 +49,7 @@ func (e ExpectedState) state() State {
 }
 
 type Input struct {
+	Adjudication      *Adjudication      `json:"adjudication,omitempty"`
 	RequestKey        string             `json:"request_key"`
 	SeriesID          int64              `json:"series_id"`
 	ProposalIDs       []int64            `json:"proposal_ids"`
@@ -69,26 +70,27 @@ type FieldAudit struct {
 	Formula string                   `json:"formula,omitempty"`
 }
 type Operation struct {
-	CoverSelection   *CoverSelection   `json:"cover_selection,omitempty"`
-	OldCoverMaterial string            `json:"old_cover_material,omitempty"`
-	NewCoverMaterial string            `json:"new_cover_material,omitempty"`
-	Version          int               `json:"version"`
-	ID               string            `json:"id"`
-	RequestKey       string            `json:"request_key"`
-	Actor            delegated.Subject `json:"actor"`
-	SeriesID         int64             `json:"series_id"`
-	LibraryID        int64             `json:"library_id"`
-	Kind             string            `json:"kind"`
-	ParentID         string            `json:"parent_id,omitempty"`
-	CreatedAt        string            `json:"created_at"`
-	Outcome          string            `json:"outcome"`
-	Reason           string            `json:"reason"`
-	Before           State             `json:"before"`
-	After            State             `json:"after"`
-	Fields           []FieldAudit      `json:"fields"`
-	UndoneBy         string            `json:"undone_by,omitempty"`
-	Applied          bool              `json:"applied"`
-	Replayed         bool              `json:"replayed"`
+	Adjudication     *AdjudicationResult `json:"adjudication,omitempty"`
+	CoverSelection   *CoverSelection     `json:"cover_selection,omitempty"`
+	OldCoverMaterial string              `json:"old_cover_material,omitempty"`
+	NewCoverMaterial string              `json:"new_cover_material,omitempty"`
+	Version          int                 `json:"version"`
+	ID               string              `json:"id"`
+	RequestKey       string              `json:"request_key"`
+	Actor            delegated.Subject   `json:"actor"`
+	SeriesID         int64               `json:"series_id"`
+	LibraryID        int64               `json:"library_id"`
+	Kind             string              `json:"kind"`
+	ParentID         string              `json:"parent_id,omitempty"`
+	CreatedAt        string              `json:"created_at"`
+	Outcome          string              `json:"outcome"`
+	Reason           string              `json:"reason"`
+	Before           State               `json:"before"`
+	After            State               `json:"after"`
+	Fields           []FieldAudit        `json:"fields"`
+	UndoneBy         string              `json:"undone_by,omitempty"`
+	Applied          bool                `json:"applied"`
+	Replayed         bool                `json:"replayed"`
 }
 type Page struct {
 	Operations []Operation `json:"operations"`
@@ -325,7 +327,10 @@ func (s *Service) State(ctx context.Context, actor delegated.Subject, series int
 // Apply requires selected fields and explicitly confirmed evidence. Identical retries
 // return the original immutable outcome with replayed=true and applied=false.
 func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) (Operation, error) {
-	if !validKey(in.RequestKey) || in.SeriesID <= 0 || len(in.Fields) < 1 || len(in.Fields) > 9 || len(in.ProposalIDs) > 10 {
+	if !validKey(in.RequestKey) || in.SeriesID <= 0 || len(in.Fields) > 9 || len(in.ProposalIDs) > 10 {
+		return Operation{}, delegated.ErrInvalid
+	}
+	if !validAdjudication(in) {
 		return Operation{}, delegated.ErrInvalid
 	}
 	seen := map[string]bool{}
@@ -347,6 +352,9 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 	evidence := map[string][]metadata.FieldEvidence{}
 	reason := ""
 	for _, id := range in.ProposalIDs {
+		if in.Adjudication != nil && in.Adjudication.Mode == "reject" {
+			break
+		}
 		proposal, err := s.evidence.GetMatchProposal(ctx, actor, in.SeriesID, id)
 		if err != nil {
 			return Operation{}, err
@@ -395,12 +403,54 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 	if err = authorize(ctx, tx, actor, current.LibraryID, true); err != nil {
 		return Operation{}, err
 	}
+	if in.Adjudication != nil {
+		if err = authorize(ctx, tx, actor, current.LibraryID, false); err != nil {
+			return Operation{}, err
+		}
+	}
 	if out, found, e := retry(ctx, j, actor, in.RequestKey, applyDigest(in)); e != nil || found {
 		return out, e
 	}
 	out := operation(actor, in.RequestKey, current.ID, current.LibraryID, "enrich")
 	out.Before = before
 	out.After = before
+	var adjudicated database.MetadataReview
+	if in.Adjudication != nil {
+		var pending bool
+		adjudicated, pending, err = adjudicationGuard(ctx, q, in, evidence)
+		if err != nil {
+			return Operation{}, err
+		}
+		out.Adjudication = &AdjudicationResult{ProposalID: in.ProposalIDs[0], Mode: in.Adjudication.Mode, Reason: in.Adjudication.Reason, Status: adjudicated.Status, Accepted: adjudicated.AppliedAt.Valid || adjudicated.Status == "supplemented_closed"}
+		if !pending {
+			out.Outcome = "conflict"
+			out.Reason = "proposal terminal or selected field already consumed"
+			if err = save(ctx, j, out, applyDigest(in)); err != nil {
+				return Operation{}, err
+			}
+			if err = tx.Commit(); err != nil {
+				return Operation{}, err
+			}
+			return out, nil
+		}
+	}
+	if in.Adjudication == nil {
+		pending, e := pendingEvidence(ctx, q, in)
+		if e != nil {
+			return Operation{}, e
+		}
+		if !pending {
+			out.Outcome = "conflict"
+			out.Reason = "proposal is no longer pending"
+			if err = save(ctx, j, out, applyDigest(in)); err != nil {
+				return Operation{}, err
+			}
+			if err = tx.Commit(); err != nil {
+				return Operation{}, err
+			}
+			return out, nil
+		}
+	}
 	if in.Cover != nil {
 		out.CoverSelection = in.Cover
 		if prepared == nil {
@@ -519,7 +569,15 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 		}
 	}
 	if out.Applied {
-		failed, e := j.TryChange(ctx, func() error { return writeState(ctx, tx, q, current, out.After, changedFields(out.Fields)) })
+		failed, e := j.TryChange(ctx, func() error {
+			if err := writeState(ctx, tx, q, current, out.After, changedFields(out.Fields)); err != nil {
+				return err
+			}
+			if in.Adjudication != nil {
+				return finishAdjudication(ctx, tx, q, adjudicated, in, &out)
+			}
+			return nil
+		})
 		if e != nil {
 			return Operation{}, e
 		}
@@ -527,10 +585,18 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 			out.Applied = false
 			out.Outcome = "failed"
 			out.Reason = "metadata write failed; nothing changed"
+			if out.Adjudication != nil {
+				out.Adjudication.Status = "pending"
+			}
 			out.After = out.Before
 			for i := range out.Fields {
 				out.Fields[i].Changed = false
 			}
+		}
+	}
+	if in.Adjudication != nil && !out.Applied && out.Outcome != "conflict" && out.Outcome != "failed" {
+		if err = finishAdjudication(ctx, tx, q, adjudicated, in, &out); err != nil {
+			return Operation{}, err
 		}
 	}
 	if err = save(ctx, j, out, applyDigest(in)); err != nil {
@@ -539,7 +605,7 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 	if err = tx.Commit(); err != nil {
 		return Operation{}, err
 	}
-	if out.Applied && s.publish != nil {
+	if s.publish != nil && (out.Applied || (out.Adjudication != nil && out.Adjudication.Status != "pending" && out.Outcome != "conflict" && out.Outcome != "failed")) {
 		s.publish()
 	}
 	return out, nil

@@ -140,6 +140,7 @@ func runProductionAuthorCorrections(t *testing.T, stdio bool) {
 		out := call("library_propose_match", map[string]any{"search_id": search["search_id"], "identity_confirmed": true, "edition_confirmed": true, "summary": "Same series and edition confirmed from directory and release", "fields": map[string]string{"summary": source + ":0", "tags": source + ":0", "rating": source + ":0", "authors": source + ":0"}})
 		return out["proposal_id"]
 	}
+	verifyAdjudicationAfterReopen := verifyProposalAdjudication(t, store, makeSeries, call, propose, web, session, wrapped.gate)
 	// Both series share the exact identity, whose role is part of its uniqueness.
 	if _, err = store.DB().Exec(`INSERT INTO authors(name,role) VALUES('Alias','Artist')`); err != nil {
 		t.Fatal(err)
@@ -373,6 +374,10 @@ func runProductionAuthorCorrections(t *testing.T, stdio bool) {
 		t.Fatal("undo ignored current metadata capability", denied, err)
 	}
 
+	denied, err = session.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_match_proposal", Arguments: map[string]any{"series_id": a, "proposal_id": p}})
+	if err != nil || !denied.IsError {
+		t.Fatal("read-only credential read a proposal", denied, err)
+	}
 	// Reopen storage AND production bootstrap; HTTP undo restores the old association set.
 	_ = session.Close()
 	server.Close()
@@ -393,6 +398,26 @@ func runProductionAuthorCorrections(t *testing.T, stdio bool) {
 	process.HTTP.SetupRoutes(router)
 	server = serve(router)
 	defer server.Close()
+	snapshot = cfg.Snapshot()
+	snapshot.MCP.PublicURL = server.URL
+	cfg.Replace(&snapshot)
+	var fresh struct{ Token string }
+	_ = json.Unmarshal(web("POST", "/mcp/credentials", map[string]any{"user_id": 1, "name": "adjudication-reopened", "library_ids": []int64{lib.ID}, "capabilities": []string{"read", "metadata_write"}}, 200), &fresh)
+	reopenedSession, e := mcp.NewClient(&mcp.Implementation{Name: "adjudication-reopen", Version: "1"}, nil).Connect(ctx, &mcp.StreamableClientTransport{Endpoint: server.URL + "/mcp", HTTPClient: &http.Client{Transport: &bearerTransport{base: server.Client().Transport, token: fresh.Token}}}, nil)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer reopenedSession.Close()
+	verifyAdjudicationAfterReopen(func(name string, input any) map[string]any {
+		result, e := reopenedSession.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: input})
+		if e != nil || result.IsError {
+			t.Fatal(result, e)
+		}
+		raw, _ := json.Marshal(result.StructuredContent)
+		var out map[string]any
+		_ = json.Unmarshal(raw, &out)
+		return out
+	})
 	restored := web("POST", "/mcp/operations/"+merged["id"].(string)+"/undo", map[string]string{"request_key": "authors-reopen-undo"}, 200)
 	var receipt map[string]any
 	if err = json.Unmarshal(restored, &receipt); err != nil || receipt["outcome"] != "changed" || len(receipt["after"].(map[string]any)["authors"].([]any)) != 4 {

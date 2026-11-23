@@ -43,9 +43,13 @@ func TestEnrichmentAtomicReplayAndPersistentUndo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	proposal, err := store.CreateMetadataReview(ctx, database.CreateMetadataReviewParams{SeriesID: series.ID, Provider: "bangumi", Status: "pending"})
+	if err != nil {
+		t.Fatal(err)
+	}
 	svc := enrichment.New(store.DB(), evidence{}, nil)
 	actor := delegated.Subject{UserID: 1}
-	in := enrichment.Input{RequestKey: "fill", SeriesID: series.ID, ProposalIDs: []int64{1}, Fields: []string{"summary"}}
+	in := enrichment.Input{RequestKey: "fill", SeriesID: series.ID, ProposalIDs: []int64{proposal.ID}, Fields: []string{"summary"}}
 	out, err := svc.Apply(ctx, actor, in)
 	if err != nil || out.Outcome != "changed" || !out.Applied {
 		t.Fatalf("%+v %v", out, err)
@@ -67,8 +71,8 @@ func TestEnrichmentAtomicReplayAndPersistentUndo(t *testing.T) {
 	// Full receipts are never silently lost to an oversized batch response.
 	svc = enrichment.New(store.DB(), evidence{summary: strings.Repeat("x", 30000)}, nil)
 	batch, err := svc.Batch(ctx, actor, []enrichment.Input{
-		{RequestKey: "large-first", SeriesID: series.ID, ProposalIDs: []int64{1}, Fields: []string{"summary"}},
-		{RequestKey: "large-second", SeriesID: series.ID, ProposalIDs: []int64{1}, Fields: []string{"summary"}},
+		{RequestKey: "large-first", SeriesID: series.ID, ProposalIDs: []int64{proposal.ID}, Fields: []string{"summary"}},
+		{RequestKey: "large-second", SeriesID: series.ID, ProposalIDs: []int64{proposal.ID}, Fields: []string{"summary"}},
 	})
 	if err != nil || len(batch.Operations) != 2 || batch.Operations[0].Outcome != "changed" || batch.Operations[1].Outcome != "unprocessed" {
 		t.Fatalf("batch budget: %+v %v", batch, err)
@@ -81,4 +85,16 @@ func TestEnrichmentAtomicReplayAndPersistentUndo(t *testing.T) {
 	if err != nil || original.UndoneBy != undo.ID {
 		t.Fatalf("%+v %v", original, err)
 	}
+	// Closure changes the public inbox even when no metadata field changes.
+	publications := 0
+	svc = enrichment.New(store.DB(), evidence{}, func() { publications++ })
+	reject := enrichment.Input{RequestKey: "reject", SeriesID: series.ID, ProposalIDs: []int64{proposal.ID}, Adjudication: &enrichment.Adjudication{Mode: "reject", Reason: "Discard all remaining differences"}}
+	closed, err := svc.Apply(ctx, actor, reject)
+	if err != nil || closed.Adjudication.Status != "rejected" || publications != 1 {
+		t.Fatal("closure did not refresh the inbox", closed, publications, err)
+	}
+	if _, err = svc.Apply(ctx, actor, reject); err != nil || publications != 1 {
+		t.Fatal("replay republished closure", publications, err)
+	}
+
 }

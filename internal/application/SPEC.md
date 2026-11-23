@@ -62,11 +62,11 @@ references: [mm-adr-0001, mm-adr-0005, mm-adr-0013, mm-adr-0014]
 
 run_id 标识一次已接纳执行，不是系列变更的 operation_id，也不是请求幂等键。扫描请求重试不保证 exactly-once：仅在同凭据、同任务已有排队项时沿用既有队列合并并返回 coalesced，保留原声明；否则接纳另一条运行。客户端不确定受理结果时应先列表查询，不可把合并当作幂等保证。未来系列操作及额度需独立持久标识，不得复用扫描合并计数。委托任务变体不登记重启/重试入口：重启只将遗留运行记为 interrupted，绝不自动继续扫描或重新发出付费调用；重新发起须当前授权。
 
-供后续来源、写入、模型及撤销用例复用的边界是 `PrepareRun`（准入/归属）、`Checkpoint`（外部请求前及可中断单元间）和 `AuthorizeTx`（在实际写入的同一 SQLite 事务内读取当前权限）。权限查询不是权限快照；事务冲突必须整笔中止，重试须开新事务并重新鉴权。禁止把事务外 Authorize 当作写入 fencing，也不得把数据库授权检查宣传为可追回网络请求。受限补充及撤销归下述 enrichment；当前不提供普通提案裁决或清理工具。
+供后续来源、写入、模型及撤销用例复用的边界是 `PrepareRun`（准入/归属）、`Checkpoint`（外部请求前及可中断单元间）和 `AuthorizeTx`（在实际写入的同一 SQLite 事务内读取当前权限）。权限查询不是权限快照；事务冲突必须整笔中止，重试须开新事务并重新鉴权。禁止把事务外 Authorize 当作写入 fencing，也不得把数据库授权检查宣传为可追回网络请求。受限补充及撤销归下述 enrichment；提案裁决复用下述受保护补充；当前不提供清理工具。
 
 ### 多来源匹配与确认提案
 
-`SearchSources`、`GetSourceSearch`、`ProposeMatch`、`GetMatchProposal` 归 `delegated.Service`，协议不接触数据库，也不借网页刮削路由绕过委托。搜索和读取映射 read；**构建持久提案也是写入**，须 metadata_write 及当前管理员权限，普通账号即使凭据含写能力也不能创建。直接读取提案还须核对请求系列及提案所属系列，不接受书 ID、来源 ID 或源 URL 代替目标授权。
+`SearchSources`、`GetSourceSearch`、`ProposeMatch`、`GetMatchProposal` 归 `delegated.Service`，协议不接触数据库，也不借网页刮削路由绕过委托。搜索与搜索结果读取映射 read；已有提案读取须在同一读事务重查实际库的 read 与 metadata_write，按当前值/锁投影，返回历史 accepted 标记。**构建持久提案也是写入**，须 metadata_write 及当前管理员权限，普通账号即使凭据含写能力也不能创建。直接读取提案还须核对请求系列及提案所属系列，不接受书 ID、来源 ID 或源 URL 代替目标授权。
 
 搜索通过同一 `Runs.Start`、`PrepareRun` 和当前权限检查点异步执行。可用来源是 Bangumi、AniList、MangaDex，以及当前配置具有对应凭据的 MyAnimeList、ComicVine；不调用任何 LLM 别名，不产生模型费用。工厂沿用装配根外部来源接缝，配置在执行时读取。每个来源前后检查权限和取消；单源失败不隐藏其他可用结果，全失败运行失败，部分可用明确 partial。取消后不能从该搜索创建提案；客户端断线不取消运行。列表允许 read 或 scan_control 进入，但每条运行仍须其自身原声明能力。
 
@@ -81,7 +81,7 @@ agent 必须显式确认所选候选属于同一系列及相同版本，并提�
 
 ### 安全补充与持久撤销
 
-`enrichment.Service` 是网页管理与 MCP 共用的同步应用能力，读取 07 已持久化且明确确认身份、版本的提案证据；不接受调用者自由填写文字事实，不涉及提案终态或 LLM；封面选择归下述归档封面契约。`State` 提供按字段预期值。每个系列独立事务内重读实际资料库、当前值与锁，并调用 `AuthorizeTx`（网页主语检查当前管理员及非强制改密状态）；实际元数据、统计和完整操作收据一起提交，失败回滚，不带旧授权自动重试。协议不参与 SQL。
+`enrichment.Service` 是网页管理与 MCP 共用的同步应用能力，读取 07 已持久化且明确确认身份、版本的提案证据；不接受调用者自由填写文字事实，不涉及 LLM；普通补充不消费字段，但在最终写事务也尊重提案终态；封面选择归下述归档封面契约。`State` 提供按字段预期值。每个系列独立事务内重读实际资料库、当前值与锁，并调用 `AuthorizeTx`（网页主语检查当前管理员及非强制改密状态）；实际元数据、统计和完整操作收据一起提交，失败回滚，不带旧授权自动重试。协议不参与 SQL。
 
 所选 title、summary、publisher、status 只补空；tags 使用 `seriesmeta.ContentTags` 保守内容词表后追加，保留所有旧成员；source_links 只追加有效 HTTP(S) 来源链接，不替换同名或同 URL 旧链接。rating 仅 NULL 时采用 `seriesmeta.EnrichmentRating`：有效站点原分数按原尺度换算十分制，来源去重后等权平均，无有效来源保持缺失。标签和链接各以整组比较，其他仅比较所选字段；锁定任一所选字段或相关预期值不一致，整项 conflict，无关字段变化不阻止。
 
@@ -142,3 +142,15 @@ agent 必须显式确认所选候选属于同一系列及相同版本，并提�
 `Input.fields` 可选择 authors；`State.authors` 是精确 name/role 身份对的整组快照，忽略顺序与重复，不隐式折叠大小写、空白或不同角色。作者默认追加已确认提案的来源成员，保留未选校正的所有旧关联。可选 `author_corrections` 明确列出 from/to 身份对与非空短理由（最多 50 条）；from 必须属于 expected 作者组，to 必须来自本次确认提案的 authors 来源事实。重复 from、自映射和目标同时被移除的矛盾映射拒绝。多个别名可归并到一个已存在的身份；同名不同角色仍是不同身份。不接受无来源的新作者事实，不做全库合并。
 
 这是成员保留规则的获准例外，仅允许替换显式 from 关联；其他来源即使再次列出该旧别名也不加回。不扩展为描述或评分覆盖。作者来源与校正短理由保存在字段审计，前后组留在同一持久单系列收据中，不存内部推理。提交与 Undo 均在实际写入授权事务检查当前资料库、能力、作者锁及整个组；其他任一关联变化冲突，无关字段不阻止。可与其他补空字段联合提交，作者或其他写入失败整体回滚；Undo 恢复旧关联组，失败收据和重开行为沿用既有契约。共享身份的持久写入归 `mm-seriesmeta` / `mm-database`。
+
+### 已有提案的受保护裁决
+
+`Input.adjudication={mode,reason}` 显式区分来源补充与提案裁决，复用同一 Apply/Batch、请求键、当前 read 与 metadata_write 交集、系列预期值及字段锁。一次只裁决一个 proposal_id；支持既有七个提案字段，不能借此裁决 cover/source_links。`partial` 只消费实际改变的剩余字段；有剩余时 pending，最后一个实际字段消耗后 applied。`supplement_and_close` 在同一事务补充并关闭其余差异，也允许空 fields 关闭先前部分应用后的剩余差异。`reject` 必须空 fields，只丢弃剩余差异，不撤销已应用内容。
+
+描述及评分仍只补空，标签筛噪追加，authors 复用目标系列的明确校正例外；不是普通人工提案的整组替换。缺少持久身份/版本确认的旧提案可读取、明确拒绝，但不允许补充、补写 confirmation 或把 confidence 当确认。确需采纳的来源须重新经过明确的匹配工作流；复用旧提案不会升级它的旧证据。
+
+实际写事务通过 proposal 的待裁决/剩余字段守卫重读当前提案及原证据；终态或已消费字段导致整项持久 conflict。元数据、最新来源沿革、实际字段消费、状态和操作收据同事务提交；常规写失败由同一 savepoint 全部回滚，再保存 failed。日志/事务自身不可用仍返回错误，不伪造成功收据。没有隐式竞争重试；SQLite busy/snapshot 错误可明确返回不可用，调用方先查原请求键。部分应用不会重复消费；纯关闭也在提交后发布 refresh。
+
+提案生命周期以 pending + 持久接受标记、applied、supplemented_closed、rejected 区分结果，具体标记归 mm-proposal。收据 adjudication 保存 proposal_id、原命令 mode、短 reason、当时 status 与 accepted；此前已有接受的 reject 最终显示 supplemented_closed 而非全部拒绝。相同键永久重放原收据，即使提案后来关闭也不改写先前 pending 收据；最新提案状态另由 GetMatchProposal 查询。新意图以显式可选 V1 adjudication={mode,reason} 编入摘要，缺失时完全省略，08/09/10 原字节不变；不序列化整个响应 State。
+
+Undo 仍是实际改动字段的独立单系列恢复，不恢复提案状态或字段行，也不清除接受历史；来源归口的已撤销最新引用仅在仍属于原提案时移除，不伪造未知的更早来源。原收据及来源/理由保持不变。普通人工 Apply/Reject、集合替换及 fill_empty 语义不改；无 adjudication 的来源补充不隐式消费提案或建立接受标记。
