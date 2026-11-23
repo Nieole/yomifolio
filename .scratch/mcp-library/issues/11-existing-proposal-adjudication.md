@@ -29,3 +29,5 @@
 - Fresh narrow fix（HEAD ab462e9c，未提交）：已复现并集中修复普通网页 fill_empty partial 的 provenance 接受事实遗漏；真实 HTTP/stdio 红绿、最终 transport 双轮及相关定向/全包通过。11 仍 ready-for-agent，完整门禁及当前结论见 acceptance 最新 Fresh narrow fix 节；等待父 fresh 独立 review，不标 done。
 
 - 本轮最终门禁：定向双轮/最终 HTTP+stdio 双轮、相关八包全测、完整 frontend121files/1162tests、build/lint/gofmt/Go lint/tsgen无漂移/diff均通过；唯一一次完整backend失败于 relocation occupied 与 derived_effects 两处Windows rename Access is denied（37包PASS，仅apiFAIL），未盲重跑或归因baseline，最终门禁框重新取消。修复待父fresh独立review和故障诊断，不称merge-ready；详见acceptance最新节与 `.tmp/11/acceptedfix/`。
+
+- Fresh 最后 UI 窄修（HEAD8a1b95d3，未提交）：修复人工部分接受后普通网页 Reject 的 rejected/accepted=true 被误报全部拒绝；双语显示“已接受部分内容，剩余差异已拒绝”，冲突结果保留且不冒充 supplemented_closed 成功。组件双语红绿、最终18项历史页/完整前端121files1164tests、build/lint、真实HTTP/stdio共享体两条人工Reject路径的backend定向双轮、gofmt/Go lint/48types tsgen无漂移/diff均PASS。无后端业务/人工状态/接受事实/不可变收据/digest变更；after mockup更新、before原字节不变。依要求未跑完整backend、不干预父原8a完整gate；全局门禁框留父根据其结果更新，11仍ready-for-agent，等待父fresh独立review。详见acceptance最新节及 `.tmp/11/uifix/`。

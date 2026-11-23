@@ -5,6 +5,7 @@ export const messages: MessageCatalog = {
     "audit.proposal.partial": "部分已应用，仍待裁决",
     "audit.proposal.pending": "待裁决",
     "audit.proposal.supplemented_closed": "已补充并关闭剩余差异",
+    "audit.proposal.accepted_rejected": "已接受部分内容，剩余差异已拒绝",
     "audit.proposal.rejected": "全部差异已拒绝",
     "audit.proposal.applied": "已应用",
     "audit.title": "元数据操作记录",

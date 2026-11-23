@@ -229,3 +229,31 @@ Go **1.26.10**；guide共享GOCACHE，本树独立 `gotmp` / `lintcache`。fnm N
 ### 当前 remaining / 父 fresh review
 
 功能缺陷已修复，真实生产 provenance-only、noop 收据、清理、重开、拒绝内容保留与反例全部实测。**当前实测 blocker 是上述唯一完整 backend 的两处 Windows rename 拒绝，未定位、未声称修复或 baseline；不是独立批准/merge-ready。** 旧已持久收据按原不可变语义不回填，丢失 provenance 的历史不猜测。父负责新的 fresh 独立 review、Windows 故障诊断/独立完整门禁及提交。11 保持 ready-for-agent，所有改动未 stage/commit，HEAD 不变；其他票/父 TODO 未动。
+
+
+## Fresh 最后 UI 窄修：人工拒绝后的 accepted/rejected 展示（HEAD 8a1b95d3）
+
+本轮仅编辑本票树，起点 HEAD=`8a1b95d3`，保持 ready-for-agent；未 stage/commit/merge/reset，未动父 TODO、其他树或父正在运行的完整 backend。当前增量是 UI 投影、双语文案与回归测试/文档；**没有后端业务实现、普通人工状态、Accepted 事实、不可变收据、冻结 digest 或生成契约变更**。
+
+### Fix / seam / TDD
+
+- `SettingsMetadataOperationsPage` 的窄投影函数按收据 status+accepted 显示：pending/true 为部分应用待裁决，rejected/false 为全部拒绝，rejected/true 为“已接受部分内容，剩余差异已拒绝”（英文 Some content accepted; remaining differences rejected）。不伪装成 supplemented_closed 或本次成功；操作 conflict 标题与提案状态同时保留，Undo 仍由 outcome 控制。
+- 按用户指定的两个公开 seam 验证：真实页面组件（只 mock HTTP/auth）与生产 HTTP/编译 stdio 共用 adjudication 测试体。组件新增中英文反例，覆盖 rejected 两种 accepted、pending/false、applied 与既有 partial/supplemented_closed，明确 conflict 不显示关闭成功或 Undo。
+- `.tmp/11/uifix/ui-red.log` / exit1：新增两种语言测试均因缺少 accepted/rejected 文案失败，原16项通过；最小修复后 `ui-green.log` / exit0，18项通过。随后仅提取小投影函数，最终 full frontend 验证最终源码。生产新测试是对已有正确后端事实的回归，不虚构后端红测或改业务让测试变绿。
+- 复用原 manual-partial fixture：真实网页 fill_empty partial（applied_at 仍空、provenance 唯一接受证据）→原收据清理/重放→普通网页 Reject→MCP 新键真实 conflict/rejected/accepted=true；网页公开 GET 同一冲突收据保留事实，旧 pending 收据不变。真实重开后拒绝状态/接受事实与冲突收据保持，已应用 title/summary 不撤回。
+- 复用原 partial 竞争成功场景：MCP partial 后普通网页 Reject，再用新键裁决得到真实 conflict/rejected/accepted=true；summary 保留，原 pending 收据仍不改写。两条流程同体由 HTTP 与真实编译 stdio 执行，不扩张 provider/数据库 fixture。原其他补充关闭、拒绝、Undo、权限与故障场景保留。
+- owning `web/SPEC.md`、CHANGELOG 与 `11-after.html` 同步；`11-before.html` 原字节保持。mockup 仍是静态概念示意，不声称浏览器截图或端到端布局验收。
+
+### Actual checks
+
+本轮证据目录 `.tmp/11/uifix/`，runner=`checks.sh`，每项独立 start/end/log/exit。Go1.26.10、guide共享 GOCACHE、本树独立 GOTMPDIR/lintcache；fnm Node26.13.1 / npm11.20.0。本轮只运行定向 backend 双轮，不重跑完整 backend；父对原8a完整 gate 的结果由父另行记录，不挪用为本次结果。
+
+- **最终 backend 定向两轮 PASS**：`go test -p 1 ./internal/bootstrap ./internal/application/enrichment ./internal/proposal ./internal/application/delegated ./internal/seriesmeta ./internal/api ./internal/database ./internal/covermaterial -run 'TestProductionMCP(AuthorCorrections|Enrichment)|TestEnrichment|Adjudication|Concurrent|Concurrency|TestMCP|TestCurrentAuthority|Cleanup|Cover|Undo' -count=2 -timeout=10m`，`targeted.exit=0`，bootstrap417.972s/api14.790s。新人工 Reject 两条流程与原 HTTP/stdio 生产体实际通过；delegated 有匹配，covermaterial 无独立测试，不冒称其有独立用例。
+- **最终完整 frontend PASS**：`npm test -- --maxWorkers=2`，**121 files /1164 tests**，379.73s；`npm run build`（7.04s）与 `npm run lint` 均 exit0。验证包含最终投影函数、双语18项历史页组件测试与其余全套回归。
+- `gofmt -l ./cmd ./internal` 输出空，exit0；独立 cache 的 `golangci-lint run --allow-parallel-runners` **0 issues.** /exit0。没有忽略规则、skip、retry 或预算放宽。
+- `go run ./cmd/tsgen` **48 types** /exit0；生成前后 SHA256 都为 `109ab5217b37c3aab46ee9b43bfe71cbf94641263e7d109f6dca02eba325a7d7`，无漂移。
+- `stable-inputs.log` 空/exit0：before mockup、后端裁决/接受实现、冻结 digest、generated.ts 及 SQL/query/schema/sqlc 配置相对 HEAD 不变；没有 sqlc 输入变化，无需且未运行 sqlc。最终 `git diff --check` 通过，文档保持 LF，无整页换行 churn。
+
+### Remaining / 父独立 review
+
+本次已实测 UI blocker 的修复及反例，无已知本窄修功能缺口；不代表独立批准或穷尽安全验证。按用户指定，**没有重跑完整 backend，也没有干预父正在跑的完整 gate**；历史 Windows rename 根因仍不在本窄修内，不将本次定向通过冒称完整门禁已绿。11 保持 ready-for-agent、全局门禁框留父据其完整 gate 结果更新；父负责 fresh 独立 review、最终集成与提交。全部修改未 stage/commit，HEAD 仍为8a1b95d3。

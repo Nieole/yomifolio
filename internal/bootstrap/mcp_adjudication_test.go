@@ -360,9 +360,14 @@ func verifyAdjudicationRaces(t *testing.T, store database.Store, makeSeries func
 				}
 				if competitor == "partial" {
 					closeOnly := map[string]any{"request_key": "adjudication-race-close-after-partial", "series_id": id, "proposal_ids": []any{p}, "fields": []string{}, "expected": state, "adjudication": map[string]any{"mode": "reject", "reason": "Discard only remaining differences"}}
+					web("POST", fmt.Sprintf("/metadata/reviews/%v/reject", p), nil, 200)
 					closed := call("library_enrich_metadata", closeOnly)
-					if closed["adjudication"].(map[string]any)["status"] != "supplemented_closed" {
-						t.Fatal(closed)
+					a := closed["adjudication"].(map[string]any)
+					if closed["outcome"] != "conflict" || closed["applied"] != false || a["status"] != "rejected" || a["accepted"] != true {
+						t.Fatal("manual reject after MCP partial must retain accepted conflict facts", closed)
+					}
+					if current := call("library_get_enrichment_state", map[string]any{"series_id": id}); current["summary"] != "Space journey" {
+						t.Fatal("manual reject withdrew accepted content", current)
 					}
 					original := call("library_get_metadata_operation", map[string]any{"operation_id": winner["id"]})
 					if original["adjudication"].(map[string]any)["status"] != "pending" {
@@ -638,8 +643,26 @@ func verifyManualPartialAdjudication(t *testing.T, store database.Store, makeSer
 	if r := read(call); r["status"] != "pending" || r["accepted"] != true {
 		t.Fatal("cleanup lost provenance acceptance", r)
 	}
+	// Ordinary web Reject keeps its existing terminal status and provenance.
+	web("POST", fmt.Sprintf("/metadata/reviews/%v/reject", p), nil, 200)
+	input["request_key"] = "manual-partial-terminal-conflict"
+	conflict := call("library_enrich_metadata", input)
+	assertRejectedConflict := func(r map[string]any) {
+		t.Helper()
+		a := r["adjudication"].(map[string]any)
+		if r["outcome"] != "conflict" || r["applied"] != false || a["status"] != "rejected" || a["accepted"] != true {
+			t.Fatal("manual partial then web reject lost accepted conflict facts", r)
+		}
+	}
+	assertRejectedConflict(conflict)
+	if err := json.Unmarshal(web("GET", "/mcp/operations/"+conflict["id"].(string), nil, 200), &history); err != nil {
+		t.Fatal(err)
+	}
+	assertRejectedConflict(history)
+	input["request_key"] = "manual-partial-noop"
+	assertPartial(call("library_enrich_metadata", input))
 	return func(c func(string, any) map[string]any) {
-		if r := read(c); r["status"] != "pending" || r["accepted"] != true {
+		if r := read(c); r["status"] != "rejected" || r["accepted"] != true {
 			t.Fatal("reopen lost provenance-only acceptance", r)
 		}
 		assertPartial(c("library_get_metadata_operation", map[string]any{"operation_id": op["id"]}))
@@ -647,13 +670,12 @@ func verifyManualPartialAdjudication(t *testing.T, store database.Store, makeSer
 		input["fields"] = []string{}
 		input["adjudication"] = map[string]any{"mode": "reject", "reason": "Discard remaining title difference"}
 		closed := c("library_enrich_metadata", input)
-		if a := closed["adjudication"].(map[string]any); a["status"] != "supplemented_closed" || a["accepted"] != true {
-			t.Fatal(closed)
-		}
+		assertRejectedConflict(closed)
+		assertRejectedConflict(c("library_get_metadata_operation", map[string]any{"operation_id": conflict["id"]}))
 		if state := c("library_get_enrichment_state", map[string]any{"series_id": id}); state["title"] != "Existing title" || state["summary"] != "Space journey" {
 			t.Fatal("reject removed manual content", state)
 		}
-		if r := read(c); r["status"] != "supplemented_closed" || r["accepted"] != true {
+		if r := read(c); r["status"] != "rejected" || r["accepted"] != true {
 			t.Fatal(r)
 		}
 		assertPartial(c("library_get_metadata_operation", map[string]any{"operation_id": op["id"]}))

@@ -1,9 +1,10 @@
 /** @vitest-environment jsdom */
 import { afterEach, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { SettingsMetadataOperationsPage } from './SettingsMetadataOperationsPage';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { messages } from '../../i18n/locales/en-US';
+import { messages as zhMessages } from '../../i18n/locales/zh-CN';
 const mocks = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), admin: true }));
 vi.mock('../../api/client', () => ({ apiClient: { defaults: { headers: { common: {} } }, get: mocks.get, post: mocks.post }, getApiErrorMessage: () => 'Operation unavailable' }));
 vi.mock('../../auth/AuthProvider', () => ({ useAuth: () => ({ isAdmin: mocks.admin, user: { id: 1 } }) }));
@@ -111,6 +112,28 @@ it('distinguishes partial acceptance, supplement-and-close and complete rejectio
  expect(screen.getByText('Discard only remaining differences')).toBeTruthy();
  expect(screen.getAllByRole('button', { name: 'Undo operation' })).toHaveLength(1);
  expect(screen.getByText('Space journey')).toBeTruthy();
+});
+it.each([
+ ['en-US', messages, 'Some content accepted; remaining differences rejected', 'All differences rejected', 'Conflict'],
+ ['zh-CN', zhMessages, '已接受部分内容，剩余差异已拒绝', '全部差异已拒绝', '冲突'],
+] as const)('shows rejected acceptance facts alongside the conflict outcome in %s', async (locale, translations, acceptedLabel, rejectedLabel, conflictLabel) => {
+ const adjudication = { proposal_id: 21, mode: 'supplement_and_close', reason: 'Already manually rejected', status: 'rejected' };
+ mocks.get.mockResolvedValue({ data: { operations: [
+  { ...row, id: 'accepted-rejected', adjudication: { ...adjudication, accepted: true }, outcome: 'conflict', fields: [] },
+  { ...row, id: 'pure-rejected', adjudication: { ...adjudication, accepted: false }, outcome: 'no-change', fields: [] },
+  { ...row, id: 'pending', adjudication: { ...adjudication, status: 'pending', accepted: false }, outcome: 'no-change', fields: [] },
+  { ...row, id: 'applied', adjudication: { ...adjudication, status: 'applied', accepted: true }, outcome: 'no-change', fields: [] },
+ ] } });
+ render(<LocaleProvider initialLocale={locale} initialMessages={translations} fallbackMessages={messages}><SettingsMetadataOperationsPage /></LocaleProvider>);
+ const accepted = await screen.findByText(acceptedLabel);
+ const conflict = within(accepted.closest('section')!);
+ expect(conflict.getByRole('heading', { name: new RegExp(conflictLabel) })).toBeTruthy();
+ expect(conflict.queryByText(rejectedLabel)).toBeNull();
+ expect(screen.getAllByText(rejectedLabel)).toHaveLength(1);
+ expect(screen.getByText(translations['audit.proposal.pending'])).toBeTruthy();
+ expect(screen.getByText(translations['audit.proposal.applied'])).toBeTruthy();
+ expect(screen.queryByText(translations['audit.proposal.supplemented_closed'])).toBeNull();
+ expect(screen.queryByRole('button', { name: translations['audit.undo'] })).toBeNull();
 });
 it('warns of permanent rollback loss and cleans without a per-batch confirmation workflow', async () => {
  mocks.get.mockResolvedValue({ data: { operations: [row] } });

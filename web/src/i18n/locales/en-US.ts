@@ -5,6 +5,7 @@ export const messages: MessageCatalog = {
     "audit.proposal.partial": "Partially applied; still pending",
     "audit.proposal.pending": "Pending adjudication",
     "audit.proposal.supplemented_closed": "Supplemented; remaining differences closed",
+    "audit.proposal.accepted_rejected": "Some content accepted; remaining differences rejected",
     "audit.proposal.rejected": "All differences rejected",
     "audit.proposal.applied": "Applied",
     "audit.title": "Metadata operations",

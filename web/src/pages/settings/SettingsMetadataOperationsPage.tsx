@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiClient, getApiErrorMessage } from '../../api/client';
-import type { Operation, Page, State } from '../../api/generated';
+import type { AdjudicationResult, Operation, Page, State } from '../../api/generated';
 import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n/LocaleProvider';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
@@ -19,6 +19,12 @@ function fieldValue(state: State, field: string) {
   const value = state[field === 'source_links' ? 'links' : field as keyof State];
   if (value === null || value === undefined) return '∅';
   return typeof value === 'string' ? value : JSON.stringify(value);
+}
+
+function proposalStatusKey({ status, accepted }: AdjudicationResult) {
+  if (accepted && status === 'pending') return 'partial';
+  if (accepted && status === 'rejected') return 'accepted_rejected';
+  return status;
 }
 
 export function SettingsMetadataOperationsPage() {
@@ -96,7 +102,7 @@ function OperationHistory() {
       {row.parent_id && <p className="break-all text-sm">{t('audit.reversal')}: {row.parent_id}</p>}
       {row.reason && <p>{row.reason}</p>}
       {row.adjudication && <div className="space-y-1 border-l-2 border-blue-400 pl-3">
-        <p className="font-medium">{t(`audit.proposal.${row.adjudication.status === 'pending' && row.adjudication.accepted ? 'partial' : row.adjudication.status}`)}</p>
+        <p className="font-medium">{t(`audit.proposal.${proposalStatusKey(row.adjudication)}`)}</p>
         <p className="text-sm text-gray-400">{t('audit.proposal')} #{row.adjudication.proposal_id}</p>
         <p className="text-sm">{row.adjudication.reason}</p>
       </div>}
