@@ -17,6 +17,8 @@ export const messages: MessageCatalog = {
     "audit.reversal": "撤销的操作",
     "audit.before": "变更前",
     "audit.after": "变更后",
+    "audit.cleanup.resume": "继续清理",
+    "audit.cleanup.inspect": "重新读取清理结果",
     "audit.cleanup.action": "清理撤销材料",
     "audit.cleanup.warning": "清理将永久丢弃撤销快照和必要旧图片，默认不会自动到期。最小审计和在用封面保留；不再保证恢复。",
     "audit.cleanup.unavailable": "不可撤销 — 已显式清理撤销材料。",

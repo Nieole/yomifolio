@@ -23,3 +23,5 @@
 - Freshfix（7a082c16，未提交）：按持久裁决收据在同一retry事务重查当前Read；永久HTTP/真实stdio撤权红绿、最终定向两轮及相关六包全测通过，原摘要/终态重放保留。首项据实勾回；唯一一次完整backend在配置并发编辑save的Windows rename Access is denied失败，非本轮stdio失败，不冒称baseline、不盲重跑；最终门禁框仍不勾，ready-for-agent，待父独立review/门禁。历史页仅定向10tests通过，未重跑merger已绿的完整frontend/build/lint。详见acceptance Freshfix节。
 
 - Final fresh merger（HEAD6311bca3 + 父预置MERGE_HEAD5e7dfaf0）：逐块解决9项正文冲突，两票增量与read freshfix均保留；定向两轮、唯一一次完整backend（38包/0fail）、完整frontend121files/1158tests、build/lint、gofmt/golangci-lint、48types tsgen漂移和diff检查全部通过，最终门禁据实勾选。当前组合merge-ready，保持ready-for-agent而非done；索引UU留父stage，父canonical request_review。13另树pending离页恢复后续fix未纳入，不宣称已验收；历史rename故障未定位、不归baseline、不宣称修复。详见acceptance末节。
+
+- 最终parent ef44小增量（HEAD0a634bb9 + 预置MERGE_HEADef44f9b6，含13 approved fix727820e9）：仅CHANGELOG正文冲突已逐块保留双方；自动合并契约/48types+retry_request_key/双语UI/hook/完整remount tests与11三态/read事务重鉴权均核查保留。新定向两轮、唯一一次完整backend38包/0fail、完整frontend121files/1162tests及历史页16tests、build/lint/gofmt/Go lint/tsgen无漂移/diff全部PASS，证据 `.tmp/11/parentef44/`，详见acceptance末节。当前merge-ready，保持ready-for-agent；13已done不改关闭状态。索引UU CHANGELOG留父stage/提交，并对11发canonical request_review；历史Windows rename未定位，不宣称修复。

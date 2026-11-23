@@ -4,7 +4,7 @@
 
 **Blocked by:** 10 改善自动封面并与文字一起生效。
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 默认不按时间自动清理撤销材料和必要旧图片；管理员网页提供手动清理入口，MCP 提供独立能力控制的同等操作。
 - [x] 元数据写入权限不隐含清理权限；服务端执行当前用户、凭据资料库及清理能力交集，猜测操作标识不能清理其他作用域材料。
@@ -17,7 +17,11 @@
 
 ## Comments
 
+- Final closure: `727820e9` repairs durable pending cleanup inspection and original-key resumption after reload. Independent re-review approved; full backend38 packages and frontend121 files/1161 tests, build/lint and generation checks pass. Earlier blocked/pending notes below are historical. Historical Windows rename failures remain unassigned, not claimed repaired.
+
 - 最新顺序对照：基线 `13ea7e66` 与票13完整后端各一次 exit0（545.584s / 553.699s，各38包PASS），未改源码或增加retry；前端、lint及生成检查证据见acceptance13。此前 Windows rename 失败的句柄持有者仍未定位，不宣称已修复。以下blocked记录为历史，当前等待集成与最终独立审阅。
 
 - 独立树 mcp-library-13 / mcp-undo-material-cleanup，base 13ea7e66 祖先确认。实现未提交，维持 ready-for-agent，父负责集成与独立审阅。完整后端一次门禁发现新增 GET 路由 sweep 缺 cleanupId 参数，已补参数；后续 API 全包另遇 Windows relocation rename Access denied，未盲重试或归为已证明基线。最后门禁项未勾，详细证据与未测边界见 acceptance13。
 - Fresh 独立审阅在实现 HEAD e2b010ba 补了真实 stdio 异步运行中 HTTP 撤权/重置密码屏障、库预约回收、混库拒绝、同键换目标拒绝及真实 Windows junction 越界保护，定向双轮和前端/生成/lint均过。一次完整后端仍因 relocation_policy_crash_test.go:58/runtime_apply 配置 rename Access denied 失败，未归基线/未盲重试；blocked，保持 ready-for-agent，父负责最终门禁、提交/集成和独立 request_review。见 acceptance13 Fresh 节及 .tmp/13review/ 日志。
+
+- Canonical review rc_000c6675 fresh 窄修：管理页从持久 cleaned_by 恢复 pending 结果，原网页执行者以服务器验证的原 request_key 续办；不生成新键绕过隔离归属，不转移其他执行者 namespace。UI完整卸载/挂载、真实生产结果写入失败/重开/同键续办及异目标拒绝已测；双轮相关后端、一次完整后端（38包）、前端121文件/1161测试、build/lint、Go lint/format/tsgen全部通过。详见 acceptance13 末节及 .tmp/13freshfix/。保持 ready-for-agent，未提交，待父独立重审；未新增单项隔离后HTTP主动cancel的确定性屏障，不冒称穷尽取消调度。

@@ -39,6 +39,7 @@ export interface AdjudicationResult {
 }
 
 export interface CleanupResult {
+  retry_request_key?: string;
   id: string;
   operation_id: string;
   actor: Subject;

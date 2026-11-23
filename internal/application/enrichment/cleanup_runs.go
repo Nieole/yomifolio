@@ -139,9 +139,23 @@ func (s *Service) InspectCleanup(ctx context.Context, actor delegated.Subject, i
 	if database.RequireMetadataAdmin(ctx, tx, actor.UserID) != nil {
 		return CleanupResult{}, delegated.ErrDenied
 	}
-	var payload string
-	if err = tx.QueryRowContext(ctx, `SELECT payload FROM metadata_cleanup_requests WHERE id=?`, id).Scan(&payload); err != nil {
+	var payload, key, hash, operationID, credentialID string
+	var userID int64
+	if err = tx.QueryRowContext(ctx, `SELECT payload,request_key,request_hash,operation_id,user_id,credential_id FROM metadata_cleanup_requests WHERE id=?`, id).Scan(&payload, &key, &hash, &operationID, &userID, &credentialID); err != nil {
 		return CleanupResult{}, delegated.ErrDenied
 	}
-	return decodeCleanup(payload)
+	out, err := decodeCleanup(payload)
+	if err != nil {
+		return CleanupResult{}, err
+	}
+	// Never transfer another actor's retry namespace to the inspecting admin.
+	// Existing printable ASCII keys (1-80 bytes) and V1 digests stay unchanged.
+	if out.Outcome == "pending" && userID == actor.UserID && credentialID == "" &&
+		validKey(key) && out.OperationID == operationID && hash == cleanupDigest(CleanupInput{RequestKey: key, OperationID: operationID}) {
+		r, e := (database.MetadataJournal{Tx: tx}).Get(ctx, operationID)
+		if e == nil && cleanupAuthority(ctx, tx, actor, r) == nil {
+			out.RetryRequestKey = key
+		}
+	}
+	return out, nil
 }

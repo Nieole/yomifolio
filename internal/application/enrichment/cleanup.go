@@ -25,6 +25,9 @@ type MaterialResult struct {
 	Outcome string `json:"outcome"`
 }
 type CleanupResult struct {
+	// RetryRequestKey is projected only to the original web actor on inspection.
+	// It is not a credential and never changes the stored V1 intent.
+	RetryRequestKey string            `json:"retry_request_key,omitempty"`
 	ID              string            `json:"id"`
 	OperationID     string            `json:"operation_id"`
 	Actor           delegated.Subject `json:"actor"`

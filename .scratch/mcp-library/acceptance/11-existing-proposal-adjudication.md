@@ -168,3 +168,30 @@ Go **1.26.10**；guide共享GOCACHE，本树独立 `gotmp` / `lintcache`。fnm N
 11初次完整backend已绿；freshfix完整backend曾唯一失败于 `TestConfigFailedUpdatePreservesConcurrentExternalEditor/save` 的Windows rename Access denied。13历史两次不同rename失败及其顺序baseline/13完整green证据仍按13acceptance原样保留。**本轮是新的有效11+13组合验证，不是已定位holder、已修复rename、或已证明baseline不稳；不抹去历史红灯。** 未添加retry/sleep/skip/timeout放宽，也未改配置或relocation实现。
 
 本轮未发现新的已证实非合并业务缺陷，不代表穷尽安全/崩溃调度证明。当前组合门禁无实测blocker；父负责索引解决、提交、独立canonical request_review及后续13pending修复整合。现有11/13静态mockups保留，本轮无新UI功能/浏览器截图主张。
+
+## 最终小增量 merger：parent ef44f9b6 / 13 canonical freshfix
+
+**当前结论：merge-ready，11 保持 ready-for-agent，交父提交并 canonical request_review；不代表独立批准或 done。** 本节更新上一轮“13 pending 后续修复未纳入”的组合边界。唯一编辑树 `C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-11`，分支 `mcp-proposal-adjudication`，HEAD=`0a634bb9`，父预置 MERGE_HEAD=`ef44f9b6d7a8aa88c1702c740737dd2f3edd4c1e`（含13批准修复 `727820e9` 及关闭文档）。未 stage/commit/merge/reset、未动父 TODO；13 done 状态及关闭文档原样保留。
+
+### 纯合并与组合核查
+
+- 仅 `CHANGELOG.md` 有正文冲突，逐块保留11裁决/read撤权修复和13刷新后 pending 续办条目，未整文件 ours/theirs。正文无冲突标记；索引仍为父预置的 **UU CHANGELOG.md**，由父解决索引并提交。
+- 自动合并的 application/api/web SPEC、generated TS、双语 locale、SettingsMetadataOperationsPage 及测试没有发现语义错配。48 types 同时包含 AdjudicationResult、CleanupResult、MaterialResult；CleanupResult 新增可选 retry_request_key，不进入命令摘要。页面保留服务器 status+accepted 的裁决三态；13 hook 与 cleaned_by 去重查询、原键续办、目标绑定、失败重读和完整卸载/挂载测试均保留。
+- `service.go`、冻结 digest 实现/测试、mcp_adjudication/mcp_authors 与 proposal concurrency 测试与11 HEAD原字节一致；cleanup.go、cleanup_runs.go、mcp_cleanup_test.go 和 useOperationCleanups.ts 与父 MERGE_HEAD原字节一致。历史页两侧原测试块全部保留（仅空白分隔行不作身份判断）：11 HEAD 12项、父15项，合并16项。证据 `preservation.log`，非以旧1158总数代替13新增覆盖。
+- 重查11 early existing/retry：先当前 MetadataWrite，同事务按 user+credential+key/hash 找原收据，再按持久 Adjudication 对系列实际当前库重验 Read；拒权不返回旧Operation，不以本次可省略的 adjudication 输入决策。终态守卫前重放、恢复权限后原pending快照及不二次消费规则保留。
+- 重查13 pending recovery：仅原网页 user、空credential命名空间、合法原键/V1摘要及匹配 operation_id、当前管理员/实际库 cleanupAuthority 通过才投影 retry identity；POST仍重新授权并拒绝同键异目标。agent/其他执行者只可被管理员检查，不转移重试命名空间。cleanup裁剪不删除原 Adjudication 标记，不能借 recovery 扩大11重放权限。旧08/09/10摘要、普通人工提案及终态规则未改。
+
+### Actual checks（全部本组合新证据 `.tmp/11/parentef44/`）
+
+环境 Go **1.26.10** windows/amd64；guide共享GOCACHE，本树独立 gotmp/lintcache；fnm Node **26.13.1** / npm **11.20.0**。runner=`checks.sh`，各命令有独立 start/end/log/exit；没有失败后循环重试。
+
+1. **相关定向两轮 PASS**：`go test -p 1 ./internal/bootstrap ./internal/application/enrichment ./internal/proposal ./internal/application/delegated ./internal/seriesmeta ./internal/api ./internal/database ./internal/covermaterial -run 'TestProductionMCP(AuthorCorrections|Enrichment)|TestEnrichment|Adjudication|Concurrent|Concurrency|TestMCP|TestCurrentAuthority|Cleanup|Cover|Undo' -count=2 -timeout=10m`，exit0；bootstrap465.685s、api15.703s。包含真实HTTP/编译stdio、read/write/library撤权和用户降权、裁决与终态/摘要兼容、cleanup故障重开原key恢复/身份限制、cover/Undo/运行中撤权/junction。delegated有实际匹配；covermaterial无独立测试，其文件保护经bootstrap公开测试验证。
+2. **本组合唯一一次完整 backend PASS**：`timeout 1800 go test -json -p 1 ./... -count=1 -timeout=10m`，16:06:57→16:18:22 +08:00，exit0，**38个有测试包PASS / 0 fail事件**；api153.046s/bootstrap286.112s。JSON明确记录HTTP与stdio read/write/library撤权及user-demoted子项通过；配置并发保存/relocation crash/stdio饱和EOF均通过。摘要 `backend-summary.json`。
+3. **完整 frontend PASS：121 files /1162 tests**，130.44s；`npm run build`、`npm run lint`均exit0。另实际运行历史页定向，**1 file /16 tests PASS**，2.97s（`frontend-history`），包括11三态及13四项freshfix/remount增量。build只出现非失败PLUGIN_TIMINGS提示。
+4. `gofmt -l ./cmd ./internal` 输出空；独立cache `golangci-lint run --allow-parallel-runners` **0 issues.**，exit0；无规则豁免。
+5. `go run ./cmd/tsgen` **48 types**，exit0；前后 generated.ts SHA256均 `109ab5217b37c3aab46ee9b43bfe71cbf94641263e7d109f6dca02eba325a7d7`，无漂移。
+6. SQL/query/schema/sqlc配置及生成bindings相对HEAD/MERGE_HEAD均无输入差异（`sql-input-vs11.log`、`sql-input-vs13.log`均空），无需且未跑sqlc。`git diff --check`通过；最后只追加本验收/issue记录，不修改已验证源码。
+
+### Remaining / 诚实边界
+
+本轮未发现具体功能缺陷或实测门禁blocker；没有扩修实现。此前Windows rename Access denied本轮未复现，历史根因/holder仍未定位，**不宣称已修复或已证明baseline不稳**，没有retry/sleep/skip/预算放宽。两票安全回归在同一组合生产图执行并经静态边界交叉核查；不冒称穷尽所有取消/崩溃调度或新增浏览器端到端测试。13仍done；11仍ready-for-agent，父负责索引、提交及独立canonical review。
