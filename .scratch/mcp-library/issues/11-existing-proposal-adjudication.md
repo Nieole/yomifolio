@@ -31,3 +31,6 @@
 - 本轮最终门禁：定向双轮/最终 HTTP+stdio 双轮、相关八包全测、完整 frontend121files/1162tests、build/lint/gofmt/Go lint/tsgen无漂移/diff均通过；唯一一次完整backend失败于 relocation occupied 与 derived_effects 两处Windows rename Access is denied（37包PASS，仅apiFAIL），未盲重跑或归因baseline，最终门禁框重新取消。修复待父fresh独立review和故障诊断，不称merge-ready；详见acceptance最新节与 `.tmp/11/acceptedfix/`。
 
 - Fresh 最后 UI 窄修（HEAD8a1b95d3，未提交）：修复人工部分接受后普通网页 Reject 的 rejected/accepted=true 被误报全部拒绝；双语显示“已接受部分内容，剩余差异已拒绝”，冲突结果保留且不冒充 supplemented_closed 成功。组件双语红绿、最终18项历史页/完整前端121files1164tests、build/lint、真实HTTP/stdio共享体两条人工Reject路径的backend定向双轮、gofmt/Go lint/48types tsgen无漂移/diff均PASS。无后端业务/人工状态/接受事实/不可变收据/digest变更；after mockup更新、before原字节不变。依要求未跑完整backend、不干预父原8a完整gate；全局门禁框留父根据其结果更新，11仍ready-for-agent，等待父fresh独立review。详见acceptance最新节及 `.tmp/11/uifix/`。
+
+
+- Fresh rc_6859775a（HEAD e92a1223）：ProposeMatch 新建/复用响应在原实际授权入队事务内统一投影 proposal.Accepted，修复同 ID 在 reuse false/Get true 的不一致，不改证据/摘要/人工裁决。真实 HTTP+编译 stdio 红绿，summary+tags→partial summary→合法剩余 tags 同 ID reuse true→重开/关闭/receipt true，另覆盖 provenance-only 人工 partial 复用。定向两轮、相关八包完整、本轮唯一完整 backend（38测试包/0fail）、历史页18tests、gofmt/lint0issues/48types tsgen无漂移全部通过；前端未动，本次未重跑 fullUI/build/frontend lint。保持 ready-for-agent，未提交，父 b4740764 文档未自行合并；交父立即 fresh 独立重审及最终14组合 gate。完整证据见 acceptance 末节及 .tmp/11/reusefix/。

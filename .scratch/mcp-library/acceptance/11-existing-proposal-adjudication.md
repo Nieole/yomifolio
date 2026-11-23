@@ -257,3 +257,39 @@ Go **1.26.10**；guide共享GOCACHE，本树独立 `gotmp` / `lintcache`。fnm N
 ### Remaining / 父独立 review
 
 本次已实测 UI blocker 的修复及反例，无已知本窄修功能缺口；不代表独立批准或穷尽安全验证。按用户指定，**没有重跑完整 backend，也没有干预父正在跑的完整 gate**；历史 Windows rename 根因仍不在本窄修内，不将本次定向通过冒称完整门禁已绿。11 保持 ready-for-agent、全局门禁框留父据其完整 gate 结果更新；父负责 fresh 独立 review、最终集成与提交。全部修改未 stage/commit，HEAD 仍为8a1b95d3。
+
+
+## Fresh narrow fix rc_6859775a：确认复用响应的 Accepted
+
+仅编辑 `C:/Users/saber/.thinkrail/agent-worktrees/mcp-library-11` / `mcp-proposal-adjudication`，起点 HEAD=`e92a1223`，起点干净。已读 git log：父 `implement-mcp-library` 的 `b4740764` 仅为后续 verification 文档提交；未自行合并，留父整合。本轮不 stage/commit/merge/reset、不改父 TODO/其他树，11 保持 ready-for-agent。
+
+### 实际修复与 seam
+
+- `MatchingAccess.queue` 在原真实 SQLite 写事务内保持当前实际库与 MetadataWrite 授权、RefreshSeries/锁与 Queue 去重，再以共享 `proposal.Accepted` 投影新建/复用提案，成功 commit 后连同结果返回；`ProposeMatch` 明确填写 accepted。没有提案的 no_changes/all_fields_locked/rejected_before 返回 false，新建未接受同样 false。没有额外读事务或事务外来源查询窗口。
+- 全面检索 MatchProposal/Accepted 与收据构造（`projection-audit.log`）：生产两个 MatchProposal 非错误响应为 ProposeMatch/GetMatchProposal；后者、enrichment 初始/冲突及完成收据、关闭判断已共用 Accepted，无其他漏填入口。未改 Accepted 的 applied_at、applied/supplemented_closed 或现存 review_id provenance 判据；不可变历史收据不回填，closed/rejected 事实不改。
+- 新生产测试同体由 HTTP 与真实编译 stdio 运行：确认 summary+tags → MCP partial summary → 同一次搜索合法选择剩余 tags 再确认 → 同 ID/reused_existing/accepted=true，Get 一致；SQLite/生产图重开后 pending/true，再 reject 得到 supplemented_closed/true，历史 partial 收据仍 true，summary 不重复写、tags 不额外写。剩余字段使用 Queue 原有签名规则复用，不修改命令 digest、不伪造 confirmation。
+- 原人工 partial provenance-only 场景也新增真实确认复用断言，applied_at 仍空；人工 Reject 后 rejected/true、清理/重开及 conflict 收据原守卫继续保留。原 refused identity、字段来源选择、锁/no-diff、受保护值、当前 read/write/library 与用户降权检查未削弱。
+- owning application/proposal/metadata SPEC 和 CHANGELOG 同步。无前端、响应字段 schema、SQL/sqlc 输入或冻结 digest 修改。
+
+### TDD 与本轮证据
+
+全部本轮日志 `.tmp/11/reusefix/`。Go1.26.10 windows/amd64，共享指定 GOCACHE，本树独立 GOTMPDIR/lintcache；Node26.13.1/npm11.20.0。公开 seam 已由用户指定；已读 AGENTS、TDD skill/测试与 mock 指南、相关规格及 ADR0011。
+
+- `red.log` exit1：真实 HTTP 与编译 stdio 均实际复用相同 ID，但 accepted=false，精确复现 finding；未用 mock/setAccepted。最小修复 `green.log` exit0，48.645s。随后仅补 provenance-only 复用与关闭后内容保留断言，最终门禁覆盖最终测试字节。
+- 最终定向两轮 `targeted.log` exit0：八包 bootstrap/enrichment/proposal/delegated/seriesmeta/api/database/covermaterial，regex 含 Matching、adjudication、receipt/read 撤权、cleanup/Undo 与真实 stdio；bootstrap238.247s/api16.209s。具体命令在 checks.sh。delegated 有实际匹配，covermaterial 无独立测试，其生产行为经 bootstrap 覆盖。
+- 相关八包完整 `related-full.log` exit0：bootstrap118.956s/api193.186s，count1。
+
+后续完整 backend（仅一次、外层1800s）、历史页定向、gofmt/lint/tsgen 与 diff 检查的结果在下一节补记；不把尚在运行视为通过，不借父14最终 full gate。
+
+
+### 最终实际 checks / 当前结论
+
+上述后续门禁均已完成，最终源码未再修改：
+
+1. **本轮唯一一次完整 backend PASS**：`timeout 1800 go test -json -p 1 ./... -count=1 -timeout=10m`，17:57:47→18:05:05 +08:00；`backend-full.exit=0`，**38 个有测试包 PASS / 0 fail events**，api145.202s/bootstrap100.967s（`backend-summary.json`）。包括真实 HTTP/stdio 裁决、matching、撤权、cleanup、饱和 EOF；历史配置/relocation Windows rename 本轮未失败，不宣称定位或修复其 holder/根因。不借父14最终 full gate。
+2. **前端只历史页定向 PASS**：`npm test -- src/pages/settings/metadataOperations.test.tsx --maxWorkers=2`，1 file /18 tests，34.95s。前端没有改动；本轮**未重跑 full frontend/build/frontend lint**，父 b4740764 的历史组合结果仍只作历史记录，不冒称本轮重跑。
+3. `gofmt -l ./cmd ./internal` 输出空/exit0；本树独立 cache 的 `golangci-lint run --allow-parallel-runners` **0 issues.**/exit0。
+4. `go run ./cmd/tsgen` exit0 /48 types，前后 generated.ts SHA256 均 `109ab5217b37c3aab46ee9b43bfe71cbf94641263e7d109f6dca02eba325a7d7`，无漂移。
+5. `stable-inputs.log` 空：SQL/query/schema/sqlc 配置、生成绑定与 digest.go 相对 HEAD 无变化；无需且未调用 sqlc。`git diff --check` 通过，文档 LF，无换行 churn。
+
+**当前结论：rc_6859775a 已窄修并过本轮门禁，11 保持 ready-for-agent，交父立即 fresh 独立重审与整合/提交；不是独立批准或 done。** 无已知本 finding 剩余复现，旧不可变收据不回填。没有新 SQL/schema、权限扩张、digest 字节变化或人工 Apply/Reject 语义调整；历史 Windows 文件系统故障根因仍未定位，不能由本轮绿灯推导 baseline 不稳或已修复。父多出的 b4740764 文档提交未合并，父14最终组合 full gate 仍由父负责。最终所有变更未 stage/commit，HEAD 保持 e92a1223。

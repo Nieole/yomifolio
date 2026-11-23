@@ -76,7 +76,7 @@ run_id 标识一次已接纳执行，不是系列变更的 operation_id，也不
 
 agent 必须显式确认所选候选属于同一系列及相同版本，并提交最多 1000 字节的可核查短摘要；无法确认时仅返回候选和疑点，不持久化探索结论或内部推理。字段选择把 title、summary、publisher、status、rating、tags、authors 各映射到本次搜索返回的 candidate_id，允许跨来源组合；不开放 cover/source_links 等未支持提案字段。confidence 保持来源质量信号，不包装为身份匹配概率，不自动确认首项。
 
-确认结果交给 `proposal.Queue`，保留 queued、reused_existing、no_changes、all_fields_locked、rejected_before 的区别，`metadata_written` 恒 false；复用时返回原提案及其原证据，不谎称本次摘要已存入。新建提案 raw_payload 保存 `MatchEvidence`（真实用户/凭据归属、查询、身份及版本确认、短摘要、每字段选定来源的完整已建模数据快照），字段行同时保存各自 source/source_url。证据随提案持久化，重开服务仍可按系列和提案读取；这不是元数据变更审计或可撤销操作历史，后续写入需另建前后状态及审计记录。链接和封面出现在证据内不代表可裁决。读取当前字段值/锁复用 `proposal.Get`，不展示入队快照为当前事实。
+确认结果交给 `proposal.Queue`，保留 queued、reused_existing、no_changes、all_fields_locked、rejected_before 的区别，`metadata_written` 恒 false；复用时返回原提案及其原证据，不谎称本次摘要已存入。确认响应的 accepted 与 GetMatchProposal 共用 proposal.Accepted，投影在实际入队、当前授权事务内完成；新建或没有提案的结果不表示接受，复用 pending 可已有接受事实。新建提案 raw_payload 保存 `MatchEvidence`（真实用户/凭据归属、查询、身份及版本确认、短摘要、每字段选定来源的完整已建模数据快照），字段行同时保存各自 source/source_url。证据随提案持久化，重开服务仍可按系列和提案读取；这不是元数据变更审计或可撤销操作历史，后续写入需另建前后状态及审计记录。链接和封面出现在证据内不代表可裁决。读取当前字段值/锁复用 `proposal.Get`，不展示入队快照为当前事实。
 
 
 ### 安全补充与持久撤销

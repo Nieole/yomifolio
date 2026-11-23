@@ -311,11 +311,11 @@ func (s *Service) ProposeMatch(ctx context.Context, subject Subject, in ConfirmM
 		_ = json.Unmarshal(raw, &facts)
 		result.MatchEvidence.Fields[field] = metadata.FieldEvidence{CandidateID: id, Source: m.Provider, Metadata: facts}
 	}
-	out, err := s.matching.queue(ctx, subject, series.LibraryID, series.ID, result)
+	out, accepted, err := s.matching.queue(ctx, subject, series.LibraryID, series.ID, result)
 	if err != nil {
 		return MatchProposal{}, err
 	}
-	response := MatchProposal{Status: out.Status, ProposalID: out.Proposal.ID}
+	response := MatchProposal{Accepted: accepted, Status: out.Status, ProposalID: out.Proposal.ID}
 	if out.Proposal.ID > 0 {
 		var saved metadata.SeriesMetadata
 		_ = json.Unmarshal([]byte(out.Proposal.RawPayload), &saved)

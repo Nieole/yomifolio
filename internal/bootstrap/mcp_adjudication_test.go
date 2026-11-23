@@ -12,6 +12,7 @@ import (
 func verifyProposalAdjudication(t *testing.T, store database.Store, makeSeries func(string) int64, call func(string, any) map[string]any, propose func(int64, string) any, web func(string, string, any, int) []byte, session *mcp.ClientSession, gate func() *enrichmentBarrier) func(func(string, any) map[string]any) {
 	t.Helper()
 	verifyManualAfterReopen := verifyManualPartialAdjudication(t, store, makeSeries, call, web)
+	verifyReuseAfterReopen := verifyAcceptedMatchReuse(t, makeSeries, call)
 	id := makeSeries("Adjudication")
 	p := propose(id, "bangumi")
 	input := map[string]any{"request_key": "adjudicate-part", "series_id": id, "proposal_ids": []any{p}, "fields": []string{"summary"}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": id}), "adjudication": map[string]any{"mode": "partial", "reason": "Accept verified missing description"}}
@@ -199,6 +200,7 @@ func verifyProposalAdjudication(t *testing.T, store database.Store, makeSeries f
 	verifyAdjudicationRaces(t, store, makeSeries, call, propose, web, session, gate)
 	return func(reopenedCall func(string, any) map[string]any) {
 		verifyManualAfterReopen(reopenedCall)
+		verifyReuseAfterReopen(reopenedCall)
 		read := reopenedCall("library_get_match_proposal", map[string]any{"series_id": id, "proposal_id": p})
 		if read["status"] != "supplemented_closed" || read["accepted"] != true {
 			t.Fatal("lost persistent adjudication", read)
@@ -606,6 +608,10 @@ func verifyManualPartialAdjudication(t *testing.T, store database.Store, makeSer
 	if r := read(call); r["status"] != "pending" || r["accepted"] != true || len(r["fields"].([]any)) != 1 {
 		t.Fatal("manual partial lost acceptance", r)
 	}
+	reused := call("library_propose_match", map[string]any{"search_id": search["search_id"], "identity_confirmed": true, "edition_confirmed": true, "summary": "Same edition, remaining title", "fields": map[string]string{"title": "bangumi:0"}})
+	if reused["proposal_id"] != p || reused["status"] != "reused_existing" || reused["accepted"] != true {
+		t.Fatal("reuse lost provenance-only acceptance", reused)
+	}
 	// Assert the fixture really exercises provenance alone, not a new artificial marker.
 	var marked bool
 	if err := store.DB().QueryRow(`SELECT applied_at IS NOT NULL FROM metadata_reviews WHERE id=?`, p).Scan(&marked); err != nil || marked {
@@ -679,5 +685,57 @@ func verifyManualPartialAdjudication(t *testing.T, store database.Store, makeSer
 			t.Fatal(r)
 		}
 		assertPartial(c("library_get_metadata_operation", map[string]any{"operation_id": op["id"]}))
+	}
+}
+
+// The same public matching flow runs over production HTTP and compiled stdio.
+func verifyAcceptedMatchReuse(t *testing.T, makeSeries func(string) int64, call func(string, any) map[string]any) func(func(string, any) map[string]any) {
+	t.Helper()
+	id := makeSeries("Accepted match reuse")
+	search := call("library_search_sources", map[string]any{"series_id": id, "query": "Space"})
+	call("library_wait_run", map[string]any{"run_id": search["run"].(map[string]any)["run_id"], "timeout_ms": 30000})
+	confirm := map[string]any{"search_id": search["search_id"], "identity_confirmed": true, "edition_confirmed": true, "summary": "Same identity and edition", "fields": map[string]string{"summary": "bangumi:0", "tags": "bangumi:0"}}
+	queued := call("library_propose_match", confirm)
+	p := queued["proposal_id"]
+	if queued["status"] != "queued" || queued["accepted"] != false {
+		t.Fatal(queued)
+	}
+	input := map[string]any{"request_key": "reuse-accept-summary", "series_id": id, "proposal_ids": []any{p}, "fields": []string{"summary"}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": id}), "adjudication": map[string]any{"mode": "partial", "reason": "Accept verified description"}}
+	op := call("library_enrich_metadata", input)
+	if op["adjudication"].(map[string]any)["accepted"] != true {
+		t.Fatal(op)
+	}
+	// Queue signatures compare remaining fields and current values, not confirmation digests.
+	confirm["fields"] = map[string]string{"tags": "bangumi:0"}
+	reused := call("library_propose_match", confirm)
+	if reused["proposal_id"] != p || reused["status"] != "reused_existing" || reused["accepted"] != true || reused["metadata_written"] != false {
+		t.Fatal("reused proposal lost accepted facts", reused)
+	}
+	check := func(c func(string, any) map[string]any) {
+		r := c("library_get_match_proposal", map[string]any{"series_id": id, "proposal_id": p})
+		if r["accepted"] != true || r["status"] != "pending" || len(r["fields"].([]any)) != 1 {
+			t.Fatal(r)
+		}
+		state := c("library_get_enrichment_state", map[string]any{"series_id": id})
+		if state["summary"] != "Space journey" || len(state["tags"].([]any)) != 0 {
+			t.Fatal("confirmation wrote metadata", state)
+		}
+	}
+	check(call)
+	return func(c func(string, any) map[string]any) {
+		check(c)
+		closed := c("library_enrich_metadata", map[string]any{"request_key": "reuse-close-after-reopen", "series_id": id, "proposal_ids": []any{p}, "fields": []string{}, "expected": c("library_get_enrichment_state", map[string]any{"series_id": id}), "adjudication": map[string]any{"mode": "reject", "reason": "Keep existing tags"}})
+		a := closed["adjudication"].(map[string]any)
+		if a["accepted"] != true || a["status"] != "supplemented_closed" {
+			t.Fatal(closed)
+		}
+		state := c("library_get_enrichment_state", map[string]any{"series_id": id})
+		if state["summary"] != "Space journey" || len(state["tags"].([]any)) != 0 {
+			t.Fatal("closing rewrote accepted content or tags", state)
+		}
+		receipt := c("library_get_metadata_operation", map[string]any{"operation_id": op["id"]})
+		if receipt["adjudication"].(map[string]any)["accepted"] != true {
+			t.Fatal(receipt)
+		}
 	}
 }
