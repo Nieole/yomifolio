@@ -4,7 +4,7 @@
 
 **Blocked by:** 09 校正所选系列的作者关联。
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 读取和应用已有提案时执行当前用户、凭据、资料库及元数据写入授权，复用已交付补充、标签和作者策略，不借普通提案的整组替换语义覆盖受保护内容。
 - [x] 提供补充后关闭剩余差异的完整操作，确定可持久区分的状态或呈现；网页与 MCP 可分辨全部拒绝、部分应用尚待裁决和补充后关闭。
@@ -15,6 +15,8 @@
 - [x] 后端与前端门禁及受影响生成物检查通过，更新裁决长期契约但不削弱有效 ADR。
 
 ## Comments
+
+- Final closure: independent canonical re-review approved the reused acceptance projection in `7d21a845` after the Read-authority, manual-provenance and rejected+accepted display repairs. Complete backend passed; latest targeted HTTP/stdio and relevant package tests passed. Consolidated projection/state review boundary is in `acceptance/11-state-projection-review.md`; actual execution history remains in acceptance11. Earlier blocked notes below are historical. Final14 owns remaining whole-effort integration and documentation.
 
 - 最新集成验证：`8a1b95d3` 完整后端在父树 exit0（含api/bootstrap全包），日志 `.tmp/final11/backend.log`；其后 `e92a1223` 仅修 rejected+accepted 网页展示并补生产回归，定向后端双轮、完整前端121文件1164测试/build/lint、Go lint及tsgen均过，无后端业务或digest变化。历史Windows rename失败仍未定位，不声称修复。等待最终独立审阅。
 
