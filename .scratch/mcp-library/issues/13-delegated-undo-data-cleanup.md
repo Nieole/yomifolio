@@ -4,7 +4,7 @@
 
 **Blocked by:** 10 改善自动封面并与文字一起生效。
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 默认不按时间自动清理撤销材料和必要旧图片；管理员网页提供手动清理入口，MCP 提供独立能力控制的同等操作。
 - [x] 元数据写入权限不隐含清理权限；服务端执行当前用户、凭据资料库及清理能力交集，猜测操作标识不能清理其他作用域材料。
@@ -16,6 +16,8 @@
 - [x] 后端及前端门禁和受影响生成检查通过；长期契约明确清理与删除藏书文件的区别。
 
 ## Comments
+
+- Final closure: `727820e9` repairs durable pending cleanup inspection and original-key resumption after reload. Independent re-review approved; full backend38 packages and frontend121 files/1161 tests, build/lint and generation checks pass. Earlier blocked/pending notes below are historical. Historical Windows rename failures remain unassigned, not claimed repaired.
 
 - 最新顺序对照：基线 `13ea7e66` 与票13完整后端各一次 exit0（545.584s / 553.699s，各38包PASS），未改源码或增加retry；前端、lint及生成检查证据见acceptance13。此前 Windows rename 失败的句柄持有者仍未定位，不宣称已修复。以下blocked记录为历史，当前等待集成与最终独立审阅。
 
