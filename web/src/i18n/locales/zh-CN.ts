@@ -21,6 +21,7 @@ export const messages: MessageCatalog = {
     "audit.no-change": "无变化",
     "audit.conflict": "冲突：当前值或锁不允许此操作",
     "audit.unprocessed": "未处理",
+    "audit.field.authors": "作者",
     "audit.field.title": "标题",
     "audit.field.summary": "描述",
     "audit.field.publisher": "出版社",

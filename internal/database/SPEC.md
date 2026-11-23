@@ -51,3 +51,8 @@ references: [mm-adr-0003]
 `MetadataJournal.TryChange` 用同一外层事务内的 savepoint 包住元数据写入；仅当失败写入已完整回滚且 savepoint 释放成功时报告 failed，供应用保存脱敏失败收据。事务/savepoint 错误要求外层中止，不把已 rollback 的数据记为 changed；不使用另一个事务补记撤销失败来假装原子性。
 
 `schema_model_budget.sql` 由统一 Migrate 安装，不进入 sqlc 输入。mcp_model_operations 与 mcp_model_calls 只保存独立命名空间的模型操作归属、冻结来源证据、不可变额度、准入消耗和白名单结果标签；唯一凭据/搜索及操作/item 约束防止重复额度/消费，used 受 allowance CHECK 约束。不与元数据变更审计共用表，不存模型内部推理；应用在实际事务内执行当前权限护栏。记录不随临时搜索缓存、运行历史裁剪或重启删除，用户/凭据失效仍由当前授权拒绝访问；不是通用审计或清理功能。
+
+
+## 共享作者身份
+
+当前 authors 的唯一身份为精确 `(name, role)`，角色不属于 series_authors 行。`Queries.EnsureAuthor` 只 INSERT ON CONFLICT DO NOTHING 并读取精确身份，供受限系列校正/撤销使用，不触发共享身份 UPDATE，不删无关联旧身份。调用者提供真实事务，目标关联替换和统计与收据原子提交；本包不承担别名认定或全库合并策略。该手写查询不变更 sqlc 模型或 schema。

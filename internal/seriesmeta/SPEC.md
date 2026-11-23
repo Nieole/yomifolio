@@ -36,3 +36,8 @@ parent: mm-architecture
 `ContentTags` 以保守内容类型词表筛除个人阅读标记、来源名、年份与未知自由标签，调用方追加而不替换旧成员。`EnrichmentRating` 只接受 Bangumi、AniList、MyAnimeList 的原始站点评分及有效尺度，同来源只计一次，换算十分制后等权平均；返回参与的完整来源和可重算公式，无有效评分返回缺失，不回落到 LLM 或已有归一化 Rating。实际来源适配器的原始尺度归 `mm-metadata`；单系列事务及审计归 `mm-application`。这些入口不改写手工、扫描或普通提案原有规则。
 
 `State` 定义受限补充/撤销使用的字段快照；`EnrichmentLocked` 解释当前字段锁，`WriteEnrichmentState` 通过窄事务查询端口写入已准备状态及实际改变的集合并刷新统计。应用调用方必须先在同一事务核对当前权限、锁和相关预期值，任一步失败整体回滚写入（事务或包住完整写入的 savepoint）；写入器不持有事务或协议身份。
+
+
+`State.Authors` 与 `AuthorSet` 定义精确 name/role 集合；`WriteEnrichmentState` 仅对 authors 被实际改变的目标系列重建关联，使用 `EnsureAuthor` 获取身份，绝不修改或删除旧作者身份。旧关联可由 Undo 重建，共享其他系列不受影响。授权、明确别名/角色映射、来源证据与整组预期值检查归应用层；普通手工替换、扫描追加及提案集合规则不改变。
+
+`State` 是可扩展的响应及审计快照，不是持久命令摘要格式；命令 ExpectedState 与冻结摘要映射归 `mm-application`，新增 State 字段不得隐式改变已有请求键的 SHA。旧审计缺失 authors 不表示曾清空作者组。

@@ -11,6 +11,7 @@ function safeLink(value: string) {
   try { const url = new URL(value); return ['https:', 'http:'].includes(url.protocol) ? url.href : undefined; } catch { return undefined; }
 }
 function fieldValue(state: State, field: string) {
+  if (field === 'authors') return state.authors?.map((author) => `${author.name} · ${author.role}`).join('\n') || '∅';
   const value = state[field === 'source_links' ? 'links' : field as keyof State];
   if (value === null || value === undefined) return '∅';
   return typeof value === 'string' ? value : JSON.stringify(value);

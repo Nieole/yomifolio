@@ -45,3 +45,17 @@ it('retains the same request identity when a network failure makes undo uncertai
  await screen.findByText('Undone');
  expect(mocks.post.mock.calls[0]).toEqual(mocks.post.mock.calls[1]);
 });
+it('shows series-local author names and roles before and after correction and safe undo', async () => {
+ const authorRow = { ...row, before: { ...state, authors: [{ name: 'Alias', role: 'Artist' }] }, after: { ...state, authors: [{ name: 'Canonical', role: 'Writer' }] }, fields: [{ ...row.fields[0], field: 'authors', reason: 'Published credit confirms pen name' }] };
+ mocks.get.mockResolvedValue({ data: { operations: [authorRow] } });
+ mocks.post.mockResolvedValue({ data: { ...authorRow, id: 'author-undo', kind: 'undo', outcome: 'conflict' } });
+ setup();
+ await screen.findByText('Alias · Artist');
+ expect(screen.getByText('Canonical · Writer')).toBeTruthy();
+ expect(screen.getByText('Authors')).toBeTruthy();
+ expect(screen.getByText('Published credit confirms pen name')).toBeTruthy();
+ fireEvent.click(screen.getByRole('button', { name: 'Undo operation' }));
+ fireEvent.click(screen.getByRole('button', { name: 'Confirm undo' }));
+ await screen.findByRole('status');
+ expect(screen.queryByText('Undone')).toBeNull();
+});

@@ -77,3 +77,8 @@ MCP 安全入口仅接受 `mcp.public_url` 配置的精确 authority；有 Origi
 ## 受限补充和操作历史
 
 MCP 的 enrichment state、单项/批量补充、操作查询/按系列分页与撤销工具直接委托 `enrichment.Service`，身份来自认证凭据，不接受调用者自报。工具声明只读或幂等提示，但最终以事务授权和持久重放结果为准。管理员网页 `GET /api/mcp/operations`、`GET /api/mcp/operations/{operationId}`、`POST /api/mcp/operations/{operationId}/undo` 复用网页认证和 CSRF，命令携带 request_key；普通用户不可管理或撤销。审计、响应预算、预期值与回滚契约归 `mm-application`。
+
+
+作者校正复用同一 enrichment 工具与操作查询/撤销路径；输入可选择 authors，`author_corrections` 使用精确 from/to name、role 与短 reason，不接受自由作者事实。state 与收据 before/after 返回作者组，协议层不执行共享身份重命名。系列内例外、当前事务保护和字段补空限制归 `mm-application`。
+
+补充命令的 expected schema 来自独立 `enrichment.ExpectedState`，authors 可省略（含批量嵌套输入）；不因响应 State 增加字段而要求旧客户端补送新字段。持久摘要版本与兼容规则归 `mm-application`。

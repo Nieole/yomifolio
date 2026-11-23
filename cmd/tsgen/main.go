@@ -34,6 +34,7 @@ var targets = []reflect.Type{
 	reflect.TypeOf(metadata.SiteRating{}),
 	reflect.TypeOf(metadata.SeriesAuthor{}),
 	reflect.TypeOf(seriesmeta.Link{}),
+	reflect.TypeOf(seriesmeta.Author{}),
 	reflect.TypeOf(delegated.Restrictions{}),
 	reflect.TypeOf(delegated.Credential{}),
 	reflect.TypeOf(delegated.IssuedCredential{}),

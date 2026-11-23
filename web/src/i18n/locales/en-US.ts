@@ -21,6 +21,7 @@ export const messages: MessageCatalog = {
     "audit.no-change": "No change",
     "audit.conflict": "Conflict: current values or locks prevent this operation",
     "audit.unprocessed": "Unprocessed",
+    "audit.field.authors": "Authors",
     "audit.field.title": "Title",
     "audit.field.summary": "Description",
     "audit.field.publisher": "Publisher",
