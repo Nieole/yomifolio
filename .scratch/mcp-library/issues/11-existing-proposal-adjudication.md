@@ -12,9 +12,11 @@
 - [x] 严格遵守 mm-adr-0011，在实际写入事务中重读待裁决状态、当前值、锁和已消费字段；终态竞争失败不提交元数据、提案字段或来源沿革。
 - [x] 并发部分应用不得重复消费字段，重放和关闭竞争有明确公开结果；不改变既有人工提案使用方式。
 - [x] 从生产服务验证旧提案输入、作者保护、成功后关闭、先拒绝后应用及部分应用竞争，保留现有真实事务回滚守卫；网页呈现不误报为全部拒绝。
-- [ ] 后端与前端门禁及受影响生成物检查通过，更新裁决长期契约但不削弱有效 ADR。
+- [x] 后端与前端门禁及受影响生成物检查通过，更新裁决长期契约但不削弱有效 ADR。
 
 ## Comments
+
+- 最新集成验证：`8a1b95d3` 完整后端在父树 exit0（含api/bootstrap全包），日志 `.tmp/final11/backend.log`；其后 `e92a1223` 仅修 rejected+accepted 网页展示并补生产回归，定向后端双轮、完整前端121文件1164测试/build/lint、Go lint及tsgen均过，无后端业务或digest变化。历史Windows rename失败仍未定位，不声称修复。等待最终独立审阅。
 
 - 在专属 mcp-library-11 / mcp-proposal-adjudication 实施；保持 ready-for-agent，未提交，等待父独立 merger/review。验收证据归 acceptance/11-existing-proposal-adjudication.md，勾选仅代表实测，不代表父批准。完整后端唯一一次运行在 TestMCPStdioSaturatedEOF 的代理构建处失败，最终门禁项保持未勾；未盲重跑或放宽测试。
 
