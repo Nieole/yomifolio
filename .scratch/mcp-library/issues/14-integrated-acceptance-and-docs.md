@@ -6,11 +6,23 @@
 
 **Status:** ready-for-agent
 
-- [ ] 双传输均验证初始化、工具发现和实际调用；stdio 真实子进程连接生产组装服务，复用同一业务验收宿主，不另造应用运行时。
-- [ ] 完整链路包含受限凭据、组合筛选、本地和图片线索、多来源匹配、歧义不写入、补充与作者校正、文字封面一致性、提案关闭和逐系列结果报告。
-- [ ] 综合验证独立能力和资料库隔离、密码与权限撤销对排队及活动运行的影响、客户端断线重连、跨请求模型用量、清理前安全撤销和清理后能力损失。
-- [ ] 覆盖故障及进程重启后的存储一致性和已定义恢复行为，不将客户端断线与进程重启混同，不自动重发未经既定契约允许的付费请求。
-- [ ] 所属功能票已经包含自身公开边界、必要 UI 与回归测试；本票只补组合风险，不把未完成业务或全部安全测试集中延期到最终验收。
-- [ ] 提供部署及接入说明，讲清独立凭据、显式局域网明文风险、stdio 上游边界、agent 转述额度的信任限制及自主清理后的不可恢复风险；仅声称实际核验过的标准和客户端兼容性。
-- [ ] 将长期目标、跨模块依赖与公开契约归还所属规格，保留 effort 规划和访谈记录的定位；ADR 状态遵守用户审阅流程，不把规划 triage 当作已交付状态。
+- [x] 双传输均验证初始化、工具发现和实际调用；stdio 真实子进程连接生产组装服务，复用同一业务验收宿主，不另造应用运行时。
+- [x] 完整链路包含受限凭据、组合筛选、本地和图片线索、多来源匹配、歧义不写入、补充与作者校正、文字封面一致性、提案关闭和逐系列结果报告。
+- [x] 综合验证独立能力和资料库隔离、密码与权限撤销对排队及活动运行的影响、客户端断线重连、跨请求模型用量、清理前安全撤销和清理后能力损失。
+- [x] 覆盖故障及进程重启后的存储一致性和已定义恢复行为，不将客户端断线与进程重启混同，不自动重发未经既定契约允许的付费请求。
+- [x] 所属功能票已经包含自身公开边界、必要 UI 与回归测试；本票只补组合风险，不把未完成业务或全部安全测试集中延期到最终验收。
+- [x] 提供部署及接入说明，讲清独立凭据、显式局域网明文风险、stdio 上游边界、agent 转述额度的信任限制及自主清理后的不可恢复风险；仅声称实际核验过的标准和客户端兼容性。
+- [x] 将长期目标、跨模块依赖与公开契约归还所属规格，保留 effort 规划和访谈记录的定位；ADR 状态遵守用户审阅流程，不把规划 triage 当作已交付状态。
 - [ ] 全量后端测试、Go 格式与 lint、前端测试、构建与 lint、SQL 和响应契约生成漂移检查及规格图检查通过；用户可见变化记录到变更日志。任一门禁受环境阻断须明确记录，不能冒称通过。
+
+## Comments
+
+- Worker14: implementation claim in assigned independent tree, base 9a221ca8;
+  remains ready-for-agent pending parent review. Evidence in acceptance/14.
+
+- Retry worker: preserved prior tests and diagnostics; final combined candidate
+  passed two rounds, then one full backend gate, frontend test/build/lint,
+  Go format/lint and generation drift checks. Last item remains open for parent
+  spec graph validation. Extra doc-style script environment blocked (MSYS fork
+  failure/outer timeout), not passed. No production business changes; awaiting
+  independent and whole-branch review.
