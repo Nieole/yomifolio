@@ -1,6 +1,6 @@
 /**
  * 业务说明：只读打开仓库里的 MCP 接入指南全文。正文由构建期把 docs/mcp*.md 转成 HTML
- * 注入虚拟模块（见 web/build/mcpDocs.ts），这里只按界面语言取一份并塞进弹层，
+ * 注入虚拟模块（见 web/vite-plugins/mcpDocs.ts），这里只按界面语言取一份并塞进弹层，
  * 因此文档与仓库里的 markdown 不会各写一遍、互相漂移。
  */
 
