@@ -136,10 +136,57 @@ jobs:
           cd release-artifacts
           sha256sum yomifolio-* > SHA256SUMS.txt
           cat SHA256SUMS.txt
+      - name: Compose release notes from the changelog
+        env:
+          VERSION: ${{ needs.resolve.outputs.tag }}
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, sys
+
+          version = os.environ["VERSION"]
+          lines = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8").splitlines()
+          prefix = "### \U0001F3F7\uFE0F "
+          heading = f"{prefix}{version} "
+          start = next((i for i, line in enumerate(lines) if line.startswith(heading)), None)
+          if start is None:
+              sys.exit(f"CHANGELOG.md has no section for {version}")
+          end = next(
+              (j for j in range(start + 1, len(lines))
+               if lines[j].startswith("### ") or lines[j].strip() == "---"),
+              len(lines),
+          )
+          section = lines[start:end]
+          while section and not section[-1].strip():
+              section.pop()
+          section[0] = "## " + section[0][len(prefix):]
+
+          footer = f"""
+
+          ## 下载与校验
+
+          - `yomifolio-{version}-linux-amd64`、`yomifolio-{version}-windows-amd64.exe`、`yomifolio-{version}-darwin-arm64`：启用 CGO 的原生二进制。
+          - `yomifolio-{version}-<target>.metadata.json`：对应二进制的构建来源——目标与 `go env`、编译器版本输出、动态依赖（`ldd`）、嵌入式 AVIF/WASI 输入的哈希、MPL 组件的对应源码归档及逐文件哈希。
+          - `yomifolio-{version}-notices.zip`：本版本随二进制分发的第三方许可通知与适用全文。
+          - `SHA256SUMS.txt`：下载后以 `sha256sum -c SHA256SUMS.txt` 校验。
+
+          ## 已知限制
+
+          - 尚无可复现构建与签名 attestation，二进制与源码输入之间只有记录、没有密码学证明。
+          - 嵌入式 AVIF 预构建 WASM 的上游源码与工具链映射未解析，元数据中如实标注为未解析。
+          - 通知包内仍有两处 NPM 位置只有元数据标签、缺适用全文；该残留风险在发布审查记录中标注为非阻断。
+          """
+
+          pathlib.Path("release-artifacts/RELEASE_NOTES.md").write_text(
+              "\n".join(section) + footer, encoding="utf-8"
+          )
+          PY
+          cat release-artifacts/RELEASE_NOTES.md
       - name: Publish GitHub Release assets
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           tag_name: ${{ needs.resolve.outputs.tag }}
           target_commitish: ${{ needs.resolve.outputs.sha }}
+          body_path: release-artifacts/RELEASE_NOTES.md
           files: release-artifacts/*
           fail_on_unmatched_files: true
+          overwrite_files: true
