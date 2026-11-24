@@ -3956,6 +3956,20 @@
     },
     {
       "ecosystem": "NPM",
+      "name": "marked",
+      "version": "18.3.0",
+      "location": "node_modules/marked",
+      "license": "MIT",
+      "scope": "dev/build-only possible",
+      "installed": true,
+      "source": "https://registry.npmjs.org/marked/-/marked-18.3.0.tgz",
+      "integrity": "sha512-ed8zmPXlBb3UfGXN5iHMQyMhFpdqLgoV5umUXx/Q1R+FW3q8VpqpyoKUwlENL9appo2UMvNLURDVaT3AMOryGA==",
+      "files": [
+        "LICENSES/npm/node_modules/marked/18.3.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "NPM",
       "name": "math-intrinsics",
       "version": "1.1.0",
       "location": "node_modules/math-intrinsics",
@@ -7143,6 +7157,13 @@
       "collected": "2026-11-16"
     },
     {
+      "file": "LICENSES/npm/node_modules/marked/18.3.0/LICENSE",
+      "bytes": 2942,
+      "sha256": "8e3a3f82f59a60958f56ca08f445647c32a4733dc7ca6c2c46f6eb898471ab9c",
+      "source": "https://registry.npmjs.org/marked/-/marked-18.3.0.tgz!//LICENSE",
+      "collected": "2026-11-24"
+    },
+    {
       "file": "LICENSES/npm/node_modules/math-intrinsics/1.1.0/LICENSE",
       "bytes": 1073,
       "sha256": "2b770a704c15de238c3f622b01b0044ddd60b49ee30608ea6991ebf19db7a7a1",
@@ -7933,8 +7954,8 @@
   ],
   "inputs": {
     "go.mod": "cfbe52c69ccd545c4cb545f299d87ebad0aae9223bb91f4dc137753c93c0c3af",
-    "web/package-lock.json": "8d1c349ff3c3f22efd703d8ebd658636352b0840609976419bd0e66329536c5c",
+    "web/package-lock.json": "4cff91721c6800ab86d3c126b1cfbc96366107ee24e93fefa3bcbb3cfa2b17c6",
     "go.sum": "f66af9e64a3f83ead3b55893eaa2702174da0cc16916f9854255c681138b507e",
-    "web/package.json": "16d3a0b5bdf0f15eb2ef21d4a138223bc4ea4a1929412d2a24d98412cbab7640"
+    "web/package.json": "8c0be23bcec6a29b83dcf6736833e791fcf48f86372304938f4f44b6a59c2ff7"
   }
 }

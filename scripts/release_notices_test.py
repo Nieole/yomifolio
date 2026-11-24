@@ -242,7 +242,9 @@ class GateTests(unittest.TestCase):
                          [f'missing-review-{category}' for category in notices.REVIEW_CATEGORIES])
 
     def test_repository_reports_legal_gaps_without_gating_them(self):
-        report = notices.evaluate(notices.ROOT, Path('unused'), 'v1.10.0')
+        version = json.loads((notices.ROOT / 'LICENSES/release-review.json').read_text(
+            encoding='utf-8'))['version']
+        report = notices.evaluate(notices.ROOT, Path('unused'), version)
         residual_ids = [item['id'] for item in report['residual']]
         self.assertEqual(residual_ids, ['npm-legal-texts', 'native-runtime-notices', 'mpl-source',
                                         'unresolved-collection-gap', 'unresolved-collection-gap',
@@ -257,7 +259,7 @@ class GateTests(unittest.TestCase):
         self.assertTrue(all('metadata.json' in item for item in report['blockers']), report['blockers'])
         stderr = io.StringIO()
         with contextlib.redirect_stderr(stderr), self.assertRaisesRegex(AssertionError, 'metadata.json'):
-            notices.gate(notices.ROOT, Path('unused'), 'v1.10.0')
+            notices.gate(notices.ROOT, Path('unused'), version)
         self.assertIn('Residual non-blocking risk [npm-legal-texts]', stderr.getvalue())
         self.assertIn('Deferred non-blocking risk [avif-libyuv-wasi-build-provenance]', stderr.getvalue())
 

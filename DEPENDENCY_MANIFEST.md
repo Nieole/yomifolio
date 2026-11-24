@@ -2,7 +2,7 @@
 
 Generated 2026-11-16; inventory revised 2026-11-24 with upstream texts retrieved 2026-11-23. Labels come from lock metadata, not legal conclusions. Missing entries are explicit; a link is not a replacement for required license text.
 
-Current inventory: 384 package entries (54 Go modules, 329 NPM dependency locations, one Go 1.27.4 runtime); 402 legal files including root LICENSE/NOTICE and four upstream codec texts. Superseded Go 1.26.10 runtime texts are not included. NPM `installed` records directory presence, not a complete installation; six present directories lack package.json, so their versions cannot be locally verified.
+Current inventory: 384 package entries (54 Go modules, 329 NPM dependency locations, one Go 1.27.4 runtime); 402 legal files including root LICENSE/NOTICE and four upstream codec texts. Superseded Go 1.26.10 runtime texts are not included. NPM `installed` records directory presence, not a complete installation; absent optional/platform locations carry no local verification.
 
 | Ecosystem | Package/version | Scope | Source | Texts |
 |---|---|---|---|---|
