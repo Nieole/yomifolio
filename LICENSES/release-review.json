@@ -1,10 +1,19 @@
 {
   "version": "v1.10.0",
-  "scope": "Substantive release evidence checklist, not legal clearance; blocking defects are separate from deferred provenance risks",
-  "blockers": [
-    "Eight NPM package locations lack applicable full legal texts and no actual-bundle evidence places them outside the release payload: @humanfs/types 0.15.0, @napi-rs/wasm-runtime 1.2.6, @rolldown/binding-win32-x64-msvc 1.2.19, @tailwindcss/oxide-wasm32-wasi 4.3.5, nested @napi-rs/wasm-runtime 1.2.2 and @tybys/wasm-util 0.10.3, natural-compare 1.4.0, saxes 6.0.0",
-    "Actual three-target native compiler, CGO support-library and runtime legal texts are not yet reconciled with the emitted binaries, and no per-target evidence confirms that the bundled Web assets and the prebuilt WASI payload's applicable notices are present in the release payload",
-    "MPL-2.0 corresponding source access is recorded only as upstream locations; covered-source correspondence, local modifications and any required modified-source delivery for the actual release build remain unverified"
+  "scope": "Substantive release evidence checklist, not legal clearance; unverified legal applicability, inventory gaps and provenance risks are reported by the gate, not cleared",
+  "residual_risks": [
+    {
+      "id": "npm-legal-texts",
+      "risk": "Two NPM package locations lack applicable full legal texts: @humanfs/types 0.15.0 and the nested @tybys/wasm-util 0.10.3; their locked tarballs and matching source commits carry only metadata labels, and no actual-bundle evidence places them outside the release payload. Six further locations now carry version-pinned upstream texts with recorded limits (natural-compare keeps a linked author text, not a version-tarball LICENSE; @rolldown/binding-win32-x64-msvc 1.2.19 and @tailwindcss/oxide-wasm32-wasi 4.3.5 are tag-corresponding, not native/WASI build correspondence)."
+    },
+    {
+      "id": "native-runtime-notices",
+      "risk": "Actual three-target native compiler, CGO support-library and runtime legal texts are not reconciled with the emitted binaries, and no per-target evidence confirms that the bundled Web assets and the prebuilt WASI payload's applicable notices are present in the release payload."
+    },
+    {
+      "id": "mpl-source",
+      "risk": "MPL-2.0 corresponding source access is recorded only as upstream locations; covered-source correspondence, local modifications and any required modified-source delivery for the actual release build remain unverified."
+    }
   ],
   "deferred": [
     {

@@ -1,0 +1,13 @@
+$ python -B scripts/release_notices.py create --version v1.10.0 --artifacts <temp>
+Notice integrity: 401 files verified.
+Recorded collection gaps: 2; see THIRD_PARTY_NOTICES.md.
+This check does not certify compliance or clear release limitations.
+Notice create passed (not legal clearance).
+
+exit=0
+$ python -B scripts/release_notices.py verify --version v1.10.0 --artifacts <temp>
+Notice verify passed (not legal clearance).
+
+exit=0
+members: 407 (LICENSES/**: 401)
+archive sha256: 40e3a8d593d1f6765b77ea561660ca6a0e3c4052dc12dffd1a9981d6a8e6421f

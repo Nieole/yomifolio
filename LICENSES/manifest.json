@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-16",
+  "date": "2026-11-24",
   "scope": "conservative legal-file inventory, not SBOM or full legal audit",
   "packages": [
     {
@@ -1120,7 +1120,9 @@
       "installed": true,
       "source": "https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-1.2.6.tgz",
       "integrity": "sha512-mRyDmEw9/fCDXCGfL1sbgIw/GUK0PVxRW4YwgPN61F3LQ+fSyoBFarJVzgGyhF6kRzEQZ0FejDqm4WLXSeqQmw==",
-      "files": []
+      "files": [
+        "LICENSES/npm/node_modules/@napi-rs/wasm-runtime/1.2.6/LICENSE"
+      ]
     },
     {
       "ecosystem": "NPM",
@@ -1326,7 +1328,10 @@
       "installed": true,
       "source": "https://registry.npmjs.org/@rolldown/binding-win32-x64-msvc/-/binding-win32-x64-msvc-1.2.19.tgz",
       "integrity": "sha512-y/sqRRc6d7hECzOFc5n3LSeqctmIp9mMjY1Kq4s14uLPd/LZ4z7i1zrW6fMtp2mPeuQIC4e6ULMcwQzMomqQag==",
-      "files": []
+      "files": [
+        "LICENSES/npm/node_modules/@rolldown/binding-win32-x64-msvc/1.2.19/LICENSE",
+        "LICENSES/npm/node_modules/@rolldown/binding-win32-x64-msvc/1.2.19/THIRD-PARTY-LICENSE"
+      ]
     },
     {
       "ecosystem": "NPM",
@@ -1488,7 +1493,12 @@
       "installed": true,
       "source": "https://registry.npmjs.org/@tailwindcss/oxide-wasm32-wasi/-/oxide-wasm32-wasi-4.3.5.tgz",
       "integrity": "sha512-OJhFmlEfdzMr+avACdi40RPtnkW0B6hXyxL/8r+tnEHBWZji36CYRjEXrrvgBmaYsD3oEOBqwYFRKsYvzFe7Bw==",
-      "files": []
+      "files": [
+        "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/4.3.5/LICENSE",
+        "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/4.3.5/crates/ignore/COPYING",
+        "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/4.3.5/crates/ignore/LICENSE-MIT",
+        "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/4.3.5/crates/ignore/UNLICENSE"
+      ]
     },
     {
       "ecosystem": "NPM",
@@ -1542,7 +1552,11 @@
       "installed": true,
       "source": "package-lock.json:node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@napi-rs/wasm-runtime",
       "integrity": null,
-      "files": []
+      "files": [
+        "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@napi-rs/wasm-runtime/1.2.2/LICENSE",
+        "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@napi-rs/wasm-runtime/1.2.2/LICENSE-EXTRACT-microsoft.txt",
+        "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@napi-rs/wasm-runtime/1.2.2/LICENSE-EXTRACT-joyent.txt"
+      ]
     },
     {
       "ecosystem": "NPM",
@@ -4034,7 +4048,10 @@
       "installed": true,
       "source": "https://registry.npmjs.org/natural-compare/-/natural-compare-1.4.0.tgz",
       "integrity": "sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==",
-      "files": []
+      "files": [
+        "LICENSES/npm/node_modules/natural-compare/1.4.0/README.md",
+        "LICENSES/npm/node_modules/natural-compare/1.4.0/author-mit-license.txt"
+      ]
     },
     {
       "ecosystem": "NPM",
@@ -4396,7 +4413,9 @@
       "installed": true,
       "source": "https://registry.npmjs.org/saxes/-/saxes-6.0.0.tgz",
       "integrity": "sha512-xAg7SOnEhrm5zI3puOOKyy1OMcMlIJZYNJY7xLBwSze0UjhPLnWfj2GF2EpT0jmzaJKIWKHLsaSSajf35bcYnA==",
-      "files": []
+      "files": [
+        "LICENSES/npm/node_modules/saxes/6.0.0/LICENSE"
+      ]
     },
     {
       "ecosystem": "NPM",
@@ -7815,17 +7834,102 @@
       "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
       "source": "https://proxy.golang.org/golang.org/x/time/@v/v0.15.0.zip!/golang.org/x/time@v0.15.0/PATENTS",
       "collected": "2026-12-02"
+    },
+    {
+      "file": "LICENSES/npm/node_modules/@napi-rs/wasm-runtime/1.2.6/LICENSE",
+      "bytes": 2138,
+      "sha256": "3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215",
+      "source": "https://api.github.com/repos/napi-rs/napi-rs/git/blobs/7fe7e35eff46457f65a4e30a717fada632de9e03#gitHead=4fff029f67693d08be0ff16818eb9ead2637a99e",
+      "collected": "2026-11-23"
+    },
+    {
+      "file": "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@napi-rs/wasm-runtime/1.2.2/LICENSE",
+      "bytes": 2138,
+      "sha256": "3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215",
+      "source": "https://api.github.com/repos/napi-rs/napi-rs/git/blobs/7fe7e35eff46457f65a4e30a717fada632de9e03#gitHead=5b344c367eeed81d1917f7c4d8e65b1adc16de12",
+      "collected": "2026-11-23"
+    },
+    {
+      "file": "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@napi-rs/wasm-runtime/1.2.2/LICENSE-EXTRACT-microsoft.txt",
+      "bytes": 805,
+      "sha256": "7932ec89afeb0991d60e50b13194a73eeefba8976f37a03d3e6b64670f833855",
+      "source": "https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-1.2.2.tgz!/dist/fs.js#bytes=1532:2337",
+      "collected": "2026-11-23"
+    },
+    {
+      "file": "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@napi-rs/wasm-runtime/1.2.2/LICENSE-EXTRACT-joyent.txt",
+      "bytes": 1139,
+      "sha256": "e491e365df71ec3171813083ad91ccb504b880237d510a7f0950bca167f95c6b",
+      "source": "https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-1.2.2.tgz!/dist/fs.js#bytes=277379:278518",
+      "collected": "2026-11-23"
+    },
+    {
+      "file": "LICENSES/npm/node_modules/saxes/6.0.0/LICENSE",
+      "bytes": 3011,
+      "sha256": "0fac2374380621b22e6b50451057721a9c52935b02d16d106a9f04897f061d0e",
+      "source": "https://api.github.com/repos/lddubeau/saxes/git/blobs/187f3ba399862022f4e670b2a3a1dbc6d7e6a800#gitHead=211fa0ebec9b628affc09219199639887174bfc3",
+      "collected": "2026-11-23"
+    },
+    {
+      "file": "LICENSES/npm/node_modules/natural-compare/1.4.0/README.md",
+      "bytes": 3352,
+      "sha256": "ced6cb1fe6ee15a32c63ea8c7e0425454e80456a890c6df3909429530566d40a",
+      "source": "https://registry.npmjs.org/natural-compare/-/natural-compare-1.4.0.tgz!/README.md",
+      "collected": "2026-11-23"
+    },
+    {
+      "file": "LICENSES/npm/node_modules/natural-compare/1.4.0/author-mit-license.txt",
+      "bytes": 1087,
+      "sha256": "353fe762ba595bf1ffe786acf0f5984bb164205901d74f258af195fc8228c67d",
+      "source": "http://lauri.rooden.ee/mit-license.txt#referenced-by=LICENSES/npm/node_modules/natural-compare/1.4.0/README.md",
+      "collected": "2026-11-23"
+    },
+    {
+      "file": "LICENSES/npm/node_modules/@rolldown/binding-win32-x64-msvc/1.2.19/LICENSE",
+      "bytes": 1302,
+      "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734",
+      "source": "https://api.github.com/repos/rolldown/rolldown/git/blobs/afc0cdbabfb99ed4030bf9be2b852977f1ed72a0#tag=v1.2.19;commit=b9c75ddc8bd50f2c1a4c7be0b548bdab5cba85ab",
+      "collected": "2026-11-23"
+    },
+    {
+      "file": "LICENSES/npm/node_modules/@rolldown/binding-win32-x64-msvc/1.2.19/THIRD-PARTY-LICENSE",
+      "bytes": 2209,
+      "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c",
+      "source": "https://api.github.com/repos/rolldown/rolldown/git/blobs/6e673d76c2bf35903d2f16ae41f901cf7966c402#tag=v1.2.19;commit=b9c75ddc8bd50f2c1a4c7be0b548bdab5cba85ab",
+      "collected": "2026-11-23"
+    },
+    {
+      "file": "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/4.3.5/LICENSE",
+      "bytes": 1071,
+      "sha256": "60e0b68c0f35c078eef3a5d29419d0b03ff84ec1df9c3f9d6e39a519a5ae7985",
+      "source": "https://api.github.com/repos/tailwindlabs/tailwindcss/git/blobs/d6a82290738a9f78946cbcb4594535d6984086dd#tag=v4.3.5;commit=9b2c925c19aae46ff4f9cf54a2fa6d2dbac7fa19",
+      "collected": "2026-11-23"
+    },
+    {
+      "file": "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/4.3.5/crates/ignore/COPYING",
+      "bytes": 126,
+      "sha256": "01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f",
+      "source": "https://api.github.com/repos/tailwindlabs/tailwindcss/git/blobs/bb9c20a094e41b7632d63bcff20c0b4b95e80777#tag=v4.3.5;commit=9b2c925c19aae46ff4f9cf54a2fa6d2dbac7fa19",
+      "collected": "2026-11-23"
+    },
+    {
+      "file": "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/4.3.5/crates/ignore/LICENSE-MIT",
+      "bytes": 1081,
+      "sha256": "0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f",
+      "source": "https://api.github.com/repos/tailwindlabs/tailwindcss/git/blobs/3b0a5dc09c1e16357459ddc9182a50f360f3cdba#tag=v4.3.5;commit=9b2c925c19aae46ff4f9cf54a2fa6d2dbac7fa19",
+      "collected": "2026-11-23"
+    },
+    {
+      "file": "LICENSES/npm/node_modules/@tailwindcss/oxide-wasm32-wasi/4.3.5/crates/ignore/UNLICENSE",
+      "bytes": 1211,
+      "sha256": "7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c",
+      "source": "https://api.github.com/repos/tailwindlabs/tailwindcss/git/blobs/68a49daad8ff7e35068f2b7a97d643aab440eaec#tag=v4.3.5;commit=9b2c925c19aae46ff4f9cf54a2fa6d2dbac7fa19",
+      "collected": "2026-11-23"
     }
   ],
   "gaps": [
     "Installed NPM package has no collected legal file: @humanfs/types@0.15.0 (node_modules/@humanfs/types)",
-    "Installed NPM package has no collected legal file: @napi-rs/wasm-runtime@1.2.6 (node_modules/@napi-rs/wasm-runtime)",
-    "Installed NPM package has no collected legal file: @rolldown/binding-win32-x64-msvc@1.2.19 (node_modules/@rolldown/binding-win32-x64-msvc)",
-    "Installed NPM package has no collected legal file: @tailwindcss/oxide-wasm32-wasi@4.3.5 (node_modules/@tailwindcss/oxide-wasm32-wasi)",
-    "Installed NPM package has no collected legal file: @napi-rs/wasm-runtime@1.2.2 (node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@napi-rs/wasm-runtime)",
-    "Installed NPM package has no collected legal file: @tybys/wasm-util@0.10.3 (node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@tybys/wasm-util)",
-    "Installed NPM package has no collected legal file: natural-compare@1.4.0 (node_modules/natural-compare)",
-    "Installed NPM package has no collected legal file: saxes@6.0.0 (node_modules/saxes)"
+    "Installed NPM package has no collected legal file: @tybys/wasm-util@0.10.3 (node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@tybys/wasm-util)"
   ],
   "inputs": {
     "go.mod": "cfbe52c69ccd545c4cb545f299d87ebad0aae9223bb91f4dc137753c93c0c3af",

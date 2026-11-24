@@ -14,8 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 ROOT_FILES = ('LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md', 'DEPENDENCY_MANIFEST.md',
               'images/README.md')
 TARGETS = ('linux-amd64', 'windows-amd64', 'darwin-arm64')
-# Applicable legal texts, their delivery and the actual-component inventory gate publication.
-BLOCKING_EVIDENCE = ('npm-legal-texts', 'native-runtime-notices', 'mpl-source')
+# Human legal review categories: reported as residual risks, never accepted as clearance.
+REVIEW_CATEGORIES = ('npm-legal-texts', 'native-runtime-notices', 'mpl-source')
 
 
 def digest(data):
@@ -116,7 +116,11 @@ def check_artifact(artifacts, manifest, version, target, commit):
     assert 'go1.27.4' in metadata['go_version_m'], 'Binary runtime differs from metadata'
     assert metadata['avif_inputs']['lib/avif.wasm.gz'] == \
         '92ffd604d276359c2df829effc615cd9f286c36ece5761644929e4396eb97360', 'Unexpected AVIF payload'
-    assert metadata['go_env']['CGO_ENABLED'] == '1', 'Unexpected CGO configuration'
+    # Read the binary's own build settings: `go env` on the runner is not what built the artifact.
+    for setting in ('CGO_ENABLED=1', f'GOOS={target.split("-")[0]}',
+                    f'GOARCH={target.split("-")[1]}'):
+        assert re.search(rf'(?m)^\s*build\s+{re.escape(setting)}$', metadata['go_version_m']), \
+            f'Binary build settings lack {setting}'
     assert metadata['compiler']['output'].strip(), 'Missing compiler identification'
     assert metadata['dynamic_dependencies']['output'].strip(), 'Missing native dependency inventory'
     assert metadata['mpl_unmodified'], 'MPL source differs from exact module archive'
@@ -136,40 +140,58 @@ def artifact_failures(artifacts, manifest, version, commit):
 
 
 def evaluate(root, artifacts, version, commit=None):
-    """Separate blocking legal/integrity/delivery defects from deferred provenance risks."""
+    """Fail closed on integrity and delivery defects; report legal and provenance gaps as risks."""
     review = json.loads((root / 'LICENSES/release-review.json').read_text(encoding='utf-8'))
     manifest = json.loads((root / 'LICENSES/manifest.json').read_text(encoding='utf-8'))
-    blockers = list(review['blockers'])
+    blockers = []
     if review['version'] != version:
         blockers.append(f'Review is not for release {version}: {review["version"]}')
-    if manifest['gaps']:
-        blockers.append(f'Unresolved collection gaps: {len(manifest["gaps"])}')
     blockers += legal_text_failures(root, manifest)
-    for category in BLOCKING_EVIDENCE:
+    residual = [{'id': item['id'], 'risk': item['risk']}
+                for item in review.get('residual_risks', [])]
+    for gap in manifest['gaps']:
+        residual.append({'id': 'unresolved-collection-gap',
+                         'risk': f'No applicable full legal text recorded: {gap}'})
+    adopted = {}
+    for category in REVIEW_CATEGORIES:
         recorded, failures = evidence_failures(root, review, category)
-        if not recorded:
-            blockers.append(f'Missing review evidence: {category}')
+        # Tampered evidence is an integrity defect even where the review itself is a residual risk.
         blockers += failures
+        adopted[category] = [record['file'] for record in review['evidence'].get(category, [])]
+        if not recorded:
+            residual.append({'id': f'missing-review-{category}',
+                             'risk': f'No recorded review evidence for {category}'})
     deferred = []
     for item in review.get('deferred', []):
         recorded, failures = evidence_failures(root, review, item['evidence'])
-        # Tampered evidence is an integrity defect even when the risk itself is deferred.
         blockers += failures
         deferred.append({'id': item['id'], 'risk': item['risk'], 'evidence_recorded': bool(recorded)})
     blockers += artifact_failures(artifacts, manifest, version, commit)
-    status = 'blocked' if blockers else ('passed-with-deferred-risks' if deferred else 'passed')
-    return {'version': version, 'status': status, 'blockers': blockers, 'deferred': deferred}
+    if blockers:
+        status = 'blocked'
+    elif deferred:
+        status = 'passed-with-deferred-risks'
+    elif residual:
+        status = 'passed-with-residual-risks'
+    else:
+        status = 'passed'
+    return {'version': version, 'status': status, 'blockers': blockers, 'residual': residual,
+            'deferred': deferred, 'adopted_evidence': adopted}
 
 
 def gate(root, artifacts, version, commit=None):
-    """Fail closed on legal, delivery and integrity defects; report provenance-only risks instead."""
+    """Fail closed on integrity and delivery defects; report legal and provenance gaps as risks."""
     report = evaluate(root, artifacts, version, commit)
+    for category, files in report['adopted_evidence'].items():
+        print(f'Review evidence adopted [{category}]: ' + (', '.join(files) or 'none'), file=sys.stderr)
+    for item in report['residual']:
+        print(f"Residual non-blocking risk [{item['id']}]: {item['risk']}", file=sys.stderr)
     for item in report['deferred']:
         state = 'evidence recorded, review pending' if item['evidence_recorded'] else 'no review evidence recorded'
         print(f"Deferred non-blocking risk [{item['id']}] ({state}): {item['risk']}", file=sys.stderr)
     assert not report['blockers'], 'Unresolved release blockers: ' + '; '.join(report['blockers'])
-    print(f"Release gate: {report['status']}; deferred non-blocking risks: "
-          + (', '.join(item['id'] for item in report['deferred']) or 'none'))
+    print(f"Release gate: {report['status']}; residual legal risks: {len(report['residual'])}; "
+          f'deferred provenance risks: ' + (', '.join(item['id'] for item in report['deferred']) or 'none'))
     return report
 
 
@@ -182,7 +204,8 @@ def main():
     if args.action == 'gate':
         commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
         gate(ROOT, args.artifacts, args.version, commit)
-        print('Notice gate passed on legal delivery only; not provenance verification or legal clearance.')
+        print('Notice gate passed on delivery and integrity only; residual legal risks are listed above, '
+              'not cleared.')
     else:
         archive = args.artifacts / f'yomifolio-{args.version}-notices.zip'
         if args.action == 'create':

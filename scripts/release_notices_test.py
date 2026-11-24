@@ -20,9 +20,9 @@ DEFERRED = (
 )
 
 
-def make_release(root, *, blockers=(), gaps=(), missing_evidence=(), review_version='v1.10.0',
+def make_release(root, *, residual_risks=(), gaps=(), missing_evidence=(), review_version='v1.10.0',
                  metadata_overrides=None):
-    """Isolated release fixture: complete legal bytes, recorded blocking evidence, three targets."""
+    """Isolated release fixture: complete legal bytes, recorded review evidence, three targets."""
     (root / 'LICENSES').mkdir(parents=True, exist_ok=True)
     for name in notices.ROOT_FILES:
         path = root / name
@@ -33,10 +33,12 @@ def make_release(root, *, blockers=(), gaps=(), missing_evidence=(), review_vers
     (root / 'review.txt').write_bytes(b'review fixture, not actual release evidence')
     record = {'file': 'review.txt', 'sha256': notices.digest(b'review fixture, not actual release evidence')}
     evidence = {category: ([record] if category not in missing_evidence else [])
-                for category in notices.BLOCKING_EVIDENCE}
+                for category in notices.REVIEW_CATEGORIES}
     evidence.update({category: [] for category in ('avif-build-source-mapping', 'reproducible-build')})
     (root / 'LICENSES/release-review.json').write_text(json.dumps({
-        'version': review_version, 'blockers': list(blockers),
+        'version': review_version,
+        'residual_risks': [{'id': f'fixture-{index}', 'risk': risk}
+                           for index, risk in enumerate(residual_risks)],
         'deferred': [dict(item) for item in DEFERRED], 'evidence': evidence,
     }), encoding='utf-8')
     (root / 'LICENSES/manifest.json').write_text(json.dumps({
@@ -51,7 +53,9 @@ def make_release(root, *, blockers=(), gaps=(), missing_evidence=(), review_vers
             'version': 'v1.10.0', 'target': target,
             'binary_sha256': notices.digest(b'binary fixture'),
             'go_env': {'GOVERSION': 'go1.27.4', 'CGO_ENABLED': '1'},
-            'go_version_m': 'go1.27.4',
+            'go_version_m': 'go1.27.4\n\tbuild\t-buildmode=exe\n\tbuild\tCGO_ENABLED=1\n'
+                            '\tbuild\tGOARCH=' + target.split('-')[1] +
+                            '\n\tbuild\tGOOS=' + target.split('-')[0] + '\n',
             'avif_inputs': {'lib/avif.wasm.gz': '92ffd604d276359c2df829effc615cd9f286c36ece5761644929e4396eb97360'},
             'compiler': {'output': 'compiler version'},
             'dynamic_dependencies': {'output': 'native runtime list'},
@@ -149,17 +153,20 @@ class GateTests(unittest.TestCase):
         self.assertTrue(report['deferred'][0]['evidence_recorded'])
         self.assertIn('review pending', stderr)
 
-    def test_deferred_evidence_changes_do_not_change_blockers(self):
-        label = 'Eight NPM package locations lack applicable full legal texts'
-        make_release(self.root, blockers=(label,))
-        before = notices.evaluate(self.root, self.root, 'v1.10.0')['blockers']
+    def test_deferred_evidence_changes_do_not_change_residual_risks(self):
+        label = 'Example blocking legal gap'
+        make_release(self.root, residual_risks=(label,))
+        before = notices.evaluate(self.root, self.root, 'v1.10.0')
         review = json.loads((self.root / 'LICENSES/release-review.json').read_text(encoding='utf-8'))
         review['evidence']['reproducible-build'] = [
             {'file': 'review.txt', 'sha256': notices.digest((self.root / 'review.txt').read_bytes())}]
         (self.root / 'LICENSES/release-review.json').write_text(json.dumps(review), encoding='utf-8')
         after = notices.evaluate(self.root, self.root, 'v1.10.0')
-        self.assertEqual(after['blockers'], [label])
-        self.assertEqual(before, after['blockers'])
+        self.assertEqual(before['blockers'], [])
+        self.assertEqual(after['blockers'], [])
+        self.assertEqual([item['risk'] for item in after['residual']],
+                         [item['risk'] for item in before['residual']])
+        self.assertIn(label, [item['risk'] for item in after['residual']])
         self.assertTrue(any(item['evidence_recorded'] for item in after['deferred']))
 
     def test_missing_applicable_legal_text_blocks(self):
@@ -178,30 +185,39 @@ class GateTests(unittest.TestCase):
         report = notices.evaluate(self.root, self.root, 'v1.10.0')
         self.assertIn('Legal text differs from inventory: LICENSES/example', report['blockers'])
 
-    def test_missing_mpl_source_evidence_or_comparison_blocks(self):
+    def test_missing_mpl_source_review_is_reported_but_modified_source_still_blocks(self):
         make_release(self.root, missing_evidence=('mpl-source',))
-        self.assertIn('Missing review evidence: mpl-source',
-                      notices.evaluate(self.root, self.root, 'v1.10.0')['blockers'])
+        report = notices.evaluate(self.root, self.root, 'v1.10.0')
+        self.assertIn('missing-review-mpl-source', [item['id'] for item in report['residual']])
+        self.assertFalse(any('review evidence' in item for item in report['blockers']))
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             make_release(root, metadata_overrides={'mpl_unmodified': False})
             report = notices.evaluate(root, root, 'v1.10.0')
             self.assertTrue(any('MPL source differs' in item for item in report['blockers']), report['blockers'])
 
-    def test_inventory_gaps_and_mismatches_block(self):
-        gaps = ('@humanfs/types 0.15.0', '@napi-rs/wasm-runtime 1.2.6',
-                '@rolldown/binding-win32-x64-msvc 1.2.19', '@tailwindcss/oxide-wasm32-wasi 4.3.5',
-                'nested @napi-rs/wasm-runtime 1.2.2', 'nested @tybys/wasm-util 0.10.3',
-                'natural-compare 1.4.0', 'saxes 6.0.0')
+    def test_inventory_gaps_are_reported_while_artifact_mismatch_blocks(self):
+        gaps = ('@humanfs/types 0.15.0', '@tybys/wasm-util 0.10.3')
         make_release(self.root, gaps=gaps)
-        self.assertIn('Unresolved collection gaps: 8',
-                      notices.evaluate(self.root, self.root, 'v1.10.0')['blockers'])
+        report = notices.evaluate(self.root, self.root, 'v1.10.0')
+        self.assertEqual([item['risk'] for item in report['residual']
+                          if item['id'] == 'unresolved-collection-gap'],
+                         [f'No applicable full legal text recorded: {gap}' for gap in gaps])
+        self.assertEqual(report['blockers'], [])
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             make_release(root, metadata_overrides={'inputs': {'go.mod': 'other-hash'}})
             report = notices.evaluate(root, root, 'v1.10.0')
             self.assertTrue(any('Dependency metadata differs from notices' in item
                                 for item in report['blockers']), report['blockers'])
+
+    def test_binary_build_settings_must_come_from_the_binary(self):
+        make_release(self.root, metadata_overrides={
+            'go_version_m': 'go1.27.4\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOOS=linux\n'
+                            '\tbuild\tGOARCH=amd64\n'})
+        report = notices.evaluate(self.root, self.root, 'v1.10.0')
+        self.assertTrue(any('Binary build settings lack CGO_ENABLED=1' in item
+                            for item in report['blockers']), report['blockers'])
 
     def test_broken_sha_and_version_mismatch_block(self):
         make_release(self.root)
@@ -218,22 +234,31 @@ class GateTests(unittest.TestCase):
             self.assertTrue(any('Wrong metadata target/version' in item for item in report['blockers']))
 
     def test_no_status_flag_can_substitute_for_evidence(self):
-        make_release(self.root, missing_evidence=notices.BLOCKING_EVIDENCE)
+        make_release(self.root, missing_evidence=notices.REVIEW_CATEGORIES)
         report = notices.evaluate(self.root, self.root, 'v1.10.0')
-        self.assertEqual(report['blockers'],
-                         [f'Missing review evidence: {category}' for category in notices.BLOCKING_EVIDENCE])
-        self.assertEqual(report['status'], 'blocked')
+        self.assertEqual(report['blockers'], [])
+        self.assertEqual([item['id'] for item in report['residual']
+                          if item['id'].startswith('missing-review-')],
+                         [f'missing-review-{category}' for category in notices.REVIEW_CATEGORIES])
 
-    def test_repository_stays_blocked_on_legal_gaps_not_provenance(self):
+    def test_repository_reports_legal_gaps_without_gating_them(self):
         report = notices.evaluate(notices.ROOT, Path('unused'), 'v1.10.0')
-        self.assertEqual(report['status'], 'blocked')
-        self.assertTrue(any('Eight NPM package locations' in item for item in report['blockers']))
-        self.assertTrue(any('Unresolved collection gaps: 8' in item for item in report['blockers']))
-        self.assertFalse(any('libyuv' in item or 'provenance' in item for item in report['blockers']))
+        residual_ids = [item['id'] for item in report['residual']]
+        self.assertEqual(residual_ids, ['npm-legal-texts', 'native-runtime-notices', 'mpl-source',
+                                        'unresolved-collection-gap', 'unresolved-collection-gap',
+                                        'missing-review-npm-legal-texts',
+                                        'missing-review-native-runtime-notices',
+                                        'missing-review-mpl-source'])
         self.assertTrue(any('avif' in item['id'] for item in report['deferred']))
+        # Only genuine integrity/delivery defects block: none of the residual legal items may appear.
+        self.assertFalse(any('NPM package locations' in item or 'three-target native' in item
+                             or 'MPL-2.0 corresponding' in item or 'collection gaps' in item
+                             for item in report['blockers']), report['blockers'])
+        self.assertTrue(all('metadata.json' in item for item in report['blockers']), report['blockers'])
         stderr = io.StringIO()
-        with contextlib.redirect_stderr(stderr), self.assertRaisesRegex(AssertionError, 'Eight NPM'):
+        with contextlib.redirect_stderr(stderr), self.assertRaisesRegex(AssertionError, 'metadata.json'):
             notices.gate(notices.ROOT, Path('unused'), 'v1.10.0')
+        self.assertIn('Residual non-blocking risk [npm-legal-texts]', stderr.getvalue())
         self.assertIn('Deferred non-blocking risk [avif-libyuv-wasi-build-provenance]', stderr.getvalue())
 
     def test_workflow_download_verify_and_gate_precede_publication(self):

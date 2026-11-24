@@ -1,0 +1,9 @@
+{
+  "archive": "yomifolio-v1.10.0-notices.zip",
+  "sha256": "40e3a8d593d1f6765b77ea561660ca6a0e3c4052dc12dffd1a9981d6a8e6421f",
+  "version": "v1.10.0",
+  "members": 407,
+  "legal_files_verified": 401,
+  "all_expected_bytes_and_local_references_verified": true,
+  "scope": "Local create/extract only; remote artifact actions not executed; temporary artifacts directory removed and the ZIP was not kept as a deliverable"
+}
