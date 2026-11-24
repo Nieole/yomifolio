@@ -3,7 +3,11 @@ import { apiClient, getApiErrorMessage } from '../../api/client';
 import type { Credential, IssuedCredential, Restrictions } from '../../api/generated';
 import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n/LocaleProvider';
+import { useSettings } from '../../features/settings-editor';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { McpDocsDialog } from './McpDocsDialog';
+import { McpServerSettings } from './McpServerSettings';
+import { McpSetupGuide } from './McpSetupGuide';
 import { SettingsPageIntro, inputClassName, sectionClassName } from './shared';
 
 const capabilities = ['read', 'metadata_write', 'scan_control', 'internal_llm', 'cleanup'];
@@ -17,7 +21,9 @@ export function SettingsMCPPage() {
 
 function CredentialManager() {
   const { t } = useI18n();
+  const { config } = useSettings();
   const alive = useRef(false);
+  const [docsOpen, setDocsOpen] = useState(false);
   const [rows, setRows] = useState<Credential[]>([]);
   const [users, setUsers] = useState<Choice[]>([]);
   const [libraries, setLibraries] = useState<Choice[]>([]);
@@ -84,6 +90,8 @@ function CredentialManager() {
   return <div className="space-y-6">
     <SettingsPageIntro title={t('mcp.title')} description={t('mcp.description')} />
     <p className="text-sm leading-6 text-amber-200">{t('mcp.transport')}</p>
+    <McpSetupGuide publicUrl={config?.mcp.public_url || ''} onOpenDocs={() => setDocsOpen(true)} />
+    <McpServerSettings />
     {error && <p role="alert" className="text-red-300">{error}</p>}
     {secret && <section className={sectionClassName}>
       <p>{t('mcp.secretHint')}</p><code className="block break-all select-all text-amber-200">{secret}</code>
@@ -114,5 +122,6 @@ function CredentialManager() {
       </article>)}
     </section>
     <ConfirmDialog open={!!revoke} title={t('mcp.revoke')} description={t('mcp.revokeHint')} confirmLabel={t('mcp.confirmRevoke')} loading={busy} tone="danger" onClose={() => setRevoke(null)} onConfirm={() => { void revokeCredential(); }} />
+    <McpDocsDialog open={docsOpen} onClose={() => setDocsOpen(false)} />
   </div>;
 }

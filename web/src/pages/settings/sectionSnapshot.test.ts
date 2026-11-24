@@ -71,6 +71,20 @@ describe('applySectionSnapshot', () => {
     expect(scanner.scan_profile).toBe('fast_scan');
   });
 
+  it('mcp 分区只提交 mcp 段，不帶出其他分区的草稿', () => {
+    const server = makeConfig({ mcp: { public_url: '', allow_lan_http: false } });
+    const draft = makeConfig({
+      mcp: { public_url: 'https://books.example.net', allow_lan_http: true },
+      llm: { provider: 'openai', api_key: 'sk-leaked' }, // ai 分区：改了但没保存
+    });
+
+    const payload = applySectionSnapshot(server, draft, 'mcp');
+
+    expect(payload.mcp).toEqual({ public_url: 'https://books.example.net', allow_lan_http: true });
+    // 其余分区来自服务端基线，草稿里的 ai 改动不得随 mcp 保存提交。
+    expect(payload.llm).toEqual(server.llm);
+  });
+
   it('不修改传入的对象', () => {
     // 保存失败时前端会继续用同一份 state 重试；就地改写会让第二次提交带上第一次的残留。
     const server = makeConfig();

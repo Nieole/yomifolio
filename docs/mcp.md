@@ -8,13 +8,15 @@ This page covers setup order and troubleshooting only; the security boundary and
 
 ## Order of work
 
-1. Configure `mcp.public_url` on the server (below).
-2. Issue a credential in **Settings → MCP access**.
+1. Configure `mcp.public_url` — in **Settings → MCP access → Server settings**, or in `config.yaml` (below).
+2. Issue a credential in the same page.
 3. Configure the client and confirm a read-only tool first.
+
+The settings page repeats steps 1–3 as a collapsible guide: the derived `/mcp` endpoint, both client configurations below, and a button that opens this document without leaving the app.
 
 ## 1. Server: `public_url`
 
-`config.yaml` (in the **working directory**, not inside `data/`):
+Set in **Settings → MCP access → Server settings** (takes effect immediately), or in `config.yaml` (in the **working directory**, not inside `data/`):
 
 ```yaml
 mcp:

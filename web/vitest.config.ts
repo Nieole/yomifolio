@@ -1,5 +1,6 @@
 /**
- * 业务说明：本文件是前端单元测试配置，负责用 Vitest 运行 src 下的测试。
+ * 业务说明：本文件是前端单元测试配置，负责用 Vitest 运行 src 下的测试，以及 build/ 里
+ * 构建期插件（虚拟模块生成）的纯函数用例。
  *
  * 默认仍是 node 环境：绝大多数用例是纯函数（i18n 归一化、阅读进度计算、分页参数等），
  * 让它们跑在 node 下最快也最稳。需要 DOM 的用例（组件、hook）在文件顶部加一行
@@ -18,6 +19,6 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'node',
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'build/**/*.test.ts'],
   },
 })

@@ -2,7 +2,7 @@
 
 Generated 2026-11-16; inventory revised 2026-11-24 with upstream texts retrieved 2026-11-23. Labels come from lock metadata, not legal conclusions. Missing entries are explicit; a link is not a replacement for required license text.
 
-Current inventory: 383 package entries (54 Go modules, 328 NPM dependency locations, one Go 1.27.4 runtime); 401 legal files including root LICENSE/NOTICE and four upstream codec texts. Superseded Go 1.26.10 runtime texts are not included. NPM `installed` records directory presence, not a complete installation; six present directories lack package.json, so their versions cannot be locally verified.
+Current inventory: 384 package entries (54 Go modules, 329 NPM dependency locations, one Go 1.27.4 runtime); 402 legal files including root LICENSE/NOTICE and four upstream codec texts. Superseded Go 1.26.10 runtime texts are not included. NPM `installed` records directory presence, not a complete installation; six present directories lack package.json, so their versions cannot be locally verified.
 
 | Ecosystem | Package/version | Scope | Source | Texts |
 |---|---|---|---|---|
@@ -313,6 +313,7 @@ Current inventory: 383 package entries (54 Go modules, 328 NPM dependency locati
 | NPM | lucide-react 1.73.0 | production or optional transitive | https://registry.npmjs.org/lucide-react/-/lucide-react-1.73.0.tgz | [LICENSE](LICENSES/npm/node_modules/lucide-react/1.73.0/LICENSE) |
 | NPM | lz-string 1.5.0 | dev/build-only possible | https://registry.npmjs.org/lz-string/-/lz-string-1.5.0.tgz | [LICENSE](LICENSES/npm/node_modules/lz-string/1.5.0/LICENSE) |
 | NPM | magic-string 1.4.5 | dev/build-only possible | https://registry.npmjs.org/magic-string/-/magic-string-1.4.5.tgz | [LICENSE](LICENSES/npm/node_modules/magic-string/1.4.5/LICENSE) |
+| NPM | marked 18.3.0 | dev/build-only possible | https://registry.npmjs.org/marked/-/marked-18.3.0.tgz | [LICENSE](LICENSES/npm/node_modules/marked/18.3.0/LICENSE) |
 | NPM | math-intrinsics 1.1.0 | production or optional transitive | https://registry.npmjs.org/math-intrinsics/-/math-intrinsics-1.1.0.tgz | [LICENSE](LICENSES/npm/node_modules/math-intrinsics/1.1.0/LICENSE) |
 | NPM | mime-db 1.52.0 | production or optional transitive | https://registry.npmjs.org/mime-db/-/mime-db-1.52.0.tgz | [LICENSE](LICENSES/npm/node_modules/mime-db/1.52.0/LICENSE) |
 | NPM | mime-types 2.1.35 | production or optional transitive | https://registry.npmjs.org/mime-types/-/mime-types-2.1.35.tgz | [LICENSE](LICENSES/npm/node_modules/mime-types/2.1.35/LICENSE) |

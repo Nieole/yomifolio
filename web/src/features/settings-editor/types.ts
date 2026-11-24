@@ -52,6 +52,11 @@ export interface Config {
     match_mode: string;
     path_ignore_extension: boolean;
   };
+  // mcp 只暴露出设置页能安全改的两项：外部可达地址与局域网明文开关；其余（允许的主机等）仍归配置文件。
+  mcp: {
+    public_url: string;
+    allow_lan_http: boolean;
+  };
 }
 
 // ValidationResult / Capabilities 已改由 cmd/tsgen 从 Go 结构体生成（web/src/api/generated.ts），此处按原名

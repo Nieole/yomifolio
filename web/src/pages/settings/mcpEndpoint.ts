@@ -1,0 +1,41 @@
+/**
+ * 业务说明：MCP 接入指南与服务器配置共用的地址换算——把 `mcp.public_url` 归一成配置里
+ * 保存的形式，再拼出客户端要填的 `/mcp` 地址与两段可直接粘贴的客户端样例。
+ * 单独成文件是为了让组件文件只导出组件（react-refresh 约束）。
+ */
+
+// mcpEndpoint 拼出客户端地址：/mcp 是服务端固定挂载点，用户只填 scheme+host。
+export function mcpEndpoint(publicUrl: string): string {
+  return `${publicUrl.replace(/\/+$/, '')}/mcp`;
+}
+
+// normalizePublicUrl 去掉末尾斜杠，让客户端地址与配置里存的值一致；
+// 只输入到「https://」这种中间态时原样保留，否则末尾斜杠会被立刻吞掉，用户看不到自己敲了什么。
+export function normalizePublicUrl(value: string): string {
+  const schemeEnd = value.indexOf('://');
+  const hasHost = schemeEnd === -1
+    ? value.replace(/\/+$/, '').length > 0
+    : value.slice(schemeEnd + 3).replace(/\/+$/, '').length > 0;
+  return hasHost ? value.replace(/\/+$/, '') : value;
+}
+
+// 客户端样例用占位符而不是真密钥：页面上拿不到别人的密钥，也不该在 DOM 里留真密钥。
+export function httpSample(endpoint: string): string {
+  return JSON.stringify({
+    mcpServers: {
+      yomifolio: { type: 'http', url: endpoint, headers: { Authorization: 'Bearer <issued-secret>' } },
+    },
+  }, null, 2);
+}
+
+export function stdioSample(publicUrl: string): string {
+  return JSON.stringify({
+    mcpServers: {
+      yomifolio: {
+        command: '/opt/yomifolio/mcp-proxy',
+        args: ['--url', publicUrl.replace(/\/+$/, '')],
+        env: { YOMIFOLIO_MCP_TOKEN: '<issued-secret>' },
+      },
+    },
+  }, null, 2);
+}

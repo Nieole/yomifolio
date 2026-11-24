@@ -2,7 +2,7 @@ import type { Config } from './types';
 
 // connections 也是一个配置分区（协议开关落在 config.protocols 下），只是它没有 SaveBar。
 // 开关即时保存，不先改草稿；仍使用同一套分区基线和版本规则。
-export type ConfigSectionKey = 'library' | 'media' | 'ai' | 'connections';
+export type ConfigSectionKey = 'library' | 'media' | 'ai' | 'connections' | 'mcp';
 export type EditorSectionKey = ConfigSectionKey | 'koreader';
 
 // SECTION_FIELD_PATHS 是「哪些配置字段属于哪个分区」的**唯一**事实源。
@@ -32,6 +32,8 @@ export const SECTION_FIELD_PATHS: Record<EditorSectionKey, string[]> = {
   ai: ['llm'],
   // protocols 整块属于连接分区：opds / mihon 两个子键没有被别的分区瓜分，无需写到叶子。
   connections: ['protocols'],
+  // mcp 整个子对象属于 MCP 分区：设置页只改这两项，其余字段原样带回。
+  mcp: ['mcp'],
   koreader: ['koreader'],
 };
 
