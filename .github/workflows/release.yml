@@ -69,19 +69,68 @@ jobs:
       version: ${{ needs.resolve.outputs.tag }}
       frontend-artifact: ${{ needs.ci.outputs.frontend-artifact }}
 
-  publish:
-    name: Publish version release
+  notices:
+    name: Prepare, download and verify associated notices; gate readiness
     needs: [resolve, package]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: Download binary artifacts only
+      - name: Checkout pinned release source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+      - name: Download native binaries and review metadata
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: yomifolio-*
           path: release-artifacts
           merge-multiple: true
+      - name: Create and extract byte-exact notice archive
+        env:
+          VERSION: ${{ needs.resolve.outputs.tag }}
+        run: python3 scripts/release_notices.py create --version "$VERSION"
+      - name: Upload associated same-version notice archive
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: yomifolio-${{ needs.resolve.outputs.tag }}-notices
+          path: release-artifacts/yomifolio-${{ needs.resolve.outputs.tag }}-notices.zip
+          if-no-files-found: error
+      - name: Download uploaded notices for extraction verification
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: yomifolio-${{ needs.resolve.outputs.tag }}-notices
+          path: downloaded-notices
+      - name: Verify actual downloaded archive and gate legal delivery
+        # Legal texts, MPL source delivery, archive delivery and artifact integrity fail this gate;
+        # prebuilt-input provenance is printed as a deferred risk and never certified here.
+        env:
+          VERSION: ${{ needs.resolve.outputs.tag }}
+        run: |
+          python3 scripts/release_notices.py verify --version "$VERSION" --artifacts downloaded-notices
+          python3 scripts/release_notices.py gate --version "$VERSION"
+
+  publish:
+    name: Publish version release
+    needs: [resolve, package, notices]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout pinned release source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+      - name: Download binaries, metadata and associated notices
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: yomifolio-*
+          path: release-artifacts
+          merge-multiple: true
+      - name: Verify downloaded publication payload
+        env:
+          VERSION: ${{ needs.resolve.outputs.tag }}
+        run: |
+          python3 scripts/release_notices.py verify --version "$VERSION"
+          python3 scripts/release_notices.py gate --version "$VERSION"
       - name: Generate SHA256 checksums
         run: |
           cd release-artifacts

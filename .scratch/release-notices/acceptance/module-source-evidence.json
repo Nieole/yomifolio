@@ -1,0 +1,24 @@
+{
+  "github.com/gen2brain/avif": {
+    "source": "https://proxy.golang.org/github.com/gen2brain/avif/@v/v0.6.0.zip",
+    "sha256": "f1df415f5f2a757cca26fbadd9f71ff6e6a564ac113eb5e69af0dec918ee2878",
+    "members": 33,
+    "github.com/gen2brain/avif@v0.6.0/lib/Makefile": {
+      "sha256": "1404fe10eb61f9733e967ff1ffea5f02bde13d17fd78038f237ba32346e5c3ec",
+      "bytes": 4155
+    },
+    "github.com/gen2brain/avif@v0.6.0/lib/avif.wasm": {
+      "sha256": "52181752f8d92a43dfd0ca33179d32fdf7452a669cc1e260f37fabb8319de6bf",
+      "bytes": 3462314
+    },
+    "github.com/gen2brain/avif@v0.6.0/lib/avif.wasm.gz": {
+      "sha256": "92ffd604d276359c2df829effc615cd9f286c36ece5761644929e4396eb97360",
+      "bytes": 1292476
+    }
+  },
+  "github.com/hashicorp/golang-lru/v2": {
+    "source": "https://proxy.golang.org/github.com/hashicorp/golang-lru/v2/@v/v2.0.7.zip",
+    "sha256": "2eb92ff13970bccd460efae14255bfc03bb51474da0137e477a60f95561acc30",
+    "members": 19
+  }
+}

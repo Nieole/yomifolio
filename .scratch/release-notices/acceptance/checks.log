@@ -1,0 +1,14 @@
+............................C:\Users\saber\AppData\Local\Programs\Python\Python313\Lib\zipfile\__init__.py:1661: UserWarning: Duplicate name: 'LICENSE'
+  return self._open_to_write(zinfo, force_zip64=force_zip64)
+...........
+----------------------------------------------------------------------
+Ran 39 tests in 8.450s
+
+OK
+Excluded TagResolverTests: fixture commit/tag operations prohibited.
+Conservative full validation: ValueError
+Conservative full validation: ValueError
+Conservative full validation: CalledProcessError
+Conservative full validation: KeyError
+Conservative full validation: ValueError
+Conservative full validation: ValueError

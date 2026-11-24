@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "C:\Users\saber\.thinkrail\agent-worktrees\mcp-release-notices\scripts\release_notices.py", line 127, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\saber\.thinkrail\agent-worktrees\mcp-release-notices\scripts\release_notices.py", line 115, in main
+    gate(ROOT, args.artifacts, args.version, commit)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\saber\.thinkrail\agent-worktrees\mcp-release-notices\scripts\release_notices.py", line 76, in gate
+    assert not review['blockers'], 'Unresolved release blockers: ' + '; '.join(review['blockers'])
+           ^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Unresolved release blockers: AVIF v0.6.0 prebuilt WASM exact source/libyuv revision and WASI compiler/runtime mapping unavailable; Eight npm legal-text gaps remain; exact archives alone do not supply their missing full texts or demonstrate release exclusion; Three actual Go 1.27.4 native builds, CGO compiler/runtime notices and emitted Web/WASI inputs require review; Actual release MPL module-source comparison and source access require remote build verification

@@ -1,0 +1,9 @@
+{
+  "archive": "yomifolio-v1.10.0-notices.zip",
+  "sha256": "1086f4fb45100a82cc17dc2c691b17ba0d85940d88a1f8d8b9b8db40d10e68ea",
+  "version": "v1.10.0",
+  "members": 394,
+  "legal_files_verified": 388,
+  "all_expected_bytes_and_local_references_verified": true,
+  "scope": "Local create/extract only; remote artifact actions not executed"
+}

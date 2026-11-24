@@ -1,0 +1,13 @@
+Deferred non-blocking risk [avif-libyuv-wasi-build-provenance] (no review evidence recorded): The embedded AVIF v0.6.0 prebuilt WASM is bound only by payload and recipe hashes; its exact upstream libavif/AOM/dav1d/libyuv revisions, WASI SDK/compiler/runtime inputs and any source modifications are unmapped. Payload presence and recorded legal texts are not provenance.
+Deferred non-blocking risk [reproducible-build-attestation] (no review evidence recorded): No reproducible-build or signed-attestation record ties the published binaries to the recorded source inputs and toolchain.
+Traceback (most recent call last):
+  File "C:\Users\saber\.thinkrail\agent-worktrees\mcp-release-notices\scripts\release_notices.py", line 197, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\saber\.thinkrail\agent-worktrees\mcp-release-notices\scripts\release_notices.py", line 184, in main
+    gate(ROOT, args.artifacts, args.version, commit)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\saber\.thinkrail\agent-worktrees\mcp-release-notices\scripts\release_notices.py", line 170, in gate
+    assert not report['blockers'], 'Unresolved release blockers: ' + '; '.join(report['blockers'])
+           ^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Unresolved release blockers: Eight NPM package locations lack applicable full legal texts and no actual-bundle evidence places them outside the release payload: @humanfs/types 0.15.0, @napi-rs/wasm-runtime 1.2.6, @rolldown/binding-win32-x64-msvc 1.2.19, @tailwindcss/oxide-wasm32-wasi 4.3.5, nested @napi-rs/wasm-runtime 1.2.2 and @tybys/wasm-util 0.10.3, natural-compare 1.4.0, saxes 6.0.0; Actual three-target native compiler, CGO support-library and runtime legal texts are not yet reconciled with the emitted binaries, and no per-target evidence confirms that the bundled Web assets and the prebuilt WASI payload's applicable notices are present in the release payload; MPL-2.0 corresponding source access is recorded only as upstream locations; covered-source correspondence, local modifications and any required modified-source delivery for the actual release build remain unverified; Unresolved collection gaps: 8; Missing review evidence: npm-legal-texts; Missing review evidence: native-runtime-notices; Missing review evidence: mpl-source; yomifolio-v1.10.0-linux-amd64: [Errno 2] No such file or directory: 'release-artifacts\\yomifolio-v1.10.0-linux-amd64.metadata.json'; yomifolio-v1.10.0-windows-amd64.exe: [Errno 2] No such file or directory: 'release-artifacts\\yomifolio-v1.10.0-windows-amd64.exe.metadata.json'; yomifolio-v1.10.0-darwin-arm64: [Errno 2] No such file or directory: 'release-artifacts\\yomifolio-v1.10.0-darwin-arm64.metadata.json'

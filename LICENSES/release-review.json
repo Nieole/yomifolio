@@ -1,0 +1,28 @@
+{
+  "version": "v1.10.0",
+  "scope": "Substantive release evidence checklist, not legal clearance; blocking defects are separate from deferred provenance risks",
+  "blockers": [
+    "Eight NPM package locations lack applicable full legal texts and no actual-bundle evidence places them outside the release payload: @humanfs/types 0.15.0, @napi-rs/wasm-runtime 1.2.6, @rolldown/binding-win32-x64-msvc 1.2.19, @tailwindcss/oxide-wasm32-wasi 4.3.5, nested @napi-rs/wasm-runtime 1.2.2 and @tybys/wasm-util 0.10.3, natural-compare 1.4.0, saxes 6.0.0",
+    "Actual three-target native compiler, CGO support-library and runtime legal texts are not yet reconciled with the emitted binaries, and no per-target evidence confirms that the bundled Web assets and the prebuilt WASI payload's applicable notices are present in the release payload",
+    "MPL-2.0 corresponding source access is recorded only as upstream locations; covered-source correspondence, local modifications and any required modified-source delivery for the actual release build remain unverified"
+  ],
+  "deferred": [
+    {
+      "id": "avif-libyuv-wasi-build-provenance",
+      "risk": "The embedded AVIF v0.6.0 prebuilt WASM is bound only by payload and recipe hashes; its exact upstream libavif/AOM/dav1d/libyuv revisions, WASI SDK/compiler/runtime inputs and any source modifications are unmapped. Payload presence and recorded legal texts are not provenance.",
+      "evidence": "avif-build-source-mapping"
+    },
+    {
+      "id": "reproducible-build-attestation",
+      "risk": "No reproducible-build or signed-attestation record ties the published binaries to the recorded source inputs and toolchain.",
+      "evidence": "reproducible-build"
+    }
+  ],
+  "evidence": {
+    "npm-legal-texts": [],
+    "native-runtime-notices": [],
+    "mpl-source": [],
+    "avif-build-source-mapping": [],
+    "reproducible-build": []
+  }
+}

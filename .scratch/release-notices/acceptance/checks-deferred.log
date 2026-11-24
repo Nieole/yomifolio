@@ -1,0 +1,17 @@
+...........................C:\Users\saber\AppData\Local\Programs\Python\Python313\Lib\zipfile\__init__.py:1661: UserWarning: Duplicate name: 'LICENSE'
+  return self._open_to_write(zinfo, force_zip64=force_zip64)
+..................
+----------------------------------------------------------------------
+Ran 45 tests in 6.589s
+
+OK
+Excluded 4 tests (temporary-git fixtures that create commits/tags): ('ci_changes_test.GitComparisonTests', 'ci_workflows_test.TagResolverTests')
+Conservative full validation: ValueError
+Conservative full validation: ValueError
+Conservative full validation: CalledProcessError
+Conservative full validation: KeyError
+Conservative full validation: ValueError
+Conservative full validation: ValueError
+Release gate: passed-with-deferred-risks; deferred non-blocking risks: avif-libyuv-wasi-build-provenance, reproducible-build-attestation
+Release gate: passed-with-deferred-risks; deferred non-blocking risks: avif-libyuv-wasi-build-provenance, reproducible-build-attestation
+Ran 45 tests; failures=0 errors=0

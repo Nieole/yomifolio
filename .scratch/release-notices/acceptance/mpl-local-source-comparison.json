@@ -1,0 +1,27 @@
+{
+  "source": "https://proxy.golang.org/github.com/hashicorp/golang-lru/v2/@v/v2.0.7.zip",
+  "availability": "Public archive downloaded in this run; hash recorded in module-source-evidence.json",
+  "cache_matches_exact_archive": true,
+  "files": {
+    ".github/workflows/ci.yml": "bfc7397ffbedebfaa8bc9be078e32116e5535d175478720fdfc6e0ead0607c23",
+    ".gitignore": "4a8ce32bda0c1d55fe16d8a4544ca045456151f63d8f2b5dddb3fad848e288ec",
+    ".golangci.yml": "984372c2107c714f655bfca11a3187aa7e49b2be3e174234b51d80652bca9f3e",
+    "2q.go": "2004c591c846b2b88b52a79b8064838df995fbee39b5edda9edfd7e50cd7b5e1",
+    "2q_test.go": "2f76a068ab897b0625f420d40f64f84462546a089ce4a7ffda371aa5009cec21",
+    "LICENSE": "6c7088eb877b5d7e6e0e9d27e822ea25fcda2e83f9eba59bb5f1418a656796e0",
+    "README.md": "2868872fe74752a3ead3d5aca59b392aa58e0dba94fce886543be66311e0368d",
+    "doc.go": "8e86116433af061eb57a755f56fd5d5b9cb9b43688ca3207c4e784e2155294ad",
+    "expirable/expirable_lru.go": "7bb8e0c8498522c15a5acea7d252ec325558de9940f8962c95858c5a1832196a",
+    "expirable/expirable_lru_test.go": "d5f994227c66b06b482f208a37b012608333eb3d4ceb3d1ccab8478387a8d77e",
+    "go.mod": "c6b886c0242ffeac92b6b6aecf1123bc63c86faee81b16fff3a13273e50f6824",
+    "internal/list.go": "81db950294579bcaeccc75b3167149dce5c170007c5316145d802cedf93f80a9",
+    "lru.go": "38f218a97d6a4bb2384462bd63e61d9a37c37a92efa80e523f0941fcaff65043",
+    "lru_test.go": "b6ea1c0c49dddea261d117ba899f49f29d7ad5b99d95d118bf247f7eab4c040e",
+    "simplelru/LICENSE_list": "6d462371baa8649492b06f51f154dba9b25d2ac9548369b8b4fdbbbb85f2f75d",
+    "simplelru/lru.go": "2d7479aad7fdfa002f0ccb5d89e088cda137a6e48675862e20c5bbbc65dadbe0",
+    "simplelru/lru_interface.go": "07ec47db6304acdba50a0b8819bca928ab0654c0c63eb4ff1d726cb928a6061a",
+    "simplelru/lru_test.go": "fca6b2f0749db1de36652b4efc88643575a647a2f96ed606c6b4be342d72132b",
+    "testing_test.go": "9a103374405e994776a8cc62400a5839d7023b3e6ec9c9ade63760c5bd3c362c"
+  },
+  "go_mod_replacements": "No replace directive in current go.mod; actual release module metadata must still be verified"
+}
