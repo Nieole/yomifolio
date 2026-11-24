@@ -67,7 +67,7 @@ func TestEvidenceCancellationDoesNotWaitForOrdinaryRarSession(t *testing.T) {
 				t.Error("cancelled evidence waited for ordinary session mutex")
 				a.mu.Unlock()
 				locked = false
-				<-result
+				_ = <-result
 				return
 			}
 			a.mu.Unlock()
@@ -135,7 +135,7 @@ func TestEvidenceQueuedCancellationWithConcurrentClose(t *testing.T) {
 				t.Error("evidence did not reach cancellable acquisition")
 				cancel()
 				a.mu.Unlock()
-				<-result
+				_ = <-result
 				_ = arc.Close()
 				return
 			}
@@ -150,8 +150,8 @@ func TestEvidenceQueuedCancellationWithConcurrentClose(t *testing.T) {
 			case <-time.After(2 * time.Second):
 				t.Error("queued evidence did not cancel while Close/ordinary session remained blocked")
 				a.mu.Unlock()
-				<-result
-				<-closed
+				_ = <-result
+				_ = <-closed
 				return
 			}
 			select {

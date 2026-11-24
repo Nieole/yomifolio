@@ -95,7 +95,7 @@ func assertClueTransportDisconnect(t *testing.T, cfg config.Config, server *http
 						}
 					case <-time.After(5 * time.Second):
 						_ = command.Process.Kill()
-						<-exited
+						_ = <-exited
 						t.Error("helper did not exit normally after EOF")
 					}
 				}()

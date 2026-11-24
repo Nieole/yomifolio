@@ -106,7 +106,7 @@ func TestEvidenceSessionCancellationReturnsContentResources(t *testing.T) {
 		t.Error("content cancellation waited for ordinary RAR IO")
 		unlock()
 		unlock = func() {}
-		<-result
+		_ = <-result
 		return
 	}
 	if access.active.Load() != 0 || parser.ActiveArchiveBorrows(path) != 1 {
