@@ -27,3 +27,8 @@
 - Worker04 targeted truthfulness fix (uncommitted, HEAD `4839e85c`, contains requested integration `a0245ff5`): reopened clue item repaired by `parser.ParseComicInfo` whole-document token validation through EOF; original CBZ now returns `corrupt` without partial fields. Public parser and real-CBZ HTTP/TLS regressions first failed then passed; all parser/bookcontent/bootstrap tests passed three times, including integrated real stdio joint. Full backend gate, lint and drift results are in the acceptance fix addendum. Status remains ready-for-agent pending parent commit/review. Integration branch observed advanced to `acaecadd`; no merge/stage/commit was attempted.
 
 - Worker04 request_review `rc_6c56374b` repair at clean `f6d2b19e`: all five run-tool errors use canonical typed public mapping; production SQLite failure regression went red then green. Repeated MCP/run/stdio and lint/format/drift pass. Full backend gate reopened after four failed attempts (relocation/archive/watcher); no baseline attribution. See acceptance review addendum. Status remains ready-for-agent pending review; 03/06 untouched; no stage/commit/merge.
+
+
+## Final whole-branch review remediation
+
+See [final-review-remediation](../acceptance/final-review-remediation.md) for the final two-axis findings, focused repairs and actual checks. This is final-review revalidation, not a claim that this ticket caused every finding or that historical Windows rename failures were fixed. Status unchanged; parent owns integration and independent review.

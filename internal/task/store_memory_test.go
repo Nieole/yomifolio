@@ -477,12 +477,18 @@ func (s *memStore) matchesFilterLocked(run Run, filter RunFilter) bool {
 }
 
 func (s *memStore) matchesIdentityLocked(taskID int64, filter RunFilter) bool {
-	if len(filter.Types) == 0 && filter.Scope == "" && filter.ScopeID == nil {
+	if len(filter.Types) == 0 && filter.Scope == "" && filter.ScopeID == nil && filter.Variant == nil && filter.VariantPrefix == nil {
 		return true
 	}
 	for id, owner := range s.tasks {
 		if owner.ID != taskID {
 			continue
+		}
+		if filter.Variant != nil && id.Variant != *filter.Variant {
+			return false
+		}
+		if filter.VariantPrefix != nil && !strings.HasPrefix(string(id.Variant), string(*filter.VariantPrefix)) {
+			return false
 		}
 		if len(filter.Types) > 0 && !slices.Contains(filter.Types, id.Type) {
 			return false

@@ -170,7 +170,7 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 				}
 				return discoveryResult(), out, nil
 			})
-			registerDiscoveryTools(server, service, subject)
+			registerDiscoveryTools(server, service, subject, r.Context())
 			registerMCPImages(server, service, subject, r.Context())
 			registerMCPRuns(server, service, subject)
 			registerMCPMatching(server, service, subject)

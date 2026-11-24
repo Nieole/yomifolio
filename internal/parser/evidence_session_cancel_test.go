@@ -24,7 +24,7 @@ func (c *evidencePreflightBarrier) Err() error {
 }
 
 func TestEvidenceCancellationDoesNotWaitForOrdinaryRarSession(t *testing.T) {
-	for _, name := range []string{"directory", "selected-page"} {
+	for _, name := range []string{"directory", "selected-page", "comicinfo"} {
 		t.Run(name, func(t *testing.T) {
 			arc, err := OpenArchive(testRarPath)
 			if err != nil {
@@ -44,9 +44,12 @@ func TestEvidenceCancellationDoesNotWaitForOrdinaryRarSession(t *testing.T) {
 			ctx := &evidencePreflightBarrier{Context: base, entered: make(chan struct{}), resume: make(chan struct{})}
 			result := make(chan error, 1)
 			go func() {
-				if name == "directory" {
+				switch name {
+				case "directory":
 					_, err = GetPagesLimited(ctx, arc)
-				} else {
+				case "comicinfo":
+					_, err = ReadMetadataLimited(ctx, arc, "ComicInfo.xml", 64<<10)
+				default:
 					_, err = ReadPageLimited(ctx, arc, "1.jpg", 16<<20)
 				}
 				result <- err
@@ -79,6 +82,9 @@ func TestEvidenceCancellationDoesNotWaitForOrdinaryRarSession(t *testing.T) {
 			if _, err := GetPagesLimited(context.Background(), arc); !errors.Is(err, ErrArchiveClosed) {
 				t.Fatalf("directory after close: %v", err)
 			}
+			if _, err := ReadMetadataLimited(context.Background(), arc, "ComicInfo.xml", 64<<10); !errors.Is(err, ErrArchiveClosed) {
+				t.Fatalf("metadata after close: %v", err)
+			}
 			if _, err := ReadPageLimited(context.Background(), arc, "1.jpg", 16<<20); !errors.Is(err, ErrArchiveClosed) {
 				t.Fatalf("page after close: %v", err)
 			}
@@ -100,7 +106,7 @@ func (c *evidenceQueuedContext) Done() <-chan struct{} {
 }
 
 func TestEvidenceQueuedCancellationWithConcurrentClose(t *testing.T) {
-	for _, name := range []string{"directory", "selected-page"} {
+	for _, name := range []string{"directory", "selected-page", "comicinfo"} {
 		t.Run(name, func(t *testing.T) {
 			arc, err := OpenArchive(testRarPath)
 			if err != nil {
@@ -113,9 +119,12 @@ func TestEvidenceQueuedCancellationWithConcurrentClose(t *testing.T) {
 			ctx := &evidenceQueuedContext{Context: base, queued: make(chan struct{})}
 			result := make(chan error, 1)
 			go func() {
-				if name == "directory" {
+				switch name {
+				case "directory":
 					_, err = GetPagesLimited(ctx, arc)
-				} else {
+				case "comicinfo":
+					_, err = ReadMetadataLimited(ctx, arc, "ComicInfo.xml", 64<<10)
+				default:
 					_, err = ReadPageLimited(ctx, arc, "1.jpg", 16<<20)
 				}
 				result <- err
@@ -156,6 +165,9 @@ func TestEvidenceQueuedCancellationWithConcurrentClose(t *testing.T) {
 			}
 			if _, err := GetPagesLimited(context.Background(), arc); !errors.Is(err, ErrArchiveClosed) {
 				t.Fatalf("manifest after concurrent Close: %v", err)
+			}
+			if _, err := ReadMetadataLimited(context.Background(), arc, "ComicInfo.xml", 64<<10); !errors.Is(err, ErrArchiveClosed) {
+				t.Fatalf("metadata after close: %v", err)
 			}
 			if _, err := ReadPageLimited(context.Background(), arc, "1.jpg", 16<<20); !errors.Is(err, ErrArchiveClosed) {
 				t.Fatalf("page after concurrent Close: %v", err)

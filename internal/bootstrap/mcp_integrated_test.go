@@ -23,6 +23,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"yomifolio/internal/api"
+	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/bootstrap"
 	"yomifolio/internal/config"
 	"yomifolio/internal/database"
@@ -34,11 +35,15 @@ import (
 // irreversible cleanup; transport-specific tests cannot substitute for it.
 func TestMCPIntegratedAcceptance(t *testing.T) {
 	for _, mode := range []string{"http", "stdio"} {
-		t.Run(mode, func(t *testing.T) { runIntegratedAcceptance(t, mode == "stdio") })
+		t.Run(mode, func(t *testing.T) {
+			for _, capability := range []string{"read", "scan_control", "cleanup"} {
+				t.Run(capability, func(t *testing.T) { runIntegratedAcceptance(t, mode == "stdio", capability) })
+			}
+		})
 	}
 }
 
-func runIntegratedAcceptance(t *testing.T, stdio bool) {
+func runIntegratedAcceptance(t *testing.T, stdio bool, finalCapability string) {
 	ctx := t.Context()
 	store, cfg := fixture(t)
 	lib, err := store.CreateLibrary(ctx, database.CreateLibraryParams{Name: "Integrated", Path: t.TempDir(), ScanMode: "none"})
@@ -189,7 +194,7 @@ func runIntegratedAcceptance(t *testing.T, stdio bool) {
 	}
 	login := web("POST", "/auth/setup", map[string]string{"username": "admin", "password": "correct horse battery staple"}, 200)
 	csrf = login["csrf_token"].(string)
-	caps := []string{"read", "metadata_write", "internal_llm", "cleanup"}
+	caps := []string{"read", "metadata_write", "internal_llm", "cleanup", "scan_control"}
 	issued := web("POST", "/mcp/credentials", map[string]any{"user_id": 1, "name": "integrated", "library_ids": []int64{lib.ID}, "capabilities": caps}, 200)
 	var binary string
 	if stdio {
@@ -207,6 +212,7 @@ func runIntegratedAcceptance(t *testing.T, stdio bool) {
 			server = httptest.NewTLSServer(router)
 		}
 		snapshot := cfg.Snapshot()
+		snapshot.Library.IOPolicy.ArchiveOpenConcurrency = 1
 		snapshot.MCP.PublicURL = server.URL
 		snapshot.MCP.AllowLANHTTP = stdio
 		cfg.Replace(&snapshot)
@@ -287,8 +293,91 @@ func runIntegratedAcceptance(t *testing.T, stdio bool) {
 	if imageCount != 1 {
 		t.Fatal(images)
 	}
+	// Real RAR clues share the same request-owned admission and volume IO lease.
+	rarPath := filepath.Join(lib.Path, "clues.cbr")
+	rarBytes, err := os.ReadFile("../parser/testdata/vol.cbr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(rarPath, rarBytes, 0600); err != nil {
+		t.Fatal(err)
+	}
+	rarBook, err := store.CreateBook(ctx, database.CreateBookParams{LibraryID: lib.ID, SeriesID: target, Name: "clues.cbr", Path: rarPath, Size: int64(len(rarBytes)), FileModifiedAt: modified, PageCount: 4})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertClueTransportDisconnect(t, cfg.Snapshot(), server, binary, issued["token"].(string), process.Application.Engine, rarPath, lib.ID, rarBook.ID, stdio)
+	if clue := call("library_get_book_clues", map[string]any{"book_id": rarBook.ID}, false); clue["comic_info"].(map[string]any)["status"] != "available" {
+		t.Fatal(clue)
+	}
+	// Real compressed solid stream with a CRC-valid undersized first declaration:
+	// public clues must say unavailable, and images must not decode or fall back.
+	hostilePath := filepath.Join(lib.Path, "solid-undersized.cbr")
+	hostileBytes, err := os.ReadFile("../parser/testdata/solid-undersized.cbr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(hostilePath, hostileBytes, 0600); err != nil {
+		t.Fatal(err)
+	}
+	hostileBook, err := store.CreateBook(ctx, database.CreateBookParams{LibraryID: lib.ID, SeriesID: target, Name: "solid-undersized.cbr", Path: hostilePath, Size: int64(len(hostileBytes)), FileModifiedAt: modified, PageCount: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if clue := call("library_get_book_clues", map[string]any{"book_id": hostileBook.ID}, false); clue["comic_info"].(map[string]any)["status"] != "unavailable" {
+		t.Fatal(clue)
+	}
+	rejected, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_page_thumbnails", Arguments: map[string]any{"series_id": target, "book_id": hostileBook.ID, "pages": []int{1}}})
+	if err != nil || !rejected.IsError {
+		t.Fatalf("hostile solid image: %+v %v", rejected, err)
+	}
+	for _, content := range rejected.Content {
+		if _, ok := content.(*mcp.ImageContent); ok {
+			t.Fatal("hostile solid returned image")
+		}
+	}
+	acceptedIDs := map[int64]string{}
+	assertRunPages := func(wantCapability string) {
+		t.Helper()
+		for _, limit := range []int{1, 2} {
+			seen := map[int64]bool{}
+			var before int64
+			for {
+				r, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "library_list_runs", Arguments: map[string]any{"library_id": lib.ID, "limit": limit, "before_id": before}})
+				if err != nil || r.IsError {
+					t.Fatalf("list: %+v %v", r, err)
+				}
+				raw, _ := json.Marshal(r.StructuredContent)
+				var page []delegated.Run
+				if err := json.Unmarshal(raw, &page); err != nil {
+					t.Fatal(err)
+				}
+				if len(page) > limit {
+					t.Fatal("unbounded page", page)
+				}
+				if len(page) == 0 {
+					break
+				}
+				for _, run := range page {
+					capability, own := acceptedIDs[run.ID]
+					if !own || seen[run.ID] || run.LibraryID != lib.ID || (before > 0 && run.ID >= before) || (wantCapability != "" && capability != wantCapability) {
+						t.Fatalf("wrong/duplicate/cursor run: %+v before=%d", run, before)
+					}
+					seen[run.ID] = true
+					before = run.ID
+				}
+			}
+			for id, capability := range acceptedIDs {
+				want := wantCapability == "" || capability == wantCapability
+				if seen[id] != want {
+					t.Fatalf("lost admission run=%d capability=%s limit=%d", id, capability, limit)
+				}
+			}
+		}
+	}
 	search := func(id int64, query string) map[string]any {
 		s := call("library_search_sources", map[string]any{"series_id": id, "query": query, "limit": 2}, false)
+		acceptedIDs[int64(s["run"].(map[string]any)["run_id"].(float64))] = "read"
 		call("library_wait_run", map[string]any{"run_id": s["run"].(map[string]any)["run_id"], "timeout_ms": 30000}, false)
 		return call("library_get_source_search", map[string]any{"search_id": s["search_id"]}, false)
 	}
@@ -312,6 +401,8 @@ func runIntegratedAcceptance(t *testing.T, stdio bool) {
 	}
 	model := call("library_assess_match", map[string]any{"search_id": found["search_id"], "allowance": 1}, false)
 	call("library_wait_run", map[string]any{"run_id": model["run_id"], "timeout_ms": 30000}, false)
+	acceptedIDs[int64(model["run_id"].(float64))] = "internal_llm"
+	assertRunPages("")
 	usage := call("library_get_model_operation", map[string]any{"operation_id": model["operation_id"]}, false)
 	if usage["items"].([]any)[0].(map[string]any)["outcome"] != "uncertain" || len(usage["unprocessed"].([]any)) != 5 {
 		t.Fatal(usage)
@@ -440,6 +531,34 @@ func runIntegratedAcceptance(t *testing.T, stdio bool) {
 	decisionInput, decision := decide(p2, "integrated-publisher", "publisher")
 	closeProposal(p2, "integrated-second-close")
 	assertPublished()
+	// Actual scan admission shares the engine; pause/cancel avoids changing this
+	// fixture's deliberately curated metadata while still producing its real run.
+	if _, err := process.Application.Engine.PauseAll(ctx); err != nil {
+		t.Fatal(err)
+	}
+	scan := call("library_start_scan", map[string]any{"library_id": lib.ID}, false)
+	acceptedIDs[int64(scan["run_id"].(float64))] = "scan_control"
+	call("library_cancel_run", map[string]any{"run_id": scan["run_id"]}, false)
+	if _, err := process.Application.Engine.ResumeAll(ctx); err != nil {
+		t.Fatal(err)
+	}
+	cleanRun := call("library_start_metadata_cleanup", map[string]any{"library_id": lib.ID, "operations": []any{map[string]any{"operation_id": op["id"], "request_key": "recovery-cleanup"}}}, false)
+	acceptedIDs[int64(cleanRun["run_id"].(float64))] = "cleanup"
+	call("library_wait_run", map[string]any{"run_id": cleanRun["run_id"], "timeout_ms": 30000}, false)
+	// A different credential of the same user/library creates a genuine search,
+	// which must not appear in the owner's reconnect listing.
+	ownerCredential := issued
+	ownerSession := session
+	issued = web("POST", "/mcp/credentials", map[string]any{"user_id": 1, "name": "sibling", "library_ids": []int64{lib.ID}, "capabilities": []string{"read"}}, 200)
+	connect()
+	sibling := call("library_search_sources", map[string]any{"series_id": target, "query": "Identity", "limit": 2}, false)
+	call("library_wait_run", map[string]any{"run_id": sibling["run"].(map[string]any)["run_id"], "timeout_ms": 30000}, false)
+	session.Close()
+	issued, session = ownerCredential, ownerSession
+	session.Close()
+	connect()
+	assertRunPages("")
+	call("library_list_runs", map[string]any{"library_id": outside.ID}, true)
 	if _, err = store.DB().Exec(`CREATE TRIGGER integrated_cleanup_fault BEFORE UPDATE ON metadata_cleanup_requests WHEN NEW.payload LIKE '%"deleted"%' BEGIN SELECT RAISE(ABORT,'controlled result failure'); END`); err != nil {
 		t.Fatal(err)
 	}
@@ -462,6 +581,7 @@ func runIntegratedAcceptance(t *testing.T, stdio bool) {
 	hold.Store(true)
 	interruptedSearch := search(target, "Identity")
 	interrupted := call("library_assess_match", map[string]any{"search_id": interruptedSearch["search_id"], "allowance": 2}, false)
+	acceptedIDs[int64(interrupted["run_id"].(float64))] = "internal_llm"
 	select {
 	case <-entered:
 	case <-ctx.Done():
@@ -575,7 +695,17 @@ func runIntegratedAcceptance(t *testing.T, stdio bool) {
 	}
 	issued = original
 	connect()
-	web("PATCH", "/mcp/credentials/"+issued["id"].(string), map[string]any{"user_id": 1, "name": "integrated", "library_ids": []int64{lib.ID}, "capabilities": []string{"metadata_write", "cleanup"}}, 200)
+	finalCapabilities := []string{finalCapability}
+	if finalCapability == "cleanup" {
+		finalCapabilities = append(finalCapabilities, "metadata_write")
+	}
+	web("PATCH", "/mcp/credentials/"+issued["id"].(string), map[string]any{"user_id": 1, "name": "integrated", "library_ids": []int64{lib.ID}, "capabilities": finalCapabilities}, 200)
+	assertRunPages(finalCapability)
+	for id, required := range acceptedIDs {
+		if required != finalCapability {
+			call("library_get_run", map[string]any{"run_id": id}, true)
+		}
+	}
 	call("library_enrich_metadata", decisionInput, true)
 	altered := map[string]any{}
 	for k, v := range decisionInput {

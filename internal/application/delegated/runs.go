@@ -100,23 +100,27 @@ func (s *Service) ListRuns(ctx context.Context, subject Subject, library, before
 		}
 	}
 	variant := task.Variant("delegated:" + subject.CredentialID + ":")
-	snaps, err := s.runs.Engine.ListSnapshots(ctx, task.RunFilter{Scope: task.ScopeLibrary, ScopeID: &library, Variant: &variant, BeforeID: before, Order: task.OrderIDDesc, Limit: limit})
-	if err != nil {
-		return nil, err
-	}
 	out := []Run{}
-	// IDs are stable admission order, unlike sequence which changes with progress.
-	for _, snap := range snaps {
-		if before > 0 && snap.Run.ID >= before {
-			continue
+	// Scan past currently unauthorized capabilities internally, so an invisible
+	// page cannot hide older authorized runs from the public before-ID cursor.
+	for len(out) < limit {
+		batch := limit - len(out)
+		snaps, err := s.runs.Engine.ListSnapshots(ctx, task.RunFilter{Scope: task.ScopeLibrary, ScopeID: &library, VariantPrefix: &variant, BeforeID: before, Order: task.OrderIDDesc, Limit: batch})
+		if err != nil {
+			return nil, err
 		}
-		run, e := s.visible(ctx, subject, snap)
-		if e == nil {
-			out = append(out, run)
+		for _, snap := range snaps {
+			before = snap.Run.ID
+			run, err := s.visible(ctx, subject, snap)
+			if err == nil {
+				out = append(out, run)
+			} else if !errors.Is(err, ErrDenied) {
+				return nil, err
+			}
 		}
-	}
-	if len(out) > limit {
-		out = out[:limit]
+		if len(snaps) < batch {
+			break
+		}
 	}
 	return out, nil
 }

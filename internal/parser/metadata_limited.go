@@ -1,10 +1,9 @@
 package parser
 
 import (
+	"context"
 	"errors"
 	"io"
-
-	"github.com/nwaples/rardecode/v2"
 )
 
 // ErrMetadataTooLarge indicates a metadata entry exceeds the caller's byte budget.
@@ -12,7 +11,10 @@ var ErrMetadataTooLarge = errors.New("metadata exceeds byte limit")
 
 // ReadMetadataLimited applies a smaller metadata budget before allocating or decompressing.
 // It preserves the format's metadata selection semantics and leaves ordinary reads unchanged.
-func ReadMetadataLimited(arc Archive, name string, limit int64) ([]byte, error) {
+func ReadMetadataLimited(ctx context.Context, arc Archive, name string, limit int64) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if limit < 0 || limit > maxPageUncompressedBytes {
 		return nil, ErrMetadataTooLarge
 	}
@@ -32,33 +34,43 @@ func ReadMetadataLimited(arc Archive, name string, limit int64) ([]byte, error) 
 			return nil, err
 		}
 		defer rc.Close()
-		return readMetadataBytes(rc, limit)
+		return readMetadataBytes(pageContextReader{ctx, rc}, limit)
 	case *RarArchive:
-		a.mu.Lock()
+		if err := a.mu.lockContext(ctx); err != nil {
+			return nil, err
+		}
 		defer a.mu.Unlock()
 		if a.closed {
 			return nil, ErrArchiveClosed
 		}
-		rr, err := rardecode.OpenReader(a.path)
+		rr, err := boundedRar(ctx, a.path)
 		if err != nil {
 			return nil, err
 		}
 		defer rr.Close()
+		drain := boundedRarDrain{remaining: BoundedPageDictionaryBytes}
 		for {
+			if err := ctx.Err(); err != nil {
+				return nil, err
+			}
 			header, err := rr.Next()
 			if err == io.EOF {
 				return nil, ErrMetadataNotFound
 			}
 			if err != nil {
-				return nil, err
+				return nil, pageBudgetError(err)
 			}
 			if header.IsDir || !matchesArchiveEntry(header.Name, name, true) {
+				if err := drain.skip(ctx, rr, header.UnPackedSize, BoundedPageDictionaryBytes); err != nil {
+					return nil, err
+				}
 				continue
 			}
 			if header.UnPackedSize > limit {
 				return nil, ErrMetadataTooLarge
 			}
-			return readMetadataBytes(rr, limit)
+			data, err := readMetadataBytes(pageContextReader{ctx, rr}, limit)
+			return data, pageBudgetError(err)
 		}
 	default:
 		return nil, errors.New("unsupported metadata reader")

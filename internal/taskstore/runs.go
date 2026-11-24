@@ -257,6 +257,10 @@ func identityClause(filter task.RunFilter) (string, []any) {
 		clauses = append(clauses, `variant = ?`)
 		args = append(args, string(*filter.Variant))
 	}
+	if filter.VariantPrefix != nil {
+		clauses = append(clauses, `substr(variant, 1, length(?)) = ?`)
+		args = append(args, string(*filter.VariantPrefix), string(*filter.VariantPrefix))
+	}
 	if len(filter.Types) > 0 {
 		placeholders, typeArgs := stringPlaceholders(filter.Types)
 		clauses = append(clauses, `type IN (`+placeholders+`)`)

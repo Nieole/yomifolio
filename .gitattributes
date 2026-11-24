@@ -7,4 +7,9 @@
 # Keep legal texts byte-exact for the notice inventory's SHA-256 checks.
 LICENSE -text
 NOTICE -text
-LICENSES/** -text
+# Upstream license files can intentionally end with blank lines; preserve their bytes.
+LICENSES/** -text whitespace=-blank-at-eof
+
+# Keep generated review mockups and Python fixture recipes LF-clean across worktrees.
+.thinkrail/context/mockups/*.html text eol=lf
+internal/parser/testdata/*.py text eol=lf
