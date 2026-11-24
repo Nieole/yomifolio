@@ -92,6 +92,7 @@
 ## 深入文档
 
 - [部署、配置、权限、备份与升级](docs/getting-started.zh-CN.md)
+- [MCP 接入配置](docs/mcp.zh-CN.md)
 - [藏书管理、阅读器、客户端与可选工具](docs/features.zh-CN.md)
 - [构建、测试与开发](docs/development.zh-CN.md)
 - [配置模板](config.example.yaml) · [版本变化](CHANGELOG.md)
@@ -105,6 +106,8 @@
 [Apache License 2.0](LICENSE) · Yomifolio contributors。第三方组件保留各自许可证，见[通知与待核验的发布事项](THIRD_PARTY_NOTICES.md)。代码许可证不授予第三方漫画或封面图片的使用权。
 
 ### 受限 MCP 访问
+
+配置步骤、客户端示例与排错见 **[MCP 接入配置指南](docs/mcp.zh-CN.md)**。
 
 管理员在 **设置 → MCP 访问** 为真实账户签发独立凭据，查看、收紧资料库与五项独立能力限制，并可撤销。资料库不选即无访问权；普通用户仍只读，不能获得管理或付费模型权限。修改或重置密码会撤销该用户的全部 MCP 凭据；密钥仅在签发时显示一次，请安全保存。
 

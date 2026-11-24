@@ -92,6 +92,7 @@ For low-resolution pages, optional **waifu2x / Real-CUGAN** processing runs on d
 ## Documentation
 
 - [Getting started, deployment, configuration, and upgrades](docs/getting-started.md)
+- [Configuring MCP access](docs/mcp.md)
 - [Library management, reader features, clients, and optional tools](docs/features.md)
 - [Building, testing, and development](docs/development.md)
 - [Example configuration](config.example.yaml) · [Changelog](CHANGELOG.md)
@@ -105,6 +106,8 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and safe reporting guid
 [Apache License 2.0](LICENSE) · Yomifolio contributors. Third-party components retain their own licenses; see [notices and outstanding release checks](THIRD_PARTY_NOTICES.md). The code license does not grant rights to third-party comics or artwork.
 
 ### Scoped MCP access
+
+Setup steps, client examples and troubleshooting are in **[configuring MCP access](docs/mcp.md)**.
 
 Administrators can issue, inspect, narrow and revoke independent credentials at **Settings → MCP access**. Each credential belongs to a real account and explicitly selected libraries and capabilities; an empty library selection grants no access. Regular users remain read-only, without management or paid-model permissions. Password changes and resets revoke that account's MCP credentials. Save the secret at issuance: it cannot be viewed again.
 
