@@ -158,18 +158,32 @@ func WriteEnrichmentState(ctx context.Context, q EnrichmentQueries, current data
 	return q.RefreshSeriesStats(ctx, current.ID)
 }
 
-// RecordEnrichmentProvenance links an actual supplemented field to its proposal.
+// FieldOrigin is what a supplemented field's latest provenance points to: the
+// operation that wrote it and, when its evidence came from a proposal, that proposal.
+// Proposal is zero for evidence confirmed elsewhere, such as a series identification.
+type FieldOrigin struct {
+	Operation string
+	Proposal  int64
+}
+
+func (o FieldOrigin) proposal() sql.NullInt64 {
+	return sql.NullInt64{Int64: o.Proposal, Valid: o.Proposal > 0}
+}
+
+// RecordEnrichmentProvenance links an actual supplemented field to its origin.
 // The receipt retains full evidence; this remains only the latest field origin.
-func RecordEnrichmentProvenance(ctx context.Context, q *database.Queries, series, proposalID int64, field, stored string, source metadata.FieldEvidence) error {
-	_, err := q.UpsertSeriesMetadataProvenance(ctx, database.UpsertSeriesMetadataProvenanceParams{SeriesID: series, FieldName: field, Value: stored, Source: source.Source, SourceUrl: source.Metadata.SourceURL, ReviewID: sql.NullInt64{Int64: proposalID, Valid: true}})
+func RecordEnrichmentProvenance(ctx context.Context, q *database.Queries, series int64, origin FieldOrigin, field, stored string, source metadata.FieldEvidence) error {
+	_, err := q.UpsertSeriesMetadataProvenance(ctx, database.UpsertSeriesMetadataProvenanceParams{SeriesID: series, FieldName: field, Value: stored, Source: source.Source, SourceUrl: source.Metadata.SourceURL, ReviewID: origin.proposal(), OperationID: sql.NullString{String: origin.Operation, Valid: true}})
 	return err
 }
 
-// ForgetEnrichmentProvenance clears only the undone operation's latest origins.
-// Prior origins are unknown, not reconstructed from a proposal or stale diff.
-func ForgetEnrichmentProvenance(ctx context.Context, tx *sql.Tx, series, proposalID int64, fields []string) error {
+// ForgetEnrichmentProvenance clears only the latest origins origin.Operation wrote,
+// never another writer's. Records written before writers were recorded name no
+// operation; origin.Proposal claims those, so undo passes it only for receipts
+// confirmed by that proposal. Prior origins are unknown, not reconstructed.
+func ForgetEnrichmentProvenance(ctx context.Context, tx *sql.Tx, series int64, origin FieldOrigin, fields []string) error {
 	for _, field := range fields {
-		if _, err := tx.ExecContext(ctx, `DELETE FROM series_metadata_provenance WHERE series_id=? AND review_id=? AND field_name=?`, series, proposalID, field); err != nil {
+		if _, err := tx.ExecContext(ctx, `DELETE FROM series_metadata_provenance WHERE series_id=? AND field_name=? AND (operation_id=? OR (operation_id IS NULL AND review_id=?))`, series, field, origin.Operation, origin.proposal()); err != nil {
 			return err
 		}
 	}

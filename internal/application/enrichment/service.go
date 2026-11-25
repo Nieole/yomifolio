@@ -9,16 +9,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"net/url"
 	"slices"
 	"sort"
-	"strings"
 	"time"
 
 	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/database"
 	"yomifolio/internal/metadata"
-	"yomifolio/internal/proposal"
 	"yomifolio/internal/seriesmeta"
 )
 
@@ -365,273 +362,22 @@ func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) 
 	if seen["cover"] != (in.Cover != nil) || len(in.AuthorCorrections) > 50 || (len(in.AuthorCorrections) > 0 && !seen["authors"]) {
 		return Operation{}, delegated.ErrInvalid
 	}
-	if out, found, err := s.existing(ctx, actor, in.SeriesID, in.RequestKey, applyDigest(in)); err != nil || found {
+	digest := applyDigest(in)
+	if out, found, err := s.existing(ctx, actor, in.SeriesID, in.RequestKey, digest); err != nil || found {
 		return out, err
 	}
-	evidence := map[string][]metadata.FieldEvidence{}
-	reason := ""
-	for _, id := range in.ProposalIDs {
-		if in.Adjudication != nil && in.Adjudication.Mode == "reject" {
-			break
-		}
-		proposal, err := s.evidence.GetMatchProposal(ctx, actor, in.SeriesID, id)
-		if err != nil {
-			return Operation{}, err
-		}
-		e := proposal.Evidence
-		if e == nil || !e.IdentityConfirmed || !e.EditionConfirmed || strings.TrimSpace(e.Summary) == "" {
-			return Operation{}, delegated.ErrInvalid
-		}
-		if reason == "" {
-			reason = e.Summary
-		}
-		keys := make([]string, 0, len(e.Fields))
-		for f := range e.Fields {
-			keys = append(keys, f)
-		}
-		sort.Strings(keys)
-		for _, f := range keys {
-			evidence[f] = append(evidence[f], e.Fields[f])
-			source := e.Fields[f]
-			if !slices.ContainsFunc(evidence["source_links"], func(existing metadata.FieldEvidence) bool {
-				return existing.Source == source.Source && existing.Metadata.SourceURL == source.Metadata.SourceURL
-			}) {
-				evidence["source_links"] = append(evidence["source_links"], source)
-			}
-		}
+	evidence, err := s.collectProposalEvidence(ctx, actor, in)
+	if err != nil {
+		return Operation{}, err
 	}
 	var prepared *preparedCover
 	if in.Cover != nil {
-		var err error
-		prepared, err = s.prepareCover(ctx, actor, in)
-		if err != nil {
+		if prepared, err = s.prepareCover(ctx, actor, in); err != nil {
 			return Operation{}, err
 		}
 	}
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return Operation{}, err
-	}
-	defer tx.Rollback()
-	q := database.New(tx)
-	j := database.MetadataJournal{Tx: tx}
-	current, before, err := readState(ctx, q, in.SeriesID)
-	if err != nil {
-		return Operation{}, delegated.ErrDenied
-	}
-	if err = authorize(ctx, tx, actor, current.LibraryID, true); err != nil {
-		return Operation{}, err
-	}
-	if in.Adjudication != nil {
-		if err = authorize(ctx, tx, actor, current.LibraryID, false); err != nil {
-			return Operation{}, err
-		}
-	}
-	if out, found, e := retry(ctx, j, actor, in.RequestKey, applyDigest(in)); e != nil || found {
-		return out, e
-	}
-	out := operation(actor, in.RequestKey, current.ID, current.LibraryID, "enrich")
-	out.Before = before
-	out.After = before
-	var adjudicated database.MetadataReview
-	if in.Adjudication != nil {
-		var pending bool
-		adjudicated, pending, err = adjudicationGuard(ctx, q, in, evidence)
-		if err != nil {
-			return Operation{}, err
-		}
-		accepted, e := proposal.Accepted(ctx, tx, adjudicated)
-		if e != nil {
-			return Operation{}, e
-		}
-		out.Adjudication = &AdjudicationResult{ProposalID: in.ProposalIDs[0], Mode: in.Adjudication.Mode, Reason: in.Adjudication.Reason, Status: adjudicated.Status, Accepted: accepted}
-		if !pending {
-			out.Outcome = "conflict"
-			out.Reason = "proposal terminal or selected field already consumed"
-			if err = save(ctx, j, out, applyDigest(in)); err != nil {
-				return Operation{}, err
-			}
-			if err = tx.Commit(); err != nil {
-				return Operation{}, err
-			}
-			return out, nil
-		}
-	}
-	if in.Adjudication == nil {
-		pending, e := pendingEvidence(ctx, q, in)
-		if e != nil {
-			return Operation{}, e
-		}
-		if !pending {
-			out.Outcome = "conflict"
-			out.Reason = "proposal is no longer pending"
-			if err = save(ctx, j, out, applyDigest(in)); err != nil {
-				return Operation{}, err
-			}
-			if err = tx.Commit(); err != nil {
-				return Operation{}, err
-			}
-			return out, nil
-		}
-	}
-	if in.Cover != nil {
-		out.CoverSelection = in.Cover
-		if prepared == nil {
-			out.Outcome = "conflict"
-			out.Reason = "current field or lock differs"
-		}
-	}
-	if prepared != nil {
-		out.OldCoverMaterial = prepared.old
-		out.NewCoverMaterial = prepared.new
-	}
-	for _, f := range in.Fields {
-		if seriesmeta.EnrichmentLocked(current, f) || !same(before, in.Expected.state(), f) || (f == "cover" && !eligibleCover(before.Cover)) {
-			out.Outcome = "conflict"
-			out.Reason = "current field or lock differs"
-		}
-		if f == "cover" {
-			if before.Cover != nil && prepared != nil {
-				out.After.Cover = &seriesmeta.CoverState{BookID: before.Cover.BookID, Path: prepared.new, Automatic: true}
-			}
-			out.Fields = append(out.Fields, FieldAudit{Field: f, Changed: true, Reason: in.Cover.Reason, Sources: []metadata.FieldEvidence{}})
-			continue
-		}
-		sources := evidence[f]
-		if len(sources) == 0 {
-			return Operation{}, delegated.ErrInvalid
-		}
-		audit := FieldAudit{Field: f, Reason: reason, Sources: sources}
-		switch f {
-		case "authors":
-			var e error
-			out.After.Authors, e = correctAuthors(in.Expected.Authors, sources, in.AuthorCorrections)
-			if e != nil {
-				return Operation{}, e
-			}
-			for _, correction := range in.AuthorCorrections {
-				audit.Reason += "; " + correction.Reason
-			}
-		case "rating":
-			r, valid, formula := seriesmeta.EnrichmentRating(sources)
-			audit.Sources = valid
-			audit.Formula = formula
-			if before.Rating == nil {
-				out.After.Rating = r
-			}
-		case "tags":
-			out.After.Tags = slices.Clone(before.Tags)
-			for _, source := range sources {
-				for _, tag := range seriesmeta.ContentTags(source.Metadata.Tags) {
-					if !slices.Contains(out.After.Tags, tag) {
-						out.After.Tags = append(out.After.Tags, tag)
-					}
-				}
-			}
-			sort.Strings(out.After.Tags)
-		case "source_links":
-			out.After.Links = slices.Clone(before.Links)
-			for _, source := range sources {
-				u, e := url.Parse(source.Metadata.SourceURL)
-				if e != nil || u.Host == "" || (u.Scheme != "https" && u.Scheme != "http") {
-					continue
-				}
-				exists := false
-				for _, l := range out.After.Links {
-					if l.Name == source.Source || l.Url == u.String() {
-						exists = true
-					}
-				}
-				if !exists {
-					out.After.Links = append(out.After.Links, seriesmeta.Link{Name: source.Source, Url: u.String()})
-				}
-			}
-		default:
-			target := scalar(&out.After, f)
-			if *target == nil || strings.TrimSpace(**target) == "" {
-				facts := sources[0].Metadata
-				v := ""
-				switch f {
-				case "title":
-					v = facts.Title
-				case "summary":
-					v = facts.Summary
-				case "publisher":
-					v = facts.Publisher
-				case "status":
-					v = facts.Status
-				}
-				if strings.TrimSpace(v) != "" {
-					*target = &v
-				}
-			}
-		}
-		audit.Changed = !same(before, out.After, f)
-		if !audit.Changed {
-			audit.Reason = "preserved existing value or no eligible source change: " + reason
-		}
-		out.Fields = append(out.Fields, audit)
-	}
-	if out.Outcome == "conflict" {
-		out.After = before
-		for i := range out.Fields {
-			out.Fields[i].Changed = false
-		}
-	} else {
-		for _, f := range out.Fields {
-			if f.Changed {
-				out.Outcome = "changed"
-				out.Applied = true
-			}
-		}
-	}
-	if in.Cover != nil {
-		source, e := q.GetBook(ctx, in.Cover.BookID)
-		if e != nil || source.SeriesID != current.ID || source.LibraryID != current.LibraryID {
-			return Operation{}, delegated.ErrDenied
-		}
-	}
-	if out.Applied {
-		failed, e := j.TryChange(ctx, func() error {
-			if err := writeState(ctx, tx, q, current, out.After, changedFields(out.Fields)); err != nil {
-				return err
-			}
-			if in.Adjudication != nil {
-				return finishAdjudication(ctx, tx, q, adjudicated, in, &out)
-			}
-			return nil
-		})
-		if e != nil {
-			return Operation{}, e
-		}
-		if failed {
-			out.Applied = false
-			out.Outcome = "failed"
-			out.Reason = "metadata write failed; nothing changed"
-			if out.Adjudication != nil {
-				out.Adjudication.Status = "pending"
-			}
-			out.After = out.Before
-			for i := range out.Fields {
-				out.Fields[i].Changed = false
-			}
-		}
-	}
-	if in.Adjudication != nil && !out.Applied && out.Outcome != "conflict" && out.Outcome != "failed" {
-		if err = finishAdjudication(ctx, tx, q, adjudicated, in, &out); err != nil {
-			return Operation{}, err
-		}
-	}
-	if err = save(ctx, j, out, applyDigest(in)); err != nil {
-		return Operation{}, err
-	}
-	if err = tx.Commit(); err != nil {
-		return Operation{}, err
-	}
-	if s.publish != nil && (out.Applied || (out.Adjudication != nil && out.Adjudication.Status != "pending" && out.Outcome != "conflict" && out.Outcome != "failed")) {
-		s.publish()
-	}
-	return out, nil
+	c := supplement{key: in.RequestKey, digest: digest, series: in.SeriesID, fields: in.Fields, expected: in.Expected.state(), evidence: evidence, cover: in.Cover, prepared: prepared, corrections: in.AuthorCorrections}
+	return s.applyEvidence(ctx, actor, c, &proposalDecision{in: in, evidence: evidence})
 }
 func (s *Service) existing(ctx context.Context, actor delegated.Subject, series int64, key, digest string) (Operation, bool, error) {
 	tx, err := s.db.BeginTx(ctx, nil)

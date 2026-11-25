@@ -282,14 +282,15 @@ type SeriesLink struct {
 }
 
 type SeriesMetadataProvenance struct {
-	SeriesID   int64         `json:"series_id"`
-	FieldName  string        `json:"field_name"`
-	Value      string        `json:"value"`
-	Source     string        `json:"source"`
-	SourceUrl  string        `json:"source_url"`
-	Confidence float64       `json:"confidence"`
-	ReviewID   sql.NullInt64 `json:"review_id"`
-	UpdatedAt  time.Time     `json:"updated_at"`
+	SeriesID    int64          `json:"series_id"`
+	FieldName   string         `json:"field_name"`
+	Value       string         `json:"value"`
+	Source      string         `json:"source"`
+	SourceUrl   string         `json:"source_url"`
+	Confidence  float64        `json:"confidence"`
+	ReviewID    sql.NullInt64  `json:"review_id"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	OperationID sql.NullString `json:"operation_id"`
 }
 
 type SeriesRelation struct {

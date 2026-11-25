@@ -2348,7 +2348,7 @@ func (q *Queries) GetSeriesIDByBookPath(ctx context.Context, path string) (int64
 }
 
 const getSeriesMetadataProvenance = `-- name: GetSeriesMetadataProvenance :many
-SELECT series_id, field_name, value, source, source_url, confidence, review_id, updated_at FROM series_metadata_provenance WHERE series_id = ? ORDER BY field_name
+SELECT series_id, field_name, value, source, source_url, confidence, review_id, updated_at, operation_id FROM series_metadata_provenance WHERE series_id = ? ORDER BY field_name
 `
 
 func (q *Queries) GetSeriesMetadataProvenance(ctx context.Context, seriesID int64) ([]SeriesMetadataProvenance, error) {
@@ -2369,6 +2369,7 @@ func (q *Queries) GetSeriesMetadataProvenance(ctx context.Context, seriesID int6
 			&i.Confidence,
 			&i.ReviewID,
 			&i.UpdatedAt,
+			&i.OperationID,
 		); err != nil {
 			return nil, err
 		}
@@ -6648,9 +6649,9 @@ func (q *Queries) UpsertSeriesByPath(ctx context.Context, arg UpsertSeriesByPath
 
 const upsertSeriesMetadataProvenance = `-- name: UpsertSeriesMetadataProvenance :one
 INSERT INTO series_metadata_provenance (
-    series_id, field_name, value, source, source_url, confidence, review_id
+    series_id, field_name, value, source, source_url, confidence, review_id, operation_id
 ) VALUES (
-    ?1, ?2, ?3, ?4, ?5, ?6, ?7
+    ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8
 )
 ON CONFLICT(series_id, field_name) DO UPDATE SET
     value = excluded.value,
@@ -6658,18 +6659,20 @@ ON CONFLICT(series_id, field_name) DO UPDATE SET
     source_url = excluded.source_url,
     confidence = excluded.confidence,
     review_id = excluded.review_id,
+    operation_id = excluded.operation_id,
     updated_at = CURRENT_TIMESTAMP
-RETURNING series_id, field_name, value, source, source_url, confidence, review_id, updated_at
+RETURNING series_id, field_name, value, source, source_url, confidence, review_id, updated_at, operation_id
 `
 
 type UpsertSeriesMetadataProvenanceParams struct {
-	SeriesID   int64         `json:"series_id"`
-	FieldName  string        `json:"field_name"`
-	Value      string        `json:"value"`
-	Source     string        `json:"source"`
-	SourceUrl  string        `json:"source_url"`
-	Confidence float64       `json:"confidence"`
-	ReviewID   sql.NullInt64 `json:"review_id"`
+	SeriesID    int64          `json:"series_id"`
+	FieldName   string         `json:"field_name"`
+	Value       string         `json:"value"`
+	Source      string         `json:"source"`
+	SourceUrl   string         `json:"source_url"`
+	Confidence  float64        `json:"confidence"`
+	ReviewID    sql.NullInt64  `json:"review_id"`
+	OperationID sql.NullString `json:"operation_id"`
 }
 
 func (q *Queries) UpsertSeriesMetadataProvenance(ctx context.Context, arg UpsertSeriesMetadataProvenanceParams) (SeriesMetadataProvenance, error) {
@@ -6681,6 +6684,7 @@ func (q *Queries) UpsertSeriesMetadataProvenance(ctx context.Context, arg Upsert
 		arg.SourceUrl,
 		arg.Confidence,
 		arg.ReviewID,
+		arg.OperationID,
 	)
 	var i SeriesMetadataProvenance
 	err := row.Scan(
@@ -6692,6 +6696,7 @@ func (q *Queries) UpsertSeriesMetadataProvenance(ctx context.Context, arg Upsert
 		&i.Confidence,
 		&i.ReviewID,
 		&i.UpdatedAt,
+		&i.OperationID,
 	)
 	return i, err
 }
