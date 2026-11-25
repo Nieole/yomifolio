@@ -16,6 +16,7 @@ func (c *administrationHTTP) mount(r chi.Router) {
 	r.Post("/mcp/credentials", c.issueMCPCredential)
 	r.Patch("/mcp/credentials/{credentialId}", c.narrowMCPCredential)
 	r.Delete("/mcp/credentials/{credentialId}", c.revokeMCPCredential)
+	c.mountIdentification(r)
 	r.Get("/system/performance", c.getSystemPerformance)
 	r.Get("/auth/status", c.authStatus)
 	r.Post("/auth/setup", c.setupAdmin)

@@ -82,6 +82,9 @@ function mockApi(role: 'admin' | 'regular') {
     }
     if (url.endsWith('/context')) return Promise.resolve({ data: CONTEXT });
     if (url.endsWith('/review')) return Promise.resolve({ data: { exists: false, rating: null, review: '' } });
+    if (url === '/api/identification/series/1') {
+      return Promise.resolve({ data: { series_id: 1, library_id: 1, status: 'unprocessed', conclusions: [], excluded_candidates: [] } });
+    }
     return Promise.resolve({ data: [] });
   }) as never);
   vi.spyOn(apiClient, 'post').mockResolvedValue({ data: {} } as never);
@@ -127,7 +130,7 @@ function openBookMenu() {
   fireEvent.click(screen.getByRole('button', { name: '更多操作' }));
 }
 
-// 侧栏挂着关系、提案与失败任务三块管理动作，同样要先点角标打开；角标默认落在失败任务页，
+// 侧栏挂着关系、提案、失败任务与识别四块管理动作，同样要先点角标打开；角标默认落在失败任务页，
 // 要看哪一块就再点哪个页签。页签只在侧栏内找——角标文案里也带着「失败任务」四个字。
 function openSidePanel(tab: string) {
   fireEvent.click(screen.getByRole('button', { name: /项待审/ }));
@@ -190,6 +193,9 @@ describe('系列详情页的管理员动作', () => {
     panelTab('失败任务');
     expect(action('重试')).toBeNull();
     expect(screen.getByText('刮削失败')).toBeTruthy();
+
+    // 识别区连读取都只给管理员：结论里带着凭据与账户归属。
+    expect(within(screen.getByRole('complementary')).queryByRole('button', { name: /识别/ })).toBeNull();
   });
 
   it('普通用户的每用户操作不受影响：阅读进度与短评照旧', async () => {
@@ -228,5 +234,8 @@ describe('系列详情页的管理员动作', () => {
     expect(action('拒绝')).toBeTruthy();
     panelTab('失败任务');
     expect(action('重试')).toBeTruthy();
+    panelTab('识别');
+    expect(await screen.findByRole('button', { name: '设为已审定' })).toBeTruthy();
+    expect(screen.getByTestId('identification-status').textContent).toBe('未处理');
   });
 });

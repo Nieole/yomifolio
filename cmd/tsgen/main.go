@@ -16,6 +16,7 @@ import (
 	"yomifolio/internal/application/configuration"
 	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/application/enrichment"
+	"yomifolio/internal/application/identification"
 	"yomifolio/internal/config"
 	"yomifolio/internal/metadata"
 	"yomifolio/internal/seriesmeta"
@@ -72,6 +73,11 @@ var targets = []reflect.Type{
 	reflect.TypeOf(api.RelocationOperation{}),
 	reflect.TypeOf(api.LibraryRelocationProtection{}),
 	reflect.TypeOf(api.RelocationRestoration{}),
+	reflect.TypeOf(identification.SeriesIdentification{}),
+	reflect.TypeOf(identification.Conclusion{}),
+	reflect.TypeOf(identification.Confirmer{}),
+	reflect.TypeOf(identification.ExcludedCandidate{}),
+	reflect.TypeOf(identification.OwnerReview{}),
 }
 
 // nullTypes 记录 sql.Null* 到 contracts.ts 导出名的映射；用到哪些就 import 哪些。

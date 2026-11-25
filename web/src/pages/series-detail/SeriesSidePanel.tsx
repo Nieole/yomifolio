@@ -7,8 +7,9 @@ import { useI18n } from '../../i18n/LocaleProvider';
 import { SeriesRelationsPanel } from './SeriesRelationsPanel';
 import { SeriesMetadataReviewPanel } from './SeriesMetadataReviewPanel';
 import { SeriesReviewPanel } from './SeriesReviewPanel';
+import { SeriesIdentificationPanel } from './SeriesIdentificationPanel';
 
-export type SeriesSidePanelTab = 'relations' | 'metadata' | 'failed' | 'review';
+export type SeriesSidePanelTab = 'relations' | 'metadata' | 'identification' | 'failed' | 'review';
 
 interface SeriesSidePanelProps {
   open: boolean;
@@ -46,7 +47,7 @@ interface SeriesSidePanelProps {
 export function SeriesSidePanel(props: SeriesSidePanelProps) {
   const { t, formatDateTime } = useI18n();
   // 重试落在 POST /api/system/tasks/{taskID}/retry，整片 /api/system/ 后端都只给管理员；
-  // 失败任务本身是只读信息，仍留给普通用户看。
+  // 失败任务本身是只读信息，仍留给普通用户看。识别区连读取都只给管理员，页签随之隐藏。
   const { isAdmin } = useAuth();
 
   const counts = {
@@ -147,6 +148,14 @@ export function SeriesSidePanel(props: SeriesSidePanelProps) {
               label={t('series.sidePanel.tabs.metadata')}
               count={counts.metadata}
             />
+            {isAdmin && (
+              <TabButton
+                active={props.activeTab === 'identification'}
+                onClick={() => props.onTabChange('identification')}
+                label={t('series.sidePanel.tabs.identification')}
+                count={0}
+              />
+            )}
             <TabButton
               active={props.activeTab === 'review'}
               onClick={() => props.onTabChange('review')}
@@ -194,6 +203,9 @@ export function SeriesSidePanel(props: SeriesSidePanelProps) {
                   onReject={props.onRejectMetadataReview}
                 />
               )
+            )}
+            {props.activeTab === 'identification' && isAdmin && (
+              <SeriesIdentificationPanel seriesId={props.seriesId} />
             )}
             {props.activeTab === 'review' && (
               <SeriesReviewPanel seriesId={props.seriesId} />
