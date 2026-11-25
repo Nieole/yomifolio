@@ -1,7 +1,8 @@
 // Package identification owns series identification: the durable per-source conclusions, the
 // entries a person excluded, escalations, not-found verdicts and the owner-reviewed decision, and
 // the identification status derived from them. The status is never stored or edited on its own;
-// the series_identification_status view is its single definition.
+// the series_identification_status view is its single definition. It also owns the evidence
+// packets that background prefetch runs prepare for the unprocessed series.
 //
 // Agent-facing use cases re-check delegated authority through Access on every call. Owner-facing
 // use cases take the acting account and re-check that it is an administrator in the same
