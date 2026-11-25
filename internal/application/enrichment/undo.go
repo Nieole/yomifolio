@@ -193,10 +193,11 @@ func (s *Service) Undo(ctx context.Context, actor delegated.Subject, in UndoInpu
 			if err := writeState(ctx, tx, q, current, out.After, changedFields(out.Fields)); err != nil {
 				return err
 			}
+			origin := seriesmeta.FieldOrigin{Operation: original.ID}
 			if original.Adjudication != nil {
-				return seriesmeta.ForgetEnrichmentProvenance(ctx, tx, current.ID, original.Adjudication.ProposalID, changedFields(out.Fields))
+				origin.Proposal = original.Adjudication.ProposalID
 			}
-			return nil
+			return seriesmeta.ForgetEnrichmentProvenance(ctx, tx, current.ID, origin, changedFields(out.Fields))
 		})
 		if e != nil {
 			return Operation{}, e

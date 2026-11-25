@@ -1,0 +1,114 @@
+{
+  "password": "correct horse battery staple",
+  "proposal_id": 1,
+  "provenance": [
+    {
+      "confidence": 0,
+      "field_name": "summary",
+      "label": "Summary",
+      "source": "bangumi",
+      "source_url": "https://example.org/bangumi",
+      "updated_at": "2026-11-25T15:25:50Z",
+      "value": "Space journey"
+    },
+    {
+      "confidence": 0,
+      "field_name": "tags",
+      "label": "Tags",
+      "source": "bangumi",
+      "source_url": "https://example.org/bangumi",
+      "updated_at": "2026-11-25T15:25:50Z",
+      "value": "[\"Science Fiction\",\"冒险\"]"
+    }
+  ],
+  "series_id": 1,
+  "summary_receipt": {
+    "actor": {
+      "credential_id": "f12a0221748340d7b036226611a51c3ba433b5a8f9dc315615263e48b62d4f55",
+      "user_id": 1
+    },
+    "adjudication": {
+      "accepted": true,
+      "mode": "partial",
+      "proposal_id": 1,
+      "reason": "Accept verified summary",
+      "status": "pending"
+    },
+    "after": {
+      "authors": [],
+      "links": [],
+      "publisher": null,
+      "rating": null,
+      "status": null,
+      "summary": "Space journey",
+      "tags": [],
+      "title": null
+    },
+    "applied": false,
+    "before": {
+      "authors": [],
+      "links": [],
+      "publisher": null,
+      "rating": null,
+      "status": null,
+      "summary": null,
+      "tags": [],
+      "title": null
+    },
+    "created_at": "2026-11-25T15:25:50.017169776Z",
+    "fields": [
+      {
+        "changed": true,
+        "field": "summary",
+        "reason": "Same series and edition confirmed from directory and release",
+        "sources": [
+          {
+            "candidate_id": "bangumi:0",
+            "metadata": {
+              "Authors": [
+                {
+                  "Name": "Canonical",
+                  "Role": "Writer"
+                }
+              ],
+              "Confidence": 0,
+              "CoverURL": "",
+              "OriginalTitle": "",
+              "Provider": "bangumi",
+              "Publisher": "",
+              "Rating": 9,
+              "ReleaseDate": "",
+              "SiteRating": {
+                "scale": 10,
+                "value": 9
+              },
+              "SourceID": 1,
+              "SourceURL": "https://example.org/bangumi",
+              "Status": "",
+              "Summary": "Space journey",
+              "Tags": [
+                "Science Fiction",
+                "favorite",
+                "冒险"
+              ],
+              "Title": "Space",
+              "VolumeCount": 0
+            },
+            "source": "bangumi"
+          }
+        ]
+      }
+    ],
+    "id": "5fde8aa17a7cfff068e6839f943f2fd6",
+    "kind": "enrich",
+    "library_id": 1,
+    "outcome": "changed",
+    "reason": "",
+    "replayed": false,
+    "request_key": "legacy-summary",
+    "series_id": 1,
+    "version": 1
+  },
+  "tags_operation_id": "cac367bbdee8ea39071293e3a435ba7e",
+  "username": "owner"
+}

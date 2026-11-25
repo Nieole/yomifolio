@@ -81,7 +81,7 @@ agent 必须显式确认所选候选属于同一系列及相同版本，并提�
 
 ### 安全补充与持久撤销
 
-`enrichment.Service` 是网页管理与 MCP 共用的同步应用能力，读取 07 已持久化且明确确认身份、版本的提案证据；不接受调用者自由填写文字事实，不涉及 LLM；普通补充不消费字段，但在最终写事务也尊重提案终态；封面选择归下述归档封面契约。`State` 提供按字段预期值。每个系列独立事务内重读实际资料库、当前值与锁，并调用 `AuthorizeTx`（网页主语检查当前管理员及非强制改密状态）；实际元数据、统计和完整操作收据一起提交，失败回滚，不带旧授权自动重试。协议不参与 SQL。
+`enrichment.Service` 是网页管理与 MCP 共用的同步应用能力，读取 07 已持久化且明确确认身份、版本的提案证据；不接受调用者自由填写文字事实，不涉及 LLM；普通补充不消费字段，但在最终写事务也尊重提案终态；封面选择归下述归档封面契约。补充分两段：从已确认提案收集字段证据；把字段证据应用到系列并留收据。后一段不假设证据来自提案，确认证据的决定在同一写事务内重读终态（提案即 ADR 0011 守卫）、完成自身收尾并决定来源记录指向。`State` 提供按字段预期值。每个系列独立事务内重读实际资料库、当前值与锁，并调用 `AuthorizeTx`（网页主语检查当前管理员及非强制改密状态）；实际元数据、统计和完整操作收据一起提交，失败回滚，不带旧授权自动重试。协议不参与 SQL。
 
 所选 title、summary、publisher、status 只补空；tags 使用 `seriesmeta.ContentTags` 保守内容词表后追加，保留所有旧成员；source_links 只追加有效 HTTP(S) 来源链接，不替换同名或同 URL 旧链接。rating 仅 NULL 时采用 `seriesmeta.EnrichmentRating`：有效站点原分数按原尺度换算十分制，来源去重后等权平均，无有效来源保持缺失。标签和链接各以整组比较，其他仅比较所选字段；锁定任一所选字段或相关预期值不一致，整项 conflict，无关字段变化不阻止。
 
@@ -170,4 +170,4 @@ agent 必须显式确认所选候选属于同一系列及相同版本，并提�
 
 提案生命周期以 pending + 持久接受标记、applied、supplemented_closed、rejected 区分结果，具体标记及同一授权事务内共享的 `Accepted` 事实投影归 mm-proposal；普通网页 fill_empty 部分应用留下的现存来源同样表示已接受，不要求改写普通人工 applied_at。收据 adjudication 保存 proposal_id、原命令 mode、短 reason、当时 status 与 accepted；此前已有接受的 reject 最终显示 supplemented_closed 而非全部拒绝。相同键永久重放原收据，即使提案后来关闭也不改写先前 pending 收据；最新提案状态另由 GetMatchProposal 查询。重放仍须当前用户、凭据与实际资料库的 metadata_write 授权；持久收据带 adjudication 时，还在同一收据事务重查当前 read，不以本次输入是否带 adjudication 决定。该检查位于提案终态预检之前，保留成功后的终态重放，不再次消费字段；异载荷仍拒绝且不返回收据。Get/List 仍按实际目标的当前 read 查询历史，不新增普通收据的写权限要求。新意图以显式可选 V1 adjudication={mode,reason} 编入摘要，缺失时完全省略，08/09/10 原字节不变；不序列化整个响应 State。
 
-Undo 仍是实际改动字段的独立单系列恢复，不恢复提案状态或字段行，也不清除接受历史；来源归口的已撤销最新引用仅在仍属于原提案时移除，不伪造未知的更早来源。原收据及来源/理由保持不变。普通人工 Apply/Reject、集合替换及 fill_empty 语义不改；无 adjudication 的来源补充不隐式消费提案或建立接受标记。
+Undo 仍是实际改动字段的独立单系列恢复，不恢复提案状态或字段行，也不清除接受历史；已恢复字段的最新来源记录仅在仍由原操作写入时移除（升级前未记操作的记录按原提案认领，兼容回归归 `TestProductionLegacyAdjudicationUndoReclaimsOwnProvenance`），不伪造未知的更早来源。原收据及来源/理由保持不变。普通人工 Apply/Reject、集合替换及 fill_empty 语义不改；无 adjudication 的来源补充不隐式消费提案或建立接受标记。

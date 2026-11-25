@@ -326,6 +326,7 @@ CREATE TABLE IF NOT EXISTS series_metadata_provenance (
     confidence REAL NOT NULL DEFAULT 0,
     review_id INTEGER,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    operation_id TEXT,
     PRIMARY KEY(series_id, field_name),
     FOREIGN KEY(series_id) REFERENCES series(id) ON DELETE CASCADE,
     FOREIGN KEY(review_id) REFERENCES metadata_reviews(id) ON DELETE SET NULL

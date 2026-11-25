@@ -10,7 +10,6 @@ import (
 	"yomifolio/internal/database"
 	"yomifolio/internal/metadata"
 	"yomifolio/internal/proposal"
-	"yomifolio/internal/seriesmeta"
 )
 
 // Adjudication explicitly opts into proposal consumption, unlike ordinary enrichment.
@@ -75,51 +74,4 @@ func adjudicationGuard(ctx context.Context, q *database.Queries, in Input, evide
 		}
 	}
 	return row, true, nil
-}
-func finishAdjudication(ctx context.Context, tx *sql.Tx, q *database.Queries, row database.MetadataReview, in Input, out *Operation) error {
-	for _, f := range out.Fields {
-		if !f.Changed {
-			continue
-		}
-		stored, err := json.Marshal(value(out.After, f.Field))
-		if err != nil {
-			return err
-		}
-		text := string(stored)
-		if v, ok := value(out.After, f.Field).(*string); ok && v != nil {
-			text = *v
-		}
-		if err = seriesmeta.RecordEnrichmentProvenance(ctx, q, row.SeriesID, row.ID, f.Field, text, f.Sources[0]); err != nil {
-			return err
-		}
-	}
-	status, err := proposal.ConsumeAdjudication(ctx, tx, q, row, changedFields(out.Fields), in.Adjudication.Mode != "partial")
-	if err != nil {
-		return err
-	}
-	row, err = q.GetMetadataReview(ctx, row.ID)
-	if err != nil {
-		return err
-	}
-	accepted, err := proposal.Accepted(ctx, tx, row)
-	if err != nil {
-		return err
-	}
-	out.Adjudication = &AdjudicationResult{ProposalID: row.ID, Mode: in.Adjudication.Mode, Reason: in.Adjudication.Reason, Status: status, Accepted: accepted}
-	return nil
-}
-
-// Ordinary supplementation uses confirmed source evidence, not proposal field
-// replacement. It must still honor terminal decisions in the actual transaction.
-func pendingEvidence(ctx context.Context, q *database.Queries, in Input) (bool, error) {
-	for _, id := range in.ProposalIDs {
-		_, ok, err := proposal.AdjudicationPending(ctx, q, id, in.SeriesID, nil)
-		if err == sql.ErrNoRows {
-			return false, delegated.ErrDenied
-		}
-		if err != nil || !ok {
-			return ok, err
-		}
-	}
-	return true, nil
 }

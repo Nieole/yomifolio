@@ -104,6 +104,8 @@ func Migrate(dbPath string) error {
 		// 存量行留空串：下一次重建会按新键建出正确的行，旧的无键行由
 		// DeleteStaleFranchiseCollections 一并清掉（它把 source_key='' 也算作过期）。
 		{table: "collections", name: "source_key", definition: "TEXT NOT NULL DEFAULT ''"},
+		// 存量行留 NULL：写入它的操作没有记下，撤销按原提案认领，见 seriesmeta.ForgetEnrichmentProvenance。
+		{table: "series_metadata_provenance", name: "operation_id", definition: "TEXT"},
 	} {
 		if err := ensureColumn(db, column.table, column.name, column.definition); err != nil {
 			return err

@@ -553,9 +553,9 @@ ORDER BY review_id ASC, id ASC;
 
 -- name: UpsertSeriesMetadataProvenance :one
 INSERT INTO series_metadata_provenance (
-    series_id, field_name, value, source, source_url, confidence, review_id
+    series_id, field_name, value, source, source_url, confidence, review_id, operation_id
 ) VALUES (
-    sqlc.arg(series_id), sqlc.arg(field_name), sqlc.arg(value), sqlc.arg(source), sqlc.arg(source_url), sqlc.arg(confidence), sqlc.arg(review_id)
+    sqlc.arg(series_id), sqlc.arg(field_name), sqlc.arg(value), sqlc.arg(source), sqlc.arg(source_url), sqlc.arg(confidence), sqlc.arg(review_id), sqlc.arg(operation_id)
 )
 ON CONFLICT(series_id, field_name) DO UPDATE SET
     value = excluded.value,
@@ -563,6 +563,7 @@ ON CONFLICT(series_id, field_name) DO UPDATE SET
     source_url = excluded.source_url,
     confidence = excluded.confidence,
     review_id = excluded.review_id,
+    operation_id = excluded.operation_id,
     updated_at = CURRENT_TIMESTAMP
 RETURNING *;
 
