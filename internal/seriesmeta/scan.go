@@ -70,8 +70,8 @@ func PrepareScanUpdate(current database.Series, records []database.SeriesMetadat
 }
 
 // SourceBacked names the scalar fields whose current value is still the value their source record
-// holds, that is, a value an applied proposal or an identification's enrichment wrote and nobody
-// changed since. Records the upgrade backfilled under "manual" name no source and back nothing.
+// holds, that is, a value an applied proposal or a metadata enrichment wrote and nobody changed
+// since. Records the upgrade backfilled under "manual" name no source and back nothing.
 // A rating matches its record exactly or as the one-decimal text proposals record.
 func SourceBacked(current database.Series, records []database.SeriesMetadataProvenance) map[string]bool {
 	values := map[string]sql.NullString{"title": current.Title, "summary": current.Summary, "publisher": current.Publisher, "status": current.Status, "language": current.Language}

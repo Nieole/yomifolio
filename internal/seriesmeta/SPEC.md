@@ -15,7 +15,7 @@ parent: mm-architecture
 - 查询接口接收调用方的事务句柄；本包不开事务。调用方负责失败回滚及派生数据刷新编排；`ApplyProposal` 内的沿革和统计刷新也在该事务中执行。
 - `SaveManual` 替换标量，可修改锁及锁住的字段；标签、作者、链接为 nil 时保留，显式空集合清空。可选 `ExpectedVersion` 与当前内容指纹比较，冲突返回 `ErrConflict` 和当前版本；不擅自清洗标量原文。
 - `ApplyProposal` 接受已裁决字段和系列快照，非空标量覆盖未锁字段；仅 `WrittenFields` 选中的未锁标签、作者整体清空重建。写入沿革，关联失败上抛；Bangumi 来源且条目 ID 有效时，缺少同名链接才追加来源链接。
-- `PrepareScanInitial` 用目录名作标题并默认锁标题；`PrepareScanUpdate` 使用调用方在批事务内读到的当前行与字段来源记录，保留已有标题、为空且未锁时回落目录名；锁定字段和 `SourceBacked` 认定的字段（当前值仍等于提案应用或识别补充写下的来源记录值，升级回填的 `manual` 记录不算）保留当前值且不因此加锁，其余标量随 ComicInfo 覆盖、缺失即清空。`AppendScanAssociations` 只追加标签、作者，不做替换。
+- `PrepareScanInitial` 用目录名作标题并默认锁标题；`PrepareScanUpdate` 使用调用方在批事务内读到的当前行与字段来源记录，保留已有标题、为空且未锁时回落目录名；锁定字段和 `SourceBacked` 认定的字段（当前值仍等于提案应用或元数据补充写下的来源记录值，升级回填的 `manual` 记录不算）保留当前值且不因此加锁，其余标量随 ComicInfo 覆盖、缺失即清空。`AppendScanAssociations` 只追加标签、作者，不做替换。
 - `EditSelection` 修改非 nil 的状态、出版商，标签先增后删，不改锁和沿革；错误要求整个选择回滚。`Version` 对可编辑内容求指纹，集合去空白、去重排序，不纳入身份、阅读状态和统计；`BuildComicInfoForBook` 只投影已知事实。
 
 ## Boundary
