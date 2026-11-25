@@ -199,6 +199,13 @@ func TestMCPEveryToolResultCarriesItsJSONText(t *testing.T) {
 	wait(cleanup["run_id"])
 	call("library_get_metadata_cleanup", map[string]any{"request_key": "text-cleanup-batch"})
 
+	call("library_identification_progress", map[string]any{"library_ids": []int64{lib.ID}})
+	sequel, err := store.CreateSeries(ctx, database.CreateSeriesParams{Name: "Copy sequel", LibraryID: lib.ID, Path: filepath.Join(lib.Path, "Copy sequel")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	call("library_add_series_relation", map[string]any{"request_key": "text-relation", "series_id": series.ID, "target_series_id": sequel.ID, "relation_type": "sequel", "reason": "Sequel volume names it"})
+
 	listed, err := session.ListTools(ctx, nil)
 	if err != nil {
 		t.Fatal(err)
