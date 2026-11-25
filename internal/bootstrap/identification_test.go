@@ -6,6 +6,7 @@ package bootstrap_test
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -23,6 +24,8 @@ import (
 	"yomifolio/internal/bootstrap"
 	"yomifolio/internal/config"
 	"yomifolio/internal/database"
+	"yomifolio/internal/metadata"
+	"yomifolio/internal/proposal"
 )
 
 // identificationWeb is an administrator browser session against one opened production process.
@@ -574,5 +577,89 @@ func TestRelocationKeepsIdentification(t *testing.T) {
 	}
 	if after := web.raw("GET", "/api/identification/series/"+strconv.FormatInt(series.ID, 10), "").Body.String(); after != before {
 		t.Fatalf("relocation changed identification:\nbefore %s\nafter  %s", before, after)
+	}
+}
+
+// historyProposals is the proposal module over the raw store, used to leave review-page history
+// behind before the first open.
+type historyProposals struct{ database.Store }
+
+func (d historyProposals) ExecTx(ctx context.Context, fn func(proposal.Queries) error) error {
+	return d.Store.ExecTx(ctx, func(q *database.Queries) error { return fn(q) })
+}
+
+func TestUpgradeTreatsPartlyAppliedProposalAsOwnerConfirmed(t *testing.T) {
+	ctx := context.Background()
+	store, cfg := fixture(t)
+	lib, err := store.CreateLibrary(ctx, database.CreateLibraryParams{Name: "Library", Path: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	series, err := store.CreateSeries(ctx, database.CreateSeriesParams{LibraryID: lib.ID, Name: "partly", Path: lib.Path + "/partly", Title: sql.NullString{String: "Own title", Valid: true}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The owner filled only the empty summary on the review page; the differing title stays pending.
+	proposals := proposal.NewService(historyProposals{store})
+	queued, err := proposals.Queue(ctx, series, &metadata.SeriesMetadata{Provider: "Bangumi", SourceID: 77, SourceURL: "https://bgm.tv/subject/77", Title: "来源标题", OriginalTitle: "原题", Summary: "来源简介"}, "bangumi", series.Name, proposal.QueueOptions{})
+	if err != nil || queued.Status != proposal.QueueQueued {
+		t.Fatalf("queue %+v %v", queued, err)
+	}
+	applied, err := proposals.Apply(ctx, queued.Proposal.ID, proposal.ApplyModeFillEmpty)
+	if err != nil || applied.Status != proposal.ApplyPartial {
+		t.Fatalf("partial apply %+v %v", applied, err)
+	}
+	untouched, err := store.CreateSeries(ctx, database.CreateSeriesParams{LibraryID: lib.ID, Name: "untouched", Path: lib.Path + "/untouched"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if queued, err := proposals.Queue(ctx, untouched, &metadata.SeriesMetadata{Provider: "Bangumi", SourceID: 78, Summary: "Never applied"}, "bangumi", untouched.Name, proposal.QueueOptions{}); err != nil || queued.Status != proposal.QueueQueued {
+		t.Fatalf("queue untouched %+v %v", queued, err)
+	}
+
+	web := openIdentificationWeb(t, store, cfg)
+	web.setupAdmin()
+	got := web.identification(series.ID)
+	if got.Status != "identified" || len(got.Conclusions) != 1 || len(got.Excluded) != 0 {
+		t.Fatalf("partly applied series %+v", got)
+	}
+	c := got.Conclusions[0]
+	if c.Source != "bangumi" || c.EntryID != "77" || c.EntryURL != "https://bgm.tv/subject/77" || c.Title != "来源标题" || c.OriginalTitle != "原题" ||
+		c.ProposalID != queued.Proposal.ID || c.Confirmer.Kind != "owner" || c.Confirmer.UserID != 0 || c.Confirmer.CredentialID != "" {
+		t.Fatalf("partly applied conclusion %+v", c)
+	}
+	if _, err := time.Parse(time.RFC3339, c.ConfirmedAt); err != nil {
+		t.Fatalf("confirmed_at %q: %v", c.ConfirmedAt, err)
+	}
+	// Closing the remaining fields belongs to enrichment after identification; history leaves them pending.
+	var reviews struct {
+		Reviews []struct {
+			ID     int64  `json:"id"`
+			Status string `json:"status"`
+			Fields []struct {
+				Name string `json:"name"`
+			} `json:"fields"`
+		} `json:"reviews"`
+	}
+	web.call("GET", "/api/series/"+strconv.FormatInt(series.ID, 10)+"/metadata-review", http.StatusOK, &reviews)
+	if len(reviews.Reviews) != 1 || reviews.Reviews[0].Status != "pending" || len(reviews.Reviews[0].Fields) != 1 || reviews.Reviews[0].Fields[0].Name != "title" {
+		t.Fatalf("remaining fields must stay pending: %+v", reviews)
+	}
+	if got := web.identification(untouched.ID); got.Status != "unprocessed" || len(got.Conclusions) != 0 {
+		t.Fatalf("untouched pending proposal %+v", got)
+	}
+
+	before := map[int64]string{}
+	for _, id := range []int64{series.ID, untouched.ID} {
+		before[id] = web.raw("GET", "/api/identification/series/"+strconv.FormatInt(id, 10), "").Body.String()
+	}
+	web.process.Close()
+	reopened := openIdentificationWeb(t, store, cfg)
+	defer reopened.process.Close()
+	reopened.loginAs("admin", "password123")
+	for id, want := range before {
+		if got := reopened.raw("GET", "/api/identification/series/"+strconv.FormatInt(id, 10), "").Body.String(); got != want {
+			t.Fatalf("series %d changed on reopen:\nbefore %s\nafter  %s", id, want, got)
+		}
 	}
 }
