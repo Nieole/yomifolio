@@ -218,6 +218,7 @@ func (i *archiveInterpreter) interpret(ctx context.Context, job archiveCandidate
 	}
 
 	res := interpretedArchive{
+		known:                job.known,
 		seriesName:           seriesName,
 		seriesPath:           seriesPath,
 		book:                 book,
@@ -234,6 +235,8 @@ func (i *archiveInterpreter) interpret(ctx context.Context, job archiveCandidate
 }
 
 type interpretedArchive struct {
+	// known says the path was already a book when the scan began.
+	known      bool
 	seriesName string
 	seriesPath string
 	book       interpretedBook

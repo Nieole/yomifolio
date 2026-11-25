@@ -18,16 +18,19 @@ type ingestionStore interface {
 // ingestionWriter owns one scan's claims, transactional caches and committed follow-up work.
 // Only this single consumer can claim old identities; interpreters have no access to it.
 type ingestionWriter struct {
-	store             ingestionStore
-	libraryID         int64
-	seriesCache       map[string]database.Series
-	lockedFieldsCache map[int64]seriesmeta.ScanLocks
-	metrics           *scanMetrics
-	progress          *scanProgressReporter
-	renames           *renameIndex
-	refreshInterval   time.Duration
-	onBatch           func(string)
-	enqueueCovers     func(context.Context, []coverJob)
+	store       ingestionStore
+	libraryID   int64
+	seriesCache map[string]database.Series
+	// preexisting holds the series that existed when the scan began; only their new books are
+	// reported as added.
+	preexisting     map[int64]bool
+	metrics         *scanMetrics
+	progress        *scanProgressReporter
+	renames         *renameIndex
+	refreshInterval time.Duration
+	onBatch         func(string)
+	onAdded         func(context.Context, []AddedBook)
+	enqueueCovers   func(context.Context, []coverJob)
 }
 
 // claimedArchive adds the writer's optional old-record claim to immutable source facts.
@@ -40,17 +43,22 @@ type ingestedBatch struct {
 	seriesIDs map[int64]bool
 	covers    []coverJob
 	rehomes   []claimedArchive
+	added     []AddedBook
 }
 
 // persist publishes cache changes only after the batch transaction commits.
 func (w *ingestionWriter) persist(ctx context.Context, batch []claimedArchive) (ingestedBatch, error) {
 	libIDInt := w.libraryID
-	seriesCache, lockedFieldsCache := w.seriesCache, w.lockedFieldsCache
+	seriesCache := w.seriesCache
 	var coverJobs []coverJob
 	var committedRehomes []claimedArchive
+	var added []AddedBook
 	updatedSeriesIDs := make(map[int64]bool)
 	pendingSeries := make(map[string]database.Series)
-	pendingLocks := make(map[int64]seriesmeta.ScanLocks)
+	// The batch's view of series it updates from ComicInfo: the row as last written in this
+	// transaction and the source records, which the scan never writes.
+	currentRows := make(map[int64]database.Series)
+	sourceRecords := make(map[int64][]database.SeriesMetadataProvenance)
 	err := w.store.WithScanIngestion(ctx, func(q database.ScanIngestionWrite) error {
 		for _, res := range batch {
 			// 获取或创建/更新归属系列
@@ -87,19 +95,19 @@ func (w *ingestionWriter) persist(ctx context.Context, batch []claimedArchive) (
 					continue
 				}
 				seriesID = createdSeries.ID
-				// 缓存整行而不是只留 ID：同一次扫描里该系列的后续卷会走增补分支，
-				// 要在那里读到刚写下的默认标题与默认锁，而不是把它们冲成空。
+				// 同一次扫描里该系列的后续卷凭它走增补分支；增补时的当前值在批事务里重读。
 				pendingSeries[res.seriesPath] = createdSeries
-				pendingLocks[seriesID] = seriesmeta.ParseScanLocks(createdSeries.LockedFields)
-			} else {
-				if res.comicInfo != nil {
-					locks := lockedFieldsCache[seriesID]
-					if staged, ok := pendingLocks[seriesID]; ok {
-						locks = staged
-					}
-					metadata := seriesmeta.PrepareScanUpdate(existingS, locks, res.seriesName, res.comicInfo)
+			} else if res.comicInfo != nil {
+				// The cache is as old as the scan; edits, enrichment and locks made since must
+				// decide what ComicInfo may replace, so the row is read inside this transaction.
+				current, records, err := w.seriesForUpdate(ctx, q, seriesID, currentRows, sourceRecords)
+				if err != nil {
+					w.metrics.uncertainEntries.Add(1)
+					slog.WarnContext(ctx, "Skipped ComicInfo metadata update because the series could not be read", "series_id", seriesID, "error", err)
+				} else {
+					metadata := seriesmeta.PrepareScanUpdate(current, records, res.seriesName, res.comicInfo)
 					// Identity and counts stay in the scanner's single batch upsert.
-					_, _ = q.UpsertSeriesByPath(ctx, database.UpsertSeriesByPathParams{
+					if updated, err := q.UpsertSeriesByPath(ctx, database.UpsertSeriesByPathParams{
 						LibraryID:    libIDInt,
 						Name:         res.seriesName,
 						Path:         res.seriesPath,
@@ -110,11 +118,13 @@ func (w *ingestionWriter) persist(ctx context.Context, batch []claimedArchive) (
 						Rating:       metadata.Rating,
 						Language:     metadata.Language,
 						LockedFields: metadata.LockedFields,
-						VolumeCount:  existingS.VolumeCount,
-						BookCount:    existingS.BookCount,
-						TotalPages:   existingS.TotalPages,
+						VolumeCount:  current.VolumeCount,
+						BookCount:    current.BookCount,
+						TotalPages:   current.TotalPages,
 						NameInitial:  metadata.NameInitial,
-					})
+					}); err == nil {
+						currentRows[seriesID] = updated
+					}
 				}
 			}
 			input := res.book.forSeries(libIDInt, seriesID)
@@ -125,6 +135,7 @@ func (w *ingestionWriter) persist(ctx context.Context, batch []claimedArchive) (
 			// 改名重连：先把那条「文件已消失」的旧记录改挂到新路径上，紧接着的 UpsertBookByPath
 			// 就会经 ON CONFLICT(path) 命中同一行——id 不变，user_book_progress / 书签 / 合集归属
 			// 因而全部保留。若更新落空（并发扫描已把该行改走），退回按新书插入即可。
+			rehomed := false
 			if res.rehome != nil {
 				affected, err := q.RehomeBookPath(ctx, database.RehomeBookPathParams{
 					Path:   res.book.Path,
@@ -140,6 +151,7 @@ func (w *ingestionWriter) persist(ctx context.Context, batch []claimedArchive) (
 					slog.InfoContext(ctx, "Skipped rehoming renamed book because the row moved concurrently",
 						"book_id", res.rehome.bookID, "old_path", res.rehome.oldPath)
 				default:
+					rehomed = true
 					committedRehomes = append(committedRehomes, res)
 				}
 			}
@@ -158,6 +170,9 @@ func (w *ingestionWriter) persist(ctx context.Context, batch []claimedArchive) (
 				w.metrics.uncertainEntries.Add(1)
 				slog.ErrorContext(ctx, "Failed to upsert book", "path", res.book.Path, "error", err)
 				continue
+			}
+			if !res.known && !rehomed && w.preexisting[seriesID] {
+				added = append(added, AddedBook{SeriesID: seriesID, BookID: actualBook.ID, Name: res.book.Name, ComicInfo: res.comicInfo})
 			}
 			if err := q.UpdateBookIdentity(ctx, database.UpdateBookIdentityParams{
 				ID:                   actualBook.ID,
@@ -189,22 +204,39 @@ func (w *ingestionWriter) persist(ctx context.Context, batch []claimedArchive) (
 	for path, series := range pendingSeries {
 		seriesCache[path] = series
 	}
-	for id, locks := range pendingLocks {
-		lockedFieldsCache[id] = locks
+	return ingestedBatch{seriesIDs: updatedSeriesIDs, covers: coverJobs, rehomes: committedRehomes, added: added}, nil
+}
+
+// seriesForUpdate returns the series row and source records a ComicInfo update starts from,
+// reading each series once per batch and then following the batch's own writes.
+func (w *ingestionWriter) seriesForUpdate(ctx context.Context, q database.ScanIngestionWrite, id int64, rows map[int64]database.Series, records map[int64][]database.SeriesMetadataProvenance) (database.Series, []database.SeriesMetadataProvenance, error) {
+	if _, read := records[id]; !read {
+		current, err := q.GetSeries(ctx, id)
+		if err != nil {
+			return database.Series{}, nil, err
+		}
+		sources, err := q.GetSeriesMetadataProvenance(ctx, id)
+		if err != nil {
+			return database.Series{}, nil, err
+		}
+		rows[id], records[id] = current, sources
+		if records[id] == nil {
+			records[id] = []database.SeriesMetadataProvenance{}
+		}
 	}
-	return ingestedBatch{seriesIDs: updatedSeriesIDs, covers: coverJobs, rehomes: committedRehomes}, nil
+	return rows[id], records[id], nil
 }
 
 func (w *ingestionWriter) consume(ctx context.Context, results <-chan interpretedArchive) {
 	w.seriesCache = make(map[string]database.Series)
-	w.lockedFieldsCache = make(map[int64]seriesmeta.ScanLocks)
+	w.preexisting = make(map[int64]bool)
 	existing, err := w.store.ListSeriesByLibraryLite(ctx, w.libraryID)
 	if err != nil {
 		w.metrics.uncertainEntries.Add(1)
 	}
 	for _, series := range existing {
 		w.seriesCache[series.Path] = series
-		w.lockedFieldsCache[series.ID] = seriesmeta.ParseScanLocks(series.LockedFields)
+		w.preexisting[series.ID] = true
 	}
 	dirty := newDerivedSeries(w.store)
 	var batch []claimedArchive
@@ -228,6 +260,9 @@ func (w *ingestionWriter) consume(ctx context.Context, results <-chan interprete
 				slog.InfoContext(ctx, "Rehomed renamed book", "book_id", res.rehome.bookID, "old_path", res.rehome.oldPath, "new_path", res.book.Path, "match", res.rehome.reason)
 			}
 			slog.InfoContext(ctx, "Successfully ingested batch", "book_count", len(batch))
+			if w.onAdded != nil && len(committed.added) > 0 {
+				w.onAdded(context.WithoutCancel(ctx), committed.added)
+			}
 			dirty.touch(committed.seriesIDs)
 			if w.onBatch != nil {
 				w.onBatch("batch_inserted")
