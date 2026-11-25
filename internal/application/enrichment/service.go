@@ -1,4 +1,5 @@
-// Package enrichment owns atomic, authorized metadata supplementation and durable undo.
+// Package enrichment owns atomic, authorized metadata supplementation, franchise relation additions and
+// their durable undo.
 // Receipts are immutable operations, not a projection of latest field provenance.
 package enrichment
 
@@ -72,6 +73,7 @@ type Operation struct {
 	CleanedBy        string              `json:"cleaned_by,omitempty"`
 	Adjudication     *AdjudicationResult `json:"adjudication,omitempty"`
 	CoverSelection   *CoverSelection     `json:"cover_selection,omitempty"`
+	Relation         *RelationChange     `json:"relation,omitempty"`
 	OldCoverMaterial string              `json:"old_cover_material,omitempty"`
 	NewCoverMaterial string              `json:"new_cover_material,omitempty"`
 	Version          int                 `json:"version"`
@@ -103,11 +105,12 @@ type BatchResult struct {
 // Service is synchronous; one series and its receipt commit together. No batch transaction,
 // external calls, implicit retries, automatic expiry or process-local reversal state exists.
 type Service struct {
-	db       *sql.DB
-	evidence Evidence
-	publish  func()
-	cleanup  *CleanupAccess
-	covers   *CoverAccess
+	db               *sql.DB
+	evidence         Evidence
+	publish          func()
+	cleanup          *CleanupAccess
+	covers           *CoverAccess
+	relationsChanged func()
 }
 
 func New(db *sql.DB, evidence Evidence, publish func()) *Service {

@@ -9,6 +9,7 @@ require (
 	github.com/gen2brain/avif v0.6.0
 	github.com/go-chi/chi/v5 v5.5.0
 	github.com/go-chi/cors v1.2.2
+	github.com/google/jsonschema-go v0.4.3
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/mozillazg/go-pinyin v0.21.0
@@ -27,7 +28,6 @@ require (
 require (
 	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/ebitengine/purego v0.11.3 // indirect
-	github.com/google/jsonschema-go v0.4.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/ncruces/go-strftime v1.1.0 // indirect

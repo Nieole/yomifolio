@@ -839,9 +839,10 @@ func (q *Queries) CreateSeries(ctx context.Context, arg CreateSeriesParams) (Ser
 	return i, err
 }
 
-const createSeriesRelation = `-- name: CreateSeriesRelation :exec
+const createSeriesRelation = `-- name: CreateSeriesRelation :one
 INSERT INTO series_relations (source_series_id, target_series_id, relation_type)
 VALUES (?, ?, ?)
+RETURNING id
 `
 
 type CreateSeriesRelationParams struct {
@@ -850,9 +851,11 @@ type CreateSeriesRelationParams struct {
 	RelationType   string `json:"relation_type"`
 }
 
-func (q *Queries) CreateSeriesRelation(ctx context.Context, arg CreateSeriesRelationParams) error {
-	_, err := q.db.ExecContext(ctx, createSeriesRelation, arg.SourceSeriesID, arg.TargetSeriesID, arg.RelationType)
-	return err
+func (q *Queries) CreateSeriesRelation(ctx context.Context, arg CreateSeriesRelationParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createSeriesRelation, arg.SourceSeriesID, arg.TargetSeriesID, arg.RelationType)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const createSimpleCollection = `-- name: CreateSimpleCollection :one
@@ -1019,6 +1022,31 @@ func (q *Queries) DeleteStaleFranchiseCollections(ctx context.Context, keepKeys 
 		query = strings.Replace(query, "/*SLICE:keep_keys*/?", "NULL", 1)
 	}
 	result, err := q.db.ExecContext(ctx, query, queryParams...)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const deleteUnchangedSeriesRelation = `-- name: DeleteUnchangedSeriesRelation :execrows
+DELETE FROM series_relations
+WHERE id = ? AND source_series_id = ? AND target_series_id = ? AND relation_type = ?
+`
+
+type DeleteUnchangedSeriesRelationParams struct {
+	ID             int64  `json:"id"`
+	SourceSeriesID int64  `json:"source_series_id"`
+	TargetSeriesID int64  `json:"target_series_id"`
+	RelationType   string `json:"relation_type"`
+}
+
+func (q *Queries) DeleteUnchangedSeriesRelation(ctx context.Context, arg DeleteUnchangedSeriesRelationParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteUnchangedSeriesRelation,
+		arg.ID,
+		arg.SourceSeriesID,
+		arg.TargetSeriesID,
+		arg.RelationType,
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -2428,6 +2456,29 @@ func (q *Queries) GetSeriesNamesByIDs(ctx context.Context, ids []int64) ([]GetSe
 		return nil, err
 	}
 	return items, nil
+}
+
+const getSeriesRelation = `-- name: GetSeriesRelation :one
+SELECT id, source_series_id, target_series_id, relation_type FROM series_relations WHERE id = ?
+`
+
+type GetSeriesRelationRow struct {
+	ID             int64  `json:"id"`
+	SourceSeriesID int64  `json:"source_series_id"`
+	TargetSeriesID int64  `json:"target_series_id"`
+	RelationType   string `json:"relation_type"`
+}
+
+func (q *Queries) GetSeriesRelation(ctx context.Context, id int64) (GetSeriesRelationRow, error) {
+	row := q.db.QueryRowContext(ctx, getSeriesRelation, id)
+	var i GetSeriesRelationRow
+	err := row.Scan(
+		&i.ID,
+		&i.SourceSeriesID,
+		&i.TargetSeriesID,
+		&i.RelationType,
+	)
+	return i, err
 }
 
 const getSeriesWithoutCollection = `-- name: GetSeriesWithoutCollection :many

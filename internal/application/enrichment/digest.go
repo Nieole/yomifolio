@@ -69,6 +69,16 @@ type undoCommandV1 struct {
 	OperationID string `json:"operation_id"`
 }
 
+// relationCommandV1 is its own command, distinguished from applyCommandV1 by its leading discriminator.
+type relationCommandV1 struct {
+	Command        string `json:"command"`
+	RequestKey     string `json:"request_key"`
+	SeriesID       int64  `json:"series_id"`
+	TargetSeriesID int64  `json:"target_series_id"`
+	RelationType   string `json:"relation_type"`
+	Reason         string `json:"reason"`
+}
+
 func applyDigest(in Input) string {
 	expected := expectedV1{Title: in.Expected.Title, Summary: in.Expected.Summary, Publisher: in.Expected.Publisher, Status: in.Expected.Status, Rating: in.Expected.Rating, Tags: in.Expected.Tags}
 	// Preserve base08's nil versus empty link representation, as for tags above.
@@ -99,6 +109,9 @@ func applyDigest(in Input) string {
 		adjudication = &adjudicationV1{Mode: a.Mode, Reason: a.Reason}
 	}
 	return commandHash(applyCommandV1{Adjudication: adjudication, RequestKey: in.RequestKey, SeriesID: in.SeriesID, ProposalIDs: in.ProposalIDs, Fields: in.Fields, Expected: expected, AuthorCorrections: corrections, Cover: cover})
+}
+func relationDigest(in RelationInput) string {
+	return commandHash(relationCommandV1{Command: relationKind, RequestKey: in.RequestKey, SeriesID: in.SeriesID, TargetSeriesID: in.TargetSeriesID, RelationType: in.RelationType, Reason: in.Reason})
 }
 func undoDigest(in UndoInput) string {
 	return commandHash(undoCommandV1{RequestKey: in.RequestKey, OperationID: in.OperationID})

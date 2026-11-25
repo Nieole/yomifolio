@@ -30,6 +30,7 @@ var targets = []reflect.Type{
 	reflect.TypeOf(enrichment.CleanupResult{}),
 	reflect.TypeOf(enrichment.MaterialResult{}),
 	reflect.TypeOf(enrichment.CoverSelection{}),
+	reflect.TypeOf(enrichment.RelationChange{}),
 	reflect.TypeOf(seriesmeta.CoverState{}),
 	reflect.TypeOf(enrichment.Page{}),
 	reflect.TypeOf(enrichment.State{}),

@@ -100,6 +100,7 @@ function OperationHistory() {
       </div>
       <p className="break-all text-sm text-gray-400">{row.id} · {t('audit.actor')} #{row.actor.user_id} · {row.actor.credential_id || t('audit.web')}</p>
       {row.parent_id && <p className="break-all text-sm">{t('audit.reversal')}: {row.parent_id}</p>}
+      {row.relation && <p>{t('audit.relation', { source: row.relation.source_series_id, target: row.relation.target_series_id, type: t(`series.relations.type.${row.relation.relation_type}`) })}</p>}
       {row.reason && <p>{row.reason}</p>}
       {row.adjudication && <div className="space-y-1 border-l-2 border-blue-400 pl-3">
         <p className="font-medium">{t(`audit.proposal.${proposalStatusKey(row.adjudication)}`)}</p>

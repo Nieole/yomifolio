@@ -44,7 +44,29 @@ type CreatedRelation struct {
 	ID       int64
 }
 
+// RelationTypes are the franchise relation kinds a writer may create; each has an inverse for display.
+var RelationTypes = []string{"parent_story", "sequel", "prequel", "spinoff", "side_story", "adaptation", "remake", "same_universe", "alternative_version", "alternate_story", "crossover", "one_shot", "anthology", "doujinshi"}
+
 func (s *Relations) Create(ctx context.Context, source, target int64, kind string) (CreatedRelation, error) {
+	var result CreatedRelation
+	err := s.store.ExecTx(ctx, func(q *database.Queries) error {
+		var err error
+		result, err = AddRelationTx(ctx, q, source, target, kind)
+		return err
+	})
+	if err != nil {
+		return CreatedRelation{}, err
+	}
+	if !result.Existing {
+		s.Changed()
+	}
+	return result, nil
+}
+
+// AddRelationTx creates source→target in the caller's transaction unless the pair is already related in
+// either direction, and marks the franchise projection stale in that same transaction (ADR 0012). The
+// caller calls Changed after committing a new relation.
+func AddRelationTx(ctx context.Context, q *database.Queries, source, target int64, kind string) (CreatedRelation, error) {
 	if source == target {
 		return CreatedRelation{}, ErrRelationSelf
 	}
@@ -52,35 +74,40 @@ func (s *Relations) Create(ctx context.Context, source, target int64, kind strin
 	if kind == "" {
 		kind = "sequel"
 	}
-	var result CreatedRelation
-	err := s.store.ExecTx(ctx, func(q *database.Queries) error {
-		if _, err := q.SeriesExistsByID(ctx, target); err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return ErrRelationTargetMissing
-			}
-			return err
+	if _, err := q.SeriesExistsByID(ctx, target); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return CreatedRelation{}, ErrRelationTargetMissing
 		}
-		id, err := q.FindExistingSeriesRelation(ctx, database.FindExistingSeriesRelationParams{LeftID: source, RightID: target})
-		if err == nil {
-			result = CreatedRelation{Existing: true, ID: id}
-			return nil
-		}
-		if !errors.Is(err, sql.ErrNoRows) {
-			return err
-		}
-		if err := q.CreateSeriesRelation(ctx, database.CreateSeriesRelationParams{SourceSeriesID: source, TargetSeriesID: target, RelationType: kind}); err != nil {
-			return err
-		}
-		return q.MarkFranchiseRebuildPending(ctx)
-	})
-	if err != nil {
 		return CreatedRelation{}, err
 	}
-	if !result.Existing {
-		s.rebuilder.schedule()
+	id, err := q.FindExistingSeriesRelation(ctx, database.FindExistingSeriesRelationParams{LeftID: source, RightID: target})
+	if err == nil {
+		return CreatedRelation{Existing: true, ID: id}, nil
 	}
-	return result, nil
+	if !errors.Is(err, sql.ErrNoRows) {
+		return CreatedRelation{}, err
+	}
+	if id, err = q.CreateSeriesRelation(ctx, database.CreateSeriesRelationParams{SourceSeriesID: source, TargetSeriesID: target, RelationType: kind}); err != nil {
+		return CreatedRelation{}, err
+	}
+	return CreatedRelation{ID: id}, q.MarkFranchiseRebuildPending(ctx)
 }
+
+// RemoveUnchangedRelationTx deletes the relation only while its identity, direction and kind still match
+// the given row, marking the franchise projection stale in the same transaction. removed is false when
+// the relation was since edited or deleted; the caller calls Changed after committing a removal.
+func RemoveUnchangedRelationTx(ctx context.Context, q *database.Queries, relation database.GetSeriesRelationRow) (removed bool, err error) {
+	n, err := q.DeleteUnchangedSeriesRelation(ctx, database.DeleteUnchangedSeriesRelationParams{ID: relation.ID, SourceSeriesID: relation.SourceSeriesID, TargetSeriesID: relation.TargetSeriesID, RelationType: relation.RelationType})
+	if err != nil || n == 0 {
+		return false, err
+	}
+	return true, q.MarkFranchiseRebuildPending(ctx)
+}
+
+// Changed schedules the coalesced franchise rebuild after a relation change committed elsewhere. The
+// durable pending mark, not this call, carries the repair responsibility.
+func (s *Relations) Changed() { s.rebuilder.schedule() }
+
 func (s *Relations) Update(ctx context.Context, id int64, kind string) error {
 	kind = strings.TrimSpace(kind)
 	if kind == "" {
@@ -95,7 +122,7 @@ func (s *Relations) Update(ctx context.Context, id int64, kind string) error {
 	if err != nil {
 		return err
 	}
-	s.rebuilder.schedule()
+	s.Changed()
 	return nil
 }
 func (s *Relations) Delete(ctx context.Context, id int64) error {
@@ -112,7 +139,7 @@ func (s *Relations) Delete(ctx context.Context, id int64) error {
 	if err != nil {
 		return err
 	}
-	s.rebuilder.schedule()
+	s.Changed()
 	return nil
 }
 func (s *Relations) Graph(ctx context.Context, id int64) ([]database.GetConnectedSeriesRelationsRow, error) {

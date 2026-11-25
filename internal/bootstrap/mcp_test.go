@@ -271,6 +271,7 @@ func assertMCPToolDiscovery(t *testing.T, result *mcp.ListToolsResult, err error
 		"library_enrich_metadata":      false, "library_enrich_metadata_batch": false,
 		"library_get_metadata_operation": true, "library_list_metadata_operations": true,
 		"library_undo_metadata_operation":    false,
+		"library_add_series_relation":        false,
 		"library_cleanup_metadata_operation": false,
 		"library_start_metadata_cleanup":     false,
 		"library_get_metadata_cleanup":       true,
