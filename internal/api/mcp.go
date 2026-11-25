@@ -12,6 +12,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/application/enrichment"
+	"yomifolio/internal/application/identification"
 	"yomifolio/internal/config"
 )
 
@@ -130,7 +131,7 @@ func mcpRequestAllowed(r *http.Request, cfg config.Config) bool {
 	return privateMCPHost(peer)
 }
 
-func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Service, manager *config.Manager) http.Handler {
+func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Service, identificationService *identification.Service, manager *config.Manager) http.Handler {
 	if service == nil {
 		return nil
 	}
@@ -187,6 +188,9 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 				registerMCPCleanup(server, enrichmentService, subject, r.Context())
 			}
 			registerMCPModelBudgets(server, service, subject)
+			if identificationService != nil {
+				registerMCPIdentification(server, identificationService, subject)
+			}
 			return server
 		}, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true, DisableLocalhostProtection: true})
 		r.Body = http.MaxBytesReader(w, r.Body, 64<<10)

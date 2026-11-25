@@ -1,0 +1,236 @@
+// Package identification owns series identification: the durable per-source conclusions, the
+// entries a person excluded, escalations, not-found verdicts and the owner-reviewed decision, and
+// the identification status derived from them. The status is never stored or edited on its own;
+// the series_identification_status view is its single definition.
+//
+// Agent-facing use cases re-check delegated authority through Access on every call. Owner-facing
+// use cases take the acting account and re-check that it is an administrator in the same
+// transaction as the change.
+package identification
+
+import (
+	"cmp"
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"slices"
+	"time"
+
+	"yomifolio/internal/application/delegated"
+)
+
+var (
+	// ErrSeriesNotFound means the series does not exist.
+	ErrSeriesNotFound = errors.New("series not found")
+	// ErrDenied means the acting account may not perform an owner decision.
+	ErrDenied = errors.New("identification decision denied")
+)
+
+// Identification status values, in the precedence the status view applies them.
+const (
+	StatusOwnerReviewed = "owner_reviewed"
+	StatusNeedsRecheck  = "needs_recheck"
+	StatusAwaitingOwner = "awaiting_owner"
+	StatusIdentified    = "identified"
+	StatusNotFound      = "not_found"
+	StatusUnprocessed   = "unprocessed"
+)
+
+// Confirmer kinds of a conclusion.
+const (
+	ConfirmedByOwner = "owner"
+	ConfirmedByAgent = "agent"
+)
+
+// Escalation classes. An open escalation's class, not its category, decides the status: an
+// identification escalation makes the series awaiting_owner, a recheck escalation makes it
+// needs_recheck, and a note never changes the status.
+const (
+	EscalationIdentification = "identification"
+	EscalationRecheck        = "recheck"
+	EscalationNote           = "note"
+)
+
+// Access is the delegated authority the agent-facing use cases rely on.
+type Access interface {
+	Libraries(context.Context, delegated.Subject, []int64, string) ([]int64, error)
+}
+
+// Service is synchronous: each call is one transaction or one read, and holds no process state.
+type Service struct {
+	db     *sql.DB
+	access Access
+	now    func() time.Time
+}
+
+// New binds the service to the process database and delegated authority.
+func New(db *sql.DB, access Access) *Service {
+	return &Service{db: db, access: access, now: time.Now}
+}
+
+// Confirmer says who confirmed a conclusion. An owner row from history has no user.
+type Confirmer struct {
+	Kind           string `json:"kind"`
+	UserID         int64  `json:"user_id"`
+	UserName       string `json:"user_name"`
+	CredentialID   string `json:"credential_id"`
+	CredentialName string `json:"credential_name"`
+}
+
+// Conclusion is one source's identification of a series.
+type Conclusion struct {
+	Source        string    `json:"source"`
+	EntryID       string    `json:"entry_id"`
+	EntryURL      string    `json:"entry_url"`
+	Title         string    `json:"title"`
+	OriginalTitle string    `json:"original_title"`
+	Aliases       []string  `json:"aliases"`
+	Confirmer     Confirmer `json:"confirmer"`
+	ConfirmedAt   string    `json:"confirmed_at"`
+	Reason        string    `json:"reason"`
+	// ProposalID is the applied proposal a conclusion derived from history came from, else 0.
+	ProposalID int64 `json:"proposal_id"`
+}
+
+// ExcludedCandidate is a source entry a person ruled out for the series.
+type ExcludedCandidate struct {
+	Source     string `json:"source"`
+	EntryID    string `json:"entry_id"`
+	EntryURL   string `json:"entry_url"`
+	Title      string `json:"title"`
+	UserID     int64  `json:"user_id"`
+	ExcludedAt string `json:"excluded_at"`
+	// ProposalID is the rejected proposal an exclusion derived from history came from, else 0.
+	ProposalID int64 `json:"proposal_id"`
+}
+
+// OwnerReview records who set the series owner-reviewed and when.
+type OwnerReview struct {
+	UserID     int64  `json:"user_id"`
+	UserName   string `json:"user_name"`
+	ReviewedAt string `json:"reviewed_at"`
+}
+
+// SeriesIdentification is the owner's view of one series: its status and what it rests on.
+type SeriesIdentification struct {
+	SeriesID           int64               `json:"series_id"`
+	LibraryID          int64               `json:"library_id"`
+	Status             string              `json:"status"`
+	Conclusions        []Conclusion        `json:"conclusions"`
+	ExcludedCandidates []ExcludedCandidate `json:"excluded_candidates"`
+	OwnerReview        *OwnerReview        `json:"owner_review,omitempty"`
+}
+
+func stamp(ms int64) string { return time.UnixMilli(ms).UTC().Format(time.RFC3339) }
+
+type queryer interface {
+	QueryContext(context.Context, string, ...any) (*sql.Rows, error)
+	QueryRowContext(context.Context, string, ...any) *sql.Row
+}
+
+// Series reads one series' identification for the owner.
+func (s *Service) Series(ctx context.Context, actor, seriesID int64) (SeriesIdentification, error) {
+	if err := requireAdmin(ctx, s.db, actor); err != nil {
+		return SeriesIdentification{}, err
+	}
+	return read(ctx, s.db, seriesID)
+}
+
+func requireAdmin(ctx context.Context, q queryer, actor int64) error {
+	var ok bool
+	err := q.QueryRowContext(ctx, `SELECT role = 'admin' AND NOT must_change_password FROM users WHERE id = ?`, actor).Scan(&ok)
+	if errors.Is(err, sql.ErrNoRows) || (err == nil && !ok) {
+		return ErrDenied
+	}
+	return err
+}
+
+func read(ctx context.Context, q queryer, seriesID int64) (SeriesIdentification, error) {
+	out := SeriesIdentification{SeriesID: seriesID, Conclusions: []Conclusion{}, ExcludedCandidates: []ExcludedCandidate{}}
+	err := q.QueryRowContext(ctx, `SELECT library_id, status FROM series_identification_status WHERE series_id = ?`, seriesID).Scan(&out.LibraryID, &out.Status)
+	if errors.Is(err, sql.ErrNoRows) {
+		return SeriesIdentification{}, ErrSeriesNotFound
+	}
+	if err != nil {
+		return SeriesIdentification{}, err
+	}
+	if out.Conclusions, err = conclusions(ctx, q, seriesID); err != nil {
+		return SeriesIdentification{}, err
+	}
+	if out.ExcludedCandidates, err = exclusions(ctx, q, seriesID); err != nil {
+		return SeriesIdentification{}, err
+	}
+	var review OwnerReview
+	var reviewedAt int64
+	err = q.QueryRowContext(ctx, `SELECT o.user_id, COALESCE(NULLIF(u.display_name, ''), u.username, ''), o.reviewed_at_ms
+		FROM identification_owner_reviews o LEFT JOIN users u ON u.id = o.user_id WHERE o.series_id = ?`, seriesID).Scan(&review.UserID, &review.UserName, &reviewedAt)
+	switch {
+	case err == nil:
+		review.ReviewedAt = stamp(reviewedAt)
+		out.OwnerReview = &review
+	case !errors.Is(err, sql.ErrNoRows):
+		return SeriesIdentification{}, err
+	}
+	return out, nil
+}
+
+func conclusions(ctx context.Context, q queryer, seriesID int64) ([]Conclusion, error) {
+	rows, err := q.QueryContext(ctx, `SELECT c.source, c.entry_id, c.entry_url, c.title, c.original_title, c.aliases,
+			c.confirmer, c.user_id, COALESCE(NULLIF(u.display_name, ''), u.username, ''), c.credential_id, COALESCE(m.name, ''),
+			c.confirmed_at_ms, c.reason, c.proposal_id
+		FROM identification_conclusions c
+		LEFT JOIN users u ON u.id = c.user_id
+		LEFT JOIN mcp_credentials m ON m.id = c.credential_id
+		WHERE c.series_id = ?`, seriesID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []Conclusion{}
+	for rows.Next() {
+		var c Conclusion
+		var aliases string
+		var confirmedAt int64
+		if err := rows.Scan(&c.Source, &c.EntryID, &c.EntryURL, &c.Title, &c.OriginalTitle, &aliases,
+			&c.Confirmer.Kind, &c.Confirmer.UserID, &c.Confirmer.UserName, &c.Confirmer.CredentialID, &c.Confirmer.CredentialName,
+			&confirmedAt, &c.Reason, &c.ProposalID); err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(aliases), &c.Aliases); err != nil || c.Aliases == nil {
+			c.Aliases = []string{}
+		}
+		c.ConfirmedAt = stamp(confirmedAt)
+		out = append(out, c)
+	}
+	slices.SortFunc(out, func(a, b Conclusion) int { return cmp.Compare(sourceRank(a.Source), sourceRank(b.Source)) })
+	return out, rows.Err()
+}
+
+func exclusions(ctx context.Context, q queryer, seriesID int64) ([]ExcludedCandidate, error) {
+	rows, err := q.QueryContext(ctx, `SELECT source, entry_id, entry_url, title, user_id, excluded_at_ms, proposal_id
+		FROM identification_exclusions WHERE series_id = ? ORDER BY excluded_at_ms DESC, source, entry_id`, seriesID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []ExcludedCandidate{}
+	for rows.Next() {
+		var x ExcludedCandidate
+		var excludedAt int64
+		if err := rows.Scan(&x.Source, &x.EntryID, &x.EntryURL, &x.Title, &x.UserID, &excludedAt, &x.ProposalID); err != nil {
+			return nil, err
+		}
+		x.ExcludedAt = stamp(excludedAt)
+		out = append(out, x)
+	}
+	return out, rows.Err()
+}
+
+// sourceRank orders sources by the default priority; unknown keys sort last.
+func sourceRank(source string) int {
+	if i := slices.Index(Sources, source); i >= 0 {
+		return i
+	}
+	return len(Sources)
+}

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/application/enrichment"
+	"yomifolio/internal/application/identification"
 
 	"sync"
 	"time"
@@ -79,12 +80,13 @@ type LibraryDependencies struct {
 
 // AdministrationDependencies supplies configuration publication, not a Runtime.
 type AdministrationDependencies struct {
-	Delegated     *delegated.Service
-	Enrichment    *enrichment.Service
-	Configuration *configuration.Service
-	Store         AdministrationStore
-	Manager       *config.Manager
-	KOReader      *koreader.Service
+	Delegated      *delegated.Service
+	Enrichment     *enrichment.Service
+	Identification *identification.Service
+	Configuration  *configuration.Service
+	Store          AdministrationStore
+	Manager        *config.Manager
+	KOReader       *koreader.Service
 }
 
 // HostDependencies supplies explicit family capabilities and shared transport leaves.
@@ -208,7 +210,7 @@ func (t *Transport) Bind(d HostDependencies) *Host {
 		readingLists: organization.readingLists, loadCollectionViews: organization.loadCollectionViews,
 		loadStaticCollectionSeries: organization.loadStaticCollectionSeries, loadSmartCollectionSeries: organization.loadSmartCollectionSeries, getSmartFilterByID: organization.getSmartFilterByID}
 	invalidate := d.Reading.Statistics.InvalidateAll
-	return &Host{mcp: newMCPHandler(d.Administration.Delegated, d.Administration.Enrichment, t.cfg), reader: reader, organizationHTTP: organization, administration: admin, content: media, events: t.events,
+	return &Host{mcp: newMCPHandler(d.Administration.Delegated, d.Administration.Enrichment, d.Administration.Identification, t.cfg), reader: reader, organizationHTTP: organization, administration: admin, content: media, events: t.events,
 		catalogue: &catalogMaintenanceHTTP{store: d.Catalogue, engine: e.engine, openPath: openPathInDefaultFileManager, invalidateDashboardStatsCache: invalidate},
 		covers:    &coverHTTP{store: d.CoverQueries, scanner: d.Libraries.Scanner, invalidateDashboardStatsCache: invalidate}, providers: providers,
 		families: bindHTTPFamilies(d.Libraries, d.Reading.Content, snapshot, e, t.clients.getMetadataFetcher, d.Administration.Configuration.DatabasePath, invalidate)}

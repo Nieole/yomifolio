@@ -480,3 +480,49 @@ export interface RelocationRestoration {
   check?: RelocationPlan;
 }
 
+export interface SeriesIdentification {
+  series_id: number;
+  library_id: number;
+  status: string;
+  conclusions: Conclusion[];
+  excluded_candidates: ExcludedCandidate[];
+  owner_review?: OwnerReview;
+}
+
+export interface Conclusion {
+  source: string;
+  entry_id: string;
+  entry_url: string;
+  title: string;
+  original_title: string;
+  aliases: string[];
+  confirmer: Confirmer;
+  confirmed_at: string;
+  reason: string;
+  proposal_id: number;
+}
+
+export interface Confirmer {
+  kind: string;
+  user_id: number;
+  user_name: string;
+  credential_id: string;
+  credential_name: string;
+}
+
+export interface ExcludedCandidate {
+  source: string;
+  entry_id: string;
+  entry_url: string;
+  title: string;
+  user_id: number;
+  excluded_at: string;
+  proposal_id: number;
+}
+
+export interface OwnerReview {
+  user_id: number;
+  user_name: string;
+  reviewed_at: string;
+}
+
