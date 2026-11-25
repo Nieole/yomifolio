@@ -1,5 +1,5 @@
 import type { Config } from './types';
-import { acceptSectionSave, applySectionSnapshot, pickSectionSnapshot, SECTION_FIELD_PATHS, type EditorSectionKey } from './sections';
+import { acceptSectionSave, applySectionSnapshot, normalizeSectionPayload, pickSectionSnapshot, SECTION_FIELD_PATHS, type EditorSectionKey } from './sections';
 
 const equalSection = (a: Config, b: Config, section: EditorSectionKey) =>
   JSON.stringify(pickSectionSnapshot(a, section)) === JSON.stringify(pickSectionSnapshot(b, section));
@@ -27,7 +27,7 @@ export class EditSession {
     return {
       section,
       sent: this.draft,
-      payload: applySectionSnapshot(this.server, this.draft, section),
+      payload: normalizeSectionPayload(applySectionSnapshot(this.server, this.draft, section), section),
       version: this.versions[section] || '',
     };
   }

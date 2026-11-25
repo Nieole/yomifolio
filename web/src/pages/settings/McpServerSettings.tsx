@@ -6,7 +6,6 @@
 
 import { useI18n } from '../../i18n/LocaleProvider';
 import { useSettings } from '../../features/settings-editor';
-import { normalizePublicUrl } from './mcpEndpoint';
 import { FieldErrors, SettingsSaveBar, inputClassName, sectionClassName } from './shared';
 
 export function McpServerSettings() {
@@ -26,7 +25,8 @@ export function McpServerSettings() {
         placeholder="https://library.example.com"
         disabled={saving}
         onChange={(event) => {
-          const publicUrl = normalizePublicUrl(event.target.value);
+          // 存用户敲的原文：保存时由分区 payload 归一（去末尾斜杠），键入时改写会把 `https://` 的斜杠吞掉。
+          const publicUrl = event.target.value;
           setConfig((current) => current ? { ...current, mcp: { ...current.mcp, public_url: publicUrl } } : current);
         }}
       />

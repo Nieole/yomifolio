@@ -77,6 +77,22 @@ export function applySectionSnapshot(base: Config, draft: Config, section: Edito
   return merged as unknown as Config;
 }
 
+// SECTION_PAYLOAD_NORMALIZERS 是「草稿 → 落盘」的收尾步骤。输入框里存用户真正敲的原文（否则打字中途
+// 会被改写：`https://` 的两个斜杠会被当成末尾斜杠吞掉），要保存的规范形式在这里统一。
+type PayloadNormalizer = (payload: Config) => Config;
+
+const SECTION_PAYLOAD_NORMALIZERS: Partial<Record<EditorSectionKey, PayloadNormalizer>> = {
+  // 公开地址存成不带末尾斜杠的形式，客户端地址与配置里存的值才一致。
+  mcp: (payload) => ({
+    ...payload,
+    mcp: { ...payload.mcp, public_url: payload.mcp.public_url.trim().replace(/\/+$/, '') },
+  }),
+};
+
+export function normalizeSectionPayload(payload: Config, section: EditorSectionKey): Config {
+  return SECTION_PAYLOAD_NORMALIZERS[section]?.(payload) ?? payload;
+}
+
 function acceptUnedited(current: unknown, sent: unknown, saved: unknown): unknown {
   if (JSON.stringify(current) === JSON.stringify(sent)) return saved;
   if (current && sent && saved && typeof current === 'object' && typeof sent === 'object' && typeof saved === 'object'

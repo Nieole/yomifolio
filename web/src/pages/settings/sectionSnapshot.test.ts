@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { applySectionSnapshot } from '../../features/settings-editor';
+import { applySectionSnapshot, normalizeSectionPayload } from '../../features/settings-editor';
 import type { Config } from '../../features/settings-editor';
 
 // makeConfig 造一份只带本用例关心字段的最小 config。
@@ -146,5 +146,21 @@ describe('保存后的刷新同样只覆盖本分区', () => {
 
     expect((payload.protocols as unknown as { opds: { enabled: boolean } }).opds.enabled).toBe(true);
     expect(payload.llm).toEqual(server.llm);
+  });
+});
+
+describe('normalizeSectionPayload', () => {
+  it('公开地址落盘时去掉首尾空白与末尾斜杠，其余字段与其他分区原样保留', () => {
+    const payload = makeConfig({
+      mcp: { public_url: '  https://books.example.net//  ', allow_lan_http: true },
+      cache: { dir: '/data/cache/' },
+    });
+
+    const normalized = normalizeSectionPayload(payload, 'mcp');
+
+    expect(normalized.mcp.public_url).toBe('https://books.example.net');
+    expect(normalized.mcp.allow_lan_http).toBe(true);
+    // 归一化只碰公开地址：其他分区（含同样带末尾斜杠的 cache.dir）不得被顺带改写。
+    expect(normalized.cache).toEqual(payload.cache);
   });
 });

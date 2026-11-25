@@ -83,6 +83,23 @@ it('saves only the mcp section with the published version as precondition', asyn
   expect(options.headers['If-Match']).toBe('"one"');
 });
 
+it('accepts a typed URL without swallowing the scheme slashes', async () => {
+  mocks.get.mockImplementation(async (path: string) => path === '/api/system/config'
+    ? configResponse({ mcp: { public_url: '', allow_lan_http: false } })
+    : { data: [] });
+  setup();
+  const input = (await screen.findByPlaceholderText('https://library.example.com')) as HTMLInputElement;
+  const target = 'https://books.example.net';
+  // 每个字符都接在“目前渲染出来的值”后面，模拟真实键入：
+  // 被输入框吞掉字符后，后续按键不会自己把它补回来。
+  let rendered = input.value;
+  for (const char of target) {
+    fireEvent.change(input, { target: { value: rendered + char } });
+    rendered = input.value;
+  }
+  expect(rendered).toBe(target);
+});
+
 it('keeps the plaintext LAN switch next to its risk and saves the flag', async () => {
   setup();
   const toggle = await screen.findByLabelText('Allow plaintext LAN HTTP');
