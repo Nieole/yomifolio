@@ -22,15 +22,23 @@ type StatusCounts struct {
 	OwnerReviewed int64 `json:"owner_reviewed"`
 }
 
+// PrefetchCounts splits the unprocessed series by whether their evidence packet is ready.
+type PrefetchCounts struct {
+	Ready   int64 `json:"ready"`
+	Pending int64 `json:"pending"`
+}
+
 // Progress counts series per identification status across the covered libraries.
 type Progress struct {
-	LibraryIDs []int64      `json:"library_ids"`
-	Series     int64        `json:"series"`
-	Statuses   StatusCounts `json:"statuses"`
+	LibraryIDs []int64        `json:"library_ids"`
+	Series     int64          `json:"series"`
+	Statuses   StatusCounts   `json:"statuses"`
+	Prefetch   PrefetchCounts `json:"prefetch"`
 }
 
 // Progress counts the series of the requested libraries, or of every library the credential
-// names, per identification status. Each library needs current read authority.
+// names, per identification status, and how many unprocessed ones have an evidence packet ready.
+// Each library needs current read authority.
 func (s *Service) Progress(ctx context.Context, subject delegated.Subject, in ProgressInput) (Progress, error) {
 	libraries, err := s.access.Libraries(ctx, subject, in.LibraryIDs, delegated.Read)
 	if err != nil {
@@ -44,8 +52,9 @@ func (s *Service) Progress(ctx context.Context, subject delegated.Subject, in Pr
 	for i, id := range libraries {
 		args[i] = id
 	}
-	rows, err := s.db.QueryContext(ctx, `SELECT status, COUNT(*) FROM series_identification_status
-		WHERE library_id IN (?`+strings.Repeat(", ?", len(libraries)-1)+`) GROUP BY status`, args...)
+	rows, err := s.db.QueryContext(ctx, `SELECT st.status, COUNT(*), COUNT(e.series_id) FROM series_identification_status st
+		LEFT JOIN identification_evidence e ON e.series_id = st.series_id
+		WHERE st.library_id IN (?`+strings.Repeat(", ?", len(libraries)-1)+`) GROUP BY st.status`, args...)
 	if err != nil {
 		return Progress{}, err
 	}
@@ -56,12 +65,15 @@ func (s *Service) Progress(ctx context.Context, subject delegated.Subject, in Pr
 	}
 	for rows.Next() {
 		var status string
-		var n int64
-		if err := rows.Scan(&status, &n); err != nil {
+		var n, packed int64
+		if err := rows.Scan(&status, &n, &packed); err != nil {
 			return Progress{}, err
 		}
 		if target, ok := counts[status]; ok {
 			*target = n
+		}
+		if status == StatusUnprocessed {
+			out.Prefetch = PrefetchCounts{Ready: packed, Pending: n - packed}
 		}
 		out.Series += n
 	}

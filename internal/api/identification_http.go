@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -15,6 +17,31 @@ func (c *administrationHTTP) mountIdentification(r chi.Router) {
 	r.Get("/identification/series/{seriesId}", c.getSeriesIdentification)
 	r.Put("/identification/series/{seriesId}/owner-review", c.setSeriesOwnerReview)
 	r.Delete("/identification/series/{seriesId}/owner-review", c.withdrawSeriesOwnerReview)
+	r.Post("/identification/prefetch", c.startIdentificationPrefetch)
+}
+
+// startIdentificationPrefetch launches the evidence prefetch over one library ({"library_id": n})
+// or over every library (an empty body).
+func (c *administrationHTTP) startIdentificationPrefetch(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		LibraryID int64 `json:"library_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); (err != nil && !errors.Is(err, io.EOF)) || in.LibraryID < 0 {
+		jsonError(w, http.StatusBadRequest, "Invalid library ID")
+		return
+	}
+	user, _ := userFromContext(r.Context())
+	out, err := c.identification.StartPrefetch(r.Context(), user.ID, in.LibraryID)
+	switch {
+	case errors.Is(err, identification.ErrLibraryNotFound):
+		jsonError(w, http.StatusNotFound, "Library not found")
+	case errors.Is(err, identification.ErrDenied):
+		jsonError(w, http.StatusForbidden, apiText(requestLocale(r), "auth.admin_required"))
+	case err != nil:
+		writeTaskLaunchError(w, err, "An evidence prefetch is already running", "Failed to start evidence prefetch")
+	default:
+		jsonResponse(w, http.StatusOK, out)
+	}
 }
 
 func (c *administrationHTTP) getSeriesIdentification(w http.ResponseWriter, r *http.Request) {

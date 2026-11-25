@@ -8,14 +8,6 @@ import (
 	"yomifolio/internal/task"
 )
 
-func (c *apiFixture) launchBatchScrapeAllSeriesTask(ctx context.Context, key string, trigger task.Trigger) error {
-	_, err := c.intelligence.ScrapeAll(ctx, key, trigger)
-	return err
-}
-func (c *apiFixture) launchLibraryScrapeTask(ctx context.Context, id int64, key string, trigger task.Trigger) error {
-	_, err := c.intelligence.ScrapeLibrary(ctx, id, key, trigger)
-	return err
-}
 func (c *apiFixture) launchAIGroupingTask(id int64, locale string, trigger task.Trigger) error {
 	_, err := c.intelligence.GroupLibrary(context.Background(), id, locale, trigger)
 	return err

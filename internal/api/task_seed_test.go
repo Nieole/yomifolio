@@ -398,7 +398,6 @@ func init() {
 	rememberTaskKey("rebuild_file_identities", systemTask("rebuild_file_identities", variantSole))
 	rememberTaskKey("reconcile_koreader_progress", systemTask("reconcile_koreader_progress", variantSole))
 	rememberTaskKey("refresh_koreader_matching", systemTask("refresh_koreader_matching", variantSole))
-	rememberTaskKey("scrape_all_series", systemTask("scrape", variantScrapeAllLibraries))
 	rememberTaskKey(cleanupRunHistoryTaskKey, systemTask(cleanupRunHistoryTaskKey, variantSole))
 	// 哈希重建两个**变体**共用一个类型，各有自己的键：前台重建与低优先级回填是两个身份。
 	rememberTaskKey(rebuildBookHashesTaskKey, systemTask("rebuild_book_hashes", variantHashRebuildForeground))

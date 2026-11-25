@@ -73,6 +73,16 @@ CREATE TABLE IF NOT EXISTS identification_owner_reviews (
     reviewed_at_ms INTEGER NOT NULL
 );
 
+-- The evidence packet of a series, replaced whole by every fetch. packet is the text view served
+-- to agents and the owner. source_facts maps each candidate id in it to the validated source
+-- snapshot that enrichment fills fields from.
+CREATE TABLE IF NOT EXISTS identification_evidence (
+    series_id INTEGER PRIMARY KEY REFERENCES series(id) ON DELETE CASCADE,
+    fetched_at_ms INTEGER NOT NULL,
+    packet TEXT NOT NULL,
+    source_facts TEXT NOT NULL DEFAULT '{}'
+);
+
 -- Completion marker of the one-time derivation from proposal history.
 CREATE TABLE IF NOT EXISTS identification_history_derivation (
     id INTEGER PRIMARY KEY CHECK (id = 1),

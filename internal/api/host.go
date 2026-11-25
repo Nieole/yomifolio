@@ -140,7 +140,8 @@ func (t *Transport) RuntimeEffects() appruntime.Effects {
 		InvalidateReading:         func() { e.stats.InvalidateVolatile("koreader_progress") },
 		RunEvents:                 t.events.run, StopEvents: t.events.closeClients,
 		TrimPageCache: func() { t.media.enforcePageCacheBudget() }, ObserveIdentity: t.projection.observeIdentity,
-		Sources: intelligence.Sources{Metadata: t.clients.getMetadataFetcher, Grouping: func() intelligence.GroupingProvider { return t.clients.sources.configuredAI(t.cfg.Snapshot()) }}}
+		Sources:   intelligence.Sources{Grouping: func() intelligence.GroupingProvider { return t.clients.sources.configuredAI(t.cfg.Snapshot()) }},
+		Catalogue: t.clients.sources.MetadataProvider}
 }
 
 // TaskOptions attaches transport projections while retaining caller-controlled clocks and scheduling.
@@ -213,7 +214,7 @@ func (t *Transport) Bind(d HostDependencies) *Host {
 	return &Host{mcp: newMCPHandler(d.Administration.Delegated, d.Administration.Enrichment, d.Administration.Identification, t.cfg), reader: reader, organizationHTTP: organization, administration: admin, content: media, events: t.events,
 		catalogue: &catalogMaintenanceHTTP{store: d.Catalogue, engine: e.engine, openPath: openPathInDefaultFileManager, invalidateDashboardStatsCache: invalidate},
 		covers:    &coverHTTP{store: d.CoverQueries, scanner: d.Libraries.Scanner, invalidateDashboardStatsCache: invalidate}, providers: providers,
-		families: bindHTTPFamilies(d.Libraries, d.Reading.Content, snapshot, e, t.clients.getMetadataFetcher, d.Administration.Configuration.DatabasePath, invalidate)}
+		families: bindHTTPFamilies(d.Libraries, d.Reading.Content, snapshot, e, d.Administration.Configuration.DatabasePath, invalidate)}
 }
 func (h *Host) SetupOPDSRoutes(r chi.Router)     { h.reader.SetupOPDSRoutes(r) }
 func (h *Host) SetupKOReaderRoutes(r chi.Router) { h.administration.SetupKOReaderRoutes(r) }

@@ -37,12 +37,12 @@ func TestAssemblyRegistersRestartCapabilitiesBeforeAnyLaunch(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer app.Close()
-	for _, id := range []task.Identity{{Type: "scan_library", Scope: task.ScopeLibrary, ScopeID: 1}, {Type: "rebuild_book_hashes", Scope: task.ScopeSystem, Variant: "foreground"}, {Type: "rebuild_book_hashes", Scope: task.ScopeSystem, Variant: "low_priority_backfill"}, {Type: "scrape", Scope: task.ScopeSystem, Variant: "all_libraries"}} {
+	for _, id := range []task.Identity{{Type: "scan_library", Scope: task.ScopeLibrary, ScopeID: 1}, {Type: "rebuild_book_hashes", Scope: task.ScopeSystem, Variant: "foreground"}, {Type: "rebuild_book_hashes", Scope: task.ScopeSystem, Variant: "low_priority_backfill"}, {Type: "evidence_prefetch", Scope: task.ScopeSystem, Variant: "all_libraries"}, {Type: "evidence_prefetch", Scope: task.ScopeLibrary, ScopeID: 1, Variant: "one_library"}} {
 		if !app.Registry.Retryable(id.Type, id.Variant) {
 			t.Fatalf("first launch capability absent: %+v", id)
 		}
 	}
-	if app.Registry.Resumable("rebuild_index", "") || app.Registry.Resumable("scrape", "all_libraries") {
+	if app.Registry.Resumable("rebuild_index", "") || app.Registry.Resumable("evidence_prefetch", "all_libraries") || app.Registry.Resumable("evidence_prefetch", "one_library") {
 		t.Fatal("attended-only work may resume")
 	}
 	if err := app.Recover(context.Background()); err != nil {

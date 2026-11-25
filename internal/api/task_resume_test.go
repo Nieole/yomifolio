@@ -135,11 +135,11 @@ func TestResumableIsStricterThanRetryable(t *testing.T) {
 	controller, _, _, _ := newTestController(t)
 	dispatch := controller.taskEngine.dispatch
 
-	// 可重试但**不可续跑**：它们要么改磁盘内容、要么花钱。
+	// 可重试但**不可续跑**：它们要么改磁盘内容、要么花钱，要么无人看着时会对外部站点连发一长串请求。
 	strictlyRetryable := []taskDispatchKey{
 		{Type: "cleanup_library", Variant: variantSole},
-		{Type: "scrape", Variant: variantScrapeAllLibraries},
-		{Type: "scrape", Variant: variantScrapeOneLibrary},
+		{Type: "evidence_prefetch", Variant: "all_libraries"},
+		{Type: "evidence_prefetch", Variant: "one_library"},
 		{Type: "ai_grouping", Variant: variantSole},
 	}
 	for _, key := range strictlyRetryable {

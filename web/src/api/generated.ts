@@ -495,6 +495,7 @@ export interface SeriesIdentification {
   conclusions: Conclusion[];
   excluded_candidates: ExcludedCandidate[];
   owner_review?: OwnerReview;
+  evidence?: EvidencePacket;
 }
 
 export interface Conclusion {
@@ -532,5 +533,55 @@ export interface OwnerReview {
   user_id: number;
   user_name: string;
   reviewed_at: string;
+}
+
+export interface EvidencePacket {
+  fetched_at: string;
+  local: EvidenceLocalClues;
+  queries: string[];
+  sources: EvidenceSource[];
+  candidates: EvidenceCandidate[];
+}
+
+export interface EvidenceLocalClues {
+  directory_name: string;
+  book_count: number;
+  file_names: string[];
+  comic_info?: EvidenceComicInfo;
+}
+
+export interface EvidenceComicInfo {
+  series?: string;
+  authors?: string[];
+  year?: number;
+}
+
+export interface EvidenceSource {
+  source: string;
+  status: string;
+}
+
+export interface EvidenceCandidate {
+  id: string;
+  source: string;
+  entry_url: string;
+  title: string;
+  original_title?: string;
+  authors?: string[];
+  year?: number;
+  summary?: string;
+  signals: EvidenceSignals;
+}
+
+export interface EvidenceSignals {
+  title_matches: boolean;
+  author_matches?: boolean;
+  source_volumes: number;
+  local_books: number;
+}
+
+export interface PrefetchLaunch {
+  run_id?: number;
+  series: number;
 }
 

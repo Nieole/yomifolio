@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"yomifolio/internal/application/identification"
 	"yomifolio/internal/application/intelligence"
 	"yomifolio/internal/application/maintenance"
 	"yomifolio/internal/application/scanning"
@@ -31,8 +32,8 @@ type restartEntry struct {
 type Registry struct{ entries map[restartKey]restartEntry }
 
 // NewRegistry registers complete feature restart declarations without starting any work.
-func NewRegistry(scans *scanning.Service, maintenance *maintenance.Service, intelligence *intelligence.Service) *Registry {
-	r := &Runtime{Scans: scans, Maintenance: maintenance, Intelligence: intelligence}
+func NewRegistry(scans *scanning.Service, maintenance *maintenance.Service, intelligence *intelligence.Service, prefetch *identification.Prefetcher) *Registry {
+	r := &Runtime{Scans: scans, Maintenance: maintenance, Intelligence: intelligence, Prefetch: prefetch}
 	return newRegistry(r)
 }
 func newRegistry(r *Runtime) *Registry {
@@ -51,6 +52,9 @@ func newRegistry(r *Runtime) *Registry {
 			_, err := r.Intelligence.Restart(ctx, id, args, t)
 			return err
 		})
+	}
+	for _, def := range identification.Restarts() {
+		add(RestartDefinition{def.Type, def.Variant, def.Resumable}, r.Prefetch.Restart)
 	}
 	for _, def := range maintenance.Restarts() {
 		add(RestartDefinition{def.Type, def.Variant, def.Resumable}, func(ctx context.Context, id task.Identity, args map[string]string, t task.Trigger) error {

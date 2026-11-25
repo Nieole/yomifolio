@@ -70,7 +70,8 @@ func sourceHTTP(t *testing.T, process *bootstrap.Process) func(string, string, s
 	return request
 }
 
-func TestProductionSourceFeedsHTTPAndApplicationScrape(t *testing.T) {
+// The application side of the same factory is covered by the evidence prefetch tests.
+func TestProductionSourceFeedsHTTPSearch(t *testing.T) {
 	store, cfg := fixture(t)
 	root := t.TempDir()
 	lib, err := store.CreateLibrary(context.Background(), database.CreateLibraryParams{Name: "Library", Path: root, ScanMode: "none", ScanFormats: "cbz"})
@@ -104,18 +105,8 @@ func TestProductionSourceFeedsHTTPAndApplicationScrape(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	entered, release := make(chan struct{}, 1), make(chan struct{})
-	source := &controlledSource{fetch: func(ctx context.Context, title string) (*metadata.SeriesMetadata, error) {
-		if title != "Local series" {
-			return nil, fmt.Errorf("unexpected title %q", title)
-		}
-		entered <- struct{}{}
-		select {
-		case <-release:
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		}
-		return &metadata.SeriesMetadata{Title: "Source title", Summary: "Source summary", Confidence: 1}, nil
+	source := &controlledSource{fetch: func(_ context.Context, title string) (*metadata.SeriesMetadata, error) {
+		return nil, fmt.Errorf("unexpected fetch %q", title)
 	}, search: func(_ context.Context, title string, limit, offset int) ([]*metadata.SeriesMetadata, int, error) {
 		if title != "Local series" || limit != 2 || offset != 3 {
 			return nil, 0, fmt.Errorf("unexpected search %q %d %d", title, limit, offset)
@@ -140,28 +131,6 @@ func TestProductionSourceFeedsHTTPAndApplicationScrape(t *testing.T) {
 	found := request("GET", fmt.Sprintf("/series/%d/scrape-search?provider=bangumi&limit=2&offset=3", series.ID), "", 200)
 	if !strings.Contains(found.Body.String(), "Candidate two") || !strings.Contains(found.Body.String(), `"total":5`) {
 		t.Fatal(found.Body.String())
-	}
-	request("POST", fmt.Sprintf("/libraries/%d/scrape", lib.ID), `{"provider":"bangumi"}`, 200)
-	select {
-	case <-entered:
-	case <-time.After(3 * time.Second):
-		t.Fatal("application did not reach injected source")
-	}
-	runs := request("GET", "/system/tasks?type=scrape", "", 200)
-	if !strings.Contains(runs.Body.String(), `"status":"running"`) {
-		t.Fatal(runs.Body.String())
-	}
-	close(release)
-	deadline := time.Now().Add(5 * time.Second)
-	for {
-		reviews := request("GET", "/metadata/reviews", "", 200)
-		if strings.Contains(reviews.Body.String(), "Source summary") {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("source result not visible via HTTP: " + reviews.Body.String())
-		}
-		time.Sleep(10 * time.Millisecond)
 	}
 }
 

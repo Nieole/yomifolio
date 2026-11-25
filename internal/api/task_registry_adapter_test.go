@@ -7,7 +7,7 @@ import (
 )
 
 func (c *apiFixture) buildTaskDispatch() map[taskDispatchKey]taskDispatch {
-	registry := runtime.NewRegistry(c.scans, c.maintenance, c.intelligence)
+	registry := runtime.NewRegistry(c.scans, c.maintenance, c.intelligence, nil)
 	if c.runtime != nil {
 		registry = c.runtime.Registry
 	}

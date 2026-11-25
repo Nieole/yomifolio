@@ -174,7 +174,7 @@ func TestTaskBodyContextCarriesTaskKey(t *testing.T) {
 	}{
 		{"资料库扫描", libraryTask("scan_library", 1, variantSole), "scan_library_1"},
 		{"重建缩略图", systemTask("rebuild_thumbnails", variantSole), "rebuild_thumbnails"},
-		{"刮削", libraryTask("scrape", 2, variantScrapeOneLibrary), "scrape_library_2"},
+		{"证据包预取", libraryTask("evidence_prefetch", 2, TaskVariant("one_library")), "evidence_prefetch_library_2"},
 	}
 
 	for _, tc := range cases {

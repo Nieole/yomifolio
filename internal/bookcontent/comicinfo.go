@@ -54,30 +54,41 @@ func (s *Service) ComicInfo(ctx context.Context, id, libraryID int64, access Lib
 	}
 }
 func readComicInfo(ctx context.Context, path string) ComicInfoClue {
+	info, status := ArchiveComicInfo(ctx, path)
+	if info == nil {
+		return ComicInfoClue{Status: status}
+	}
+	return ComicInfoClue{Status: status, Title: info.Title, Series: info.Series, Number: info.Number, Volume: info.Volume, Writer: info.Writer, Penciller: info.Penciller, Publisher: info.Publisher}
+}
+
+// ArchiveComicInfo reads the ComicInfo document of the archive at path. The status is one of the
+// ComicInfoClue statuses and the document is returned only when it is "available". The caller
+// holds read access to the book's library, either through admission or a run declaring it.
+func ArchiveComicInfo(ctx context.Context, path string) (*parser.ComicInfo, string) {
 	arc, release, err := parser.GetArchiveFromPool(path)
 	if err != nil {
-		return ComicInfoClue{Status: "unavailable"}
+		return nil, "unavailable"
 	}
 	defer release()
 	raw, err := parser.ReadMetadataLimited(ctx, arc, "ComicInfo.xml", 64<<10)
 	if errors.Is(err, parser.ErrRarEvidenceUnsupported) {
-		return ComicInfoClue{Status: "unavailable"}
+		return nil, "unavailable"
 	}
 	if errors.Is(err, parser.ErrMetadataNotFound) {
-		return ComicInfoClue{Status: "missing"}
+		return nil, "missing"
 	}
 	if errors.Is(err, parser.ErrMetadataTooLarge) {
-		return ComicInfoClue{Status: "too_large"}
+		return nil, "too_large"
 	}
 	if err != nil {
-		return ComicInfoClue{Status: "unreadable"}
+		return nil, "unreadable"
 	}
 	if len(raw) > 64<<10 {
-		return ComicInfoClue{Status: "too_large"}
+		return nil, "too_large"
 	}
 	info, err := parser.ParseComicInfo(raw)
 	if err != nil {
-		return ComicInfoClue{Status: "corrupt"}
+		return nil, "corrupt"
 	}
-	return ComicInfoClue{Status: "available", Title: info.Title, Series: info.Series, Number: info.Number, Volume: info.Volume, Writer: info.Writer, Penciller: info.Penciller, Publisher: info.Publisher}
+	return info, "available"
 }

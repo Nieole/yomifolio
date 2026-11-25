@@ -10,6 +10,7 @@ import (
 	"yomifolio/internal/application"
 	"yomifolio/internal/application/configuration"
 	"yomifolio/internal/application/diskjobs"
+	"yomifolio/internal/application/identification"
 	"yomifolio/internal/application/intelligence"
 	"yomifolio/internal/application/libraries"
 	"yomifolio/internal/application/maintenance"
@@ -45,6 +46,8 @@ type Effects struct {
 	TrimPageCache             func()
 	ObserveIdentity           func(context.Context, task.Identity) error
 	Sources                   intelligence.Sources
+	// Catalogue opens a catalogue source for the evidence prefetch; nil uses the production factory.
+	Catalogue func(config.Config, string) metadata.Provider
 }
 
 // ConfigWatch is the operating-system configuration subscription owned by this process.
@@ -73,6 +76,7 @@ type Runtime struct {
 	Maintenance       *maintenance.Service
 	Disk              *diskjobs.Service
 	Intelligence      *intelligence.Service
+	Prefetch          *identification.Prefetcher
 	Moves             *relocating.Service
 	KOReader          *koreader.Service
 	External          *external.Manager
@@ -164,16 +168,18 @@ func New(store database.Store, cfg *config.Manager, options Options) (*Runtime, 
 	r.Scanner.SetCoverRunLauncher(func(ctx context.Context, batch *scanner.CoverBatch) { r.Scans.DispatchCoverBatch(ctx, batch) })
 	r.Disk = diskjobs.New(r.Runs, store, r.External, diskjobs.Effects{Publish: e.Publish, PurgeReadingPaths: e.PurgeReadingPaths})
 	sources := e.Sources
-	if sources.Metadata == nil {
-		sources.Metadata = func(name string) metadata.Fetcher { return metadata.NewConfiguredProvider(cfg.Snapshot(), name) }
-	}
 	if sources.Grouping == nil {
 		sources.Grouping = func() intelligence.GroupingProvider {
 			c := cfg.Snapshot()
 			return metadata.NewAIProvider(c.LLM.Provider, c.LLM.APIMode, c.LLM.BaseURL, c.LLM.RequestPath, c.LLM.Model, c.LLM.APIKey, c.LLM.Timeout)
 		}
 	}
-	r.Intelligence = intelligence.New(r.Runs, store, r.Proposals, organize.NewAIGrouping(store, nil), sources, e.Publish)
+	r.Intelligence = intelligence.New(r.Runs, store, organize.NewAIGrouping(store, nil), sources, e.Publish)
+	catalogue := e.Catalogue
+	if catalogue == nil {
+		catalogue = metadata.NewConfiguredProvider
+	}
+	r.Prefetch = identification.NewPrefetcher(store.DB(), r.Runs.Start, cfg.Snapshot, catalogue)
 	r.Watcher, r.WatcherError = scanner.NewFileWatcher(scanner.WatcherHooks{ScanLibrary: r.Scans.WatchIngestion, CleanupLibrary: r.Scans.WatchCleanupWhen, LibraryScanRunning: r.Scanner.LibraryScanActive})
 	var libraryWatcher libraries.Watcher
 	if r.Watcher != nil {

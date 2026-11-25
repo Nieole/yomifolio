@@ -14,7 +14,6 @@ import (
 	"yomifolio/internal/config"
 	"yomifolio/internal/database"
 	"yomifolio/internal/external"
-	"yomifolio/internal/metadata"
 	"yomifolio/internal/relocation"
 	"yomifolio/internal/task"
 )
@@ -41,10 +40,9 @@ type libraryHTTP struct {
 	scans             *scanning.Service
 }
 type maintenanceHTTP struct {
-	initials           interface{ BackfillSeriesInitials(context.Context) error }
-	maintenance        *maintenance.Service
-	intelligence       *intelligence.Service
-	getMetadataFetcher func(string) metadata.Fetcher
+	initials     interface{ BackfillSeriesInitials(context.Context) error }
+	maintenance  *maintenance.Service
+	intelligence *intelligence.Service
 }
 type diskHTTP struct {
 	store    ComicInfoQueries
@@ -121,11 +119,11 @@ type httpFamilies struct {
 	runs        *runsHTTP
 }
 
-func bindHTTPFamilies(d LibraryDependencies, content *bookcontent.Service, snapshot func() config.Config, projection *taskEngine, fetcher func(string) metadata.Fetcher, databasePath func() string, invalidate func(string)) httpFamilies {
+func bindHTTPFamilies(d LibraryDependencies, content *bookcontent.Service, snapshot func() config.Config, projection *taskEngine, databasePath func() string, invalidate func(string)) httpFamilies {
 	return httpFamilies{
 		removal:     &removalHTTP{store: d.Removal, engine: d.Runs.Engine, databasePath: databasePath, invalidateDashboardStatsCache: invalidate},
 		library:     &libraryHTTP{store: d.Queries, libraryManagement: d.Management, scans: d.Scans},
-		maintenance: &maintenanceHTTP{initials: d.Initials, maintenance: d.Maintenance, intelligence: d.Intelligence, getMetadataFetcher: fetcher},
+		maintenance: &maintenanceHTTP{initials: d.Initials, maintenance: d.Maintenance, intelligence: d.Intelligence},
 		disk:        &diskHTTP{store: d.ComicInfo, diskJobs: d.Disk, external: d.External, content: content, engine: d.Runs.Engine},
 		relocation:  &relocationHTTP{store: d.Queries, moves: d.Moves, relocation: d.Relocation},
 		storage:     &storageHTTP{store: d.Queries, currentConfig: snapshot, taskEngine: projection},

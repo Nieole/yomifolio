@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -194,6 +195,11 @@ type Config struct {
 		MALClientID     string `yaml:"mal_client_id" json:"mal_client_id"`
 		ComicVineAPIKey string `yaml:"comicvine_api_key" json:"comicvine_api_key"`
 	} `yaml:"scrapers" json:"scrapers"`
+	// Identification 是系列识别流程的设置。
+	Identification struct {
+		// SourceIntervalsMS 是证据包预取向同一来源连发两次请求的最小间隔（毫秒）。
+		SourceIntervalsMS SourceIntervals `yaml:"source_intervals_ms" json:"source_intervals_ms"`
+	} `yaml:"identification" json:"identification"`
 	Protocols struct {
 		OPDS struct {
 			Enabled bool `yaml:"enabled" json:"enabled"`
@@ -209,6 +215,58 @@ type Config struct {
 		MatchMode           string `yaml:"match_mode" json:"match_mode"`
 		PathIgnoreExtension bool   `yaml:"path_ignore_extension" json:"path_ignore_extension"`
 	} `yaml:"koreader" json:"koreader"`
+}
+
+// SourceIntervals holds one request interval per catalogue source, in milliseconds. Zero means the
+// default, a negative value turns the spacing off for that source.
+type SourceIntervals struct {
+	Bangumi     int `yaml:"bangumi" json:"bangumi"`
+	AniList     int `yaml:"anilist" json:"anilist"`
+	MangaDex    int `yaml:"mangadex" json:"mangadex"`
+	MyAnimeList int `yaml:"myanimelist" json:"myanimelist"`
+	ComicVine   int `yaml:"comicvine" json:"comicvine"`
+}
+
+// DefaultSourceIntervals follows each source's published or observed limits: Comic Vine allows 200
+// requests per resource per hour, AniList currently throttles to 30 per minute, and the others
+// publish no hard quota, so one request per second stays polite.
+var DefaultSourceIntervals = SourceIntervals{Bangumi: 1000, AniList: 2000, MangaDex: 1000, MyAnimeList: 1000, ComicVine: 18000}
+
+// For returns the spacing for one source key; an unknown source or a negative setting is not spaced.
+func (s SourceIntervals) For(source string) time.Duration {
+	var ms int
+	switch source {
+	case "bangumi":
+		ms = s.Bangumi
+	case "anilist":
+		ms = s.AniList
+	case "mangadex":
+		ms = s.MangaDex
+	case "myanimelist":
+		ms = s.MyAnimeList
+	case "comicvine":
+		ms = s.ComicVine
+	}
+	if ms <= 0 {
+		return 0
+	}
+	return time.Duration(ms) * time.Millisecond
+}
+
+// withDefaults fills every unset interval with its default.
+func (s SourceIntervals) withDefaults() SourceIntervals {
+	for _, f := range []struct {
+		value    *int
+		fallback int
+	}{
+		{&s.Bangumi, DefaultSourceIntervals.Bangumi}, {&s.AniList, DefaultSourceIntervals.AniList}, {&s.MangaDex, DefaultSourceIntervals.MangaDex},
+		{&s.MyAnimeList, DefaultSourceIntervals.MyAnimeList}, {&s.ComicVine, DefaultSourceIntervals.ComicVine},
+	} {
+		if *f.value == 0 {
+			*f.value = f.fallback
+		}
+	}
+	return s
 }
 
 const (
@@ -368,6 +426,7 @@ func createDefaultConfig(path string) (*Config, error) {
 	cfg.Cache.Dir = "./data/cache"
 	cfg.Cache.PageDiskCacheEnabled = false
 	cfg.Cache.PageDiskCacheMaxBytes = DefaultPageDiskCacheMaxBytes
+	cfg.Identification.SourceIntervalsMS = DefaultSourceIntervals
 	cfg.Logging.Level = LogLevelInfo
 	cfg.Scanner.Workers = 0 // 0 表示自动使用 runtime.NumCPU() * 2
 	cfg.Scanner.ScanProfile = ScanProfileMetadata
@@ -451,6 +510,7 @@ func NormalizeConfig(cfg *Config) {
 	if cfg.Cache.PageDiskCacheMaxBytes == 0 {
 		cfg.Cache.PageDiskCacheMaxBytes = DefaultPageDiskCacheMaxBytes
 	}
+	cfg.Identification.SourceIntervalsMS = cfg.Identification.SourceIntervalsMS.withDefaults()
 	level := strings.ToLower(strings.TrimSpace(cfg.Logging.Level))
 	switch level {
 	case LogLevelDebug, LogLevelInfo, LogLevelWarn, LogLevelError:
