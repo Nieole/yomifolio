@@ -230,6 +230,19 @@ func (s *Service) Authorize(ctx context.Context, subject Subject, library int64,
 	return authorizeAuthority(authority, library, capability)
 }
 
+// GrantedCapabilities reports the flags the credential currently carries, for deciding which
+// tools a listing may show. Visibility follows the granted flags, not the account's own
+// permissions: a regular account still lists the scan tools its credential holds and every call
+// stays denied by Authorize. Each request re-reads them, so narrowing and revocation apply to the
+// next listing.
+func (s *Service) GrantedCapabilities(ctx context.Context, subject Subject) ([]string, error) {
+	authority, err := s.store.Authority(ctx, subject)
+	if err != nil || authority.Credential.Revoked || authority.MustChangePassword {
+		return nil, ErrDenied
+	}
+	return authority.Credential.Capabilities, nil
+}
+
 func authorizeAuthority(authority Authority, library int64, capability string) error {
 	if authority.Credential.Revoked || authority.MustChangePassword {
 		return ErrDenied

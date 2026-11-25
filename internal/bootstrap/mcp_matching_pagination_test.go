@@ -92,6 +92,10 @@ func TestMCPMatchingPagination(t *testing.T) {
 		t.Helper()
 		out, e := session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
 		if e != nil {
+			// A capability the credential no longer holds also withdraws the tool itself.
+			if wantError {
+				return nil
+			}
 			t.Fatal(e)
 		}
 		if out.IsError != wantError {

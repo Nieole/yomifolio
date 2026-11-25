@@ -156,10 +156,18 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 			http.Error(w, "MCP credential invalid", http.StatusUnauthorized)
 			return
 		}
+		// Visibility follows the currently granted capabilities; the handlers below keep
+		// authorizing their own operations, so a listing is never the access boundary.
+		capabilities, err := service.GrantedCapabilities(r.Context(), subject)
+		if err != nil {
+			http.Error(w, "MCP credential invalid", http.StatusUnauthorized)
+			return
+		}
 		// The strict canonical authority check above replaces SDK localhost-only Host
 		// protection, permitting explicitly configured HTTPS reverse proxies.
 		handler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
 			server := mcp.NewServer(&mcp.Implementation{Name: "yomifolio-library", Version: "1"}, nil)
+			listOnlyGranted(server, newGrantedTools(capabilities))
 			type input struct {
 				SeriesID int64 `json:"series_id" jsonschema:"positive series identifier"`
 			}
@@ -168,7 +176,7 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 				if err != nil {
 					return nil, delegated.Series{}, delegated.ErrDenied
 				}
-				return discoveryResult(), out, nil
+				return nil, out, nil
 			})
 			registerDiscoveryTools(server, service, subject, r.Context())
 			registerMCPImages(server, service, subject, r.Context())

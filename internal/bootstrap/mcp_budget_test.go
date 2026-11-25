@@ -121,7 +121,14 @@ func runMCPModelBudgetPersists(t *testing.T, stdio bool) {
 	call := func(name string, args any, wantError bool) map[string]any {
 		t.Helper()
 		out, e := session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
-		if e != nil || out.IsError != wantError {
+		if e != nil {
+			// A capability the credential no longer holds also withdraws the tool itself.
+			if wantError {
+				return nil
+			}
+			t.Fatalf("%s: %+v %v", name, out, e)
+		}
+		if out.IsError != wantError {
 			t.Fatalf("%s: %+v %v", name, out, e)
 		}
 		raw, _ := json.Marshal(out.StructuredContent)

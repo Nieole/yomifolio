@@ -11,11 +11,11 @@ func registerDiscoveryTools(server *mcp.Server, service *delegated.Service, subj
 	annotations := &mcp.ToolAnnotations{ReadOnlyHint: true, IdempotentHint: true, OpenWorldHint: new(bool)}
 	mcp.AddTool(server, &mcp.Tool{Name: "library_find_series", Description: "Find authorized series. Filters intersect: library_ids (default credential scope), series_ids (max 50 explicit targets), added_from inclusive / added_before exclusive RFC3339 creation time, missing_fields ALL of title, summary, publisher, status, language, rating, authors, tags, source_links. Ascending stable ID keyset: after_id exclusive; limit default 20, max 50. Not an incremental watermark. Responses limited to 256 KiB.", Annotations: annotations}, func(ctx context.Context, _ *mcp.CallToolRequest, in delegated.FindSeriesInput) (*mcp.CallToolResult, delegated.SeriesPage, error) {
 		out, err := service.FindSeries(ctx, subject, in)
-		return discoveryResult(), out, discoveryError(err)
+		return nil, out, discoveryError(err)
 	})
 	mcp.AddTool(server, &mcp.Tool{Name: "library_list_books", Description: "List books in one authorized series, ascending stable ID. after_id exclusive; limit default 20, max 50. Names only, no paths. Use library_get_book_clues with a returned book ID for ComicInfo evidence. Responses limited to 256 KiB.", Annotations: annotations}, func(ctx context.Context, _ *mcp.CallToolRequest, in delegated.BooksInput) (*mcp.CallToolResult, delegated.BooksPage, error) {
 		out, err := service.ListBooks(ctx, subject, in)
-		return discoveryResult(), out, discoveryError(err)
+		return nil, out, discoveryError(err)
 	})
 	type input struct {
 		BookID int64 `json:"book_id"`
@@ -24,12 +24,8 @@ func registerDiscoveryTools(server *mcp.Server, service *delegated.Service, subj
 		ctx, cancel := imageRequestContext(ctx, transportCtx)
 		defer cancel()
 		out, err := service.GetBookClues(ctx, subject, in.BookID)
-		return discoveryResult(), out, discoveryError(err)
+		return nil, out, discoveryError(err)
 	})
-}
-
-func discoveryResult() *mcp.CallToolResult {
-	return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "See structuredContent for local catalogue evidence."}}}
 }
 
 func discoveryError(err error) error {

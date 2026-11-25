@@ -194,7 +194,11 @@ func TestMCPScanDisconnectQueueRevocationAndScope(t *testing.T) {
 	if err != nil || canceled.Status != task.StatusCancelled || !canceled.StartedAt.IsZero() {
 		t.Fatalf("revoked queue started %+v %v", canceled, err)
 	}
-	if got := call(session, "library_get_run", map[string]any{"run_id": queued.ID}); !got.IsError {
+	// Narrowing to no capability withdraws every tool, including run reads.
+	if listed, e := session.ListTools(ctx, nil); e != nil || len(listed.Tools) != 0 {
+		t.Fatalf("narrowed listing %+v %v", listed, e)
+	}
+	if got, e := session.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_run", Arguments: map[string]any{"run_id": queued.ID}}); e == nil && !got.IsError {
 		t.Fatalf("narrowed control %+v", got)
 	}
 	// Attribution remains available to the engine after the protocol session is gone.

@@ -154,13 +154,24 @@ func testMCPDelegatedSeriesLifecycle(t *testing.T, tls bool) {
 	if narrowed.Code != 200 {
 		t.Fatalf("narrow %d %s", narrowed.Code, narrowed.Body)
 	}
+	// Withdrawing read also withdraws its tools, so the refusal is a protocol error rather than a
+	// denied handler, and the next listing no longer offers them.
+	withdrawn, err := session.ListTools(context.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"library_get_series", "library_find_series"} {
+		if offersTool(withdrawn, name) {
+			t.Fatalf("withdrawn read tool still listed: %s", name)
+		}
+	}
 	denied, err = session.CallTool(context.Background(), &mcp.CallToolParams{Name: "library_get_series", Arguments: map[string]any{"series_id": series.ID}})
-	if err != nil || !denied.IsError {
+	if err == nil && !denied.IsError {
 		t.Fatalf("removed read capability still usable %+v %v", denied, err)
 	}
 	deniedImage, e := session.CallTool(context.Background(), &mcp.CallToolParams{Name: "library_get_series_cover", Arguments: map[string]any{"series_id": series.ID}})
 	encodedImage, _ := json.Marshal(deniedImage)
-	if e != nil || !deniedImage.IsError || !strings.Contains(string(encodedImage), "delegated access denied") {
+	if e == nil && (!deniedImage.IsError || !strings.Contains(string(encodedImage), "delegated access denied")) {
 		t.Fatalf("removed image permission: %+v %v", deniedImage, e)
 	}
 	// Cookie catalogue reading remains unaffected by MCP restrictions.
@@ -278,4 +289,14 @@ func assertMCPToolDiscovery(t *testing.T, result *mcp.ListToolsResult, err error
 			t.Errorf("missing tool %s", name)
 		}
 	}
+}
+
+// offersTool reports whether a listing still advertises the named tool.
+func offersTool(result *mcp.ListToolsResult, name string) bool {
+	for _, tool := range result.Tools {
+		if tool.Name == name {
+			return true
+		}
+	}
+	return false
 }

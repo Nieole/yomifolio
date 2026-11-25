@@ -124,8 +124,13 @@ func TestMCPStdioProductionProxy(t *testing.T) {
 		}
 		if i == 1 {
 			admin("PATCH", "/api/mcp/credentials/"+credential.ID, fmt.Sprintf(`{"user_id":1,"name":"stdio","library_ids":[%d],"capabilities":["cleanup"]}`, lib.ID))
+			// The narrowed credential no longer lists the read tools, so the call is refused at the
+			// protocol boundary instead of reaching a denied handler.
+			if listed, e := session.ListTools(ctx, nil); e != nil || offersTool(listed, "library_get_series") {
+				t.Fatalf("narrowed listing: %+v %v", listed, e)
+			}
 			denied, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_series", Arguments: map[string]any{"series_id": series.ID}})
-			if err != nil || !denied.IsError {
+			if err == nil && !denied.IsError {
 				t.Fatalf("narrow: %+v %v", denied, err)
 			}
 			admin("DELETE", "/api/mcp/credentials/"+credential.ID, "")

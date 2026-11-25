@@ -7,6 +7,11 @@ import (
 	"yomifolio/internal/application/delegated"
 )
 
+// A structured result travels twice on the wire: structuredContent, plus the serialized JSON text
+// fallback every client can read. The transport envelope therefore covers two full application
+// results, the 64 KiB request cap that bounds a caller-supplied JSON-RPC ID, and SDK framing.
+const mcpWireBudget = 2*delegated.MaxImageResultBytes + 64<<10 + 8<<10
+
 // The final wire budget also covers SDK framing and arbitrary caller-supplied
 // JSON-RPC IDs, which are not part of the application result reserve.
 type mcpResponse struct {
@@ -27,7 +32,7 @@ func (w *mcpResponse) Write(p []byte) (int, error) {
 		w.status = http.StatusOK
 	}
 	if !w.overflow {
-		if len(p) > delegated.MaxImageResultBytes-w.body.Len() {
+		if len(p) > mcpWireBudget-w.body.Len() {
 			w.overflow = true
 			w.body.Reset()
 		} else {
@@ -41,7 +46,7 @@ func serveBoundedMCP(w http.ResponseWriter, r *http.Request, handler http.Handle
 	buffered := &mcpResponse{header: make(http.Header)}
 	handler.ServeHTTP(buffered, r)
 	if buffered.overflow {
-		http.Error(w, "MCP response exceeds 256 KiB wire budget; select fewer pages or shorten request ID", http.StatusRequestEntityTooLarge)
+		http.Error(w, "MCP response exceeds the 584 KiB transport budget; select fewer pages or shorten request ID", http.StatusRequestEntityTooLarge)
 		return
 	}
 	for key, values := range buffered.header {

@@ -123,7 +123,14 @@ func assertImageEvidence(t *testing.T, session *mcp.ClientSession, store databas
 	call := func(name string, args map[string]any, wantError bool) *mcp.CallToolResult {
 		t.Helper()
 		out, e := session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
-		if e != nil || out.IsError != wantError {
+		if e != nil {
+			// A capability the credential no longer holds also withdraws the tool itself.
+			if wantError {
+				return nil
+			}
+			t.Fatalf("%s: %+v %v", name, out, e)
+		}
+		if out.IsError != wantError {
 			t.Fatalf("%s: %+v %v", name, out, e)
 		}
 		raw, _ := json.Marshal(out)
@@ -228,6 +235,9 @@ func assertImageEvidence(t *testing.T, session *mcp.ClientSession, store databas
 
 }
 
+// A legal image result plus an unusually long caller ID must still reach the client: the transport
+// envelope carries a structured result twice (structuredContent and the JSON text fallback) plus
+// that ID, so this call is no longer refused.
 func assertMCPWireBudget(t *testing.T, client *http.Client, endpoint string, series, book int64) {
 	t.Helper()
 	// The final wire budget includes a legal but unusually long caller ID.
@@ -247,7 +257,8 @@ func assertMCPWireBudget(t *testing.T, client *http.Client, endpoint string, ser
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(body) > 256<<10 || response.StatusCode != http.StatusRequestEntityTooLarge {
+	// 2x the 256 KiB result bound, plus the 64 KiB request cap and SDK framing.
+	if response.StatusCode != http.StatusOK || len(body) > 584<<10 {
 		t.Fatalf("wire budget status=%d bytes=%d", response.StatusCode, len(body))
 	}
 }

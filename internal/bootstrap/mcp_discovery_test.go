@@ -42,7 +42,14 @@ func assertLocalClues(t *testing.T, session *mcp.ClientSession, store database.S
 	call := func(name string, args map[string]any, wantError bool) json.RawMessage {
 		t.Helper()
 		result, err := session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
-		if err != nil || result.IsError != wantError {
+		if err != nil {
+			// A capability the credential no longer holds also withdraws the tool itself.
+			if wantError {
+				return nil
+			}
+			t.Fatalf("%s: %+v %v", name, result, err)
+		}
+		if result.IsError != wantError {
 			t.Fatalf("%s: %+v %v", name, result, err)
 		}
 		envelope, _ := json.Marshal(result)

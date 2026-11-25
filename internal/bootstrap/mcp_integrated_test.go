@@ -239,8 +239,15 @@ func runIntegratedAcceptance(t *testing.T, stdio bool, finalCapability string) {
 	call := func(name string, args any, wantError bool) map[string]any {
 		t.Helper()
 		r, e := session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
-		if e != nil || r.IsError != wantError {
-			t.Fatalf("%s: %+v %v", name, r, e)
+		if e != nil {
+			// A capability the current grant no longer covers also withdraws the tool itself.
+			if wantError {
+				return nil
+			}
+			t.Fatalf("%s: %v", name, e)
+		}
+		if r.IsError != wantError {
+			t.Fatalf("%s: %+v", name, r)
 		}
 		raw, _ := json.Marshal(r.StructuredContent)
 		var out map[string]any

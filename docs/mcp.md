@@ -40,7 +40,7 @@ mcp:
 - The secret is shown **once at issuance**; save it then, otherwise issue a new one.
 - Any account can be delegated; the credential works under that account's current permissions and restrictions, and a regular user gains neither management nor paid-model rights.
 - Changing or resetting that account's password revokes all of its MCP credentials. Revocation stops queued work before dispatch and running work at a safe checkpoint, and **does not undo committed changes**.
-- Narrowing capabilities or libraries also applies immediately: the next tool listing no longer shows the withdrawn tools.
+- Narrowing capabilities or libraries also applies immediately: the next tool listing no longer shows the withdrawn tools. The listing only discloses what the credential may use; a call to a tool it omits is still refused with the same uniform denial, because every tool authorizes its own operation.
 
 ## 3. Client configuration
 
@@ -101,7 +101,7 @@ A client only sees the tools its credential currently allows.
 
 Source search leaves the machine: `library_search_sources` and `library_get_source_search` contact external source sites; every other tool works locally.
 
-Run tools only reach this credential's own runs and re-authorize against the capability that run belongs to; `library_list_runs` needs any one of `scan_control`, `read` or `cleanup`.
+Run tools only reach this credential's own runs and re-authorize against the capability that run belongs to. Every capability can create runs, so `library_get_run`, `library_wait_run` and `library_cancel_run` are listed with any of them, while `library_list_runs` needs one of `scan_control`, `read` or `cleanup`.
 
 ## 5. Verify in order
 
