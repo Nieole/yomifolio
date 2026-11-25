@@ -29,6 +29,7 @@ var listingCapability = map[string]string{
 	"library_enrich_metadata":         delegated.MetadataWrite,
 	"library_enrich_metadata_batch":   delegated.MetadataWrite,
 	"library_undo_metadata_operation": delegated.MetadataWrite,
+	"library_add_series_relation":     delegated.MetadataWrite,
 
 	"library_start_scan": delegated.ScanControl,
 

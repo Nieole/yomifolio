@@ -9,6 +9,7 @@ export interface Operation {
   cleaned_by?: string;
   adjudication?: AdjudicationResult;
   cover_selection?: CoverSelection;
+  relation?: RelationChange;
   old_cover_material?: string;
   new_cover_material?: string;
   version: number;
@@ -60,6 +61,13 @@ export interface CoverSelection {
   page: number;
   quality_compared: boolean;
   reason: string;
+}
+
+export interface RelationChange {
+  id: number;
+  source_series_id: number;
+  target_series_id: number;
+  relation_type: string;
 }
 
 export interface CoverState {

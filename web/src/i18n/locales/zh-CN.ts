@@ -16,6 +16,7 @@ export const messages: MessageCatalog = {
     "audit.actor": "用户",
     "audit.web": "网页管理员",
     "audit.reversal": "撤销的操作",
+    "audit.relation": "作品群关系：#{{source}} → #{{target}} · {{type}}",
     "audit.before": "变更前",
     "audit.after": "变更后",
     "audit.cleanup.resume": "继续清理",

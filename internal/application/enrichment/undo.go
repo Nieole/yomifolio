@@ -122,6 +122,9 @@ func (s *Service) Undo(ctx context.Context, actor delegated.Subject, in UndoInpu
 	if err != nil {
 		return Operation{}, err
 	}
+	if original.Kind == relationKind {
+		return s.undoRelation(ctx, tx, actor, in, original)
+	}
 	current, before, err := readState(ctx, q, original.SeriesID)
 	if err != nil {
 		return Operation{}, delegated.ErrDenied

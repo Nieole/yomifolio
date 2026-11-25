@@ -1314,9 +1314,13 @@ WHERE (source_series_id = sqlc.arg(left_id) AND target_series_id = sqlc.arg(righ
    OR (source_series_id = sqlc.arg(right_id) AND target_series_id = sqlc.arg(left_id))
 LIMIT 1;
 
--- name: CreateSeriesRelation :exec
+-- name: CreateSeriesRelation :one
 INSERT INTO series_relations (source_series_id, target_series_id, relation_type)
-VALUES (?, ?, ?);
+VALUES (?, ?, ?)
+RETURNING id;
+
+-- name: GetSeriesRelation :one
+SELECT id, source_series_id, target_series_id, relation_type FROM series_relations WHERE id = ?;
 
 -- name: UpdateSeriesRelation :exec
 UPDATE series_relations
@@ -1325,6 +1329,10 @@ WHERE id = ?;
 
 -- name: DeleteSeriesRelation :execrows
 DELETE FROM series_relations WHERE id = ?;
+
+-- name: DeleteUnchangedSeriesRelation :execrows
+DELETE FROM series_relations
+WHERE id = ? AND source_series_id = ? AND target_series_id = ? AND relation_type = ?;
 
 -- name: ListSmartFilters :many
 SELECT id, library_id, name, active_tag, active_author, active_status, active_letter,

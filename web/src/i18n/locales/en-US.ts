@@ -16,6 +16,7 @@ export const messages: MessageCatalog = {
     "audit.actor": "User",
     "audit.web": "Web administrator",
     "audit.reversal": "Reverses operation",
+    "audit.relation": "Franchise relation: #{{source}} → #{{target}} · {{type}}",
     "audit.before": "Before",
     "audit.after": "After",
     "audit.cleanup.resume": "Resume cleanup",

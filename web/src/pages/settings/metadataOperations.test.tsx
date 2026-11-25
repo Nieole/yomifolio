@@ -207,3 +207,12 @@ it('allows a failed durable result lookup to be retried without claiming complet
  fireEvent.click(screen.getByRole('button', { name: 'Reload cleanup result' }));
  await screen.findByRole('button', { name: 'Resume cleanup' });
 });
+it.each([
+ ['en-US', messages, 'Franchise relation: #7 → #9 · Sequel'],
+ ['zh-CN', zhMessages, '作品群关系：#7 → #9 · 续作'],
+] as const)('shows which franchise relation an agent added and why in %s', async (locale, translations, described) => {
+ mocks.get.mockResolvedValue({ data: { operations: [{ ...row, kind: 'relation', reason: 'Second volume afterword names it the sequel', before: state, after: state, fields: [], relation: { id: 3, source_series_id: 7, target_series_id: 9, relation_type: 'sequel' } }] } });
+ render(<LocaleProvider initialLocale={locale} initialMessages={translations} fallbackMessages={messages}><SettingsMetadataOperationsPage /></LocaleProvider>);
+ expect(await screen.findByText(described)).toBeTruthy();
+ expect(screen.getByText('Second volume afterword names it the sequel')).toBeTruthy();
+});

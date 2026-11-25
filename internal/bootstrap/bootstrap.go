@@ -58,7 +58,7 @@ func Open(ctx context.Context, store database.Store, cfg *config.Manager, option
 	stats := dashboard.New()
 	reader := api.NewReaderCapabilities(store, app.Relations, app.Proposals, app.Engine, func() { stats.InvalidateVolatile("reading") })
 	delegatedService := delegated.NewWithDiscoveryAndRuns(delegated.NewSQLStore(store.DB()), content, app.Engine, delegated.RunAccess{Engine: app.Engine, Scans: app.Scans, Libraries: store}).WithMatching(&delegated.MatchingAccess{Store: store, Config: cfg.Snapshot, Source: options.Sources.MetadataProvider, Start: app.Runs.Start}).WithModelBudgets(&delegated.ModelBudgetAccess{DB: store.DB(), Config: cfg.Snapshot, AI: options.Sources.ConfiguredAI, Start: app.Runs.Start})
-	enrichmentService := enrichment.New(store.DB(), delegatedService, func() { effects.InvalidateStats("metadata_enrichment"); effects.Publish("refresh") }).WithCovers(enrichment.CoverAccess{Images: delegatedService, Config: cfg.Snapshot}).WithCleanup(enrichment.CleanupAccess{Delegated: delegatedService, Start: app.Runs.Start})
+	enrichmentService := enrichment.New(store.DB(), delegatedService, func() { effects.InvalidateStats("metadata_enrichment"); effects.Publish("refresh") }).WithCovers(enrichment.CoverAccess{Images: delegatedService, Config: cfg.Snapshot}).WithCleanup(enrichment.CleanupAccess{Delegated: delegatedService, Start: app.Runs.Start}).WithRelations(app.Relations.Changed)
 	host := transport.Bind(api.HostDependencies{
 		Catalogue: store, CoverQueries: store,
 		Reading: api.ReadingDependencies{ContentQueries: store, StatisticsQueries: store, Capabilities: reader, Content: content, ImageCache: memory, Statistics: stats, Recommendations: recommendation.New(24 * time.Hour)},

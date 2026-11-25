@@ -51,7 +51,7 @@ type Querier interface {
 	CreateMetadataReviewField(ctx context.Context, arg CreateMetadataReviewFieldParams) (MetadataReviewField, error)
 	CreateReadingList(ctx context.Context, arg CreateReadingListParams) (ReadingList, error)
 	CreateSeries(ctx context.Context, arg CreateSeriesParams) (Series, error)
-	CreateSeriesRelation(ctx context.Context, arg CreateSeriesRelationParams) error
+	CreateSeriesRelation(ctx context.Context, arg CreateSeriesRelationParams) (int64, error)
 	CreateSimpleCollection(ctx context.Context, arg CreateSimpleCollectionParams) (int64, error)
 	DeleteAllFranchiseCollections(ctx context.Context) (int64, error)
 	DeleteBook(ctx context.Context, id int64) error
@@ -65,6 +65,7 @@ type Querier interface {
 	DeleteSeriesRelation(ctx context.Context, id int64) (int64, error)
 	DeleteSmartFilter(ctx context.Context, id int64) (int64, error)
 	DeleteStaleFranchiseCollections(ctx context.Context, keepKeys []string) (int64, error)
+	DeleteUnchangedSeriesRelation(ctx context.Context, arg DeleteUnchangedSeriesRelationParams) (int64, error)
 	FindExistingSeriesRelation(ctx context.Context, arg FindExistingSeriesRelationParams) (int64, error)
 	GetAIGroupingReview(ctx context.Context, id int64) (AiGroupingReview, error)
 	GetAIGroupingReviewCollection(ctx context.Context, id int64) (AiGroupingReviewCollection, error)
@@ -101,6 +102,7 @@ type Querier interface {
 	GetSeriesIDByBookPath(ctx context.Context, path string) (int64, error)
 	GetSeriesMetadataProvenance(ctx context.Context, seriesID int64) ([]SeriesMetadataProvenance, error)
 	GetSeriesNamesByIDs(ctx context.Context, ids []int64) ([]GetSeriesNamesByIDsRow, error)
+	GetSeriesRelation(ctx context.Context, id int64) (GetSeriesRelationRow, error)
 	GetSeriesWithoutCollection(ctx context.Context, libraryID int64) ([]GetSeriesWithoutCollectionRow, error)
 	GetSmartFilterByID(ctx context.Context, id int64) (SmartFilter, error)
 	GetStaticCollectionView(ctx context.Context, id int64) (GetStaticCollectionViewRow, error)
