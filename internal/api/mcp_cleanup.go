@@ -12,19 +12,19 @@ import (
 )
 
 func registerMCPCleanup(server *mcp.Server, service *enrichment.Service, subject delegated.Subject, transportCtx context.Context) {
-	mcp.AddTool(server, &mcp.Tool{Name: "library_start_metadata_cleanup", Description: "Accept 1-20 explicit operation_id/request_key pairs in ONE library for asynchronous cleanup. Independent cleanup permission, no further human confirmation. Disconnect does not cancel; use existing run query/wait/cancel. Check each item's durable cleanup result by request_key; cancelled remainder is unprocessed. Not batch atomic; retries can create a new run but never redo completed item effects.", Annotations: &mcp.ToolAnnotations{}}, func(ctx context.Context, _ *mcp.CallToolRequest, in enrichment.CleanupBatchInput) (*mcp.CallToolResult, delegated.Run, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_start_metadata_cleanup", Description: `Start one run that permanently discards the undo snapshots of 1-20 operations in one library, each with its own request_key. Not atomic: read each item with library_get_metadata_cleanup. Disconnecting does not cancel it. Example: {"library_id": 1, "operations": [{"operation_id": "0d4f6c2a9b1e47c3a5d8e2f1b6c9a370", "request_key": "clean-1"}]}`, Annotations: &mcp.ToolAnnotations{}}, func(ctx context.Context, _ *mcp.CallToolRequest, in enrichment.CleanupBatchInput) (*mcp.CallToolResult, delegated.Run, error) {
 		out, err := service.StartCleanup(ctx, subject, in)
 		return nil, out, publicMCPToolError(err, "invalid cleanup batch", "cleanup unavailable")
 	})
 	type key struct {
 		RequestKey string `json:"request_key"`
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "library_get_metadata_cleanup", Description: "Read this credential's durable cleanup result by request_key under current cleanup permission. Unknown/unprocessed requests have no receipt. pending means undo already lost but file reclamation incomplete; same-key single cleanup can resume pending only. partial is a durable file failure, not full reclamation.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true, IdempotentHint: true}}, func(ctx context.Context, _ *mcp.CallToolRequest, in key) (*mcp.CallToolResult, enrichment.CleanupResult, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_get_metadata_cleanup", Description: `Read this credential's cleanup result by request_key. pending: undo is already gone but file removal is unfinished; repeat the same cleanup to resume. partial: some files could not be removed. Example: {"request_key": "clean-1"}`, Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true, IdempotentHint: true}}, func(ctx context.Context, _ *mcp.CallToolRequest, in key) (*mcp.CallToolResult, enrichment.CleanupResult, error) {
 		out, err := service.GetCleanup(ctx, subject, in.RequestKey)
 		return nil, out, publicMCPToolError(err, "invalid cleanup key", "cleanup unavailable")
 	})
 
-	mcp.AddTool(server, &mcp.Tool{Name: "library_cleanup_metadata_operation", Description: "Permanently discard ONE operation's rollback snapshots. Requires independent cleanup capability, NOT metadata_write. No per-batch human approval. Minimal audit remains; undo becomes unavailable even when files are protected or deletion fails. Never deletes collection files, current covers, or other operations' retained images. Exact request_key replays the durable result; partial file failure is not full reclamation.", Annotations: &mcp.ToolAnnotations{IdempotentHint: true}}, func(ctx context.Context, _ *mcp.CallToolRequest, in enrichment.CleanupInput) (*mcp.CallToolResult, enrichment.CleanupResult, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_cleanup_metadata_operation", Description: `Permanently discard one operation's undo snapshots; undo becomes unavailable and a minimal audit stays. Never deletes library files or current covers. The same request_key replays the stored result. Example: {"request_key": "clean-1", "operation_id": "0d4f6c2a9b1e47c3a5d8e2f1b6c9a370"}`, Annotations: &mcp.ToolAnnotations{IdempotentHint: true}}, func(ctx context.Context, _ *mcp.CallToolRequest, in enrichment.CleanupInput) (*mcp.CallToolResult, enrichment.CleanupResult, error) {
 		ctx, cancel := imageRequestContext(ctx, transportCtx)
 		defer cancel()
 		out, err := service.Cleanup(ctx, subject, in)

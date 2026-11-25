@@ -8,6 +8,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"yomifolio/internal/database"
@@ -207,15 +208,32 @@ func assertLocalClues(t *testing.T, session *mcp.ClientSession, store database.S
 	if _, err = store.DB().ExecContext(ctx, `UPDATE series SET publisher='Known' WHERE id=?`, second.ID); err != nil {
 		t.Fatal(err)
 	}
-	raw = call("library_find_series", map[string]any{"missing_fields": []string{"summary", "publisher"}}, false)
-	var filtered struct {
-		Items []struct {
-			ID int64 `json:"id"`
-		} `json:"items"`
+	// A series lacking any one listed field matches; only one holding every listed field drops out.
+	missing := func() []int64 {
+		t.Helper()
+		raw := call("library_find_series", map[string]any{"missing_fields": []string{"summary", "publisher"}}, false)
+		var filtered struct {
+			Items []struct {
+				ID int64 `json:"id"`
+			} `json:"items"`
+		}
+		if err := json.Unmarshal(raw, &filtered); err != nil {
+			t.Fatal(err)
+		}
+		ids := make([]int64, 0, len(filtered.Items))
+		for _, item := range filtered.Items {
+			ids = append(ids, item.ID)
+		}
+		return ids
 	}
-	_ = json.Unmarshal(raw, &filtered)
-	if len(filtered.Items) != 1 || filtered.Items[0].ID != series {
-		t.Fatalf("ALL missing filter: %s", raw)
+	if got := missing(); !slices.Equal(got, []int64{series, second.ID}) {
+		t.Fatalf("ANY missing filter with publisher known: %v", got)
+	}
+	if _, err = store.DB().ExecContext(ctx, `UPDATE series SET summary='Known' WHERE id=?`, second.ID); err != nil {
+		t.Fatal(err)
+	}
+	if got := missing(); !slices.Equal(got, []int64{series}) {
+		t.Fatalf("ANY missing filter with both known: %v", got)
 	}
 	// Payload bounds fail rather than silently truncating local evidence.
 	if _, err = store.DB().ExecContext(ctx, `UPDATE series SET path=? WHERE id=?`, filepath.Join(root, strings.Repeat("x", 250<<10)), second.ID); err != nil {

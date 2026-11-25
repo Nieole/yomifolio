@@ -61,15 +61,22 @@ references: [mm-adr-0003, mm-adr-0007, mm-database, mm-adr-0014, mm-catalogsearc
 
 MCP 安全入口仅接受 `mcp.public_url` 配置的精确 authority；有 Origin 时须与该 origin 一致，重复 Origin 拒绝。SDK 的 localhost-only Host 检查由此更严格的单一 authority 检查替代，使显式 HTTPS 反向代理可用。HTTPS 的直连 TLS 或已配置可信代理的协议声明有效，Cookie Secure 的 always/never 不参与 MCP 判定；不信任 Forwarded Host。显式 LAN HTTP 还校验直连或可信代理报告的真实客户端为 private/loopback IP，可信代理缺失客户端地址时拒绝，公网明文不可用。请求体限制为 64 KiB，无记录协议 payload/Authorization 的 SDK logger；部署代理也不得记录这些秘密。
 
-核对入口：`bootstrap` 的 `TestMCPDelegatedSeriesLifecycle`、`TestMCPAccountPasswordAndManagementIsolation`、`TestMCPRejectsUnsafeTransport`；独立凭据与交集规则归 `mm-application`，配置合法性归 `mm-config`。
+工具结果契约对所有工具一致：
+
+- 每个成功结果在 structuredContent 之外都带一个文本块，内容是同一份 JSON，只读文本的客户端不读 structuredContent 也能拿到完整结果。
+- 拒绝只有一句：`errMCPDenied`。它附下一步提示（ID 取自本凭据自己的查询结果；已是如此则说明授权不再覆盖，应上报而非重试），但对象不存在、跨资料库与能力不足读来完全相同，不泄露存在性。
+- 工具描述不超过 400 字符，以一个可直接照抄的 `Example: {...}` 调用结尾，示例参数都在输入 schema 中声明；细粒度识别链工具（来源搜索、匹配提案、补充状态与补充、内部模型额度）不受此约束。
+- 工具清单按凭据当前能力过滤（`listOnlyGranted`），清单只披露授权，每个处理器仍自行鉴权。
+
+核对入口：`bootstrap` 的 `TestMCPEveryToolResultCarriesItsJSONText`、`TestMCPListingFollowsGrantedCapabilities`、`TestMCPDelegatedSeriesLifecycle`、`TestMCPAccountPasswordAndManagementIsolation`、`TestMCPRejectsUnsafeTransport`；独立凭据与交集规则归 `mm-application`，配置合法性归 `mm-config`。
 
 发现工具只映射应用用例与结构化结果，查询条件、分页、证据及响应上限归 `mm-application`；工具描述提供条件交集、默认页长、硬上限与后继用法。不提供路径参数、任意磁盘读取或整书下载。
 
-图片工具只调用应用完整用例，以 SDK v1.8.0 `ImageContent.Data` 的原始字节字段交付真实 `image/jpeg`，让 SDK 执行 base64 序列化，不能预先 base64 后二次编码。结构化元数据与 image content 顺序一致，不在文本重复图片。stateless SDK 的工具上下文不自行代表 HTTP 请求生命周期：ComicInfo 线索、图片工具和单项/批量同步补充工具显式合并请求取消上下文，HTTP 断线、stdio EOF 取消上游后，在封面准备的 IO 等待时也归还读资格及图片/准备槽；同步补充沿用同一合并上下文直至事务提交，不在准备后脱离取消；这不改变已接纳后台运行的断线后继续语义。
+图片工具只调用应用完整用例，以 SDK v1.8.0 `ImageContent.Data` 的原始字节字段交付真实 `image/jpeg`，让 SDK 执行 base64 序列化，不能预先 base64 后二次编码。首个文本块是结构化元数据的 JSON 副本，其后 image content 与结构化 `images` 顺序一致；文本不重复图片字节。stateless SDK 的工具上下文不自行代表 HTTP 请求生命周期：ComicInfo 线索、图片工具和单项/批量同步补充工具显式合并请求取消上下文，HTTP 断线、stdio EOF 取消上游后，在封面准备的 IO 等待时也归还读资格及图片/准备槽；同步补充沿用同一合并上下文直至事务提交，不在准备后脱离取消；这不改变已接纳后台运行的断线后继续语义。
 
-所有 MCP JSON HTTP 响应在写入网络前受 256 KiB 最终响应体硬上限约束，包含 SDK framing、调用方 JSON-RPC ID 与 base64/JSON 开销；有界缓冲溢出后返回短 HTTP 413，不发出部分图片 JSON。应用预留不是任意长请求 ID 的豁免。该接口仍为 stateless JSON，不用此缓冲提供 SSE 会话恢复；stdio 代理沿同一 HTTP 契约转发。
+所有 MCP JSON HTTP 响应在写入网络前受最终响应体硬上限约束，上限容纳两份应用结果（structuredContent 与其 JSON 文本副本）、64 KiB 请求体上限所界定的调用方 JSON-RPC ID 与 SDK framing；有界缓冲溢出后返回短 HTTP 413，不发出部分图片 JSON。应用预留不是任意长请求 ID 的豁免。该接口仍为 stateless JSON，不用此缓冲提供 SSE 会话恢复；stdio 代理沿同一 HTTP 契约转发。
 
-匹配工具只映射 `delegated.Service` 的完整用例；输入确认、来源白名单、分页/字节上限、临时证据寿命、持久提案证据及读/写能力映射归 `mm-application`。只返回结构化数据，文本不再复制一份候选；底层来源/SQL 错误统一脱敏。
+匹配工具只映射 `delegated.Service` 的完整用例；输入确认、来源白名单、分页/字节上限、临时证据寿命、持久提案证据及读/写能力映射归 `mm-application`。底层来源/SQL 错误统一脱敏。
 
 模型工具只映射应用的不可变额度操作；操作 status=history_unavailable 明确表示关联运行历史已缺失，并非运行终态，预算及逐项结果仍返回，运行工具不再保证可查/可取消。声明是 agent 转述而非受信任人工审批。具体记账、归属、返回状态和重启不重放契约归 `mm-application`。协议适配器不直接接触计数表或调用模型工厂。
 

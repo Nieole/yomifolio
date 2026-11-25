@@ -26,7 +26,7 @@ func TestMCPToolErrorsExposeOnlyCanonicalMessages(t *testing.T) {
 			}{
 				{"nil", nil, ""},
 				{"storage", errors.New(private), mapper.unavailable},
-				{"wrapped denial", fmt.Errorf("%s: %w", private, delegated.ErrDenied), delegated.ErrDenied.Error()},
+				{"wrapped denial", fmt.Errorf("%s: %w", private, delegated.ErrDenied), errMCPDenied.Error()},
 				{"wrapped validation", fmt.Errorf("%s: %w", private, delegated.ErrInvalid), mapper.invalid},
 				{"denial text is not authority", fmt.Errorf("%s: %s", private, delegated.ErrDenied), mapper.unavailable},
 				{"validation text is not authority", fmt.Errorf("%s: %s", private, delegated.ErrInvalid), mapper.unavailable},
