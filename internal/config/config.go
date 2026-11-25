@@ -189,7 +189,7 @@ type Config struct {
 		Timeout     int    `yaml:"timeout" json:"timeout"`           // 请求超时时间（秒），默认 120
 	} `yaml:"llm" json:"llm"`
 	// Scrapers 存放需要凭据的外部元数据源密钥。AniList / MangaDex 免密钥，无需在此配置；
-	// MyAnimeList 需要 Client ID，Comic Vine 需要 API Key，未填则对应源在 listProviders 中不出现。
+	// MyAnimeList 需要 Client ID，Comic Vine 需要 API Key，未填则对应源不在 metadata.CatalogueSources 之列。
 	Scrapers struct {
 		MALClientID     string `yaml:"mal_client_id" json:"mal_client_id"`
 		ComicVineAPIKey string `yaml:"comicvine_api_key" json:"comicvine_api_key"`

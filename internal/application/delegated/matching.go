@@ -104,84 +104,34 @@ func (s *Service) SearchSources(ctx context.Context, subject Subject, in SearchS
 	a.mu.Unlock()
 	spec := task.RunSpec{Identity: task.Identity{Type: "source_search", Scope: task.ScopeLibrary, ScopeID: series.LibraryID, Variant: task.Variant(id)}, LibraryIDs: []int64{series.LibraryID}, Trigger: task.TriggerManual, Key: "source_search", CanCancel: true}
 	spec, body, err := s.PrepareRun(ctx, subject, series.LibraryID, Read, spec, func(ctx context.Context, h *runhandle.Handle) (task.Result, error) {
-		cfg := a.Config()
-		names := []string{"bangumi", "anilist", "mangadex"}
-		if strings.TrimSpace(cfg.Scrapers.MALClientID) != "" {
-			names = append(names, "myanimelist")
-		}
-		if strings.TrimSpace(cfg.Scrapers.ComicVineAPIKey) != "" {
-			names = append(names, "comicvine")
-		}
-		successes := 0
+		fanout := metadata.SourceFanout{Config: a.Config(), Open: a.Source}
+		sources := len(metadata.CatalogueSources(fanout.Config))
+		visited, successes := 0, 0
 		finish := func(status string) { a.mu.Lock(); search.evidence.Status = status; a.mu.Unlock() }
-		for i, name := range names {
-			if err := s.Checkpoint(ctx, subject, series.LibraryID, Read); err != nil {
-				finish("cancelled")
-				return task.Result{}, err
-			}
-			p := a.Source(cfg, name)
-			page := SourcePage{Source: name, Status: "failed", Candidates: []SourceCandidate{}}
-			var results []*metadata.SeriesMetadata
-			var total int
-			var fetchErr error
-			if p != nil {
-				results, total, fetchErr = p.SearchMetadata(ctx, in.Query, in.Limit, in.Offset)
-			} else {
-				fetchErr = ErrInvalid
-			}
-			if err := s.Checkpoint(ctx, subject, series.LibraryID, Read); err != nil {
-				finish("cancelled")
-				return task.Result{}, err
-			}
-			if fetchErr == nil && len(results) <= in.Limit && total >= 0 {
-				page.Status = "available"
-				page.Total = total
-				for j, result := range results {
-					if result == nil || result.MatchEvidence != nil || result.SourceID < 0 || result.VolumeCount < 0 || result.Rating < 0 || result.Rating > 10 {
-						page.Status = "invalid_response"
-						break
-					}
-					raw, e := json.Marshal(result)
-					if e != nil || len(raw) > 32<<10 || len(result.Tags) > 100 || len(result.Authors) > 100 {
-						page.Status = "invalid_response"
-						break
-					}
-					// Snapshot the source result; neither candidate IDs nor URLs are fetch inputs.
-					var snapshot metadata.SeriesMetadata
-					_ = json.Unmarshal(raw, &snapshot)
-					snapshot.Provider = name
-					page.Candidates = append(page.Candidates, SourceCandidate{ID: fmt.Sprintf("%s:%d", name, j), Metadata: snapshot})
-				}
-				if page.Status == "available" {
-					successes++
-					if in.Offset+len(results) < total && len(results) > 0 {
-						next := in.Offset + in.Limit
-						if next <= 1000 {
-							page.NextOffset = &next
-						} else {
-							page.Truncated = true
-						}
-					}
-				} else {
-					page.Candidates = []SourceCandidate{}
-				}
-			}
+		check := func(ctx context.Context) error { return s.Checkpoint(ctx, subject, series.LibraryID, Read) }
+		err := fanout.Search(ctx, metadata.SourceQuery{Text: in.Query, Limit: in.Limit, Offset: in.Offset}, check, func(found metadata.SourcePage) {
 			a.mu.Lock()
-			search.evidence.Sources = append(search.evidence.Sources, page)
+			search.evidence.Sources = append(search.evidence.Sources, sourcePage(found, in))
 			if bounded(search.evidence) != nil {
-				search.evidence.Sources[len(search.evidence.Sources)-1] = SourcePage{Source: name, Status: "too_large", Candidates: []SourceCandidate{}}
-				if page.Status == "available" {
-					successes--
-				}
+				found = found.TooLarge()
+				search.evidence.Sources[len(search.evidence.Sources)-1] = sourcePage(found, in)
 			}
 			a.mu.Unlock()
-			h.Advance(i+1, len(names), "", nil)
+			if found.Status == metadata.SourceAvailable {
+				successes++
+			}
+			visited++
+			h.Advance(visited, sources, "", nil)
+		})
+		if err != nil {
+			finish("cancelled")
+			return task.Result{}, err
 		}
 		if successes == 0 {
 			finish("failed")
 			return task.Result{}, fmt.Errorf("no source available")
 		}
-		if successes < len(names) {
+		if successes < sources {
 			finish("partial")
 		} else {
 			finish("completed")
@@ -205,6 +155,23 @@ func (s *Service) SearchSources(ctx context.Context, subject Subject, in SearchS
 	search.runID = launched.Run.ID
 	a.mu.Unlock()
 	return StartedSearch{SearchID: id, Run: Run{ID: launched.Run.ID, LibraryID: series.LibraryID, Status: launched.Run.Status, Coalesced: launched.Coalesced}}, nil
+}
+
+// sourcePage numbers candidates within the page and bounds continuation by the offset limit.
+func sourcePage(found metadata.SourcePage, in SearchSourcesInput) SourcePage {
+	page := SourcePage{Source: found.Source, Status: string(found.Status), Total: found.Total, Candidates: []SourceCandidate{}}
+	for j, result := range found.Results {
+		page.Candidates = append(page.Candidates, SourceCandidate{ID: fmt.Sprintf("%s:%d", found.Source, j), Metadata: result})
+	}
+	if found.Status == metadata.SourceAvailable && in.Offset+len(found.Results) < found.Total && len(found.Results) > 0 {
+		next := in.Offset + in.Limit
+		if next <= 1000 {
+			page.NextOffset = &next
+		} else {
+			page.Truncated = true
+		}
+	}
+	return page
 }
 func (s *Service) GetSourceSearch(ctx context.Context, subject Subject, id string) (SearchEvidence, error) {
 	if s.matching == nil {
