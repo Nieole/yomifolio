@@ -27,7 +27,7 @@
 - **持久化结构**：`internal/database/schema_identification.sql` 建识别结论、排除候选、上报、查无此作、已审定五张表和一张推导完成标记表，全部按 `series_id` 外键级联删除；路径迁移不换系列 ID，所以结论原样保留。时间一律存 Unix 毫秒，方便 06 用注入的时钟比较租约。证据包和租约的表留给 05、06。
 - **状态推导**：视图 `series_identification_status` 是识别状态的唯一定义，每次启动重建，规则改了存量库也会跟上。优先级从高到低：已审定 > 待复核 > 待人工 > 已识别 > 查无此作 > 未处理。上报的 `class` 决定它对状态的影响：`identification` 对应待人工，`recheck` 对应待复核，`note` 不影响状态。`category` 的取值留给 06、11、14 定义。查无此作用 JSON 数组记录 `searched_sources`，供 15 比对新启用的来源。
 - **存量推导**：在 `bootstrap.Open` 里执行一次，推导和完成标记在同一个事务里提交，中断后重跑结果相同。推导规则：
-  - 只认 `status` 为 `applied` 和 `rejected` 的提案。部分应用仍待审的提案，以及 `supplemented_closed` 的提案都不转换。
+  - `applied` 的提案和「已部分接受、整体仍待审」的提案都转为对应来源的人工确认识别，`rejected` 的提案转为排除候选（按下方用户决定）。部分接受的判据直接用提案模块的 `proposal.Accepted`：带 `applied_at`，或者还有字段来源记录指向这条提案。确认时间按以下顺序取：`applied_at`；没有时取仍指向它的字段来源记录里最早的写入时间；再没有就取提案的 `updated_at`。剩余待审字段保持待审，结案由 07 负责。没人接受过的待审提案和 `supplemented_closed` 的提案都不转换。
   - 来源按提案行的 `provider` 归一化，为空时改用 raw_payload 里的 Provider。条目编号取 `source_id`，缺失时从来源 URL 的形状解析（MangaDex 取 UUID）。
   - 没有来源条目的提案跳过，包括 LLM 提案和 `delegated` 多来源提案。
   - 同一系列、同一来源有多次应用时，取最近一次。
