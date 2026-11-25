@@ -110,7 +110,7 @@ MCP 工具面收缩成一个四步主循环加若干原语，目标是本机的�
 70. 作为 agent 操作者，我希望缺失字段过滤在任一所列字段缺失时即命中，以便「找缺元数据的系列」得到符合直觉的结果。
 71. 作为 agent 操作者，我希望工具清单只列出当前凭据可用的工具，以便不会在用不了的工具上浪费上下文。
 72. 作为资料库所有者，我希望 MCP 不再暴露细粒度识别链和内部模型额度工具，以便工具面只保留 agent 真正需要的能力。
-73. 作为资料库所有者，我希望已有的内部模型额度记录保留为只读，以便过去的用量仍可查询。
+73. 作为资料库所有者，我希望已有的内部模型额度记录保留不删，以便下线工具不会抹掉历史数据。
 
 ## Implementation Decisions
 
@@ -209,7 +209,7 @@ agent 不能做：
 
 **下线**：
 - `library_search_sources`、`library_get_source_search`、`library_propose_match`、`library_get_match_proposal`、`library_get_enrichment_state`、`library_enrich_metadata`、`library_enrich_metadata_batch`。其中的作者校正和封面能力迁移到上面的原语。
-- `library_assess_match`、`library_get_model_operation` 和 `internal_llm` 能力。已有的额度记录保留，只读不删。
+- `library_assess_match`、`library_get_model_operation` 和 `internal_llm` 能力。已有的额度记录数据保留不删，不再提供查询入口。
 - 只有一位所有者使用，所以不设过渡期。
 
 **能力映射**（不新增能力）：
@@ -326,7 +326,7 @@ stdio 代理只转发，工具面变化不需要改动它，它的现有进程�
   - `missing_fields` 在任一字段缺失时命中；
   - 能力映射与清单过滤一致；
   - 初始化结果带有主循环说明；
-  - 已有的额度记录仍可只读查询。
+  - 已有的额度记录数据保留。
 - **人的界面**：
   - 待人工页的挑候选、否决、判查无此作、设已审定和重搜都能完成；
   - 详情页撤换识别会记下排除候选；
