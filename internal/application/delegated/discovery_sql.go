@@ -32,21 +32,26 @@ func (s *SQLStore) FindSeries(ctx context.Context, in FindSeriesInput) ([]Series
 		query += ` AND julianday(created_at)<julianday(?)`
 		args = append(args, in.AddedBefore)
 	}
+	// A series matches when any one listed field is missing.
+	missing := make([]string, 0, len(in.MissingFields))
 	for _, field := range in.MissingFields {
 		switch field {
 		case "authors":
-			query += ` AND NOT EXISTS (SELECT 1 FROM series_authors WHERE series_id=series.id)`
+			missing = append(missing, `NOT EXISTS (SELECT 1 FROM series_authors WHERE series_id=series.id)`)
 		case "tags":
-			query += ` AND NOT EXISTS (SELECT 1 FROM series_tags WHERE series_id=series.id)`
+			missing = append(missing, `NOT EXISTS (SELECT 1 FROM series_tags WHERE series_id=series.id)`)
 		case "source_links":
-			query += ` AND NOT EXISTS (SELECT 1 FROM series_links WHERE series_id=series.id)`
+			missing = append(missing, `NOT EXISTS (SELECT 1 FROM series_links WHERE series_id=series.id)`)
 		case "rating":
-			query += ` AND rating IS NULL`
+			missing = append(missing, `rating IS NULL`)
 		case "title", "summary", "publisher", "status", "language":
-			query += fmt.Sprintf(` AND trim(coalesce(%s,''))=''`, field)
+			missing = append(missing, fmt.Sprintf(`trim(coalesce(%s,''))=''`, field))
 		default:
 			return nil, ErrInvalid
 		}
+	}
+	if len(missing) > 0 {
+		query += ` AND (` + strings.Join(missing, ` OR `) + `)`
 	}
 	query += ` ORDER BY id ASC LIMIT ?`
 	args = append(args, in.Limit)

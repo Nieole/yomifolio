@@ -45,15 +45,15 @@ func registerMCPEnrichment(server *mcp.Server, service *enrichment.Service, subj
 		out, err := service.Batch(ctx, subject, in.Operations)
 		return nil, out, publicMCPToolError(err, "invalid enrichment batch", "metadata operation unavailable")
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_get_metadata_operation", Description: "Read a persistent operation receipt and undo status; explicitly cleaned receipts retain only minimal audit and report undo_unavailable=true under current target authority. Not latest field provenance. Undo material has no automatic expiry; independent cleanup permission can explicitly discard it.", Annotations: read}, func(ctx context.Context, _ *mcp.CallToolRequest, in lookup) (*mcp.CallToolResult, enrichment.Operation, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_get_metadata_operation", Description: `Read one metadata operation receipt: the fields it changed, before and after values, and whether undo is still possible (undo_unavailable=true once cleaned up). Example: {"operation_id": "0d4f6c2a9b1e47c3a5d8e2f1b6c9a370"}`, Annotations: read}, func(ctx context.Context, _ *mcp.CallToolRequest, in lookup) (*mcp.CallToolResult, enrichment.Operation, error) {
 		out, err := service.Get(ctx, subject, in.OperationID)
 		return nil, out, publicMCPToolError(err, "invalid operation", "metadata operation unavailable")
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_list_metadata_operations", Description: "List persistent receipts for ONE currently authorized series, descending sequence. limit default 20 max 50; pass next_before as before for next page. Responses bounded without truncating receipts.", Annotations: read}, func(ctx context.Context, _ *mcp.CallToolRequest, in list) (*mcp.CallToolResult, enrichment.Page, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_list_metadata_operations", Description: `List the metadata operation receipts of one series, newest first. limit 1-50, default 20; pass next_before as before for the next page. Example: {"series_id": 12, "limit": 20}`, Annotations: read}, func(ctx context.Context, _ *mcp.CallToolRequest, in list) (*mcp.CallToolResult, enrichment.Page, error) {
 		out, err := service.List(ctx, subject, in.SeriesID, in.Before, in.Limit)
 		return nil, out, publicMCPToolError(err, "invalid operation page", "metadata operations unavailable")
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_undo_metadata_operation", Description: "Atomically reverse the actual changed fields of one enrichment. Rechecks current authorization, locks and exact after-values; whole author/tag/link changes conflict, unrelated edits survive. request_key uses the same persistent retry namespace as enrichment. Replayed undo never reports a new change. Already reversed operations are no-change.", Annotations: write}, func(ctx context.Context, _ *mcp.CallToolRequest, in enrichment.UndoInput) (*mcp.CallToolResult, enrichment.Operation, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_undo_metadata_operation", Description: `Reverse the fields one metadata operation actually changed. A field edited since then, a locked field or a changed author/tag/link set is a conflict; unrelated edits stay. request_key (1-80 printable ASCII) makes a retry return the original outcome. Example: {"request_key": "undo-1", "operation_id": "0d4f6c2a9b1e47c3a5d8e2f1b6c9a370"}`, Annotations: write}, func(ctx context.Context, _ *mcp.CallToolRequest, in enrichment.UndoInput) (*mcp.CallToolResult, enrichment.Operation, error) {
 		out, err := service.Undo(ctx, subject, in)
 		return nil, out, publicMCPToolError(err, "invalid undo request or reused key", "metadata undo unavailable")
 	})

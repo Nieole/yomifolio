@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"slices"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -103,6 +105,7 @@ func TestMCPListingFollowsGrantedCapabilities(t *testing.T) {
 	defer session.Close()
 	listed, err := session.ListTools(ctx, nil)
 	assertMCPToolDiscovery(t, listed, err)
+	assertToolDescriptionsShortWithExample(t, listed)
 	call, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_series", Arguments: map[string]any{"series_id": series.ID}})
 	if err != nil || call.IsError {
 		t.Fatalf("series %+v %v", call, err)
@@ -119,5 +122,47 @@ func TestMCPListingFollowsGrantedCapabilities(t *testing.T) {
 	}
 	if payload["name"] != "Granted series" || call.StructuredContent == nil {
 		t.Fatalf("structured %+v text %s", call.StructuredContent, text)
+	}
+}
+
+// legacyIdentificationTools keep their long descriptions: they leave the surface together with
+// the fine-grained identification chain instead of being rewritten.
+var legacyIdentificationTools = map[string]bool{
+	"library_search_sources": true, "library_get_source_search": true,
+	"library_propose_match": true, "library_get_match_proposal": true,
+	"library_get_enrichment_state": true, "library_enrich_metadata": true, "library_enrich_metadata_batch": true,
+	"library_assess_match": true, "library_get_model_operation": true,
+}
+
+// assertToolDescriptionsShortWithExample holds every other tool to a description a small model can
+// keep in context: at most 400 characters, ending in a copyable call whose arguments the tool's
+// input schema declares.
+func assertToolDescriptionsShortWithExample(t *testing.T, listed *mcp.ListToolsResult) {
+	t.Helper()
+	for _, tool := range listed.Tools {
+		if legacyIdentificationTools[tool.Name] {
+			continue
+		}
+		if n := utf8.RuneCountInString(tool.Description); n > 400 {
+			t.Errorf("%s: description has %d characters", tool.Name, n)
+		}
+		_, example, found := strings.Cut(tool.Description, "Example: ")
+		var args map[string]any
+		if !found || json.Unmarshal([]byte(example), &args) != nil {
+			t.Errorf("%s: description does not end in a JSON call example: %q", tool.Name, tool.Description)
+			continue
+		}
+		raw, _ := json.Marshal(tool.InputSchema)
+		var schema struct {
+			Properties map[string]any `json:"properties"`
+		}
+		if err := json.Unmarshal(raw, &schema); err != nil {
+			t.Fatal(err)
+		}
+		for name := range args {
+			if _, declared := schema.Properties[name]; !declared {
+				t.Errorf("%s: example argument %s is not in the input schema", tool.Name, name)
+			}
+		}
 	}
 }

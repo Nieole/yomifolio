@@ -39,13 +39,13 @@ references: [mm-adr-0001, mm-adr-0005, mm-adr-0013, mm-adr-0014]
 
 `FindSeries`、`ListBooks`、`GetBookClues` 拥有完整只读用例；SQL 持久端口负责查询，`bookcontent` 负责实际本地内容。协议层不直查 DB 或拼接归档访问。查询不扫描、不写入维护状态、不改变网页筛选或扫描摄入。
 
-- 系列条件取交集：`library_ids` 内 OR（省略或空数组取当前凭据的显式资料库集合），`series_ids` 内 OR（最多 50 个明确目标），时间区间与每个 `missing_fields` 均 AND。显式越界资料库或系列即拒绝整个请求，即使其他过滤条件会排除它；未知明确系列同样拒绝。资料库最多 256 个。
+- 系列条件取交集：`library_ids` 内 OR（省略或空数组取当前凭据的显式资料库集合），`series_ids` 内 OR（最多 50 个明确目标），时间区间与 `missing_fields` 之间 AND，`missing_fields` 内 OR。显式越界资料库或系列即拒绝整个请求，即使其他过滤条件会排除它；未知明确系列同样拒绝。资料库最多 256 个。
 - `added_from` 包含、`added_before` 不包含，均为 RFC3339 时间，比较系列持久 `created_at` 的时间点；上下界都提供时须严格递增。它不是完整增量水位，不承诺扫描完成或维护状态。
-- 缺失字段只接受 title、summary、publisher、status、language、rating、authors、tags、source_links；描述字段按 SQLite trim 后空或 NULL，评分仅 NULL，集合按没有关联成员判定。零分不是缺失；锁不参与发现。多个缺失条件必须全部满足，不解析来源内容或标签的语义。
+- 缺失字段只接受 title、summary、publisher、status、language、rating、authors、tags、source_links；描述字段按 SQLite trim 后空或 NULL，评分仅 NULL，集合按没有关联成员判定。零分不是缺失；锁不参与发现。列出的字段任一缺失即命中，便于一次找出所有缺元数据的系列；不解析来源内容或标签的语义。
 - 系列与书均按稳定 ID 升序 keyset 分页：`after_id` 排他，非负；`limit` 省略或 0 为 20，最大 50，负数或超限拒绝。返回 `next_after_id` 仅在还有匹配结果时存在。游标不是授权，后续请求仍重查权限；无跨请求快照，调用方改变条件即开始另一查询。
 - 系列返回稳定系列/资料库 ID；书返回稳定书/系列/资料库 ID、名称、标题、卷号、话号、页数及末级目录名/文件名。按书读取须同时核对所属系列和资料库一致，当前账号与凭据对实际对象的 read 授权不能绕过。`GetBookClues` 按稳定书 ID 按需取单书 ComicInfo，不将整本归档或任意路径暴露给调用方。
 - ComicInfo 只返回已建模的身份字段（标题、系列、卷号、话号、作者、画师、出版社）；原始 XML 最多 64 KiB，声明大小和实际解压均受限。状态区分 available、missing、corrupt、unreadable、unavailable、too_large，异常不伪造空元数据或把缺失宣称为有效证据；底层路径和错误不返回。
-- 单次成功的结构化 JSON 最多 240 KiB，为 256 KiB 工具结果预留协议开销；超限整个请求失败，不静默截断证据。文本块只指向结构化内容，避免 SDK 自动复制一份数据。调用方可减小分页或缩小目标；单对象仍超限须明确失败。
+- 单次成功的结构化 JSON 最多 240 KiB，为 256 KiB 工具结果预留协议开销；超限整个请求失败，不静默截断证据。协议层另以文本块重复同一份 JSON，这份副本不计入此上限。调用方可减小分页或缩小目标；单对象仍超限须明确失败。
 
 ### 受限图片证据
 

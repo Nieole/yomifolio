@@ -101,6 +101,8 @@ go build -o mcp-proxy ./cmd/mcp-proxy
 
 搜索来源需要出网，因此 `library_search_sources` 与 `library_get_source_search` 会访问外部来源站；其余工具只在本机工作。
 
+每个成功结果都带两份同样的 JSON：`structuredContent` 和一个文本块，只读文本的客户端也能拿到完整结果。图片工具把这段 JSON 文本放在最前，其后的图片顺序与其中 `images` 一致。
+
 运行类工具只作用于本凭据自己的运行，并按该运行所属能力重新鉴权。任何一项能力都会产生运行，因此 `library_get_run`、`library_wait_run`、`library_cancel_run` 随任一能力列出；`library_list_runs` 仍要有 `scan_control`、`read`、`cleanup` 之一。
 
 ## 5. 依次验证
@@ -109,7 +111,7 @@ go build -o mcp-proxy ./cmd/mcp-proxy
 2. 带错误的凭据 → **401**；用公网 HTTP 访问私网配置 → **403**。
 3. 让客户端列工具，只应出现该能力对应的工具；改了能力后应立即变化。
 4. 调 `library_get_series`，参数 `{"series_id": 1}`，应返回已授权资料库内的身份字段。
-5. 用未授权的资料库尝试 → 统一返回「委派访问被拒」，不区分“不存在”与“无权”，这是刻意不泄露存在性。
+5. 用未授权的资料库尝试 → 统一返回 "delegated access denied"，末尾附下一步提示（ID 应取自本凭据自己的查询结果，如 `library_find_series`；已是如此就上报，不要重试）。它对“不存在”与“无权”读来完全相同，这是刻意不泄露存在性。
 
 ## 6. 已知限制
 

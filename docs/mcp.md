@@ -101,6 +101,8 @@ A client only sees the tools its credential currently allows.
 
 Source search leaves the machine: `library_search_sources` and `library_get_source_search` contact external source sites; every other tool works locally.
 
+Every successful result carries its JSON twice: as `structuredContent` and as a text block, so clients that read only text still get the whole result. Image tools put that JSON text block first, followed by the images in the order of its `images` list.
+
 Run tools only reach this credential's own runs and re-authorize against the capability that run belongs to. Every capability can create runs, so `library_get_run`, `library_wait_run` and `library_cancel_run` are listed with any of them, while `library_list_runs` needs one of `scan_control`, `read` or `cleanup`.
 
 ## 5. Verify in order
@@ -109,7 +111,7 @@ Run tools only reach this credential's own runs and re-authorize against the cap
 2. A wrong credential → **401**; public HTTP against a private-network setup → **403**.
 3. List tools through the client: only the tools for the granted capabilities should appear, and they should disappear as soon as you narrow the credential.
 4. Call `library_get_series` with `{"series_id": 1}`: it returns identity fields from an authorized library.
-5. Try an unauthorized library → a uniform "delegated access denied", deliberately not distinguishing "missing" from "not allowed", so existence does not leak.
+5. Try an unauthorized library → a uniform "delegated access denied" that ends with a next step (take IDs from this credential's own results such as `library_find_series`; if they already came from there, report instead of retrying). It deliberately reads the same for "missing" and "not allowed", so existence does not leak.
 
 ## 6. Known limits
 

@@ -172,10 +172,10 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 			type input struct {
 				SeriesID int64 `json:"series_id" jsonschema:"positive series identifier"`
 			}
-			mcp.AddTool(server, &mcp.Tool{Name: "library_get_series", Description: "Read the identity of one series in an authorized library. Unknown or unauthorized identifiers are denied alike.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true, IdempotentHint: true, OpenWorldHint: new(bool)}}, func(ctx context.Context, _ *mcp.CallToolRequest, in input) (*mcp.CallToolResult, delegated.Series, error) {
+			mcp.AddTool(server, &mcp.Tool{Name: "library_get_series", Description: `Read one series by ID: name, title, directory name and library ID. Take IDs from library_find_series results. Example: {"series_id": 12}`, Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true, IdempotentHint: true, OpenWorldHint: new(bool)}}, func(ctx context.Context, _ *mcp.CallToolRequest, in input) (*mcp.CallToolResult, delegated.Series, error) {
 				out, err := service.GetSeries(ctx, subject, in.SeriesID)
 				if err != nil {
-					return nil, delegated.Series{}, delegated.ErrDenied
+					return nil, delegated.Series{}, errMCPDenied
 				}
 				return nil, out, nil
 			})

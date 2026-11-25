@@ -146,6 +146,11 @@ func testMCPDelegatedSeriesLifecycle(t *testing.T, tls bool) {
 	if err != nil || !denied.IsError {
 		t.Fatalf("guessed id %+v %v", denied, err)
 	}
+	// A refusal says where valid IDs come from, yet reads the same whether the target is missing
+	// or merely outside the credential.
+	if refusal := resultText(denied); refusal != resultText(outside) || !strings.Contains(refusal, "delegated access denied") || !strings.Contains(refusal, "library_find_series") {
+		t.Fatalf("refusals differ or give no next step: guessed %q, cross-library %q", refusal, resultText(outside))
+	}
 	expanded := request("PATCH", "/api/mcp/credentials/"+credential.ID, fmt.Sprintf(`{"user_id":1,"name":"catalogue","library_ids":[%d,%d],"capabilities":["read"]}`, lib.ID, other.ID))
 	if expanded.Code != 400 {
 		t.Fatalf("expansion accepted: %d %s", expanded.Code, expanded.Body)
@@ -290,6 +295,17 @@ func assertMCPToolDiscovery(t *testing.T, result *mcp.ListToolsResult, err error
 			t.Errorf("missing tool %s", name)
 		}
 	}
+}
+
+// resultText joins the text blocks of a tool result.
+func resultText(result *mcp.CallToolResult) string {
+	var text strings.Builder
+	for _, block := range result.Content {
+		if content, ok := block.(*mcp.TextContent); ok {
+			text.WriteString(content.Text)
+		}
+	}
+	return text.String()
 }
 
 // offersTool reports whether a listing still advertises the named tool.

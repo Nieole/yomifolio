@@ -23,26 +23,26 @@ func registerMCPRuns(server *mcp.Server, service *delegated.Service, subject del
 		Limit     int   `json:"limit,omitempty"`
 	}
 	readonly := &mcp.ToolAnnotations{ReadOnlyHint: true, IdempotentHint: true, OpenWorldHint: new(bool)}
-	mcp.AddTool(server, &mcp.Tool{Name: "library_start_scan", Description: "Accept a library scan and return run_id immediately. Disconnect does not cancel work. Repeated requests are NOT idempotent: a queued scan may coalesce (reported explicitly); otherwise another run is accepted. No paid model calls.", Annotations: &mcp.ToolAnnotations{OpenWorldHint: new(bool)}}, func(ctx context.Context, _ *mcp.CallToolRequest, in libraryInput) (*mcp.CallToolResult, delegated.Run, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_start_scan", Description: `Start a scan of one library and return its run_id at once; follow it with library_wait_run. Disconnecting does not cancel it. Not idempotent: a queued scan may absorb the call (coalesced=true), otherwise each call starts another run. Example: {"library_id": 1}`, Annotations: &mcp.ToolAnnotations{OpenWorldHint: new(bool)}}, func(ctx context.Context, _ *mcp.CallToolRequest, in libraryInput) (*mcp.CallToolResult, delegated.Run, error) {
 		out, err := service.StartScan(ctx, subject, in.LibraryID)
 		return nil, out, runToolError(err)
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_get_run", Description: "Read a run owned by this credential under current library/capability restrictions.", Annotations: readonly}, func(ctx context.Context, _ *mcp.CallToolRequest, in runInput) (*mcp.CallToolResult, delegated.Run, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_get_run", Description: `Read the status and progress of a run this credential started. Example: {"run_id": 42}`, Annotations: readonly}, func(ctx context.Context, _ *mcp.CallToolRequest, in runInput) (*mcp.CallToolResult, delegated.Run, error) {
 		out, err := service.GetRun(ctx, subject, in.RunID)
 		return nil, out, runToolError(err)
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_list_runs", Description: "List this credential's authorized library runs (default 20, max 100), newest run_id first. Pass the last run_id as before_id.", Annotations: readonly}, func(ctx context.Context, _ *mcp.CallToolRequest, in listInput) (*mcp.CallToolResult, []delegated.Run, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_list_runs", Description: `List this credential's runs in one library, newest first. limit 1-100, default 20; pass the last run_id as before_id for the next page. Example: {"library_id": 1, "limit": 20}`, Annotations: readonly}, func(ctx context.Context, _ *mcp.CallToolRequest, in listInput) (*mcp.CallToolResult, []delegated.Run, error) {
 		if in.Limit == 0 {
 			in.Limit = 20
 		}
 		out, err := service.ListRuns(ctx, subject, in.LibraryID, in.BeforeID, in.Limit)
 		return nil, out, runToolError(err)
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_wait_run", Description: "Wait at most 30 seconds for an authorized run; return current status on timeout. Disconnect/timeout does not cancel the run.", Annotations: readonly}, func(ctx context.Context, _ *mcp.CallToolRequest, in waitInput) (*mcp.CallToolResult, delegated.Run, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_wait_run", Description: `Wait up to timeout_ms (0-30000) for a run this credential started, then return its status. A timeout or disconnect does not cancel the run. Example: {"run_id": 42, "timeout_ms": 30000}`, Annotations: readonly}, func(ctx context.Context, _ *mcp.CallToolRequest, in waitInput) (*mcp.CallToolResult, delegated.Run, error) {
 		out, err := service.WaitRun(ctx, subject, in.RunID, in.TimeoutMillis)
 		return nil, out, runToolError(err)
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_cancel_run", Description: "Request cooperative cancellation of this credential's currently authorized run. Committed changes are not rolled back.", Annotations: &mcp.ToolAnnotations{OpenWorldHint: new(bool)}}, func(ctx context.Context, _ *mcp.CallToolRequest, in runInput) (*mcp.CallToolResult, delegated.Run, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_cancel_run", Description: `Ask a run this credential started to stop at its next safe point. Changes it already committed stay. Example: {"run_id": 42}`, Annotations: &mcp.ToolAnnotations{OpenWorldHint: new(bool)}}, func(ctx context.Context, _ *mcp.CallToolRequest, in runInput) (*mcp.CallToolResult, delegated.Run, error) {
 		out, err := service.CancelRun(ctx, subject, in.RunID)
 		return nil, out, runToolError(err)
 	})
