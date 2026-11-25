@@ -37,3 +37,5 @@
 - **MCP 工具**：`library_identification_progress`，能力为 `read`。参数 `library_ids` 可选，默认取凭据的全部资料库；其中任何一个没有授权，整次调用都拒绝，不缩小范围。结果形如 `{library_ids, series, statuses}`，六个状态的计数总是齐全。授权范围复用新增的 `delegated.Service.Libraries`。
 - **前端**：识别区放在系列详情侧栏新增的「识别」页签里，只对管理员显示。
 - **时钟**：`identification.Service` 内部的当前时间默认取 `time.Now`。`bootstrap.Options` 的时钟注入接缝留给 06 加。
+
+**用户决定（2026-11-25）**：在审核页只应用了部分字段、整体仍待审的提案，存量推导时也算对应来源的人工确认识别；剩余待审字段随识别以「被识别取代」结案。

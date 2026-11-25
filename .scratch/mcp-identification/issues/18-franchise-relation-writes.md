@@ -24,3 +24,5 @@
 - **撤销判据**：按 id、方向、类型三者都与本次添加一致才删除；之后被改过类型、被删除、或被删后重建（id 变了）都记 conflict，关系原样保留。撤销时重查两端系列的 `metadata_write`，已被删除的一端跳过（关系已随之级联删除）。
 - **持久化结构**：新增 sqlc 查询 `GetSeriesRelation`、`DeleteUnchangedSeriesRelation`，`CreateSeriesRelation` 改为返回 id。关系增删与 `MarkFranchiseRebuildPending` 同事务的不变量收进 `organize.AddRelationTx` / `RemoveUnchangedRelationTx`，网页的 `Relations.Create` 也改走它；提交后用 `Relations.Changed` 安排重建（ADR 0012 的持久待重建标记仍兜底）。
 - **网页审计页**：操作记录页给关系收据加一行「作品群关系：#源 → #目标 · 类型」。撤销按钮仍只对补充收据出现：所有者在系列页直接删关系即可，本票不为它加新入口。
+
+**用户决定（2026-11-25）**：网页操作记录页不为关系收据加撤销按钮，沿用现状；所有者在系列页直接删关系。
