@@ -8,6 +8,9 @@ import (
 	"log/slog"
 	"slices"
 	"time"
+
+	"yomifolio/internal/database"
+	"yomifolio/internal/proposal"
 )
 
 type historicalProposal struct {
@@ -20,10 +23,11 @@ type historicalProposal struct {
 }
 
 // DeriveFromHistory turns the proposal history into the initial identification state, once per
-// database: an applied proposal becomes the owner's conclusion for its source, and the entry of a
-// rejected proposal becomes an excluded candidate. Pending proposals are left alone. Proposals
-// without a source entry (model output, multi-source agent proposals) carry no identity and are
-// skipped. Per series and source the most recently applied entry wins, and an entry the owner
+// database: an applied proposal, or a pending one the owner already accepted in part, becomes the
+// owner's conclusion for its source, and the entry of a rejected proposal becomes an excluded
+// candidate. Pending proposals nobody accepted are left alone, and so are the remaining fields of a
+// partly accepted one. Proposals without a source entry (model output, multi-source agent
+// proposals) carry no identity and are skipped. Per series and source the most recently applied entry wins, and an entry the owner
 // applied is never also excluded.
 //
 // The derivation and its completion marker commit together, so an interrupted run leaves nothing
@@ -100,20 +104,28 @@ func (s *Service) DeriveFromHistory(ctx context.Context) error {
 }
 
 func historicalProposals(ctx context.Context, tx *sql.Tx) ([]historicalProposal, error) {
-	rows, err := tx.QueryContext(ctx, `SELECT id, series_id, provider, source_id, source_url, status, raw_payload, applied_at, rejected_at, updated_at
-		FROM metadata_reviews WHERE status IN ('applied', 'rejected')`)
+	type row struct {
+		historicalProposal
+		appliedAt, rejectedAt sql.NullTime
+		updatedAt             time.Time
+		acceptedMs            sql.NullInt64
+	}
+	// accepted_ms is when the earliest field still attributed to the proposal was written: a
+	// partial review-page apply leaves provenance behind but no applied_at.
+	rows, err := tx.QueryContext(ctx, `SELECT r.id, r.series_id, r.provider, r.source_id, r.source_url, lower(r.status), r.raw_payload,
+			r.applied_at, r.rejected_at, r.updated_at,
+			(SELECT CAST(strftime('%s', MIN(p.updated_at)) AS INTEGER) * 1000 FROM series_metadata_provenance p WHERE p.review_id = r.id)
+		FROM metadata_reviews r WHERE lower(r.status) IN ('applied', 'rejected', 'pending')`)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var out []historicalProposal
+	var candidates []row
 	for rows.Next() {
-		var p historicalProposal
+		var r row
 		var provider, link, payload string
 		var sourceID int64
-		var appliedAt, rejectedAt sql.NullTime
-		var updatedAt time.Time
-		if err := rows.Scan(&p.id, &p.series, &provider, &sourceID, &link, &p.status, &payload, &appliedAt, &rejectedAt, &updatedAt); err != nil {
+		if err := rows.Scan(&r.id, &r.series, &provider, &sourceID, &link, &r.status, &payload, &r.appliedAt, &r.rejectedAt, &r.updatedAt, &r.acceptedMs); err != nil {
+			rows.Close()
 			return nil, err
 		}
 		// The raw payload is the source result the proposal was built from; a damaged one still
@@ -130,18 +142,48 @@ func historicalProposals(ctx context.Context, tx *sql.Tx) ([]historicalProposal,
 		if !ok {
 			continue
 		}
-		if p.entry, ok = EntryOf(source, sourceID, link); !ok {
+		if r.entry, ok = EntryOf(source, sourceID, link); !ok {
 			continue
 		}
-		p.title, p.original = result.Title, result.OriginalTitle
-		p.decidedAt = updatedAt
-		if p.status == "applied" && appliedAt.Valid {
-			p.decidedAt = appliedAt.Time
-		}
-		if p.status == "rejected" && rejectedAt.Valid {
-			p.decidedAt = rejectedAt.Time
+		r.title, r.original = result.Title, result.OriginalTitle
+		candidates = append(candidates, r)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	var out []historicalProposal
+	for _, r := range candidates {
+		p := r.historicalProposal
+		p.decidedAt = r.updatedAt
+		switch p.status {
+		case "applied":
+			if r.appliedAt.Valid {
+				p.decidedAt = r.appliedAt.Time
+			}
+		case "rejected":
+			if r.rejectedAt.Valid {
+				p.decidedAt = r.rejectedAt.Time
+			}
+		case "pending":
+			// A pending proposal the owner already accepted in part counts as applied; acceptance is
+			// the proposal module's own projection, not a guess from matching values.
+			accepted, err := proposal.Accepted(ctx, tx, database.MetadataReview{ID: p.id, Status: "pending", AppliedAt: r.appliedAt})
+			if err != nil {
+				return nil, err
+			}
+			if !accepted {
+				continue
+			}
+			p.status = "applied"
+			switch {
+			case r.appliedAt.Valid:
+				p.decidedAt = r.appliedAt.Time
+			case r.acceptedMs.Valid:
+				p.decidedAt = time.UnixMilli(r.acceptedMs.Int64)
+			}
 		}
 		out = append(out, p)
 	}
-	return out, rows.Err()
+	return out, nil
 }
