@@ -1,5 +1,6 @@
 // Package metadata 把外部漫画数据源与 LLM 收拢到 Provider / AIProvider 两个契约：按标题取回候选
 // 元数据（SeriesMetadata），并基于候选系列产出 AI 推荐与合集分组结果，输出语言取自 WithLocale。
+// SourceFanout 逐个搜索配置启用的目录型来源，把每个来源的回答校验成脱离来源对象的快照。
 //
 // 出站请求的自我约束在包内：按数据源的进程级并发闸门、认 Retry-After 且可被取消的重试退避、
 // 错误里的密钥脱敏与上游响应体截断；跨源的连载状态口径在 NormalizeStatusCodeOptional 归一，
