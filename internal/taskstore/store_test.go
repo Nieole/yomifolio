@@ -21,7 +21,7 @@ func newDBForTest(t *testing.T) *sql.DB {
 	t.Helper()
 
 	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "taskstore.db")+
-		"?_pragma=foreign_keys(1)&_pragma=busy_timeout=15000&_txlock=immediate")
+		"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=busy_timeout=15000&_txlock=immediate")
 	if err != nil {
 		t.Fatalf("open db failed: %v", err)
 	}
