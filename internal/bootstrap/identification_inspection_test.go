@@ -7,6 +7,7 @@ package bootstrap_test
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -461,13 +462,16 @@ func TestInspectionNeedsOnlyReadAndGrantsNoWrite(t *testing.T) {
 	}
 }
 
-// closeNotes stands in for the owner closing a series' notes of one category: the owner's pending
-// page owns that action, so the test writes the outcome it records.
-func closeNotes(t *testing.T, store database.Store, series int64, category string) {
-	t.Helper()
-	if _, err := store.DB().Exec(`UPDATE identification_escalations SET resolved_at_ms = 1, resolved_by = 1, resolution = 'closed'
-		WHERE series_id = ? AND category = ? AND resolved_at_ms IS NULL`, series, category); err != nil {
-		t.Fatal(err)
+// closeNotes closes the series' open notes of one category the way the owner does, from the
+// pending list.
+func (w *identificationWeb) closeNotes(series int64, category string) {
+	w.t.Helper()
+	for _, item := range w.pending("").Items {
+		for _, e := range item.Identification.Escalations {
+			if item.SeriesID == series && e.Category == category {
+				w.decide(notePath(series, e.ID), ``, http.StatusOK, nil)
+			}
+		}
 	}
 }
 
@@ -485,7 +489,7 @@ func TestNoteTheOwnerClosedIsNotRaisedAgain(t *testing.T) {
 	if first, _ := agent.report(ids[0], "suspected_duplicate", "same work as series 40"); !first.Recorded {
 		t.Fatalf("first report %+v", first)
 	}
-	closeNotes(t, store, ids[0], "suspected_duplicate")
+	web.closeNotes(ids[0], "suspected_duplicate")
 
 	// Closed by the owner, the category stays closed for the series on both ways of noting it.
 	if again, _ := agent.report(ids[0], "suspected_duplicate", "same work as series 40 still"); again.Recorded || again.Status != "unprocessed" {
