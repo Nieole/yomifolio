@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  *
  * 守详情页手动搜索的「挑中即识别」：目录来源的条目挑中后交给识别接口、按服务端结果提示并让识别区重读，
- * 不再进审核队列；LLM 的结果不指向来源条目，仍按原样加入审核队列。
+ * 不进审核队列；破了的话挑中的条目只变成一条待审提案，系列仍是未处理。
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';

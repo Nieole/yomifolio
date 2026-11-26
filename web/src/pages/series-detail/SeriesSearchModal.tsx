@@ -135,6 +135,8 @@ export function SeriesSearchModal({
     return true;
   };
 
+  const selectedExcluded = Boolean(selectedResult && isExcluded(selectedResult));
+  const replacesCurrent = Boolean(replacing && selectedResult && !isCurrent(selectedResult));
   const outcomeOf = (field: PreviewField): FieldOutcome => {
     const provided = field.nextValue !== t('series.searchModal.notProvided');
     const locked = lockedFields.has(field.key);
@@ -144,16 +146,17 @@ export function SeriesSearchModal({
       if (field.key === 'tags') return areTagsEqual(currentTags, selectedResult?.Tags) ? 'none' : 'update';
       return field.currentValue !== field.nextValue ? 'update' : 'none';
     }
-    // 识别只补空字段；目录名标题是扫描设下的占位值，带着锁也会换成来源标题。
-    const placeholderTitle = field.key === 'title' && currentSeries?.title?.Valid && currentSeries.title.String === currentSeries.name;
+    // 识别只补空字段；目录名标题是扫描设下的占位值，带着锁也会换成来源标题。撤换时，标题若还是
+    // 原条目带来的那个，会先撤回成占位值再换成新条目的标题。
+    const placeholderTitle = field.key === 'title' && currentSeries?.title?.Valid &&
+      (currentSeries.title.String === currentSeries.name || (replacesCurrent && currentSeries.title.String === replacing?.title));
+    if (placeholderTitle && provided) return 'fill';
     if (locked && !placeholderTitle) return 'locked';
     if (!provided) return 'none';
     if (field.key === 'tags') return 'policy';
     return field.fillable ? 'fill' : 'keep';
   };
   const changedFieldCount = previewFields.filter((field) => ['update', 'fill'].includes(outcomeOf(field))).length;
-  const selectedExcluded = Boolean(selectedResult && isExcluded(selectedResult));
-  const replacesCurrent = Boolean(replacing && selectedResult && !isCurrent(selectedResult));
 
   return (
     <ModalShell
@@ -396,6 +399,7 @@ export function SeriesSearchModal({
                       <Sparkles className="w-4 h-4 text-komgaPrimary" />
                       <h5 className="font-semibold">{t('series.searchModal.diffTitle')}</h5>
                     </div>
+                    {replacesCurrent && <p className="-mt-2 mb-4 text-xs leading-relaxed text-gray-400">{t('series.searchModal.replacePreviewHint')}</p>}
                     <div className="space-y-3">
                       {previewFields.map((field) => {
                         const outcome = outcomeOf(field);

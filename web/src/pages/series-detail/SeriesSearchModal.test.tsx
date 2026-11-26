@@ -36,7 +36,7 @@ const IDENTIFICATION: SeriesIdentification = {
   excluded_candidates: [{ source: 'bangumi', entry_id: '9', entry_url: 'https://bgm.tv/subject/9', title: '否决过的作品', user_id: 1, excluded_at: '2026-03-01T09:00:00Z', proposal_id: 0 }],
 };
 
-function renderModal(provider: string, selected: SearchResult, onApply = vi.fn()) {
+function renderModal(provider: string, selected: SearchResult, onApply = vi.fn(), series: Series = SERIES) {
   render(
     <LocaleProvider initialLocale="zh-CN" initialMessages={zhCN} fallbackMessages={zhCN}>
       <SeriesSearchModal
@@ -49,7 +49,7 @@ function renderModal(provider: string, selected: SearchResult, onApply = vi.fn()
         searchResults={[result(7, '怪物'), result(1, '错的作品'), result(9, '否决过的作品')]}
         currentOffset={0}
         searchTotal={3}
-        currentSeries={SERIES}
+        currentSeries={series}
         currentTags={[]}
         lockedFields={new Set(['title'])}
         selectedResult={selected}
@@ -83,6 +83,13 @@ describe('SeriesSearchModal 识别口径', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '撤换为此条目' }));
     expect(onApply).toHaveBeenCalledWith(picked);
+  });
+
+  it('previews the title the replaced entry brought as replaced too', () => {
+    renderModal('bangumi', result(7, '怪物'), vi.fn(), { ...SERIES, title: { String: '错的作品', Valid: true } });
+
+    expect(screen.getByTestId('preview-title').getAttribute('data-outcome')).toBe('fill');
+    expect(screen.getByText(/撤换会先撤回原条目带来/)).toBeTruthy();
   });
 
   it('marks an excluded entry and keeps it from being picked', () => {

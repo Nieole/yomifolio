@@ -1243,6 +1243,7 @@ export const messages: MessageCatalog = {
     'series.searchModal.willFill': '将补充',
     'series.searchModal.keepValue': '保留现值',
     'series.searchModal.tagsByPolicy': '按标签策略追加',
+    'series.searchModal.replacePreviewHint': '撤换会先撤回原条目带来、之后没被改动的字段，再按新条目补充；下面按当前值估算，以实际结果为准。',
     'series.searchModal.diffTitle': '字段级差异',
     'series.searchModal.locked': '已锁定，不会覆盖',
     'series.searchModal.willUpdate': '将更新',

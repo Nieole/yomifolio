@@ -1243,6 +1243,7 @@ export const messages: MessageCatalog = {
     'series.searchModal.willFill': 'Will fill',
     'series.searchModal.keepValue': 'Kept',
     'series.searchModal.tagsByPolicy': 'Appended by tag policy',
+    'series.searchModal.replacePreviewHint': 'Replacing first takes back the fields the old entry brought that nobody changed, then the new entry supplements them; the preview below estimates from the current values.',
     'series.searchModal.diffTitle': 'Field-level differences',
     'series.searchModal.locked': 'Locked, will not be overwritten',
     'series.searchModal.willUpdate': 'Will update',
