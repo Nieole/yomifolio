@@ -407,6 +407,8 @@ type SeriesListFilters struct {
 	MaxProgress *float64
 	// 仅保留最近 N 天内加入的系列；0 表示不限。
 	AddedWithinDays int
+	// Identification 只保留处于该识别状态的系列（取值与视图 series_identification_status 一致）；空串不限。
+	Identification string
 	// UserID>0 时进度来源为该用户的 user_series_progress（多用户）；0 表示全局 series_stats。
 	// 不计入 hasAny()——它只切换进度来源，不构成过滤条件。
 	UserID int64
@@ -416,7 +418,7 @@ type SeriesListFilters struct {
 func (f SeriesListFilters) hasAny() bool {
 	return f.Keyword != "" || f.Letter != "" || f.Status != "" || len(f.Tags) > 0 || len(f.Authors) > 0 ||
 		f.ReadState != "" || f.MinRating != nil || f.MaxRating != nil || f.MinProgress != nil || f.MaxProgress != nil ||
-		f.AddedWithinDays > 0
+		f.AddedWithinDays > 0 || f.Identification != ""
 }
 
 // buildSeriesSearchQuery 组装系列列表/搜索查询。别名约定：sc = series_stats（全局封面/标签缓存），
@@ -523,6 +525,12 @@ func buildSeriesSearchQuery(libraryID int64, f SeriesListFilters) (baseQuery, pr
 		filters = append(filters, `COALESCE(ss.read_book_count, 0) > 0 AND COALESCE(ss.completed_book_count, 0) < s.book_count`)
 	case "completed":
 		filters = append(filters, `s.book_count > 0 AND COALESCE(ss.completed_book_count, 0) >= s.book_count`)
+	}
+
+	// 识别状态只认视图 series_identification_status 这一处定义，筛选与识别区、进度计数读到的是同一个状态。
+	if f.Identification != "" {
+		filters = append(filters, `EXISTS (SELECT 1 FROM series_identification_status ist WHERE ist.series_id = s.id AND ist.status = ?)`)
+		args = append(args, f.Identification)
 	}
 
 	if f.MinRating != nil {

@@ -20,6 +20,8 @@ type CatalogueFilters struct {
 	MinProgress     *float64
 	MaxProgress     *float64
 	AddedWithinDays int
+	// Identification keeps only series in this identification status; empty does not filter.
+	Identification string
 }
 
 // CatalogueSearch selects a page of series; unusable cursors fall back to Offset.
@@ -51,7 +53,7 @@ func (q *CatalogueQueries) Search(ctx context.Context, subject Subject, input Ca
 		Keyword: filters.Keyword, Letter: filters.Letter, Status: filters.Status, Tags: filters.Tags, Authors: filters.Authors,
 		ReadState: filters.ReadState, MinRating: filters.MinRating, MaxRating: filters.MaxRating,
 		MinProgress: filters.MinProgress, MaxProgress: filters.MaxProgress, AddedWithinDays: filters.AddedWithinDays,
-		UserID: subject.userID,
+		Identification: filters.Identification, UserID: subject.userID,
 	}
 	if input.Limit <= 0 {
 		input.Limit = 50

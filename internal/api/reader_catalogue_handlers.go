@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
+	"yomifolio/internal/application/identification"
 	"yomifolio/internal/database"
 	"yomifolio/internal/metadata"
 	"yomifolio/internal/reading"
@@ -59,6 +61,11 @@ func (c *ReaderHTTP) getBookInfo(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, http.StatusOK, readerBookResponse(book))
 }
 
+// identificationStatuses are the identification statuses the library filter accepts. Only an
+// administrator may filter by them: identification is the owner's maintenance view.
+var identificationStatuses = []string{identification.StatusUnprocessed, identification.StatusIdentified, identification.StatusAwaitingOwner,
+	identification.StatusNeedsRecheck, identification.StatusNotFound, identification.StatusOwnerReviewed}
+
 func (c *ReaderHTTP) searchSeriesPaged(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	libIDStr := r.URL.Query().Get("libraryId")
@@ -90,6 +97,17 @@ func (c *ReaderHTTP) searchSeriesPaged(w http.ResponseWriter, r *http.Request) {
 	cursor := strings.TrimSpace(r.URL.Query().Get("cursor"))
 
 	query := r.URL.Query()
+	identified := strings.TrimSpace(query.Get("identification"))
+	if identified != "" {
+		if !slices.Contains(identificationStatuses, identified) {
+			jsonError(w, http.StatusBadRequest, "Invalid identification status")
+			return
+		}
+		if user, ok := userFromContext(ctx); !ok || !user.IsAdmin() {
+			jsonError(w, http.StatusForbidden, apiText(requestLocale(r), "auth.admin_required"))
+			return
+		}
+	}
 	filters := reading.CatalogueFilters{
 		Keyword:         query.Get("q"),
 		Letter:          query.Get("letter"),
@@ -102,6 +120,7 @@ func (c *ReaderHTTP) searchSeriesPaged(w http.ResponseWriter, r *http.Request) {
 		MinProgress:     parseOptionalFloat(query.Get("minProgress")),
 		MaxProgress:     parseOptionalFloat(query.Get("maxProgress")),
 		AddedWithinDays: parseNonNegativeInt(query.Get("addedWithinDays")),
+		Identification:  identified,
 	}
 
 	subject, err := c.currentReadingSubject(r)

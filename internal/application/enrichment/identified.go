@@ -48,6 +48,9 @@ type IdentificationBasis struct {
 	PlaceholderTitle bool `json:"placeholder_title,omitempty"`
 	// SupersededProposals are the pending proposals of the series this identification closed.
 	SupersededProposals []int64 `json:"superseded_proposals"`
+	// Retracted is the withdrawn entry whose supplemented fields a retraction receipt took back.
+	// Such a receipt supplements nothing and its Entries is empty.
+	Retracted *IdentifiedEntry `json:"retracted,omitempty"`
 }
 
 // IdentifiedEntry is one identified source entry a receipt followed.

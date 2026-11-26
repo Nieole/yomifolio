@@ -1,4 +1,5 @@
--- Series identification state, read and written only by internal/application/identification.
+-- Series identification state, written only by internal/application/identification. The library
+-- browse filter also reads the status view.
 -- Every row belongs to one series and goes with it (FK cascade). Library relocation keeps series
 -- identity, so the rows survive it. Times are Unix milliseconds from the identification clock.
 -- Keep this file ASCII-only, and keep semicolons out of comments: Migrate splits statements on them.
