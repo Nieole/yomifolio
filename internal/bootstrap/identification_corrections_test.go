@@ -358,8 +358,10 @@ func wantCorrectionRefused(t *testing.T, got fieldCorrection, problem string) {
 
 func TestAgentMayNotCorrectWhatAPersonOrComicInfoOrALockDecided(t *testing.T) {
 	store, cfg := fixture(t)
-	// The owner applied a Bangumi proposal long ago and then changed the publisher by hand.
-	lib, series := identifiedSeries(t, store, `<ComicInfo><Series>Monster</Series></ComicInfo>`)
+	// The owner applied a Bangumi proposal long ago and then changed the publisher by hand. The
+	// scan below re-reads the first book too, in either order, so both books carry one publisher.
+	comicInfo := `<ComicInfo><Series>Monster</Series><Publisher>ComicInfo publisher</Publisher></ComicInfo>`
+	lib, series := identifiedSeries(t, store, comicInfo)
 	web := openIdentificationWeb(t, store, cfg)
 	defer web.process.Close()
 	web.setupAdmin()
@@ -370,7 +372,7 @@ func TestAgentMayNotCorrectWhatAPersonOrComicInfoOrALockDecided(t *testing.T) {
 	wantCorrectionRefused(t, agent.correct("placeholder", series.ID, "title", "怪物", "Bangumi names it 怪物"), "locked")
 	wantCorrectionRefused(t, agent.correct("unchanged", series.ID, "summary", "Source summary", "it is right"), "unchanged")
 	// A new book's ComicInfo replaces the owner's publisher, and a ComicInfo value is no source value either.
-	writeComicArchive(t, filepath.Join(lib.Path, "Monster", "Monster 02.cbz"), `<ComicInfo><Series>Monster</Series><Publisher>ComicInfo publisher</Publisher></ComicInfo>`)
+	writeComicArchive(t, filepath.Join(lib.Path, "Monster", "Monster 02.cbz"), comicInfo)
 	if run := web.scan(lib.ID, false); run.Status != task.StatusCompleted {
 		t.Fatalf("scan %+v", run)
 	}
