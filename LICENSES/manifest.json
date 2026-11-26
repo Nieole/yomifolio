@@ -7953,7 +7953,7 @@
     "Installed NPM package has no collected legal file: @tybys/wasm-util@0.10.3 (node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@tybys/wasm-util)"
   ],
   "inputs": {
-    "go.mod": "cfbe52c69ccd545c4cb545f299d87ebad0aae9223bb91f4dc137753c93c0c3af",
+    "go.mod": "5ca06fe4c5dc19cdc20481269a9eced71de3bee90edae81081954beae92b9250",
     "web/package-lock.json": "4cff91721c6800ab86d3c126b1cfbc96366107ee24e93fefa3bcbb3cfa2b17c6",
     "go.sum": "f66af9e64a3f83ead3b55893eaa2702174da0cc16916f9854255c681138b507e",
     "web/package.json": "8c0be23bcec6a29b83dcf6736833e791fcf48f86372304938f4f44b6a59c2ff7"

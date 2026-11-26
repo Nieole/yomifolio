@@ -27,7 +27,7 @@ The current direct dependencies and their reviewed license families are:
 
 | License family | Modules / versions |
 |---|---|
-| MIT | disintegration/imaging 1.6.2; gen2brain/avif 0.6.0 (Go wrapper only); go-chi/chi/v5 5.5.0; go-chi/cors 1.2.2; mozillazg/go-pinyin 0.21.0; natefinch/lumberjack.v2 2.2.1 |
+| MIT | disintegration/imaging 1.6.2; gen2brain/avif 0.6.0 (Go wrapper only); go-chi/chi/v5 5.5.0; go-chi/cors 1.2.2; google/jsonschema-go 0.4.3; mozillazg/go-pinyin 0.21.0; natefinch/lumberjack.v2 2.2.1 |
 | BSD-3-Clause | chai2010/webp 1.4.0 (also see nested libwebp); fsnotify/fsnotify **1.10.1**; golang.org/x/crypto 0.59.0; x/image 0.48.0; x/sync 0.25.0; x/sys 0.50.0; modernc.org/sqlite 1.62.0 (wrapper; embedded components differ) |
 | ISC | nfnt/resize 0.0.0-20180221191011-83c6a9932646 |
 | BSD-2-Clause | nwaples/rardecode/v2 2.4.6; no unRAR restriction appears in this module's license |
