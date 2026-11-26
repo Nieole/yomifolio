@@ -1,14 +1,16 @@
 import { useCallback, useState, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { GitCompareArrows, Layers3, Loader2, ShieldCheck } from 'lucide-react';
+import { GitCompareArrows, Layers3, Loader2, ShieldCheck, UserCheck } from 'lucide-react';
 import { PageShell, PageHeader } from '../components/PageShell';
 import { useI18n } from '../i18n/LocaleProvider';
 import { apiClient } from '../api/client';
+import type { PendingPage } from '../api/generated';
 
 const MetadataReviews = lazy(() => import('./MetadataReviews'));
 const AIGroupingReviews = lazy(() => import('./AIGroupingReviews'));
+const IdentificationPending = lazy(() => import('./identification-pending'));
 
-type TabKey = 'metadata' | 'ai-grouping';
+type TabKey = 'metadata' | 'ai-grouping' | 'identification';
 
 export default function ReviewCenter() {
   const { t } = useI18n();
@@ -16,6 +18,7 @@ export default function ReviewCenter() {
   const activeTab = (searchParams.get('tab') as TabKey) || 'metadata';
   const [metadataCount, setMetadataCount] = useState<number>(0);
   const [aiGroupingCount, setAiGroupingCount] = useState<number>(0);
+  const [pendingCount, setPendingCount] = useState<number>(0);
 
   const setTab = (tab: TabKey) => {
     setSearchParams({ tab }, { replace: true });
@@ -32,6 +35,11 @@ export default function ReviewCenter() {
         // 请求失败不代表「没有待办」。清零会让角标消失，用户以为已处理完；
         // 保留上一次的计数更接近真实状态。
       });
+    apiClient.get<PendingPage>('/api/identification/pending?limit=0')
+      .then(({ data }) => setPendingCount(data.total))
+      .catch(() => {
+        // 同上：取不到计数时保留上一次的。
+      });
   }, []);
 
   // Fetch pending counts
@@ -42,6 +50,7 @@ export default function ReviewCenter() {
   const tabs: { key: TabKey; label: string; icon: typeof GitCompareArrows; count: number }[] = [
     { key: 'metadata', label: t('reviewCenter.tab.metadata'), icon: GitCompareArrows, count: metadataCount },
     { key: 'ai-grouping', label: t('reviewCenter.tab.aiGrouping'), icon: Layers3, count: aiGroupingCount },
+    { key: 'identification', label: t('reviewCenter.tab.identification'), icon: UserCheck, count: pendingCount },
   ];
 
   return (
@@ -93,7 +102,13 @@ export default function ReviewCenter() {
           </div>
         }
       >
-        {activeTab === 'metadata' ? <MetadataReviews embedded onReviewChange={refreshCounts} /> : <AIGroupingReviews embedded onReviewChange={refreshCounts} />}
+        {activeTab === 'metadata' ? (
+          <MetadataReviews embedded onReviewChange={refreshCounts} />
+        ) : activeTab === 'identification' ? (
+          <IdentificationPending onChange={refreshCounts} />
+        ) : (
+          <AIGroupingReviews embedded onReviewChange={refreshCounts} />
+        )}
       </Suspense>
     </PageShell>
   );
