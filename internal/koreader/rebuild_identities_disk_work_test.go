@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"sync"
 	"testing"
 	"time"
 	"yomifolio/internal/bookidentity"
@@ -87,12 +88,14 @@ func TestRebuildBookIdentitiesPausesBetweenBatches(t *testing.T) {
 	first := seedHashableBook(t, store, rootDir, "First")
 	second := seedHashableBook(t, store, rootDir, "Second")
 
-	// 一批一本、停顿 300ms：100ms 的期限必然落在第一批之后的那段停顿里。没有停顿的话两本都会
-	// 在几毫秒内算完，这条用例就再也等不到那个期限。
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	// 一批一本、停顿一小时：第一本计数之后 100ms 才取消，此刻重建只该停在批间停顿里。取消
+	// 跟着第一本的完成走，第一批算得再慢也不会让期限落在它前面；没有停顿的话，第二本会在取消
+	// 之前就算完。
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	handle := &cancelAfterFirstAdvance{fakeTaskHandle: &fakeTaskHandle{}, cancel: cancel}
 
-	updated, total, err := bookidentity.New(service.store).Rebuild(ctx, bookidentity.RebuildOptions{MatchMode: service.currentMatchConfig().MatchMode, BatchSize: 1, BatchGap: 300 * time.Millisecond}, &fakeTaskHandle{})
+	updated, total, err := bookidentity.New(service.store).Rebuild(ctx, bookidentity.RebuildOptions{MatchMode: service.currentMatchConfig().MatchMode, BatchSize: 1, BatchGap: time.Hour}, handle)
 	if err == nil {
 		t.Fatal("重建跑完了 —— 批间停顿没生效，两批之间一步没歇")
 	}
@@ -105,6 +108,18 @@ func TestRebuildBookIdentitiesPausesBetweenBatches(t *testing.T) {
 	if fileHash, _, _ := loadBookIdentity(t, store, second.ID); fileHash != "" {
 		t.Fatalf("第二本的 file_hash = %q, want 空 —— 停顿被取消打断后不该再往下算", fileHash)
 	}
+}
+
+// cancelAfterFirstAdvance 在第一次**计数推进**之后稍等片刻再取消重建。
+type cancelAfterFirstAdvance struct {
+	*fakeTaskHandle
+	cancel context.CancelFunc
+	once   sync.Once
+}
+
+func (h *cancelAfterFirstAdvance) Advance(current, total int) {
+	h.fakeTaskHandle.Advance(current, total)
+	h.once.Do(func() { time.AfterFunc(100*time.Millisecond, h.cancel) })
 }
 
 // TestRebuildBookIdentitiesSkipsUnreadableBookAndAdvancesCursor 一条用例守两件事：算不出指纹
