@@ -83,6 +83,32 @@ CREATE TABLE IF NOT EXISTS identification_evidence (
     source_facts TEXT NOT NULL DEFAULT '{}'
 );
 
+-- The claim lease of a series: one agent session holds it until expires_at_ms. A finishing verdict
+-- deletes the row. An expired row stays until another claim replaces it, so its holder can still
+-- answer while nobody else has claimed the series.
+CREATE TABLE IF NOT EXISTS identification_leases (
+    series_id INTEGER PRIMARY KEY REFERENCES series(id) ON DELETE CASCADE,
+    lease_id TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    credential_id TEXT NOT NULL,
+    claimed_at_ms INTEGER NOT NULL,
+    expires_at_ms INTEGER NOT NULL
+);
+
+-- The decided result of each verdict, by the credential's request key, so a retried request gets
+-- the original result back. digest fingerprints the verdict the key was first used with.
+CREATE TABLE IF NOT EXISTS identification_verdicts (
+    credential_id TEXT NOT NULL,
+    request_key TEXT NOT NULL,
+    series_id INTEGER NOT NULL REFERENCES series(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL,
+    digest TEXT NOT NULL,
+    result TEXT NOT NULL,
+    decided_at_ms INTEGER NOT NULL,
+    PRIMARY KEY (credential_id, request_key, series_id)
+);
+CREATE INDEX IF NOT EXISTS idx_identification_verdicts_series ON identification_verdicts(series_id);
+
 -- Completion marker of the one-time derivation from proposal history.
 CREATE TABLE IF NOT EXISTS identification_history_derivation (
     id INTEGER PRIMARY KEY CHECK (id = 1),
