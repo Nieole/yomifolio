@@ -25,6 +25,7 @@ func (c *administrationHTTP) mountIdentification(r chi.Router) {
 	r.Post("/identification/series/{seriesId}/exclusions", c.excludeSeriesCandidate)
 	r.Post("/identification/series/{seriesId}/not-found", c.concludeSeriesNotFound)
 	r.Post("/identification/series/{seriesId}/notes/{noteId}/close", c.closeSeriesNote)
+	r.Post("/identification/series/{seriesId}/keep-identification", c.keepSeriesIdentification)
 	r.Put("/identification/series/{seriesId}/conclusions/{source}", c.identifySeriesAsOwner)
 }
 
@@ -60,6 +61,24 @@ func (c *administrationHTTP) identifySeriesAsOwner(w http.ResponseWriter, r *htt
 	default:
 		jsonResponse(w, http.StatusOK, out)
 	}
+}
+
+// keepSeriesIdentification records the owner's answer that a questioned identification is right
+// and answers with the series' identification after it.
+func (c *administrationHTTP) keepSeriesIdentification(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	seriesID, err := parseID(r, "seriesId")
+	if err != nil || seriesID <= 0 {
+		jsonError(w, http.StatusBadRequest, "Invalid series ID")
+		return
+	}
+	user, _ := userFromContext(r.Context())
+	out, err := c.identification.KeepIdentification(r.Context(), user.ID, seriesID)
+	if err != nil {
+		writePendingDecisionError(w, r, err)
+		return
+	}
+	jsonResponse(w, http.StatusOK, out)
 }
 
 // closeSeriesNote records that the owner has seen one note of the series and answers with its

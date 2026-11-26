@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
@@ -31,6 +32,7 @@ type pendingPage struct {
 				Category string `json:"category"`
 				Class    string `json:"class"`
 				Reason   string `json:"reason"`
+				Clue     string `json:"clue"`
 				RaisedBy struct {
 					Kind         string `json:"kind"`
 					CredentialID string `json:"credential_id"`
@@ -202,7 +204,7 @@ func rivalCandidates(source, query string) ([]*metadata.SeriesMetadata, error) {
 // ownerIdentified mirrors the answer to the owner picking candidates.
 type ownerIdentified struct {
 	Identification seriesIdentification `json:"identification"`
-	OperationID    string               `json:"operation_id"`
+	OperationIDs   []string             `json:"operation_ids"`
 }
 
 func TestOwnerPicksCandidatesAndTheSeriesIsSupplemented(t *testing.T) {
@@ -215,7 +217,8 @@ func TestOwnerPicksCandidatesAndTheSeriesIsSupplemented(t *testing.T) {
 	var picked ownerIdentified
 	web.decide(seriesPath(ids[0], "identify"), `{"candidate_ids":["bangumi:1","anilist:1"]}`, http.StatusOK, &picked)
 	got := picked.Identification
-	if got.Status != "identified" || len(got.Conclusions) != 2 || picked.OperationID == "" {
+	// One receipt per candidate, the Bangumi one first by source priority.
+	if got.Status != "identified" || len(got.Conclusions) != 2 || len(picked.OperationIDs) != 2 {
 		t.Fatalf("picked %+v", picked)
 	}
 	for i, want := range []struct{ source, entry, url string }{{"bangumi", "1", "https://bgm.tv/subject/1"}, {"anilist", "1", "https://anilist.co/manga/1"}} {
@@ -230,7 +233,7 @@ func TestOwnerPicksCandidatesAndTheSeriesIsSupplemented(t *testing.T) {
 		t.Fatalf("supplemented series %+v", s)
 	}
 	var supplemented receipt
-	web.call("GET", "/api/mcp/operations/"+picked.OperationID, http.StatusOK, &supplemented)
+	web.call("GET", "/api/mcp/operations/"+picked.OperationIDs[0], http.StatusOK, &supplemented)
 	if supplemented.Kind != "enrich" || !supplemented.changed("title") || !supplemented.changed("summary") {
 		t.Fatalf("receipt %+v", supplemented)
 	}
@@ -439,5 +442,89 @@ func TestPendingListAndDecisionsNeedAnAdministrator(t *testing.T) {
 	}
 	if got := web.identification(ids[0]); got.Status != "awaiting_owner" || len(got.Conclusions) != 0 || len(got.Excluded) != 0 {
 		t.Fatalf("a regular account decided %+v", got)
+	}
+}
+
+// questionedLibrary prefetches one library of series "Title 1".."Title n" for an agent that may
+// write to it, and returns the library so a test can add books and scan it.
+func questionedLibrary(t *testing.T, n int) (*identificationWeb, *mainLoopAgent, *handClock, *prefetchLibrary, []int64) {
+	t.Helper()
+	store, cfg := fixture(t)
+	unpaced(t, cfg)
+	directories := make([]string, n)
+	for i := range directories {
+		directories[i] = fmt.Sprintf("Title %d", i+1)
+	}
+	library, ids := claimLibrary(t, store, "Questioned", directories...)
+	clock := &handClock{now: time.Date(2026, 3, 1, 9, 0, 0, 0, time.UTC)}
+	web := openClaimWeb(t, store, cfg, &recordingSources{answer: candidatesBySeries}, clock)
+	if _, run := web.prefetch("{}"); run.Status != task.StatusCompleted {
+		t.Fatalf("prefetch run %+v", run)
+	}
+	agent := web.mainLoopAgent(cfg, 1, []int64{library.lib.ID}, []string{delegated.Read, delegated.MetadataWrite})
+	return web, agent, clock, library, ids
+}
+
+// addBook writes one more book with ComicInfo naming series into a series directory and scans the
+// library for it.
+func (w *identificationWeb) addBook(library *prefetchLibrary, directory, file, series string) {
+	w.t.Helper()
+	writeComicArchive(w.t, filepath.Join(library.lib.Path, directory, file), `<ComicInfo><Series>`+series+`</Series></ComicInfo>`)
+	if run := w.scan(library.lib.ID, false); run.Status != task.StatusCompleted {
+		w.t.Fatalf("scan %+v", run)
+	}
+}
+
+func TestOwnerKeepsAQuestionedIdentificationAndItsName(t *testing.T) {
+	web, agent, clock, library, ids := questionedLibrary(t, 2)
+	batch := agent.claim(map[string]any{})
+	for i, r := range agent.submit("identify", batch.LeaseID,
+		identifyVerdict(ids[0], "the Bangumi title equals the directory", "bangumi:1"),
+		identifyVerdict(ids[1], "the Bangumi title equals the directory", "bangumi:2")) {
+		wantResult(t, r, ids[i], true, "identified")
+	}
+	clock.advance(time.Hour)
+	web.addBook(library, "Title 1", "02.cbz", "Pluto")
+
+	page := web.pending("?category=new_book_contradiction")
+	if !reflect.DeepEqual(page.ids(), []int64{ids[0]}) || page.Items[0].Identification.Status != "needs_recheck" {
+		t.Fatalf("recheck on the list %+v", page)
+	}
+	if e := page.Items[0].Identification.Escalations; len(e) != 1 || e[0].Class != "recheck" || e[0].Clue != "Pluto" {
+		t.Fatalf("recheck escalation %+v", e)
+	}
+	// Only a series needing a recheck can be kept as it is.
+	web.conflict(seriesPath(ids[1], "keep-identification"), ``, "not_pending")
+
+	clock.advance(time.Hour)
+	var kept fullIdentification
+	web.decide(seriesPath(ids[0], "keep-identification"), ``, http.StatusOK, &kept)
+	if kept.Status != "identified" || len(kept.Escalations) != 0 || len(kept.Conclusions) != 1 {
+		t.Fatalf("kept identification %+v", kept)
+	}
+	// The questioned agent conclusion is the owner's now, its reason kept.
+	if c := kept.Conclusions[0]; c.EntryID != "1" || c.Confirmer.Kind != "owner" || c.Confirmer.UserID != 1 || c.Confirmer.CredentialID != "" ||
+		c.ConfirmedAt != "2026-03-01T11:00:00Z" || c.Reason != "the Bangumi title equals the directory" {
+		t.Fatalf("kept conclusion %+v", c)
+	}
+	if page := web.pending(""); page.Total != 0 {
+		t.Fatalf("pending after keeping %+v", page)
+	}
+
+	// The name the owner accepted no longer questions the series, however it is written; another
+	// name still does.
+	web.addBook(library, "Title 1", "03.cbz", "PLUTO ")
+	if got := web.identification(ids[0]); got.Status != "identified" {
+		t.Fatalf("an accepted name questioned the series again: %+v", got)
+	}
+	web.addBook(library, "Title 1", "04.cbz", "Astro Boy")
+	page = web.pending("")
+	if !reflect.DeepEqual(page.ids(), []int64{ids[0]}) || page.Items[0].Identification.Escalations[0].Clue != "Astro Boy" {
+		t.Fatalf("a new name on the list %+v", page)
+	}
+	// The name accepted for one series accepts nothing for another.
+	web.addBook(library, "Title 2", "02.cbz", "Pluto")
+	if got := web.identification(ids[1]); got.Status != "needs_recheck" {
+		t.Fatalf("another series with the accepted name: %+v", got)
 	}
 }

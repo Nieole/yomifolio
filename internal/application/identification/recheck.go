@@ -31,10 +31,12 @@ type NewBook struct {
 // owner-reviewed or already has an open recheck escalation. A book contradicts when its ComicInfo
 // series name, compared after database.NormalizeSearchText, neither equals nor contains nor is
 // contained in any title, original title or alias of any of the series' conclusions; a contained
-// name must be at least two characters. A book without a ComicInfo series name, or a series whose
-// conclusions carry no name, gives nothing to compare and changes nothing. The check reads only
-// local state and leaves the conclusions and the series metadata as they are; the first
-// contradicting book of a series is quoted in the escalation's reason.
+// name must be at least two characters. A name the owner kept the series' identification with
+// (KeepIdentification) never contradicts it. A book without a ComicInfo series name, or a series
+// whose conclusions carry no name, gives nothing to compare and changes nothing. The check reads
+// only local state and leaves the conclusions and the series metadata as they are; the first
+// contradicting book of a series is quoted in the escalation's reason and its series name kept as
+// the escalation's clue.
 func (s *Service) RecheckNewBooks(ctx context.Context, books []NewBook) error {
 	clues := map[int64][]NewBook{}
 	for _, book := range books {
@@ -52,18 +54,20 @@ func (s *Service) RecheckNewBooks(ctx context.Context, books []NewBook) error {
 	defer tx.Rollback()
 	var raised []NewBook
 	for _, series := range slices.Sorted(maps.Keys(clues)) {
-		names, err := recheckNames(ctx, tx, series)
+		names, accepted, err := recheckNames(ctx, tx, series)
 		if err != nil {
 			return err
 		}
-		index := slices.IndexFunc(clues[series], func(book NewBook) bool { return contradicts(book.ComicInfoSeries, names) })
+		index := slices.IndexFunc(clues[series], func(book NewBook) bool {
+			return !accepted[database.NormalizeSearchText(book.ComicInfoSeries)] && contradicts(book.ComicInfoSeries, names)
+		})
 		if index < 0 {
 			continue
 		}
 		book := clues[series][index]
 		reason := fmt.Sprintf("new book %q has ComicInfo series %q, which matches no identified title, original title or alias", clip(book.Name, 200), clip(book.ComicInfoSeries, 200))
-		if _, err := tx.ExecContext(ctx, `INSERT INTO identification_escalations (series_id, category, class, reason, raised_by, raised_at_ms)
-			VALUES (?, ?, ?, ?, 'system', ?)`, series, CategoryNewBookContradiction, EscalationRecheck, reason, s.now().UnixMilli()); err != nil {
+		if _, err := tx.ExecContext(ctx, `INSERT INTO identification_escalations (series_id, category, class, reason, clue, raised_by, raised_at_ms)
+			VALUES (?, ?, ?, ?, ?, 'system', ?)`, series, CategoryNewBookContradiction, EscalationRecheck, reason, clip(book.ComicInfoSeries, 200), s.now().UnixMilli()); err != nil {
 			return err
 		}
 		raised = append(raised, book)
@@ -78,25 +82,25 @@ func (s *Service) RecheckNewBooks(ctx context.Context, books []NewBook) error {
 }
 
 // recheckNames returns the normalized names of the series' conclusions, or nil when the series is
-// not subject to the check.
-func recheckNames(ctx context.Context, tx *sql.Tx, series int64) ([]string, error) {
+// not subject to the check, and the normalized names the owner accepted for it.
+func recheckNames(ctx context.Context, tx *sql.Tx, series int64) ([]string, map[string]bool, error) {
 	var checked bool
 	err := tx.QueryRowContext(ctx, `SELECT NOT EXISTS (SELECT 1 FROM identification_owner_reviews WHERE series_id = ?)
 		AND NOT EXISTS (SELECT 1 FROM identification_escalations WHERE series_id = ? AND class = ? AND resolved_at_ms IS NULL)`,
 		series, series, EscalationRecheck).Scan(&checked)
 	if err != nil || !checked {
-		return nil, err
+		return nil, nil, err
 	}
 	rows, err := tx.QueryContext(ctx, `SELECT title, original_title, aliases FROM identification_conclusions WHERE series_id = ?`, series)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rows.Close()
 	var names []string
 	for rows.Next() {
 		var title, original, encoded string
 		if err := rows.Scan(&title, &original, &encoded); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		var aliases []string
 		_ = json.Unmarshal([]byte(encoded), &aliases)
@@ -106,7 +110,23 @@ func recheckNames(ctx context.Context, tx *sql.Tx, series int64) ([]string, erro
 			}
 		}
 	}
-	return names, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
+	}
+	accepted := map[string]bool{}
+	keys, err := tx.QueryContext(ctx, `SELECT name_key FROM identification_accepted_names WHERE series_id = ?`, series)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer keys.Close()
+	for keys.Next() {
+		var key string
+		if err := keys.Scan(&key); err != nil {
+			return nil, nil, err
+		}
+		accepted[key] = true
+	}
+	return names, accepted, keys.Err()
 }
 
 func contradicts(clue string, names []string) bool {

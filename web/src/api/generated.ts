@@ -568,6 +568,7 @@ export interface Escalation {
   category: string;
   class: string;
   reason: string;
+  clue?: string;
   raised_by: Confirmer;
   raised_at: string;
 }
@@ -665,7 +666,7 @@ export interface PendingSeries {
 
 export interface OwnerIdentified {
   identification: SeriesIdentification;
-  operation_id?: string;
+  operation_ids: string[];
 }
 
 export interface OwnerIdentification {

@@ -4,14 +4,15 @@
 package identification
 
 import (
+	"cmp"
 	"context"
 	"database/sql"
 	"errors"
 	"slices"
 	"strings"
 
-	"yomifolio/internal/application/delegated"
-	"yomifolio/internal/application/enrichment"
+	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 )
 
 // Bounds of one page of the pending list.
@@ -38,8 +39,9 @@ var (
 
 // Resolutions an owner decision settles an escalation with.
 const (
-	resolvedIdentified = "identified"
-	resolvedNotFound   = "not_found"
+	resolvedNotFound = "not_found"
+	// resolvedKept settles a recheck the owner answered by keeping the identification.
+	resolvedKept = "kept"
 	// resolvedClosed settles a note the owner has seen. A closed note keeps agents from noting the
 	// same category on the series again.
 	resolvedClosed = "closed"
@@ -184,20 +186,23 @@ func readPending(ctx context.Context, q queryer, seriesID int64) (PendingSeries,
 }
 
 // OwnerIdentified is the series' identification after the owner picked candidates, with the
-// receipt of the supplementation the pick ran; OperationID is empty when nothing was supplemented.
+// receipts of the supplementations the pick ran, one per candidate in source priority order; none
+// when the series was owner-reviewed.
 type OwnerIdentified struct {
 	Identification SeriesIdentification `json:"identification"`
-	OperationID    string               `json:"operation_id,omitempty"`
+	OperationIDs   []string             `json:"operation_ids"`
 }
 
 // PickCandidates records the owner's identification of a series waiting for the owner with
-// candidates of its evidence, at most one per source, and in the same transaction supplements
-// the series from them and settles the identification escalations it was waiting on.
+// candidates of its evidence, at most one per source, through the owner's identification use case
+// (identifyByOwner): each candidate in the configured source priority, so the highest-priority
+// source fills the fields first, all in one transaction. The pick settles what the series was
+// waiting on and ends any claim lease. It identifies only sources the series has no conclusion for.
 func (s *Service) PickCandidates(ctx context.Context, actor, seriesID int64, candidateIDs []string) (OwnerIdentified, error) {
 	if !citable(candidateIDs) {
 		return OwnerIdentified{}, ErrInvalidPending
 	}
-	var operation string
+	out := OwnerIdentified{OperationIDs: []string{}}
 	identification, err := s.pendingDecision(ctx, actor, seriesID, []string{StatusAwaitingOwner}, func(tx *sql.Tx) error {
 		packet, facts, _, err := storedEvidence(ctx, tx, seriesID)
 		if err != nil {
@@ -207,7 +212,7 @@ func (s *Service) PickCandidates(ctx context.Context, actor, seriesID int64, can
 		if err != nil {
 			return err
 		}
-		identified, err := s.identifiedSources(ctx, tx, seriesID)
+		identified, err := conclusions(ctx, tx, seriesID)
 		if err != nil {
 			return err
 		}
@@ -215,28 +220,46 @@ func (s *Service) PickCandidates(ctx context.Context, actor, seriesID int64, can
 		for _, id := range candidateIDs {
 			index := slices.IndexFunc(packet.Candidates, func(c EvidenceCandidate) bool { return c.ID == id })
 			source, _, _ := strings.Cut(id, ":")
-			if index < 0 || excluded[id] || slices.ContainsFunc(identified, func(c enrichment.IdentifiedSource) bool { return c.Source == source }) {
+			if index < 0 || excluded[id] || slices.ContainsFunc(identified, func(c Conclusion) bool { return c.Source == source }) {
 				return ErrCandidateUnavailable
 			}
 			cited = append(cited, citedCandidate{EvidenceCandidate: packet.Candidates[index], facts: facts[id]})
 		}
-		op, err := s.confirm(ctx, tx, delegated.Subject{UserID: actor}, ConfirmedByOwner, ownerReceiptKey(), seriesID, cited, "")
-		if err != nil {
-			return err
+		rank := s.sourceRank()
+		slices.SortStableFunc(cited, func(a, b citedCandidate) int { return cmp.Compare(rank(a.Source), rank(b.Source)) })
+		for _, c := range cited {
+			done, err := s.identifyByOwner(ctx, tx, actor, seriesID, c)
+			if err != nil {
+				return err
+			}
+			if done.OperationID != "" {
+				out.OperationIDs = append(out.OperationIDs, done.OperationID)
+			}
 		}
-		operation = op.ID
-		if _, err := tx.ExecContext(ctx, `DELETE FROM identification_not_found WHERE series_id = ?`, seriesID); err != nil {
-			return err
-		}
-		return s.resolve(ctx, tx, actor, seriesID, EscalationIdentification, resolvedIdentified)
+		return nil
 	})
 	if err != nil {
 		return OwnerIdentified{}, err
 	}
-	if operation != "" {
+	if len(out.OperationIDs) > 0 && s.enricher != nil {
 		s.enricher.Publish()
 	}
-	return OwnerIdentified{Identification: identification, OperationID: operation}, nil
+	out.Identification = identification
+	return out, nil
+}
+
+// sourceRank orders sources by the configured priority; sources it does not name come last.
+func (s *Service) sourceRank() func(string) int {
+	order := config.DefaultSourcePriority.Order()
+	if s.config != nil {
+		order = s.config().Identification.SourcePriority.Order()
+	}
+	return func(source string) int {
+		if i := slices.Index(order, source); i >= 0 {
+			return i
+		}
+		return len(order)
+	}
 }
 
 // citable reports whether ids name 1 to one-per-source candidates of known sources.
@@ -372,5 +395,48 @@ func (s *Service) CloseNote(ctx context.Context, actor, seriesID, noteID int64) 
 		_, err = tx.ExecContext(ctx, `UPDATE identification_escalations SET resolved_at_ms = ?, resolved_by = ?, resolution = ? WHERE id = ?`,
 			s.now().UnixMilli(), actor, resolvedClosed, noteID)
 		return err
+	})
+}
+
+// KeepIdentification records the owner's answer to a questioned identification: it is right. The
+// series' open recheck escalations are settled and the series is identified again with its
+// conclusions and metadata as they are. Its agent conclusions become the owner's, keeping their
+// reasons, so agents can no longer replace them. The ComicInfo series names the system rechecks
+// questioned it with are accepted for the series: a later book carrying one of them, however
+// written, does not question it again.
+func (s *Service) KeepIdentification(ctx context.Context, actor, seriesID int64) (SeriesIdentification, error) {
+	return s.pendingDecision(ctx, actor, seriesID, []string{StatusNeedsRecheck}, func(tx *sql.Tx) error {
+		now := s.now().UnixMilli()
+		rows, err := tx.QueryContext(ctx, `SELECT clue FROM identification_escalations WHERE series_id = ? AND class = ? AND resolved_at_ms IS NULL AND clue != ''`,
+			seriesID, EscalationRecheck)
+		if err != nil {
+			return err
+		}
+		var clues []string
+		for rows.Next() {
+			var clue string
+			if err := rows.Scan(&clue); err != nil {
+				rows.Close()
+				return err
+			}
+			clues = append(clues, clue)
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return err
+		}
+		for _, clue := range clues {
+			if key := database.NormalizeSearchText(clue); key != "" {
+				if _, err := tx.ExecContext(ctx, `INSERT OR IGNORE INTO identification_accepted_names (series_id, name_key, name, user_id, accepted_at_ms)
+					VALUES (?, ?, ?, ?, ?)`, seriesID, key, clue, actor, now); err != nil {
+					return err
+				}
+			}
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE identification_conclusions SET confirmer = ?, user_id = ?, credential_id = '', confirmed_at_ms = ?
+			WHERE series_id = ? AND confirmer = ?`, ConfirmedByOwner, actor, now, seriesID, ConfirmedByAgent); err != nil {
+			return err
+		}
+		return s.resolve(ctx, tx, actor, seriesID, EscalationRecheck, resolvedKept)
 	})
 }
