@@ -334,16 +334,8 @@ func (s *Service) judge(ctx context.Context, tx *sql.Tx, subject delegated.Subje
 	case VerdictEscalate:
 		class, _ := agentClass(v.Category)
 		finished = class != EscalationNote
-		var open bool
-		if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM identification_escalations WHERE series_id = ? AND category = ? AND resolved_at_ms IS NULL)`,
-			v.SeriesID, v.Category).Scan(&open); err != nil {
+		if _, err := raiseOnce(ctx, tx, subject, v.SeriesID, v.Category, class, v.Reason, now); err != nil {
 			return VerdictResult{}, err
-		}
-		if !open {
-			if _, err := tx.ExecContext(ctx, `INSERT INTO identification_escalations (series_id, category, class, reason, raised_by, user_id, credential_id, raised_at_ms)
-				VALUES (?, ?, ?, ?, 'agent', ?, ?, ?)`, v.SeriesID, v.Category, class, v.Reason, subject.UserID, subject.CredentialID, now); err != nil {
-				return VerdictResult{}, err
-			}
 		}
 	}
 	if finished {
