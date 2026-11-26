@@ -494,6 +494,8 @@ export interface SeriesIdentification {
   status: string;
   conclusions: Conclusion[];
   excluded_candidates: ExcludedCandidate[];
+  not_found?: NotFoundVerdict;
+  escalations?: Escalation[];
   owner_review?: OwnerReview;
   evidence?: EvidencePacket;
 }
@@ -533,6 +535,22 @@ export interface OwnerReview {
   user_id: number;
   user_name: string;
   reviewed_at: string;
+}
+
+export interface NotFoundVerdict {
+  searched_sources: string[];
+  confirmer: Confirmer;
+  concluded_at: string;
+  reason: string;
+}
+
+export interface Escalation {
+  id: number;
+  category: string;
+  class: string;
+  reason: string;
+  raised_by: Confirmer;
+  raised_at: string;
 }
 
 export interface EvidencePacket {
