@@ -12,12 +12,13 @@ import {
   BackgroundVariant,
   getStraightPath,
   Position,
-  useStore,
+  useInternalNode,
 } from '@xyflow/react';
-import type { Node, Edge, EdgeProps, InternalNode, ReactFlowState } from '@xyflow/react';
+import type { Node, Edge, EdgeProps, InternalNode } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useI18n } from '../../i18n/LocaleProvider';
+import { useTheme } from '../../theme/ThemeProvider';
 import { CustomNode } from './CustomNode';
 import type { FranchiseRelation } from '../series-detail/types';
 
@@ -71,8 +72,8 @@ function DirectedEdge({
   style,
   interactionWidth,
 }: EdgeProps) {
-  const sourceNode = useStore((state: ReactFlowState) => state.nodeLookup.get(source));
-  const targetNode = useStore((state: ReactFlowState) => state.nodeLookup.get(target));
+  const sourceNode = useInternalNode(source);
+  const targetNode = useInternalNode(target);
   const sourceCenter = getVisualNodeCenter(sourceNode, { x: sourceX, y: sourceY });
   const targetCenter = getVisualNodeCenter(targetNode, { x: targetX, y: targetY });
   const [edgePath, labelX, labelY] = getStraightPath({
@@ -231,6 +232,7 @@ export const FranchiseGraphPage: React.FC = () => {
   const { id, libId } = useParams<{ id?: string, libId?: string }>();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const { resolvedTheme } = useTheme();
   const seriesId = id ? parseInt(id, 10) : 0;
   const libraryId = libId ? parseInt(libId, 10) : 0;
 
@@ -377,11 +379,15 @@ export const FranchiseGraphPage: React.FC = () => {
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
-            fitViewOptions={{ padding: 0.32 }}
+            fitViewOptions={{ padding: '12%' }}
             minZoom={0.12}
             maxZoom={2.2}
             proOptions={{ hideAttribution: true }}
             className="franchise-graph-flow"
+            // 内置部件的深浅色跟应用主题；不强制时浅色主题会落到系统偏好（React Flow 不认应用的 data-theme 名）。
+            forceColorMode={resolvedTheme.colorScheme}
+            // 连线从节点中心画到中心，选中边若被抬到节点之上就会压住封面。
+            elevateEdgesOnSelect={false}
             defaultEdgeOptions={{
               focusable: false,
             }}

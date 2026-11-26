@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-24",
+  "date": "2026-11-26",
   "scope": "conservative legal-file inventory, not SBOM or full legal audit",
   "packages": [
     {
@@ -2089,29 +2089,29 @@
     {
       "ecosystem": "NPM",
       "name": "@xyflow/react",
-      "version": "12.12.1",
+      "version": "13.0.3",
       "location": "node_modules/@xyflow/react",
       "license": "MIT",
       "scope": "production or optional transitive",
       "installed": true,
-      "source": "https://registry.npmjs.org/@xyflow/react/-/react-12.12.1.tgz",
-      "integrity": "sha512-g41OHmP+GL5wDBQKpgYt8AF6RlB4CrABtiStXhCMqdItK6gPdSpsuDk8V0YtdyvIvMPTjDJvkuLkz0JbSYu5Cw==",
+      "source": "https://registry.npmjs.org/@xyflow/react/-/react-13.0.3.tgz",
+      "integrity": "sha512-deKfJUYe1aAMd2j6g/LL+5YRbqIeebOXNfwHhdu6qk4L+h7XRY9UcBgqVSYT8WyXSX+3k6ZGr/hnfx7hLfgUtA==",
       "files": [
-        "LICENSES/npm/node_modules/@xyflow/react/12.12.1/LICENSE"
+        "LICENSES/npm/node_modules/@xyflow/react/13.0.3/LICENSE"
       ]
     },
     {
       "ecosystem": "NPM",
       "name": "@xyflow/system",
-      "version": "0.0.84",
+      "version": "1.0.1",
       "location": "node_modules/@xyflow/system",
       "license": "MIT",
       "scope": "production or optional transitive",
       "installed": true,
-      "source": "https://registry.npmjs.org/@xyflow/system/-/system-0.0.84.tgz",
-      "integrity": "sha512-96zfGFjH3oZ3T0MRdH4gJ0SlXuCIxbBuHVevZ4xry5UTxqjzjt010+LRdholgepq7jhrcaz1JNtzrETscwnkEA==",
+      "source": "https://registry.npmjs.org/@xyflow/system/-/system-1.0.1.tgz",
+      "integrity": "sha512-0vMyv9EbnV9lNe15USaIbBxJVuLF2awbzZNT+foIOd59Mpc2rw04oaozoms1TaSetTa376aHl7mJ/YNKqIoqJA==",
       "files": [
-        "LICENSES/npm/node_modules/@xyflow/system/0.0.84/LICENSE"
+        "LICENSES/npm/node_modules/@xyflow/system/1.0.1/LICENSE"
       ]
     },
     {
@@ -4335,6 +4335,20 @@
     },
     {
       "ecosystem": "NPM",
+      "name": "react-compiler-runtime",
+      "version": "1.0.0",
+      "location": "node_modules/react-compiler-runtime",
+      "license": "MIT",
+      "scope": "production or optional transitive",
+      "installed": true,
+      "source": "https://registry.npmjs.org/react-compiler-runtime/-/react-compiler-runtime-1.0.0.tgz",
+      "integrity": "sha512-rRfjYv66HlG8896yPUDONgKzG5BxZD1nV9U6rkm+7VCuvQc903C4MjcoZR4zPw53IKSOX9wMQVpA1IAbRtzQ7w==",
+      "files": [
+        "LICENSES/npm/node_modules/react-compiler-runtime/1.0.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "NPM",
       "name": "react-dom",
       "version": "19.3.1",
       "location": "node_modules/react-dom",
@@ -4783,20 +4797,6 @@
     },
     {
       "ecosystem": "NPM",
-      "name": "use-sync-external-store",
-      "version": "1.7.0",
-      "location": "node_modules/use-sync-external-store",
-      "license": "MIT",
-      "scope": "production or optional transitive",
-      "installed": true,
-      "source": "https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.7.0.tgz",
-      "integrity": "sha512-6L+EeigHMQhdaIPNIFUKwfWJSwWFQ8gJbJ2DLOs5sDIegTwR9fRxvnM3uciHKjIZhFz+KAv2emhWMRvDmMcY8A==",
-      "files": [
-        "LICENSES/npm/node_modules/use-sync-external-store/1.7.0/LICENSE"
-      ]
-    },
-    {
-      "ecosystem": "NPM",
       "name": "vite",
       "version": "8.3.8",
       "location": "node_modules/vite",
@@ -5008,15 +5008,15 @@
     {
       "ecosystem": "NPM",
       "name": "zustand",
-      "version": "4.5.7",
+      "version": "5.1.0",
       "location": "node_modules/zustand",
       "license": "MIT",
       "scope": "production or optional transitive",
       "installed": true,
-      "source": "https://registry.npmjs.org/zustand/-/zustand-4.5.7.tgz",
-      "integrity": "sha512-CHOUy7mu3lbD6o6LJLfllpjkzhHXSBlX8B9+qPddUsIfeF5S/UZ5q0kmCsnRqT1UHFQZchNFDDzMbQsuesHWlw==",
+      "source": "https://registry.npmjs.org/zustand/-/zustand-5.1.0.tgz",
+      "integrity": "sha512-ciJZlP48M1PTQbVQq81CGVFxHTLpZNrFjKqwjtCU34AWuXTZT/jrF3p9+fI84Cf1eSCMLapxqBy/SNTfwOBuqA==",
       "files": [
-        "LICENSES/npm/node_modules/zustand/4.5.7/LICENSE"
+        "LICENSES/npm/node_modules/zustand/5.1.0/LICENSE"
       ]
     },
     {
@@ -6289,18 +6289,18 @@
       "collected": "2026-11-16"
     },
     {
-      "file": "LICENSES/npm/node_modules/@xyflow/react/12.12.1/LICENSE",
+      "file": "LICENSES/npm/node_modules/@xyflow/react/13.0.3/LICENSE",
       "bytes": 1073,
       "sha256": "023119ac20fb1c8c9930abe0bcd196989a1960388529a96fc43cebf96f07c9ff",
-      "source": "https://registry.npmjs.org/@xyflow/react/-/react-12.12.1.tgz!//LICENSE",
-      "collected": "2026-11-16"
+      "source": "https://registry.npmjs.org/@xyflow/react/-/react-13.0.3.tgz!//LICENSE",
+      "collected": "2026-11-26"
     },
     {
-      "file": "LICENSES/npm/node_modules/@xyflow/system/0.0.84/LICENSE",
+      "file": "LICENSES/npm/node_modules/@xyflow/system/1.0.1/LICENSE",
       "bytes": 1073,
       "sha256": "023119ac20fb1c8c9930abe0bcd196989a1960388529a96fc43cebf96f07c9ff",
-      "source": "https://registry.npmjs.org/@xyflow/system/-/system-0.0.84.tgz!//LICENSE",
-      "collected": "2026-11-16"
+      "source": "https://registry.npmjs.org/@xyflow/system/-/system-1.0.1.tgz!//LICENSE",
+      "collected": "2026-11-26"
     },
     {
       "file": "LICENSES/npm/node_modules/@yui540/comimi/0.26.0/LICENSE",
@@ -7339,6 +7339,13 @@
       "collected": "2026-11-16"
     },
     {
+      "file": "LICENSES/npm/node_modules/react-compiler-runtime/1.0.0/LICENSE",
+      "bytes": 1088,
+      "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+      "source": "https://api.github.com/repos/facebook/react/git/blobs/b93be90515ccd0b9daedaa589e42bf5929693f1f#gitHead=5c15c1cd3442f28044217703b5625f98c40042ee",
+      "collected": "2026-11-26"
+    },
+    {
       "file": "LICENSES/npm/node_modules/react-dom/19.3.1/LICENSE",
       "bytes": 1088,
       "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
@@ -7556,13 +7563,6 @@
       "collected": "2026-11-16"
     },
     {
-      "file": "LICENSES/npm/node_modules/use-sync-external-store/1.7.0/LICENSE",
-      "bytes": 1088,
-      "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
-      "source": "https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.7.0.tgz!//LICENSE",
-      "collected": "2026-11-16"
-    },
-    {
       "file": "LICENSES/npm/node_modules/vite/8.3.8/LICENSE.md",
       "bytes": 98196,
       "sha256": "a22152baa1aef74402443008e767e7c689a524c0909d19b0431d97f5ab066a13",
@@ -7668,11 +7668,11 @@
       "collected": "2026-11-16"
     },
     {
-      "file": "LICENSES/npm/node_modules/zustand/4.5.7/LICENSE",
+      "file": "LICENSES/npm/node_modules/zustand/5.1.0/LICENSE",
       "bytes": 1070,
       "sha256": "c1e6e266563517467b1bf874817d23e426f3149252bd7d42758cd697514b8417",
-      "source": "https://registry.npmjs.org/zustand/-/zustand-4.5.7.tgz!//LICENSE",
-      "collected": "2026-11-16"
+      "source": "https://registry.npmjs.org/zustand/-/zustand-5.1.0.tgz!//LICENSE",
+      "collected": "2026-11-26"
     },
     {
       "file": "LICENSES/go-runtime/go1.27.4/LICENSE",
@@ -7954,8 +7954,8 @@
   ],
   "inputs": {
     "go.mod": "cfbe52c69ccd545c4cb545f299d87ebad0aae9223bb91f4dc137753c93c0c3af",
-    "web/package-lock.json": "4cff91721c6800ab86d3c126b1cfbc96366107ee24e93fefa3bcbb3cfa2b17c6",
+    "web/package-lock.json": "bf6bdfea08c78d0ee95522f1b44f0a4d3d21aebda0e1c84c6eb30d8351a4f476",
     "go.sum": "f66af9e64a3f83ead3b55893eaa2702174da0cc16916f9854255c681138b507e",
-    "web/package.json": "8c0be23bcec6a29b83dcf6736833e791fcf48f86372304938f4f44b6a59c2ff7"
+    "web/package.json": "0a4a63aa141341cbda50aa10b50ee2a04c574e274d826fef4eef9ce8a242a440"
   }
 }

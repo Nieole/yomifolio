@@ -12,7 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@xyflow/react": "^12.12.1",
+    "@xyflow/react": "^13.0.3",
     "@yui540/comimi": "^0.26.0",
     "@yui540/comimi-react": "^0.3.0",
     "axios": "^1.21.1",
