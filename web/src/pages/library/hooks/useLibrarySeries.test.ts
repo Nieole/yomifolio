@@ -207,3 +207,31 @@ it('shared scan refresh updates every loaded page without resetting its cursor c
   expect(idsOf(view.result.current.allSeries)).toEqual([1, 2, 3, 4, 5, 6]);
   expect(view.result.current.pageCursorMap[3]).toBe('cur-3');
 });
+
+describe('资料库列表按识别状态筛选', () => {
+  it('把识别状态与其它条件一起带进查询', async () => {
+    serverSeries = [seriesOf(1)];
+    renderHook(() =>
+      useLibrarySeries({
+        libId: '1',
+        page: 1,
+        pageSize: PAGE_SIZE,
+        activeTag: null,
+        activeAuthor: null,
+        activeStatus: 'ongoing',
+        activeIdentification: 'not_found',
+        activeLetter: null,
+        advanced: EMPTY_ADVANCED_FILTERS,
+        sortByField: 'name',
+        sortDir: 'asc',
+        refreshTrigger: 0,
+        enabled: true,
+      }),
+    );
+    await settle();
+
+    const query = new URLSearchParams(requests[0]);
+    expect(query.get('identification')).toBe('not_found');
+    expect(query.get('status')).toBe('ongoing');
+  });
+});

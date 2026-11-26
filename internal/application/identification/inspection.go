@@ -337,12 +337,12 @@ const CategoryDisputedOwnerIdentification = "disputed_owner_identification"
 var ErrNoOwnerIdentification = errors.New("series has no identification a person confirmed")
 
 // ReportCategories are the categories Report takes, in the order agents are offered them.
-var ReportCategories = []string{CategoryDirectoryGrouping, CategorySuspectedDuplicate, CategoryTagProblem, CategoryDisputedOwnerIdentification}
+var ReportCategories = []string{CategoryDirectoryGrouping, CategorySuspectedDuplicate, CategoryTagProblem, CategoryProtectedValueDoubt, CategoryDisputedOwnerIdentification}
 
 // ReportInput is one report an agent leaves the owner on a series.
 type ReportInput struct {
 	SeriesID int64  `json:"series_id"`
-	Category string `json:"category" jsonschema:"directory_grouping, suspected_duplicate or tag_problem leave a note; disputed_owner_identification sends a series a person identified to the owner's recheck"`
+	Category string `json:"category" jsonschema:"directory_grouping, suspected_duplicate, tag_problem or protected_value_doubt leave a note; disputed_owner_identification sends a series a person identified to the owner's recheck"`
 	Reason   string `json:"reason" jsonschema:"one checkable sentence, at most 1000 bytes"`
 }
 

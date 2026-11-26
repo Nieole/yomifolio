@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react';
 import { useLibraryInvalidation } from '../../../session/ApplicationSessionProvider';
 import { apiClient } from '../../../api/client';
 import { getApiErrorMessage } from '../../../api/client';
+import type { SeriesIdentification } from '../../../api/generated';
+import { identifyAsOwner, isIdentificationSource, loadIdentification, ownerPickErrorKey, ownerPickMessage } from '../../../features/identification/ownerPick';
 import type { SearchResult, Series } from '../types';
 
 
@@ -25,11 +27,16 @@ export function useSeriesScrape({ seriesId, series, reload, showToast, t }: UseS
   const [selectedSearchResult, setSelectedSearchResult] = useState<SearchResult | null>(null);
   const [currentOffset, setCurrentOffset] = useState(0);
   const [searchTotal, setSearchTotal] = useState(0);
+  // 弹窗打开时系列的识别：弹窗据此提示撤换、标出排除候选。
+  const [searchIdentification, setSearchIdentification] = useState<SeriesIdentification | null>(null);
+  // 每记下一次人工识别就加一，识别区据此重读服务端的识别。
+  const [identificationRevision, setIdentificationRevision] = useState(0);
 
   const closeSearchModal = useCallback(() => {
     setShowSearchModal(false);
     setSearchResults([]);
     setSelectedSearchResult(null);
+    setSearchIdentification(null);
   }, []);
 
   const handleScrape = useCallback(
@@ -42,7 +49,11 @@ export function useSeriesScrape({ seriesId, series, reload, showToast, t }: UseS
       if (providerKey !== 'llm') {
         setIsScraping(true);
         try {
-          const res = await apiClient.get(`/api/series/${seriesId}/scrape-search?provider=${providerKey}`);
+          const [res, identification] = await Promise.all([
+            apiClient.get(`/api/series/${seriesId}/scrape-search?provider=${providerKey}`),
+            isIdentificationSource(providerKey) ? loadIdentification(seriesId) : Promise.resolve(null),
+          ]);
+          setSearchIdentification(identification);
           setSearchProvider(providerKey);
           setModalSearchQuery(series?.title?.Valid && series.title.String ? series.title.String : series?.name || '');
           setShowSearchModal(true);
@@ -98,6 +109,25 @@ export function useSeriesScrape({ seriesId, series, reload, showToast, t }: UseS
   const handleApplyMetadata = useCallback(
     async (metadata: SearchResult) => {
       if (!seriesId) return;
+      // 目录来源的条目挑中即记为人工确认的识别，按识别策略补充；被排除的条目挑不进去时弹窗留着，
+      // 让人改挑别的条目。
+      if (isIdentificationSource(searchProvider)) {
+        setIsScraping(true);
+        try {
+          const out = await identifyAsOwner(seriesId, searchProvider, metadata);
+          const message = ownerPickMessage(out);
+          closeSearchModal();
+          invalidateLibrary({ areas: ['reviews'] });
+          setIdentificationRevision((n) => n + 1);
+          showToast(t(message.key, message.params), 'success');
+          await reload();
+        } catch (err) {
+          showToast(t(ownerPickErrorKey(err)), 'error');
+        } finally {
+          setIsScraping(false);
+        }
+        return;
+      }
       setShowSearchModal(false);
       setIsScraping(true);
       try {
@@ -130,7 +160,7 @@ export function useSeriesScrape({ seriesId, series, reload, showToast, t }: UseS
         setSelectedSearchResult(null);
       }
     },
-    [seriesId, searchProvider, reload, showToast, t, invalidateLibrary],
+    [seriesId, searchProvider, reload, showToast, t, invalidateLibrary, closeSearchModal],
   );
 
   const handleModalReSearch = useCallback(
@@ -176,6 +206,8 @@ export function useSeriesScrape({ seriesId, series, reload, showToast, t }: UseS
     setSelectedSearchResult,
     currentOffset,
     searchTotal,
+    searchIdentification,
+    identificationRevision,
     handleScrape,
     handleApplyMetadata,
     handleModalReSearch,

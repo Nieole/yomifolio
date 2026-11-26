@@ -17,7 +17,9 @@ type AuthorCorrection struct {
 	Reason string            `json:"reason"`
 }
 
-func correctAuthors(before []seriesmeta.Author, sources []metadata.FieldEvidence, corrections []AuthorCorrection) ([]seriesmeta.Author, error) {
+// correctAuthors applies the corrections to the expected group and, when appendSources is set,
+// appends every source credit as well. Each correction's To joins the group either way.
+func correctAuthors(before []seriesmeta.Author, sources []metadata.FieldEvidence, corrections []AuthorCorrection, appendSources bool) ([]seriesmeta.Author, error) {
 	supplied := []seriesmeta.Author{}
 	for _, source := range sources {
 		for _, a := range source.Metadata.Authors {
@@ -47,6 +49,12 @@ func correctAuthors(before []seriesmeta.Author, sources []metadata.FieldEvidence
 		if !removed[a] {
 			out = append(out, a)
 		}
+	}
+	if !appendSources {
+		for _, c := range corrections {
+			out = append(out, c.To)
+		}
+		return seriesmeta.AuthorSet(out), nil
 	}
 	for _, a := range supplied {
 		if !removed[a] {

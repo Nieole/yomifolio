@@ -49,11 +49,11 @@ func registerMCPInspection(server *mcp.Server, service *identification.Service, 
 		out, err := service.TagUsage(ctx, subject, in)
 		return nil, out, publicMCPToolError(err, "invalid tag count; sort is count or name, limit 1-100, offset at least 0 and library_ids at most 256 positive library IDs", "tag count unavailable; retry later")
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_report_series", InputSchema: reportInputSchema(), Description: `Report a series to the owner. Notes change nothing: directory_grouping (mixes or splits works), suspected_duplicate (name the other series_id), tag_problem; one the series has, even closed, is not noted again (recorded false). disputed_owner_identification sends a series a person identified to recheck. Needs only read. Example: {"series_id":12,"category":"tag_problem","reason":"bad tags"}`, Annotations: &mcp.ToolAnnotations{IdempotentHint: true, DestructiveHint: new(bool), OpenWorldHint: new(bool)}}, func(ctx context.Context, _ *mcp.CallToolRequest, in identification.ReportInput) (*mcp.CallToolResult, identification.Report, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_report_series", InputSchema: reportInputSchema(), Description: `Report a series to the owner. Notes change nothing: directory_grouping (mixes or splits works), suspected_duplicate (name the other series_id), tag_problem, protected_value_doubt (a value you may not change is wrong); each once per series, even if closed. disputed_owner_identification sends a person's identification to recheck. Example: {"series_id":12,"category":"tag_problem","reason":"bad tags"}`, Annotations: &mcp.ToolAnnotations{IdempotentHint: true, DestructiveHint: new(bool), OpenWorldHint: new(bool)}}, func(ctx context.Context, _ *mcp.CallToolRequest, in identification.ReportInput) (*mcp.CallToolResult, identification.Report, error) {
 		out, err := service.Report(ctx, subject, in)
 		if errors.Is(err, identification.ErrNoOwnerIdentification) {
 			return nil, out, errNoOwnerIdentification
 		}
-		return nil, out, publicMCPToolError(err, "invalid report; category is directory_grouping, suspected_duplicate, tag_problem or disputed_owner_identification and reason one sentence of at most 1000 bytes; escalating for identification is a verdict of library_submit_verdicts, which needs metadata_write", "report unavailable; retry later")
+		return nil, out, publicMCPToolError(err, "invalid report; category is directory_grouping, suspected_duplicate, tag_problem, protected_value_doubt or disputed_owner_identification and reason one sentence of at most 1000 bytes; escalating for identification is a verdict of library_submit_verdicts, which needs metadata_write", "report unavailable; retry later")
 	})
 }

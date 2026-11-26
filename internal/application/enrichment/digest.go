@@ -79,6 +79,38 @@ type relationCommandV1 struct {
 	Reason         string `json:"reason"`
 }
 
+// authorsCommandV1 and coverCommandV1 are the primitives' own commands, each distinguished by its
+// leading discriminator. Expected authors are a set, encoded as AuthorSet orders it.
+type authorsCommandV1 struct {
+	Command     string         `json:"command"`
+	RequestKey  string         `json:"request_key"`
+	SeriesID    int64          `json:"series_id"`
+	Expected    []authorV1     `json:"expected_authors"`
+	Corrections []correctionV1 `json:"corrections"`
+}
+type coverCommandV1 struct {
+	Command    string `json:"command"`
+	RequestKey string `json:"request_key"`
+	SeriesID   int64  `json:"series_id"`
+	BookID     int64  `json:"book_id"`
+	Page       int64  `json:"page"`
+	Reason     string `json:"reason"`
+}
+
+func authorsDigest(in AuthorsInput) string {
+	command := authorsCommandV1{Command: "correct_authors", RequestKey: in.RequestKey, SeriesID: in.SeriesID, Expected: []authorV1{}, Corrections: []correctionV1{}}
+	for _, a := range seriesmeta.AuthorSet(in.Expected) {
+		command.Expected = append(command.Expected, authorV1{Name: a.Name, Role: a.Role})
+	}
+	for _, c := range in.Corrections {
+		command.Corrections = append(command.Corrections, correctionV1{From: authorV1{Name: c.From.Name, Role: c.From.Role}, To: authorV1{Name: c.To.Name, Role: c.To.Role}, Reason: c.Reason})
+	}
+	return commandHash(command)
+}
+func coverDigest(in CoverInput) string {
+	return commandHash(coverCommandV1{Command: "improve_cover", RequestKey: in.RequestKey, SeriesID: in.SeriesID, BookID: in.BookID, Page: in.Page, Reason: in.Reason})
+}
+
 func applyDigest(in Input) string {
 	expected := expectedV1{Title: in.Expected.Title, Summary: in.Expected.Summary, Publisher: in.Expected.Publisher, Status: in.Expected.Status, Rating: in.Expected.Rating, Tags: in.Expected.Tags}
 	// Preserve base08's nil versus empty link representation, as for tags above.

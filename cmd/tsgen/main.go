@@ -42,6 +42,7 @@ var targets = []reflect.Type{
 	reflect.TypeOf(delegated.Subject{}),
 	reflect.TypeOf(metadata.FieldEvidence{}),
 	reflect.TypeOf(metadata.SourceFacts{}),
+	reflect.TypeOf(metadata.TagVote{}),
 	reflect.TypeOf(metadata.SiteRating{}),
 	reflect.TypeOf(metadata.SeriesAuthor{}),
 	reflect.TypeOf(seriesmeta.Link{}),
@@ -94,6 +95,7 @@ var targets = []reflect.Type{
 	reflect.TypeOf(identification.EvidenceSignals{}),
 	reflect.TypeOf(identification.PrefetchLaunch{}),
 	reflect.TypeOf(identification.ResearchResult{}),
+	reflect.TypeOf(identification.OwnerIdentification{}),
 }
 
 // nullTypes 记录 sql.Null* 到 contracts.ts 导出名的映射；用到哪些就 import 哪些。

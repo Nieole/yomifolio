@@ -78,7 +78,7 @@ func newTaskTestStore(t testing.TB) task.Store {
 	t.Helper()
 
 	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "tasks.db")+
-		"?_pragma=foreign_keys(1)&_pragma=busy_timeout=15000&_txlock=immediate")
+		"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=busy_timeout=15000&_txlock=immediate")
 	if err != nil {
 		t.Fatalf("打开任务库失败: %v", err)
 	}

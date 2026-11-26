@@ -45,6 +45,7 @@ export interface IdentificationBasis {
   entries: IdentifiedEntry[];
   placeholder_title?: boolean;
   superseded_proposals: number[];
+  retracted?: IdentifiedEntry;
 }
 
 export interface IdentifiedEntry {
@@ -150,6 +151,7 @@ export interface SourceFacts {
   SiteRating?: SiteRating;
   Rating: number;
   Tags: string[];
+  TagVotes?: TagVote[];
   Authors: SeriesAuthor[];
   SourceID: number;
   SourceURL: string;
@@ -157,6 +159,11 @@ export interface SourceFacts {
   Confidence: number;
   ReleaseDate: string;
   VolumeCount: number;
+}
+
+export interface TagVote {
+  name: string;
+  votes: number;
 }
 
 export interface SiteRating {
@@ -646,5 +653,12 @@ export interface ResearchResult {
   added: string[];
   dropped?: number;
   packet?: EvidencePacket;
+}
+
+export interface OwnerIdentification {
+  identification: SeriesIdentification;
+  replaced?: Conclusion;
+  retraction_id?: string;
+  operation_id?: string;
 }
 

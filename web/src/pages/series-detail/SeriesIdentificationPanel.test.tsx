@@ -64,14 +64,16 @@ const REVIEWED: SeriesIdentification = {
   owner_review: { user_id: 1, user_name: 'admin', reviewed_at: '2026-03-01T00:00:00Z' },
 };
 
-function renderPanel() {
-  render(
+function renderPanel(props: Partial<Parameters<typeof SeriesIdentificationPanel>[0]> = {}) {
+  const ui = (extra: Partial<Parameters<typeof SeriesIdentificationPanel>[0]>) => (
     <LocaleProvider initialLocale="zh-CN" initialMessages={zhCN} fallbackMessages={zhCN}>
       <ToastProvider>
-        <SeriesIdentificationPanel seriesId={7} />
+        <SeriesIdentificationPanel seriesId={7} {...props} {...extra} />
       </ToastProvider>
-    </LocaleProvider>,
+    </LocaleProvider>
   );
+  const view = render(ui({}));
+  return { rerender: (extra: Partial<Parameters<typeof SeriesIdentificationPanel>[0]>) => view.rerender(ui(extra)) };
 }
 
 afterEach(() => {
@@ -123,5 +125,34 @@ describe('SeriesIdentificationPanel', () => {
     expect(await screen.findByText('需要管理员权限')).toBeTruthy();
     expect(screen.getByTestId('identification-status').textContent).toBe('已识别');
     expect(within(document.body).getByRole('button', { name: '设为已审定' })).toBeTruthy();
+  });
+
+  it('replaces a source identification through the manual search of that source', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue({ data: IDENTIFIED } as never);
+    const onReplace = vi.fn();
+    renderPanel({ onReplace, replaceableSources: ['bangumi'] });
+
+    const [bangumi, anilist] = await screen.findAllByRole('button', { name: '撤换' });
+    fireEvent.click(bangumi);
+    expect(onReplace).toHaveBeenCalledWith('bangumi');
+    // A source that is not enabled has no manual search to replace from.
+    expect(anilist).toHaveProperty('disabled', true);
+    fireEvent.click(anilist);
+    expect(onReplace).toHaveBeenCalledTimes(1);
+  });
+
+  it('rereads the identification after an owner pick elsewhere on the page', async () => {
+    const picked: SeriesIdentification = {
+      ...IDENTIFIED,
+      conclusions: [{ ...IDENTIFIED.conclusions[0], entry_id: '43', title: '撤换后的作品', proposal_id: 0, confirmer: { kind: 'owner', user_id: 1, user_name: 'admin', credential_id: '', credential_name: '' } }],
+    };
+    const get = vi.spyOn(apiClient, 'get').mockResolvedValueOnce({ data: IDENTIFIED } as never).mockResolvedValueOnce({ data: picked } as never);
+    const view = renderPanel({ revision: 0 });
+    expect(await screen.findByRole('link', { name: /中文名/ })).toBeTruthy();
+
+    view.rerender({ revision: 1 });
+    expect(await screen.findByRole('link', { name: /撤换后的作品/ })).toBeTruthy();
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('在手动搜索中挑中')).toBeTruthy();
   });
 });

@@ -36,6 +36,7 @@ var fieldScopes = map[string]string{
 	"identification.source_intervals_ms.bangumi": "immediate", "identification.source_intervals_ms.anilist": "immediate",
 	"identification.source_priority":              "immediate",
 	"identification.source_intervals_ms.mangadex": "immediate", "identification.source_intervals_ms.myanimelist": "immediate", "identification.source_intervals_ms.comicvine": "immediate",
+	"identification.tags.min_votes": "immediate", "identification.tags.blocklist": "immediate", "identification.tags.max_per_series": "immediate",
 	"protocols.opds.enabled": "immediate", "protocols.mihon.enabled": "immediate",
 	"koreader.enabled": "immediate", "koreader.base_path": "immediate", "koreader.allow_registration": "immediate",
 	"koreader.match_mode": "next_operation", "koreader.path_ignore_extension": "next_operation",

@@ -27,14 +27,14 @@ type replacement struct {
 	Status        string   `json:"status"`
 	Problem       string   `json:"problem"`
 	Message       string   `json:"message"`
-	WithdrawalIDs []string `json:"withdrawal_ids"`
+	RetractionIDs []string `json:"retraction_ids"`
 	OperationID   string   `json:"operation_id"`
 }
 
-func (a *mainLoopAgent) replace(key string, series int64, withdraw, candidates []string, reason string) replacement {
+func (a *mainLoopAgent) replace(key string, series int64, candidates []string, reason string) replacement {
 	a.t.Helper()
 	var out replacement
-	args := map[string]any{"request_key": key, "series_id": series, "withdraw": withdraw, "candidate_ids": candidates, "reason": reason}
+	args := map[string]any{"request_key": key, "series_id": series, "candidate_ids": candidates, "reason": reason}
 	if result := a.call("library_replace_identification", args, &out); result.IsError {
 		a.t.Fatalf("replacement %s refused: %s", key, resultText(result))
 	}
@@ -52,19 +52,22 @@ func twoBangumiEntries(source, _ string) ([]*metadata.SeriesMetadata, error) {
 	}, nil
 }
 
-// undoReceipt mirrors the parts of an undo or withdrawal receipt the tests read.
-type undoReceipt struct {
-	ID       string `json:"id"`
-	Kind     string `json:"kind"`
-	ParentID string `json:"parent_id"`
-	Outcome  string `json:"outcome"`
-	Fields   []struct {
+// retractionReceipt mirrors the parts of a retraction receipt the tests read.
+type retractionReceipt struct {
+	Kind           string `json:"kind"`
+	Outcome        string `json:"outcome"`
+	Identification struct {
+		Retracted struct {
+			CandidateID string `json:"candidate_id"`
+		} `json:"retracted"`
+	} `json:"identification"`
+	Fields []struct {
 		Field   string `json:"field"`
 		Changed bool   `json:"changed"`
 	} `json:"fields"`
 }
 
-func (r undoReceipt) changed(field string) bool {
+func (r retractionReceipt) changed(field string) bool {
 	for _, f := range r.Fields {
 		if f.Field == field {
 			return f.Changed
@@ -73,9 +76,9 @@ func (r undoReceipt) changed(field string) bool {
 	return false
 }
 
-func (a *mainLoopAgent) undoReceipt(operation string) undoReceipt {
+func (a *mainLoopAgent) retraction(operation string) retractionReceipt {
 	a.t.Helper()
-	var out undoReceipt
+	var out retractionReceipt
 	if result := a.call("library_get_metadata_operation", map[string]any{"operation_id": operation}, &out); result.IsError {
 		a.t.Fatalf("receipt %s refused: %s", operation, resultText(result))
 	}
@@ -95,15 +98,15 @@ func TestAgentReplacesItsIdentificationAndKeepsWhatWasChangedSince(t *testing.T)
 		t.Fatalf("prefetch run %+v", run)
 	}
 	agent := web.mainLoopAgent(cfg, 1, []int64{library.lib.ID}, []string{delegated.Read, delegated.MetadataWrite})
-	original := agent.identifyAll("identify", map[int64][]string{id: {"bangumi:1"}})[id].OperationID
+	agent.identifyAll("identify", map[int64][]string{id: {"bangumi:1"}})
 	if got := web.series(id); got.Title.String != "错的作品" || got.Summary.String != "Wrong summary" || got.Rating.Float64 != 6 {
 		t.Fatalf("identified series %+v", got)
 	}
 	// The owner rates the series by hand after the identification.
 	setSeries(t, store, id, func(p *database.UpdateSeriesMetadataParams) { p.Rating = sql.NullFloat64{Float64: 7, Valid: true} })
 
-	result := agent.replace("fix", id, []string{"bangumi:1"}, []string{"bangumi:2"}, "the summary describes another work")
-	if !result.Accepted || result.Status != "identified" || len(result.WithdrawalIDs) != 1 || result.OperationID == "" || result.Problem != "" {
+	result := agent.replace("fix", id, []string{"bangumi:2"}, "the summary describes another work")
+	if !result.Accepted || result.Status != "identified" || len(result.RetractionIDs) != 1 || result.OperationID == "" || result.Problem != "" {
 		t.Fatalf("replacement %+v", result)
 	}
 	// What the wrong entry brought is taken back and filled again from the right one: the
@@ -128,19 +131,19 @@ func TestAgentReplacesItsIdentificationAndKeepsWhatWasChangedSince(t *testing.T)
 		t.Fatalf("conclusions after replacement %+v", identification.Conclusions)
 	}
 
-	// Both operations leave receipts: the withdrawal undoes the old supplementation field by field,
+	// Both operations leave receipts: the retraction takes back what the old entry supplemented,
 	// and the new supplementation is an ordinary identification receipt.
-	withdrawal := agent.undoReceipt(result.WithdrawalIDs[0])
-	if withdrawal.Kind != "undo" || withdrawal.ParentID != original || withdrawal.Outcome != "changed" ||
-		!withdrawal.changed("title") || !withdrawal.changed("summary") || !withdrawal.changed("source_links") || withdrawal.changed("rating") {
-		t.Fatalf("withdrawal receipt %+v", withdrawal)
+	retraction := agent.retraction(result.RetractionIDs[0])
+	if retraction.Kind != "enrich" || retraction.Identification.Retracted.CandidateID != "bangumi:1" || retraction.Outcome != "changed" ||
+		!retraction.changed("title") || !retraction.changed("summary") || !retraction.changed("source_links") || retraction.changed("rating") {
+		t.Fatalf("retraction receipt %+v", retraction)
 	}
 	if r := agent.receipt(result.OperationID); r.Kind != "enrich" || r.Identification == nil || !r.Identification.PlaceholderTitle || !r.changed("summary") || r.changed("rating") {
 		t.Fatalf("supplementation receipt %+v", r)
 	}
 
 	// The same request replays its result without writing again.
-	if again := agent.replace("fix", id, []string{"bangumi:1"}, []string{"bangumi:2"}, "the summary describes another work"); !reflect.DeepEqual(again, result) {
+	if again := agent.replace("fix", id, []string{"bangumi:2"}, "the summary describes another work"); !reflect.DeepEqual(again, result) {
 		t.Fatalf("replay %+v want %+v", again, result)
 	}
 }
@@ -164,7 +167,7 @@ func twoEntriesPerSource(source, _ string) ([]*metadata.SeriesMetadata, error) {
 
 func wantRefused(t *testing.T, got replacement, problem string) {
 	t.Helper()
-	if got.Accepted || got.Problem != problem || got.Message == "" || got.OperationID != "" || len(got.WithdrawalIDs) != 0 {
+	if got.Accepted || got.Problem != problem || got.Message == "" || got.OperationID != "" || len(got.RetractionIDs) != 0 {
 		t.Fatalf("replacement %+v want refusal %s with a next step", got, problem)
 	}
 }
@@ -186,7 +189,7 @@ func TestAgentReplacesOnlyAgentIdentificationsOfIdentifiedSeries(t *testing.T) {
 	identified := web.series(id)
 
 	// A person's identification is out of reach; the refusal points at the report instead.
-	refused := agent.replace("owner", owned, []string{"bangumi:4711"}, []string{"bangumi:2"}, "another work")
+	refused := agent.replace("owner", owned, []string{"bangumi:2"}, "another work")
 	wantRefused(t, refused, "owner_confirmed")
 	if !strings.Contains(refused.Message, "library_report_series") || !strings.Contains(refused.Message, "disputed_owner_identification") {
 		t.Fatalf("refusal names no report: %s", refused.Message)
@@ -195,10 +198,10 @@ func TestAgentReplacesOnlyAgentIdentificationsOfIdentifiedSeries(t *testing.T) {
 		t.Fatalf("owner's identification after a refused replacement %+v", got)
 	}
 
-	wantRefused(t, agent.replace("unknown", id, []string{"bangumi:9"}, []string{"bangumi:2"}, "another work"), "not_concluded")
-	wantRefused(t, agent.replace("taken", id, []string{"bangumi:1"}, []string{"bangumi:2", "anilist:2"}, "another work"), "source_taken")
-	wantRefused(t, agent.replace("excluded", id, []string{"bangumi:1"}, []string{"bangumi:3"}, "another work"), "excluded_candidate")
-	wantRefused(t, agent.replace("missing", id, []string{"bangumi:1"}, []string{"mangadex:5"}, "another work"), "not_in_evidence")
+	wantRefused(t, agent.replace("unknown", id, []string{"bangumi:2", "mangadex:5"}, "another work"), "not_concluded")
+	wantRefused(t, agent.replace("same", id, []string{"bangumi:2", "anilist:1"}, "another work"), "already_identified")
+	wantRefused(t, agent.replace("excluded", id, []string{"bangumi:3"}, "another work"), "excluded_candidate")
+	wantRefused(t, agent.replace("missing", id, []string{"bangumi:9"}, "another work"), "not_in_evidence")
 	if got := web.series(id); !reflect.DeepEqual(got, identified) {
 		t.Fatalf("a refused replacement changed the series: %+v want %+v", got, identified)
 	}
@@ -206,7 +209,7 @@ func TestAgentReplacesOnlyAgentIdentificationsOfIdentifiedSeries(t *testing.T) {
 	// While the owner holds the series, the agent leaves it alone.
 	review := fmt.Sprintf("/api/identification/series/%d/owner-review", id)
 	web.call("PUT", review, 200, nil)
-	if got := agent.replace("reviewed", id, []string{"bangumi:1"}, []string{"bangumi:2"}, "another work"); got.Status != "owner_reviewed" {
+	if got := agent.replace("reviewed", id, []string{"bangumi:2"}, "another work"); got.Status != "owner_reviewed" {
 		t.Fatalf("replacement of an owner-reviewed series %+v", got)
 	} else {
 		wantRefused(t, got, "owner_holds")
@@ -216,7 +219,7 @@ func TestAgentReplacesOnlyAgentIdentificationsOfIdentifiedSeries(t *testing.T) {
 	if run := web.scan(library.lib.ID, false); run.Status != task.StatusCompleted {
 		t.Fatalf("scan %+v", run)
 	}
-	if got := agent.replace("recheck", id, []string{"bangumi:1"}, []string{"bangumi:2"}, "another work"); got.Status != "needs_recheck" {
+	if got := agent.replace("recheck", id, []string{"bangumi:2"}, "another work"); got.Status != "needs_recheck" {
 		t.Fatalf("replacement of a series awaiting recheck %+v", got)
 	} else {
 		wantRefused(t, got, "owner_holds")
@@ -238,7 +241,7 @@ func TestReplacingOneSourceKeepsTheOthersIdentification(t *testing.T) {
 	agent := web.mainLoopAgent(cfg, 1, []int64{library.lib.ID}, []string{delegated.Read, delegated.MetadataWrite})
 	agent.identifyAll("identify", map[int64][]string{id: {"bangumi:1", "anilist:1"}})
 
-	result := agent.replace("fix", id, []string{"bangumi:1"}, []string{"bangumi:2"}, "entry 1 is another volume set")
+	result := agent.replace("fix", id, []string{"bangumi:2"}, "entry 1 is another volume set")
 	if !result.Accepted || result.Status != "identified" {
 		t.Fatalf("replacement %+v", result)
 	}
@@ -251,14 +254,14 @@ func TestReplacingOneSourceKeepsTheOthersIdentification(t *testing.T) {
 		t.Fatalf("conclusions %+v", got.Conclusions)
 	}
 
-	// A later replacement takes back what the earlier one supplemented, and nothing the first
-	// identification left is withdrawn twice.
-	again := agent.replace("fix-anilist", id, []string{"anilist:1"}, []string{"anilist:2"}, "AniList 1 is the novel")
-	if !again.Accepted || len(again.WithdrawalIDs) != 1 || again.WithdrawalIDs[0] == result.WithdrawalIDs[0] {
+	// A later replacement takes back what the remaining entry supplemented, through the earlier
+	// replacement's supplementation, and leaves what the new Bangumi entry brought.
+	again := agent.replace("fix-anilist", id, []string{"anilist:2"}, "AniList 1 is the novel")
+	if !again.Accepted || len(again.RetractionIDs) != 1 || again.RetractionIDs[0] == result.RetractionIDs[0] {
 		t.Fatalf("second replacement %+v after %+v", again, result)
 	}
-	if parent := agent.undoReceipt(again.WithdrawalIDs[0]).ParentID; parent != result.OperationID {
-		t.Fatalf("second withdrawal undoes %s, want the first replacement's supplementation %s", parent, result.OperationID)
+	if r := agent.retraction(again.RetractionIDs[0]); r.Identification.Retracted.CandidateID != "anilist:1" || !r.changed("publisher") || r.changed("title") {
+		t.Fatalf("second retraction %+v", r)
 	}
 	if got := web.series(id); got.Title.String != "番组 2" || got.Summary.String != "Bangumi summary 2" || got.Publisher.String != "AniList publisher 2" {
 		t.Fatalf("series after the second replacement %+v", got)
@@ -447,5 +450,64 @@ func TestAgentDisputesAPersonsIdentificationForTheOwnerToRecheck(t *testing.T) {
 	}
 	if got := web.identification(unconcluded); got.Status != "unprocessed" {
 		t.Fatalf("refused dispute changed the status %+v", got)
+	}
+}
+
+// pointsAtProtectedValueNote reports whether a refusal tells the agent to note the value instead.
+func pointsAtProtectedValueNote(message string) bool {
+	return strings.Contains(message, "library_report_series") && strings.Contains(message, "protected_value_doubt")
+}
+
+func TestAgentNotesAProtectedValueInsteadOfChangingIt(t *testing.T) {
+	store, cfg := fixture(t)
+	// The owner applied a Bangumi proposal long ago and then changed the publisher by hand.
+	lib, series := identifiedSeries(t, store, `<ComicInfo><Series>Monster</Series></ComicInfo>`)
+	web := openIdentificationWeb(t, store, cfg)
+	defer web.process.Close()
+	web.setupAdmin()
+	agent := web.mainLoopAgent(cfg, 1, []int64{lib.ID}, []string{delegated.Read, delegated.MetadataWrite})
+
+	// Refusals of a person's edit, a ComicInfo value or a lock point at the note.
+	if got := agent.correct("owner-edit", series.ID, "publisher", "Shogakukan", "the colophon names Shogakukan"); !pointsAtProtectedValueNote(got.Message) {
+		t.Fatalf("refusal of a person's edit %+v", got)
+	}
+	if got := agent.correct("locked", series.ID, "title", "怪物", "Bangumi names it 怪物"); !pointsAtProtectedValueNote(got.Message) {
+		t.Fatalf("refusal of a locked field %+v", got)
+	}
+	before := web.series(series.ID)
+
+	got, result := agent.report(series.ID, "protected_value_doubt", "the publisher is Shogakukan by the colophon, not the one set")
+	if result.IsError || got != (seriesReport{SeriesID: series.ID, Category: "protected_value_doubt", Recorded: true, Status: "identified"}) {
+		t.Fatalf("note %+v %s", got, resultText(result))
+	}
+	notes := web.ownerVerdicts(series.ID).Escalations
+	if len(notes) != 1 || notes[0].Category != "protected_value_doubt" || notes[0].Class != "note" {
+		t.Fatalf("note %+v", notes)
+	}
+	if after := web.series(series.ID); !reflect.DeepEqual(after, before) {
+		t.Fatalf("the note changed the series %+v, was %+v", after, before)
+	}
+	// Like every note, one the owner closed is not raised again.
+	closeNotes(t, store, series.ID, "protected_value_doubt")
+	if again, _ := agent.report(series.ID, "protected_value_doubt", "still the wrong publisher"); again.Recorded || again.Status != "identified" {
+		t.Fatalf("note after the owner closed it %+v", again)
+	}
+}
+
+func TestRefusedCoverImprovementPointsAtTheProtectedValueNote(t *testing.T) {
+	w := openCoverWorld(t)
+	w.exec(`UPDATE books SET cover_locked = 1 WHERE id = ?`, w.book)
+	var out struct {
+		Outcome string `json:"outcome"`
+		Message string `json:"message"`
+	}
+	input := map[string]any{"request_key": "locked", "series_id": w.series, "book_id": w.book, "page": 2, "reason": "page 2 is the full cover art"}
+	if result := w.agent.call("library_improve_cover", input, &out); result.IsError || out.Outcome != "conflict" || !pointsAtProtectedValueNote(out.Message) {
+		t.Fatalf("protected cover %+v %s", out, resultText(result))
+	}
+	w.exec(`UPDATE books SET cover_locked = 0 WHERE id = ?`, w.book)
+	out.Message = ""
+	if result := w.agent.call("library_improve_cover", map[string]any{"request_key": "free", "series_id": w.series, "book_id": w.book, "page": 2, "reason": "page 2 is the full cover art"}, &out); result.IsError || out.Outcome != "changed" || out.Message != "" {
+		t.Fatalf("improved cover %+v %s", out, resultText(result))
 	}
 }

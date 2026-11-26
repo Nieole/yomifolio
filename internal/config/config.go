@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -202,6 +203,8 @@ type Config struct {
 		SourceIntervalsMS SourceIntervals `yaml:"source_intervals_ms" json:"source_intervals_ms"`
 		// SourcePriority 是识别补充取文本字段与作者时的来源先后，排前的先取。
 		SourcePriority SourcePriority `yaml:"source_priority" json:"source_priority"`
+		// Tags 是识别补充追加来源标签前依次经过的过滤：投票阈值、屏蔽列表、每系列上限。
+		Tags TagPolicy `yaml:"tags" json:"tags"`
 	} `yaml:"identification" json:"identification"`
 	Protocols struct {
 		OPDS struct {
@@ -289,6 +292,75 @@ func (p SourcePriority) Order() []string {
 		}
 	}
 	return out
+}
+
+// TagPolicy filters the source tags identification enrichment appends, in order: a vote threshold,
+// a blocklist and a per-series limit.
+type TagPolicy struct {
+	// MinVotes is the votes a tag needs from a source whose tags are votes. Zero means the default, a
+	// negative value turns the threshold off.
+	MinVotes int `yaml:"min_votes" json:"min_votes"`
+	// Blocklist names the tags never appended. An entry is compared as catalogue search text (width,
+	// case, whitespace and punctuation folded away); an entry between slashes is a regular expression
+	// over that text. Nil means the default list, an empty list blocks nothing.
+	Blocklist []string `yaml:"blocklist" json:"blocklist"`
+	// MaxPerSeries is how many source tags one series takes at most. Zero means the default, a negative
+	// value turns the limit off.
+	MaxPerSeries int `yaml:"max_per_series" json:"max_per_series"`
+}
+
+// DefaultTagPolicy keeps what several people agree describes the work. Bangumi's tags are anyone's
+// labels, so three votes rule out one reader's private ones; the blocklist covers the medium, the
+// region, years, publication status and a reader's own status, which source tags repeat on almost
+// every entry; ten tags are enough to find a series by without burying its own.
+var DefaultTagPolicy = TagPolicy{MinVotes: 3, MaxPerSeries: 10, Blocklist: []string{
+	"漫画", "漫畫", "マンガ", "まんが", "コミック", "日漫", "国漫", "韩漫", "美漫", "港漫", "台漫", "条漫", "单行本", "轻小说", "小说", "画集",
+	"manga", "manhwa", "manhua", "comic", "comics", "webtoon", "web comic", "long strip", "full color", "official colored",
+	"日本", "中国", "国产", "大陆", "台湾", "香港", "韩国", "美国", "欧美", "法国", "japan", "japanese", "korea", "korean", "china", "chinese",
+	`/^(19|20)\d{2}(年代|s|年?(\d{1,2}月?)?)$/`, `/^\d{2}(年代|s)$/`,
+	"连载", "连载中", "完结", "已完结", "完結", "未完结",
+	"已购", "已购入", "购入", "已买", "入手", "已入手", "收藏", "已收藏", "藏书", "实体书", "已读", "读过", "在读", "想读", "未读", "看过", "在看", "想看",
+	"补完", "弃坑", "养肥", "追更", "owned", "read", "reading", "plan to read", "dropped", "favorite",
+}}
+
+// Blocks splits the blocklist into its literal entries and its regular expressions. Blank entries
+// and expressions that do not compile are left out; validation reports the latter.
+func (p TagPolicy) Blocks() (literals []string, patterns []*regexp.Regexp) {
+	for _, entry := range p.Blocklist {
+		entry = strings.TrimSpace(entry)
+		if expr, ok := tagPattern(entry); ok {
+			if re, err := regexp.Compile(expr); err == nil {
+				patterns = append(patterns, re)
+			}
+			continue
+		}
+		if entry != "" {
+			literals = append(literals, entry)
+		}
+	}
+	return literals, patterns
+}
+
+// tagPattern is the regular expression a blocklist entry between slashes spells.
+func tagPattern(entry string) (string, bool) {
+	if len(entry) > 2 && strings.HasPrefix(entry, "/") && strings.HasSuffix(entry, "/") {
+		return entry[1 : len(entry)-1], true
+	}
+	return "", false
+}
+
+// withDefaults fills every unset setting with its default.
+func (p TagPolicy) withDefaults() TagPolicy {
+	if p.MinVotes == 0 {
+		p.MinVotes = DefaultTagPolicy.MinVotes
+	}
+	if p.MaxPerSeries == 0 {
+		p.MaxPerSeries = DefaultTagPolicy.MaxPerSeries
+	}
+	if p.Blocklist == nil {
+		p.Blocklist = slices.Clone(DefaultTagPolicy.Blocklist)
+	}
+	return p
 }
 
 const (
@@ -450,6 +522,7 @@ func createDefaultConfig(path string) (*Config, error) {
 	cfg.Cache.PageDiskCacheMaxBytes = DefaultPageDiskCacheMaxBytes
 	cfg.Identification.SourceIntervalsMS = DefaultSourceIntervals
 	cfg.Identification.SourcePriority = slices.Clone(DefaultSourcePriority)
+	cfg.Identification.Tags = TagPolicy{}.withDefaults()
 	cfg.Logging.Level = LogLevelInfo
 	cfg.Scanner.Workers = 0 // 0 表示自动使用 runtime.NumCPU() * 2
 	cfg.Scanner.ScanProfile = ScanProfileMetadata
@@ -537,6 +610,7 @@ func NormalizeConfig(cfg *Config) {
 	if len(cfg.Identification.SourcePriority) == 0 {
 		cfg.Identification.SourcePriority = slices.Clone(DefaultSourcePriority)
 	}
+	cfg.Identification.Tags = cfg.Identification.Tags.withDefaults()
 	level := strings.ToLower(strings.TrimSpace(cfg.Logging.Level))
 	switch level {
 	case LogLevelDebug, LogLevelInfo, LogLevelWarn, LogLevelError:

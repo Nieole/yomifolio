@@ -1,12 +1,17 @@
 import { useCallback, useRef, useState } from 'react';
 import { useLibraryInvalidation } from '../../../session/ApplicationSessionProvider';
 import { apiClient } from '../../../api/client';
+import type { OwnerIdentification, SeriesIdentification } from '../../../api/generated';
+import { identifyAsOwner, isIdentificationSource, loadIdentification, ownerPickErrorKey } from '../../../features/identification/ownerPick';
 import type { MetaTag, SearchResult, Series as DetailSeries } from '../../series-detail/types';
 import type { Series } from '../types';
 
 interface UseSeriesScrapingParams {
+  /** 挑中的结果已加入审核队列（来源不能记为识别时）。 */
   onSuccess: (seriesId: number) => void;
   onError: (msg: string) => void;
+  /** 挑中的目录来源条目已记为人工确认的识别；参数是服务端的权威结果。 */
+  onIdentified: (seriesId: number, result: OwnerIdentification) => void;
 }
 
 interface UseSeriesScrapingResult {
@@ -22,6 +27,8 @@ interface UseSeriesScrapingResult {
   scrapeSeriesDetail: DetailSeries | null;
   scrapeCurrentTags: MetaTag[];
   scrapeLockedFields: Set<string>;
+  /** 弹窗所指系列的识别；不是目录来源或读不到时为 null。 */
+  scrapeIdentification: SeriesIdentification | null;
   scrapeMenuOpenId: number | null;
   setScrapeMenuOpenId: (id: number | null) => void;
   setScrapeModalSearchQuery: (value: string) => void;
@@ -32,7 +39,7 @@ interface UseSeriesScrapingResult {
   applyScrape: (metadata: Record<string, unknown>) => Promise<void>;
 }
 
-export function useSeriesScraping({ onSuccess, onError }: UseSeriesScrapingParams): UseSeriesScrapingResult {
+export function useSeriesScraping({ onSuccess, onError, onIdentified }: UseSeriesScrapingParams): UseSeriesScrapingResult {
   const invalidateLibrary = useLibraryInvalidation();
   const [scrapeProvider, setScrapeProvider] = useState('');
   const [scrapeModalSearchQuery, setScrapeModalSearchQuery] = useState('');
@@ -46,6 +53,7 @@ export function useSeriesScraping({ onSuccess, onError }: UseSeriesScrapingParam
   const [scrapeSeriesDetail, setScrapeSeriesDetail] = useState<DetailSeries | null>(null);
   const [scrapeCurrentTags, setScrapeCurrentTags] = useState<MetaTag[]>([]);
   const [scrapeLockedFields, setScrapeLockedFields] = useState<Set<string>>(new Set());
+  const [scrapeIdentification, setScrapeIdentification] = useState<SeriesIdentification | null>(null);
   const [scrapeMenuOpenId, setScrapeMenuOpenId] = useState<number | null>(null);
   // 取候选的世代号，startScrape 与 reSearch 共用：只有最新一次取到的结果可以写进弹窗状态。
   // 资料库页只禁用发起刮削的那张卡片，A 的请求在飞时用户仍可对 B 再点一次；A 迟到的响应
@@ -58,6 +66,7 @@ export function useSeriesScraping({ onSuccess, onError }: UseSeriesScrapingParam
     setSelectedScrapeResult(null);
     setScrapingSeries(null);
     setScrapeSeriesDetail(null);
+    setScrapeIdentification(null);
   }, []);
 
   const startScrape = useCallback(
@@ -70,15 +79,17 @@ export function useSeriesScraping({ onSuccess, onError }: UseSeriesScrapingParam
       setScrapeModalSearchQuery(series.title?.Valid ? series.title.String : series.name);
       setIsScraping(true);
       try {
-        const [seriesRes, tagsRes, searchRes] = await Promise.all([
+        const [seriesRes, tagsRes, searchRes, identification] = await Promise.all([
           apiClient.get<DetailSeries>(`/api/series/${series.id}`),
           apiClient.get<MetaTag[]>(`/api/series/${series.id}/tags`).catch(() => ({ data: [] as MetaTag[] })),
           apiClient.get<{ results?: SearchResult[]; total?: number }>(
             `/api/series/${series.id}/scrape-search?provider=${providerKey}&q=${encodeURIComponent(series.title?.Valid ? series.title.String : series.name)}&offset=0`,
           ),
+          isIdentificationSource(providerKey) ? loadIdentification(series.id) : Promise.resolve(null),
         ]);
         if (requestID !== latestRequestIDRef.current) return;
         setScrapeSeriesDetail(seriesRes.data);
+        setScrapeIdentification(identification);
         setScrapeCurrentTags(tagsRes.data || []);
         // locked_fields 已包含在 series 详情里（逗号分隔），与详情页解析方式一致，
         // 无需再请求独立的 /locked-fields 端点（该端点不存在，会产生 404）。
@@ -129,6 +140,21 @@ export function useSeriesScraping({ onSuccess, onError }: UseSeriesScrapingParam
     async (metadata: Record<string, unknown>) => {
       if (!scrapingSeries) return;
       setIsScraping(true);
+      // 目录来源的条目挑中即记为人工确认的识别，按识别策略补充；被排除的条目挑不进去时弹窗留着，
+      // 让人改挑别的条目。
+      if (isIdentificationSource(scrapeProvider)) {
+        try {
+          const out = await identifyAsOwner(scrapingSeries.id, scrapeProvider, metadata);
+          onIdentified(scrapingSeries.id, out);
+          closeScrapeModal();
+        } catch (err) {
+          console.error('Owner identification failed', err);
+          onError(ownerPickErrorKey(err));
+        } finally {
+          setIsScraping(false);
+        }
+        return;
+      }
       try {
         const res = await apiClient.post<{ queued?: boolean; outcome?: string; message?: string }>(
           `/api/series/${scrapingSeries.id}/scrape-apply?provider=${scrapeProvider}`,
@@ -159,7 +185,7 @@ export function useSeriesScraping({ onSuccess, onError }: UseSeriesScrapingParam
         setIsScraping(false);
       }
     },
-    [scrapingSeries, scrapeProvider, onSuccess, closeScrapeModal, onError, invalidateLibrary],
+    [scrapingSeries, scrapeProvider, onSuccess, onIdentified, closeScrapeModal, onError, invalidateLibrary],
   );
 
   return {
@@ -175,6 +201,7 @@ export function useSeriesScraping({ onSuccess, onError }: UseSeriesScrapingParam
     scrapeSeriesDetail,
     scrapeCurrentTags,
     scrapeLockedFields,
+    scrapeIdentification,
     scrapeMenuOpenId,
     setScrapeMenuOpenId,
     setScrapeModalSearchQuery,

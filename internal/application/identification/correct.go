@@ -108,8 +108,3 @@ func (s *Service) correctField(ctx context.Context, tx *sql.Tx, subject delegate
 	result.Accepted, result.OperationID = true, op.ID
 	return "", nil
 }
-
-// ownerHolds reports whether a status is the owner's turn or the owner's decision.
-func ownerHolds(status string) bool {
-	return status == StatusAwaitingOwner || status == StatusNeedsRecheck || status == StatusOwnerReviewed
-}

@@ -91,7 +91,7 @@ func TestMCPEveryToolResultCarriesItsJSONText(t *testing.T) {
 		},
 		Metadata: func(config.Config, string) metadata.Provider {
 			return &controlledSource{search: func(context.Context, string, int, int) ([]*metadata.SeriesMetadata, int, error) {
-				return []*metadata.SeriesMetadata{{Title: "Copy", Summary: "Copied summary", Publisher: "Copy press", SourceID: 1}}, 1, nil
+				return []*metadata.SeriesMetadata{{Title: "Copy", Summary: "Copied summary", Publisher: "Copy press", SourceID: 1, Authors: []metadata.SeriesAuthor{{Name: "Copy Writer", Role: "Writer"}}}}, 1, nil
 			}}
 		},
 	}
@@ -228,9 +228,16 @@ func TestMCPEveryToolResultCarriesItsJSONText(t *testing.T) {
 		map[string]any{"series_id": first, "verdict": "escalate", "category": "tag_problem", "reason": "tags name the shop"},
 	}})
 	call("library_submit_verdicts", map[string]any{"request_key": "text-identify", "lease_id": claimed["lease_id"], "verdicts": []any{
-		map[string]any{"series_id": first, "verdict": "identify", "candidate_ids": []string{"bangumi:1"}, "reason": "the title matches"},
+		map[string]any{"series_id": first, "verdict": "identify", "candidate_ids": []string{"bangumi:1"}, "reason": "title matches"},
 	}})
-	call("library_replace_identification", map[string]any{"request_key": "text-replace", "series_id": first, "withdraw": []string{"bangumi:1"}, "candidate_ids": []string{"anilist:1"}, "reason": "the AniList entry fits"})
+	if _, err = store.DB().Exec(`INSERT INTO authors(name, role) VALUES ('Copy Alias', 'Writer'); INSERT INTO series_authors SELECT ?, id FROM authors WHERE name = 'Copy Alias'`, first); err != nil {
+		t.Fatal(err)
+	}
+	call("library_get_series_authors", map[string]any{"series_id": first})
+	call("library_correct_authors", map[string]any{"request_key": "text-authors", "series_id": first, "expected_authors": []any{map[string]string{"name": "Copy Alias", "role": "Writer"}},
+		"corrections": []any{map[string]any{"from": map[string]string{"name": "Copy Alias", "role": "Writer"}, "to": map[string]string{"name": "Copy Writer", "role": "Writer"}, "reason": "source credit"}}})
+	call("library_improve_cover", map[string]any{"request_key": "text-cover", "series_id": series.ID, "book_id": book.ID, "page": 1, "reason": "page 1 is the full cover art"})
+	call("library_replace_identification", map[string]any{"request_key": "text-replace", "series_id": first, "candidate_ids": []string{"anilist:1"}, "reason": "the AniList entry fits"})
 	call("library_correct_series_field", map[string]any{"request_key": "text-correct", "series_id": first, "field": "summary", "value": "A corrected summary", "reason": "the source summary is another work's"})
 
 	listed, err := session.ListTools(ctx, nil)

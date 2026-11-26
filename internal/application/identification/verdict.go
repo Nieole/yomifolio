@@ -30,6 +30,9 @@ const (
 	CategoryDirectoryGrouping   = "directory_grouping"
 	CategorySuspectedDuplicate  = "suspected_duplicate"
 	CategoryTagProblem          = "tag_problem"
+	// CategoryProtectedValueDoubt notes a value the agent believes is wrong but may not change: a
+	// person's edit, a ComicInfo value, a locked field or a protected cover.
+	CategoryProtectedValueDoubt = "protected_value_doubt"
 )
 
 // AgentCategories maps each category an agent may escalate with to the class it raises, in the
@@ -41,6 +44,7 @@ var AgentCategories = []struct{ Category, Class string }{
 	{CategoryDirectoryGrouping, EscalationNote},
 	{CategorySuspectedDuplicate, EscalationNote},
 	{CategoryTagProblem, EscalationNote},
+	{CategoryProtectedValueDoubt, EscalationNote},
 }
 
 func agentClass(category string) (string, bool) {
@@ -91,7 +95,7 @@ type Verdict struct {
 	SeriesID     int64    `json:"series_id"`
 	Verdict      string   `json:"verdict" jsonschema:"identify, not_found or escalate"`
 	CandidateIDs []string `json:"candidate_ids,omitempty" jsonschema:"identify only: ids of the series' evidence candidates it is, at most one per source"`
-	Category     string   `json:"category,omitempty" jsonschema:"escalate only: ambiguous_candidates, uncertain_edition or missing_from_sources hand it to the owner; directory_grouping, suspected_duplicate or tag_problem only add a note"`
+	Category     string   `json:"category,omitempty" jsonschema:"escalate only: ambiguous_candidates, uncertain_edition or missing_from_sources hand it to the owner; directory_grouping, suspected_duplicate, tag_problem or protected_value_doubt only add a note"`
 	Reason       string   `json:"reason" jsonschema:"one checkable sentence, at most 1000 bytes"`
 }
 
