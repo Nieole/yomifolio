@@ -16,19 +16,21 @@ import (
 type historicalProposal struct {
 	id, series int64
 	status     string
-	entry      Entry
-	title      string
-	original   string
-	decidedAt  time.Time
+	// partial marks a pending proposal the owner accepted in part, which counts as applied.
+	partial   bool
+	entry     Entry
+	title     string
+	original  string
+	decidedAt time.Time
 }
 
 // DeriveFromHistory turns the proposal history into the initial identification state, once per
 // database: an applied proposal, or a pending one the owner already accepted in part, becomes the
 // owner's conclusion for its source, and the entry of a rejected proposal becomes an excluded
-// candidate. Pending proposals nobody accepted are left alone, and so are the remaining fields of a
-// partly accepted one. Proposals without a source entry (model output, multi-source agent
-// proposals) carry no identity and are skipped. Per series and source the most recently applied entry wins, and an entry the owner
-// applied is never also excluded.
+// candidate. A partly accepted proposal is thereby an identification, so its remaining fields close
+// as superseded; pending proposals nobody accepted are left alone. Proposals without a source entry
+// (model output, multi-source agent proposals) carry no identity and are skipped. Per series and
+// source the most recently applied entry wins, and an entry the owner applied is never also excluded.
 //
 // The derivation and its completion marker commit together, so an interrupted run leaves nothing
 // behind and the next start runs it again from the same history.
@@ -56,11 +58,20 @@ func (s *Service) DeriveFromHistory(ctx context.Context) error {
 	}
 	chosen := map[key]bool{}
 	applied := map[key]map[string]bool{}
-	var conclusions, exclusions int
+	var conclusions, exclusions, superseded int
 	for _, p := range proposals {
 		k := key{p.series, p.entry.Source}
 		if p.status != "applied" {
 			continue
+		}
+		if p.partial {
+			closed, err := proposal.Supersede(ctx, database.New(tx), p.id)
+			if err != nil {
+				return err
+			}
+			if closed {
+				superseded++
+			}
 		}
 		if applied[k] == nil {
 			applied[k] = map[string]bool{}
@@ -99,7 +110,7 @@ func (s *Service) DeriveFromHistory(ctx context.Context) error {
 	if err := tx.Commit(); err != nil {
 		return err
 	}
-	slog.InfoContext(ctx, "Derived series identification from proposal history", "conclusions", conclusions, "excluded_candidates", exclusions)
+	slog.InfoContext(ctx, "Derived series identification from proposal history", "conclusions", conclusions, "excluded_candidates", exclusions, "superseded_proposals", superseded)
 	return nil
 }
 
@@ -175,7 +186,7 @@ func historicalProposals(ctx context.Context, tx *sql.Tx) ([]historicalProposal,
 			if !accepted {
 				continue
 			}
-			p.status = "applied"
+			p.status, p.partial = "applied", true
 			switch {
 			case r.appliedAt.Valid:
 				p.decidedAt = r.appliedAt.Time

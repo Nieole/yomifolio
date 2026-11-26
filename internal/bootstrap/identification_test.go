@@ -631,21 +631,24 @@ func TestUpgradeTreatsPartlyAppliedProposalAsOwnerConfirmed(t *testing.T) {
 	if _, err := time.Parse(time.RFC3339, c.ConfirmedAt); err != nil {
 		t.Fatalf("confirmed_at %q: %v", c.ConfirmedAt, err)
 	}
-	// Closing the remaining fields belongs to enrichment after identification; history leaves them pending.
-	var reviews struct {
-		Reviews []struct {
-			ID     int64  `json:"id"`
-			Status string `json:"status"`
-			Fields []struct {
-				Name string `json:"name"`
-			} `json:"fields"`
-		} `json:"reviews"`
+	// The identification supersedes what is left of the proposal; the proposal of the series that
+	// stays unprocessed waits for that series' identification.
+	pendingReviews := func(series int64) int {
+		var reviews struct {
+			Reviews []struct {
+				ID int64 `json:"id"`
+			} `json:"reviews"`
+		}
+		web.call("GET", "/api/series/"+strconv.FormatInt(series, 10)+"/metadata-review", http.StatusOK, &reviews)
+		return len(reviews.Reviews)
 	}
-	web.call("GET", "/api/series/"+strconv.FormatInt(series.ID, 10)+"/metadata-review", http.StatusOK, &reviews)
-	if len(reviews.Reviews) != 1 || reviews.Reviews[0].Status != "pending" || len(reviews.Reviews[0].Fields) != 1 || reviews.Reviews[0].Fields[0].Name != "title" {
-		t.Fatalf("remaining fields must stay pending: %+v", reviews)
+	if n := pendingReviews(series.ID); n != 0 {
+		t.Fatalf("partly applied series still has %d pending proposals", n)
 	}
-	if got := web.identification(untouched.ID); got.Status != "unprocessed" || len(got.Conclusions) != 0 {
+	if row, err := store.GetMetadataReview(ctx, queued.Proposal.ID); err != nil || row.Status != proposal.StatusSuperseded {
+		t.Fatalf("partly applied proposal %+v %v", row, err)
+	}
+	if got := web.identification(untouched.ID); got.Status != "unprocessed" || len(got.Conclusions) != 0 || pendingReviews(untouched.ID) != 1 {
 		t.Fatalf("untouched pending proposal %+v", got)
 	}
 

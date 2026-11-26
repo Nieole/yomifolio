@@ -5,6 +5,8 @@
 
 -- One conclusion per series and source. confirmer is 'owner' (a person) or 'agent'
 -- (user_id plus credential_id). proposal_id names the applied proposal a derived row came from.
+-- facts is the validated source snapshot of the entry enrichment fills fields from, '{}' when the
+-- conclusion came without one (derived from history).
 CREATE TABLE IF NOT EXISTS identification_conclusions (
     series_id INTEGER NOT NULL REFERENCES series(id) ON DELETE CASCADE,
     source TEXT NOT NULL,
@@ -19,6 +21,7 @@ CREATE TABLE IF NOT EXISTS identification_conclusions (
     confirmed_at_ms INTEGER NOT NULL,
     reason TEXT NOT NULL DEFAULT '',
     proposal_id INTEGER NOT NULL DEFAULT 0,
+    facts TEXT NOT NULL DEFAULT '{}',
     PRIMARY KEY (series_id, source)
 );
 

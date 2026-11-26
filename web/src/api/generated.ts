@@ -8,6 +8,7 @@ export interface Operation {
   undo_unavailable?: boolean;
   cleaned_by?: string;
   adjudication?: AdjudicationResult;
+  identification?: IdentificationBasis;
   cover_selection?: CoverSelection;
   relation?: RelationChange;
   old_cover_material?: string;
@@ -37,6 +38,17 @@ export interface AdjudicationResult {
   mode: string;
   reason: string;
   status: string;
+}
+
+export interface IdentificationBasis {
+  entries: IdentifiedEntry[];
+  placeholder_title?: boolean;
+  superseded_proposals: number[];
+}
+
+export interface IdentifiedEntry {
+  candidate_id: string;
+  entry_url: string;
 }
 
 export interface CleanupResult {

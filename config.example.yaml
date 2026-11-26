@@ -101,6 +101,9 @@ identification:
         mangadex: 1000
         myanimelist: 1000
         comicvine: 18000    # Comic Vine 限每资源每小时 200 次 / Comic Vine allows 200 requests per resource per hour
+    # 识别补充取文本字段与作者的来源先后，排前的先取；没列出的来源按默认顺序接在后面。
+    # Order identification enrichment takes text fields and authors in; unlisted sources follow in the default order.
+    source_priority: [bangumi, anilist, mangadex, myanimelist, comicvine]
 protocols:
     opds:
         enabled: false

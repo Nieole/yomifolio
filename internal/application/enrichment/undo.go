@@ -155,7 +155,9 @@ func (s *Service) Undo(ctx context.Context, actor delegated.Subject, in UndoInpu
 				continue
 			}
 			out.Fields = append(out.Fields, field)
-			if seriesmeta.EnrichmentLocked(current, field.Field) || !same(before, original.After, field.Field) || (field.Field == "cover" && (before.Cover == nil || before.Cover.Locked)) {
+			// A placeholder title was replaced under its lock, so restoring it is not stopped by that lock.
+			placeholder := field.Field == "title" && original.Identification != nil && original.Identification.PlaceholderTitle
+			if (seriesmeta.EnrichmentLocked(current, field.Field) && !placeholder) || !same(before, original.After, field.Field) || (field.Field == "cover" && (before.Cover == nil || before.Cover.Locked)) {
 				out.Outcome = "conflict"
 				out.Reason = "current field or lock differs from operation after-state"
 			}

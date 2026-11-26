@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"yomifolio/internal/application/delegated"
+	"yomifolio/internal/config"
 )
 
 var (
@@ -63,6 +64,8 @@ type Service struct {
 	db       *sql.DB
 	access   Access
 	prefetch *Prefetcher
+	enricher Enricher
+	config   func() config.Config
 	now      func() time.Time
 }
 
