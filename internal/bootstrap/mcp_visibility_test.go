@@ -28,7 +28,7 @@ func TestMCPListingFollowsGrantedCapabilities(t *testing.T) {
 		{capability: delegated.Read, want: append(slices.Clone(runReads),
 			"library_get_series", "library_find_series", "library_list_books", "library_get_book_clues",
 			"library_get_enrichment_state", "library_get_metadata_operation", "library_list_metadata_operations",
-			"library_get_series_cover", "library_get_page_thumbnails",
+			"library_get_series_cover", "library_get_page_thumbnails", "library_get_identification_images",
 			"library_search_sources", "library_get_source_search", "library_get_match_proposal",
 			"library_identification_progress")},
 		{capability: delegated.MetadataWrite, want: append(slices.Clone(runReads),
