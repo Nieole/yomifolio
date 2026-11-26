@@ -373,7 +373,8 @@ func TestDeleteAbandonmentPreservesCancellationButNotFalseExit(t *testing.T) {
 			var got outcome
 			select {
 			case got = <-done:
-			case <-time.After(4 * time.Second):
+			// Delete drains for at most 2s and then allows the watcher restore up to 5s.
+			case <-time.After(10 * time.Second):
 				t.Fatal("drain exceeded bound")
 			}
 			if got.result.Deleted || len(got.result.CancellationRequested) != 1 || got.result.CancellationRequested[0] != launched.Run.ID || len(got.result.ExitedRuns) != 0 || len(got.result.Conflicts) != 1 {

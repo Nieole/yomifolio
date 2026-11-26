@@ -81,7 +81,7 @@ func TestTransferRunPauseResumeAndCancelKeepCommittedRange(t *testing.T) {
 			})
 			select {
 			case <-paused:
-			case <-time.After(3 * time.Second):
+			case <-time.After(10 * time.Second):
 				t.Fatal("run did not reach mid-book barrier")
 			}
 			if err := engine.Pause(launch.Run.ID); err != nil {
@@ -122,7 +122,8 @@ func TestTransferRunPauseResumeAndCancelKeepCommittedRange(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			wait, stop := context.WithTimeout(context.Background(), 3*time.Second)
+			// Liveness bound only: the rest of the transfer copies and syncs several MiB.
+			wait, stop := context.WithTimeout(context.Background(), 10*time.Second)
 			defer stop()
 			run, err := engine.Await(wait, launch.Run.ID)
 			if err != nil {

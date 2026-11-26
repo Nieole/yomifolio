@@ -76,21 +76,28 @@ func TestWatcherDebouncesEventBurst(t *testing.T) {
 	for _, op := range []fsnotify.Op{fsnotify.Create, fsnotify.Rename, fsnotify.Write, fsnotify.Write} {
 		events <- fsnotify.Event{Name: path, Op: op}
 	}
+	sent := time.Now()
 
 	// 断言的是**时序**而不是次数。次数在这里不能证明去抖：内容相等检查本身就会把后续几次
 	// 重载压成空操作，去掉去抖后 apply 次数一样是 1。真正只有去抖能保证的性质是
 	// 「突发事件期间不立刻动手」——省掉的是那几次读盘 + YAML 解析。
+	// 重载最早也在最后一个事件之后一个去抖时长才发生，因此只在读数时仍处于这个窗口内才下结论；
+	// 本 goroutine 自己睡过了头，这一次读数就判不了什么。
 	time.Sleep(testDebounce / 3)
-	if got := applyCalls.Load(); got != 0 {
+	if got, elapsed := applyCalls.Load(), time.Since(sent); elapsed < testDebounce && got != 0 {
 		t.Fatalf("去抖窗口内就已经 apply 了 %d 次 —— 突发事件没有被合并", got)
 	}
 
-	time.Sleep(6 * testDebounce)
-	if got := applyCalls.Load(); got != 1 {
-		t.Fatalf("apply 被调用了 %d 次, want 1", got)
+	// 等的是重载收尾——新值已生效；apply 在换上新快照之前调用，单看它的计数会读得太早。
+	deadline := time.Now().Add(5 * time.Second)
+	for mgr.Snapshot().Scanner.ArchivePoolSize != 9 && time.Now().Before(deadline) {
+		time.Sleep(testDebounce / 6)
 	}
 	if got := mgr.Snapshot().Scanner.ArchivePoolSize; got != 9 {
 		t.Fatalf("ArchivePoolSize = %d, want 9", got)
+	}
+	if got := applyCalls.Load(); got != 1 {
+		t.Fatalf("apply 被调用了 %d 次, want 1", got)
 	}
 }
 
