@@ -22,7 +22,8 @@ type StatusCounts struct {
 	OwnerReviewed int64 `json:"owner_reviewed"`
 }
 
-// PrefetchCounts splits the unprocessed series by whether their evidence packet is ready.
+// PrefetchCounts splits the unprocessed series by whether their evidence packet is ready, that is
+// stored and current; a packet that is not current waits for a refresh like a missing one.
 type PrefetchCounts struct {
 	Ready   int64 `json:"ready"`
 	Pending int64 `json:"pending"`
@@ -37,7 +38,7 @@ type Progress struct {
 }
 
 // Progress counts the series of the requested libraries, or of every library the credential
-// names, per identification status, and how many unprocessed ones have an evidence packet ready.
+// names, per identification status, and how many unprocessed ones have a current evidence packet.
 // Each library needs current read authority.
 func (s *Service) Progress(ctx context.Context, subject delegated.Subject, in ProgressInput) (Progress, error) {
 	libraries, err := s.access.Libraries(ctx, subject, in.LibraryIDs, delegated.Read)
@@ -52,9 +53,9 @@ func (s *Service) Progress(ctx context.Context, subject delegated.Subject, in Pr
 	for i, id := range libraries {
 		args[i] = id
 	}
-	rows, err := s.db.QueryContext(ctx, `SELECT st.status, COUNT(*), COUNT(e.series_id) FROM series_identification_status st
+	rows, err := s.db.QueryContext(ctx, `SELECT st.status, COUNT(*), COALESCE(SUM(COALESCE(`+currentPacket+`, 0)), 0) FROM series_identification_status st
 		LEFT JOIN identification_evidence e ON e.series_id = st.series_id
-		WHERE st.library_id IN (?`+strings.Repeat(", ?", len(libraries)-1)+`) GROUP BY st.status`, args...)
+		WHERE st.library_id IN (?`+strings.Repeat(", ?", len(libraries)-1)+`) GROUP BY st.status`, append([]any{packetCutoff(s.now())}, args...)...)
 	if err != nil {
 		return Progress{}, err
 	}

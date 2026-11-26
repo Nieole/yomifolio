@@ -69,6 +69,8 @@ Yomifolio 的 Go 模块为 `yomifolio`。单进程 Go 服务使用 chi 接收 HT
 
 `bootstrap` 把 `scanner` 每个已提交批次的新增书经 `SetAddedBooksHook` 交给 `application/identification` 做待复核检查：只读本地识别结论，不访问外部来源，失败只记日志、不让扫描失败；矛盾判据归识别模块。
 
+同样，`bootstrap` 把每个已提交批次新建的系列经 `SetCreatedSeriesHook` 交给识别模块记为增量预取请求；`application/scanning` 在资料库扫描收尾（未取消，委托扫描也一样）经 `Effects.Prefetch` 串联该资料库的增量预取运行，由它访问外部来源。记录请求或发起运行失败只记日志、不让扫描失败；扫描不把系列推给 agent。
+
 `application/delegated → metadata` 的多来源搜索经 `metadata.SourceFanout` 扇出，来源范围、单源状态与候选快照校验归 `mm-metadata`，权限检查点、结果预算与分页归调用方用例。模型辅助复用生产 AI 工厂与同一 Runs；统一数据库迁移安装独立次数额度表，不与 enrichment 收据共用操作命名空间。当前授权、原子预留和不恢复付费请求的用例契约归 `mm-application`，实际 HTTP 单请求守卫归 `mm-metadata`。
 
 

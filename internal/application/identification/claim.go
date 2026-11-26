@@ -6,11 +6,14 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"log/slog"
 	"slices"
 	"strings"
 	"time"
 
 	"yomifolio/internal/application/delegated"
+	"yomifolio/internal/task"
 )
 
 // Claim bounds. A batch holds at most MaxClaim series and, packets included, at most claimBudget
@@ -28,7 +31,8 @@ const (
 const (
 	// EmptyAllProcessed: no unprocessed series is left in the claimed libraries.
 	EmptyAllProcessed = "all_processed"
-	// EmptyPrefetchPending: unprocessed series remain, but their evidence packets are not ready.
+	// EmptyPrefetchPending: unprocessed series remain, but their evidence packets are not ready:
+	// none yet, or one being refreshed.
 	EmptyPrefetchPending = "prefetch_pending"
 	// EmptyAllClaimed: every ready series is under a live lease, the caller's own included.
 	EmptyAllClaimed = "all_claimed"
@@ -58,11 +62,14 @@ type ClaimedSeries struct {
 	Evidence  EvidencePacket `json:"evidence"`
 }
 
-// Claim hands out up to limit unprocessed series whose evidence packet is ready and that no live
+// Claim hands out up to limit unprocessed series whose evidence packet is current and that no live
 // lease holds, in library and name order, and leases them to the caller for LeaseDuration.
-// Owner-reviewed and otherwise processed series are never handed out. Every library needs current
-// metadata_write authority, checked again inside the claiming transaction; claims are serialized
-// by that transaction, so two claims never hand out the same series.
+// Owner-reviewed and otherwise processed series are never handed out. A series the claim would
+// hand out but for a packet no longer current (older than PacketMaxAge, or predating the source
+// that reopened it) is held back until the incremental prefetch, launched after the claim,
+// refreshes the packet. Every library needs current metadata_write authority, checked again inside
+// the claiming transaction; claims are serialized by that transaction, so two claims never hand
+// out the same series.
 func (s *Service) Claim(ctx context.Context, subject delegated.Subject, in ClaimInput) (Claim, error) {
 	limit := in.Limit
 	if limit == 0 {
@@ -95,10 +102,18 @@ func (s *Service) Claim(ctx context.Context, subject delegated.Subject, in Claim
 	if err != nil {
 		return Claim{}, err
 	}
+	stale, err := requestRefresh(ctx, tx, libraries, now, limit)
+	if err != nil {
+		return Claim{}, err
+	}
 	if len(ready) == 0 {
-		if out.EmptyReason, err = emptyReason(ctx, tx, libraries); err != nil {
+		if out.EmptyReason, err = emptyReason(ctx, tx, libraries, now); err != nil {
 			return Claim{}, err
 		}
+		if err := tx.Commit(); err != nil {
+			return Claim{}, err
+		}
+		s.refresh(ctx, stale)
 		return out, nil
 	}
 	lease, err := newLeaseID()
@@ -132,7 +147,57 @@ func (s *Service) Claim(ctx context.Context, subject delegated.Subject, in Claim
 	if err := tx.Commit(); err != nil {
 		return Claim{}, err
 	}
+	s.refresh(ctx, stale)
 	return out, nil
+}
+
+// requestRefresh asks the incremental prefetch to refresh, in claim order, up to limit packets the
+// claim holds back as no longer current, and returns the libraries they belong to.
+func requestRefresh(ctx context.Context, tx *sql.Tx, libraries []int64, now time.Time, limit int) ([]int64, error) {
+	in, args := libraryArgs(libraries)
+	rows, err := tx.QueryContext(ctx, `SELECT s.id, s.library_id FROM series_identification_status st
+		JOIN series s ON s.id = st.series_id
+		JOIN identification_evidence e ON e.series_id = st.series_id
+		LEFT JOIN identification_leases l ON l.series_id = st.series_id
+		WHERE st.status = 'unprocessed' AND st.library_id IN (`+in+`) AND (l.series_id IS NULL OR l.expires_at_ms <= ?) AND NOT `+currentPacket+`
+		ORDER BY s.library_id, s.name, s.id LIMIT ?`, append(args, now.UnixMilli(), packetCutoff(now), limit)...)
+	if err != nil {
+		return nil, err
+	}
+	var series, touched []int64
+	for rows.Next() {
+		var id, library int64
+		if err := rows.Scan(&id, &library); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		series = append(series, id)
+		if !slices.Contains(touched, library) {
+			touched = append(touched, library)
+		}
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	for _, id := range series {
+		if _, err := tx.ExecContext(ctx, `INSERT OR IGNORE INTO identification_prefetch_requests (series_id, requested_at_ms) VALUES (?, ?)`, id, now.UnixMilli()); err != nil {
+			return nil, err
+		}
+	}
+	return touched, nil
+}
+
+// refresh launches the incremental prefetch of each library a claim asked to refresh packets in.
+// A failed launch is logged and leaves the claim as it was; the next claim asks again.
+func (s *Service) refresh(ctx context.Context, libraries []int64) {
+	if s.prefetch == nil {
+		return
+	}
+	for _, library := range libraries {
+		if _, err := s.prefetch.StartIncremental(context.Background(), library, task.TriggerChained); err != nil && !errors.Is(err, task.ErrRunAlreadyActive) {
+			slog.WarnContext(ctx, "Evidence packet refresh not started", "library_id", library, "error", err)
+		}
+	}
 }
 
 type readySeries struct {
@@ -148,15 +213,15 @@ func libraryArgs(libraries []int64) (string, []any) {
 	return "?" + strings.Repeat(", ?", len(libraries)-1), args
 }
 
-// claimable lists the ready series no live lease holds, in claim order.
+// claimable lists the series with a current packet that no live lease holds, in claim order.
 func claimable(ctx context.Context, tx *sql.Tx, libraries []int64, now time.Time, limit int) ([]readySeries, error) {
 	in, args := libraryArgs(libraries)
 	rows, err := tx.QueryContext(ctx, `SELECT s.id, s.library_id, e.packet FROM series_identification_status st
 		JOIN series s ON s.id = st.series_id
 		JOIN identification_evidence e ON e.series_id = st.series_id
 		LEFT JOIN identification_leases l ON l.series_id = st.series_id
-		WHERE st.status = 'unprocessed' AND st.library_id IN (`+in+`) AND (l.series_id IS NULL OR l.expires_at_ms <= ?)
-		ORDER BY s.library_id, s.name, s.id LIMIT ?`, append(args, now.UnixMilli(), limit)...)
+		WHERE st.status = 'unprocessed' AND st.library_id IN (`+in+`) AND (l.series_id IS NULL OR l.expires_at_ms <= ?) AND `+currentPacket+`
+		ORDER BY s.library_id, s.name, s.id LIMIT ?`, append(args, now.UnixMilli(), packetCutoff(now), limit)...)
 	if err != nil {
 		return nil, err
 	}
@@ -200,13 +265,15 @@ func claimedSeries(ctx context.Context, tx *sql.Tx, ready readySeries) (ClaimedS
 	return item, rows.Err()
 }
 
-// emptyReason says why no series could be claimed from the libraries.
-func emptyReason(ctx context.Context, tx *sql.Tx, libraries []int64) (string, error) {
+// emptyReason says why no series could be claimed from the libraries. A packet that is not current
+// counts as not ready.
+func emptyReason(ctx context.Context, tx *sql.Tx, libraries []int64, now time.Time) (string, error) {
 	in, args := libraryArgs(libraries)
 	var pending, ready int64
-	err := tx.QueryRowContext(ctx, `SELECT COALESCE(SUM(e.series_id IS NULL), 0), COALESCE(SUM(e.series_id IS NOT NULL), 0)
-		FROM series_identification_status st LEFT JOIN identification_evidence e ON e.series_id = st.series_id
-		WHERE st.status = 'unprocessed' AND st.library_id IN (`+in+`)`, args...).Scan(&pending, &ready)
+	err := tx.QueryRowContext(ctx, `SELECT COALESCE(SUM(NOT ready), 0), COALESCE(SUM(ready), 0) FROM (
+			SELECT COALESCE(`+currentPacket+`, 0) AS ready FROM series_identification_status st
+			LEFT JOIN identification_evidence e ON e.series_id = st.series_id
+			WHERE st.status = 'unprocessed' AND st.library_id IN (`+in+`))`, append([]any{packetCutoff(now)}, args...)...).Scan(&pending, &ready)
 	switch {
 	case err != nil:
 		return "", err

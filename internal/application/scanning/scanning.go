@@ -40,7 +40,10 @@ type Effects struct {
 	InvalidateStats   func(string)
 	WarmStats         func(string)
 	Backfill          func(context.Context, string)
-	Publish           func(string)
+	// Prefetch follows every library scan that was not cancelled, delegated ones included, with
+	// the incremental evidence prefetch of that library. Nil chains nothing.
+	Prefetch func(ctx context.Context, libraryID int64)
+	Publish  func(string)
 }
 
 // Service shares the application run entry and shares complete scan results with ingestion coordination.
@@ -140,6 +143,10 @@ func (c *Service) scanLibrary(admission context.Context, lib database.Library, f
 		outcome, err := c.scanner.IngestLibrary(ctx, lib.ID, lib.Path, scanner.LibraryScanOptions{Force: force, SkipCovers: policy != nil}, NewObserver(handle))
 		if completed != nil {
 			completed(outcome)
+		}
+		// The series a scan created are worth a packet even when some archives failed.
+		if c.effects.Prefetch != nil && outcome.Status != scanner.ScanCancelled && !errors.Is(err, context.Canceled) {
+			c.effects.Prefetch(ctx, lib.ID)
 		}
 		if err == nil {
 			err = outcome.Err()

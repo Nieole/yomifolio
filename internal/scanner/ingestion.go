@@ -31,7 +31,7 @@ func (s *Scanner) ingest(ctx context.Context, plan ingestionPlan, metrics *scanM
 	jobs := make(chan archiveCandidate, plan.queueSize)
 	results := make(chan interpretedArchive, plan.queueSize)
 	interpreter := &archiveInterpreter{rootPath: plan.libraryRoot, options: plan.options, metrics: metrics, progress: progress, currentConfig: s.currentConfig, diskWork: s.diskWork, openArchive: s.openArchive}
-	writer := &ingestionWriter{store: s.store, libraryID: plan.libraryID, metrics: metrics, progress: progress, renames: plan.renames, refreshInterval: s.dirtyRefreshInterval, onBatch: s.onBatchIngested, onAdded: s.onBooksAdded, enqueueCovers: func(ctx context.Context, jobs []coverJob) {
+	writer := &ingestionWriter{store: s.store, libraryID: plan.libraryID, metrics: metrics, progress: progress, renames: plan.renames, refreshInterval: s.dirtyRefreshInterval, onBatch: s.onBatchIngested, onAdded: s.onBooksAdded, onCreated: s.onSeriesCreated, enqueueCovers: func(ctx context.Context, jobs []coverJob) {
 		if !plan.skipCovers {
 			s.enqueueCoverJobs(ctx, covers, metrics, jobs)
 		}

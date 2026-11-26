@@ -318,16 +318,18 @@ func (s *Service) judge(ctx context.Context, tx *sql.Tx, subject delegated.Subje
 				return VerdictResult{}, err
 			}
 		}
+		// The series was unprocessed, so a not-found verdict here is one a new source reopened.
+		if _, err := tx.ExecContext(ctx, `DELETE FROM identification_not_found WHERE series_id = ?`, v.SeriesID); err != nil {
+			return VerdictResult{}, err
+		}
 	case VerdictNotFound:
-		searched := []string{}
+		var searched []string
 		for _, source := range packet.Sources {
 			if source.Status == SourceAvailable {
 				searched = append(searched, source.Source)
 			}
 		}
-		raw, _ := json.Marshal(searched)
-		if _, err := tx.ExecContext(ctx, `INSERT INTO identification_not_found (series_id, searched_sources, confirmer, user_id, credential_id, concluded_at_ms, reason)
-			VALUES (?, ?, ?, ?, ?, ?, ?)`, v.SeriesID, string(raw), ConfirmedByAgent, subject.UserID, subject.CredentialID, now, v.Reason); err != nil {
+		if err := recordNotFound(ctx, tx, v.SeriesID, searched, ConfirmedByAgent, subject.UserID, subject.CredentialID, now, v.Reason); err != nil {
 			return VerdictResult{}, err
 		}
 	case VerdictEscalate:
