@@ -433,7 +433,9 @@ func TestCoverRestartReplaysBackfillIndependentlyOfTrigger(t *testing.T) {
 		t.Run(string(trigger), func(t *testing.T) {
 			service, store, lib, scan, engine, _ := newCoverService(t, func(fn func()) { fn() }, nil)
 			coverArchive(t, lib, "missing.cbz")
-			scan.SetCoverRunLauncher(nil)
+			// Take the scan's batch and never drain it: with no launcher at all the scanner drains
+			// the batch itself in the background, and that cover would race the backfill=false check.
+			scan.SetCoverRunLauncher(func(context.Context, *scanner.CoverBatch) {})
 			if err := scan.ScanLibrary(context.Background(), lib.ID, lib.Path, true, nil); err != nil {
 				t.Fatal(err)
 			}
