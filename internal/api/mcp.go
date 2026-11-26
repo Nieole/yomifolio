@@ -193,6 +193,7 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 				registerMCPIdentification(server, identificationService, subject)
 				registerMCPResearch(server, identificationService, subject)
 				registerMCPIdentificationImages(server, identificationService, subject, r.Context())
+				registerMCPInspection(server, identificationService, subject)
 			}
 			return server
 		}, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true, DisableLocalhostProtection: true})
