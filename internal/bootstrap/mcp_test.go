@@ -281,6 +281,7 @@ func assertMCPToolDiscovery(t *testing.T, result *mcp.ListToolsResult, err error
 		"library_list_runs": true, "library_wait_run": true, "library_cancel_run": false,
 		"library_identification_progress": true,
 		"library_claim_series":            false, "library_submit_verdicts": false,
+		"library_research_series": false,
 	}
 	seen := map[string]bool{}
 	for _, tool := range result.Tools {

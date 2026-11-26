@@ -35,6 +35,7 @@ var listingCapability = map[string]string{
 	"library_add_series_relation":     delegated.MetadataWrite,
 	"library_claim_series":            delegated.MetadataWrite,
 	"library_submit_verdicts":         delegated.MetadataWrite,
+	"library_research_series":         delegated.MetadataWrite,
 
 	"library_start_scan": delegated.ScanControl,
 

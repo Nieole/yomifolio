@@ -21,6 +21,7 @@ const TASK_TYPE_OPTIONS = [
   'rebuild_file_identities',
   'scrape',
   'evidence_prefetch',
+  'evidence_research',
   'ai_grouping',
   'rebuild_book_hashes',
   'reconcile_koreader_progress',

@@ -201,6 +201,8 @@ func TestMCPEveryToolResultCarriesItsJSONText(t *testing.T) {
 	call("library_get_metadata_cleanup", map[string]any{"request_key": "text-cleanup-batch"})
 
 	call("library_identification_progress", map[string]any{"library_ids": []int64{lib.ID}})
+	unpaced(t, cfg)
+	call("library_research_series", map[string]any{"series_id": series.ID, "query": "Copy press"})
 	sequel, err := store.CreateSeries(ctx, database.CreateSeriesParams{Name: "Copy sequel", LibraryID: lib.ID, Path: filepath.Join(lib.Path, "Copy sequel")})
 	if err != nil {
 		t.Fatal(err)
