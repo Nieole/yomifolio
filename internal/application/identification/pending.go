@@ -5,9 +5,7 @@ package identification
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
-	"encoding/hex"
 	"errors"
 	"slices"
 	"strings"
@@ -255,14 +253,6 @@ func citable(ids []string) bool {
 		sources = append(sources, source)
 	}
 	return true
-}
-
-// ownerReceiptKey names the enrichment receipt of one owner pick. Every pick is a new decision, so
-// the key is never reused.
-func ownerReceiptKey() string {
-	b := make([]byte, 16)
-	_, _ = rand.Read(b)
-	return "owner-identify-" + hex.EncodeToString(b)
 }
 
 // resolve settles the series' open escalations of class as the owner's decision.

@@ -17,9 +17,11 @@ import (
 	"yomifolio/internal/metadata"
 )
 
-// Enricher supplements an identified series inside the transaction that confirmed it.
+// Enricher supplements an identified series inside the transaction that confirmed it, and takes
+// back what a withdrawn entry supplemented inside the transaction that withdrew it.
 type Enricher interface {
 	EnrichIdentified(context.Context, *sql.Tx, delegated.Subject, enrichment.IdentifiedInput) (enrichment.Operation, error)
+	RetractIdentified(context.Context, *sql.Tx, delegated.Subject, enrichment.RetractInput) (enrichment.Operation, error)
 	Publish()
 }
 
@@ -71,7 +73,11 @@ func (s *Service) confirm(ctx context.Context, tx *sql.Tx, actor delegated.Subje
 	if err != nil {
 		return enrichment.Operation{}, err
 	}
-	return s.enricher.EnrichIdentified(ctx, tx, actor, enrichment.IdentifiedInput{RequestKey: receiptKey, SeriesID: seriesID, Reason: reason, Sources: sources})
+	tags := config.DefaultTagPolicy
+	if s.config != nil {
+		tags = s.config().Identification.Tags
+	}
+	return s.enricher.EnrichIdentified(ctx, tx, actor, enrichment.IdentifiedInput{RequestKey: receiptKey, SeriesID: seriesID, Reason: reason, Sources: sources, Tags: tags})
 }
 
 // identifiedSources lists every source the series is identified with, in the configured priority.

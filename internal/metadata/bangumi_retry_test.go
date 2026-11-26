@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -249,5 +250,21 @@ func TestBangumiSearchPreservesNativeSiteScore(t *testing.T) {
 	}
 	if rows[1].SiteRating != nil || rows[1].Rating != 0 {
 		t.Fatalf("unrated source invented score: %+v", rows[1])
+	}
+}
+
+func TestBangumiSearchKeepsTagVotes(t *testing.T) {
+	p := NewBangumiProvider()
+	p.httpClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		return metaJSONResponse(req, `{"total":1,"data":[{"id":1,"name":"Voted","tags":[{"name":"热血","count":120},{"name":"已购","count":2},{"name":"","count":9}]}]}`), nil
+	})}
+	rows, _, err := p.SearchMetadata(t.Context(), "voted", 1, 0)
+	if err != nil || len(rows) != 1 {
+		t.Fatalf("%+v %v", rows, err)
+	}
+	// The tag policy thresholds on votes, so every named tag keeps its count beside the plain names.
+	want := []TagVote{{Name: "热血", Votes: 120}, {Name: "已购", Votes: 2}}
+	if !reflect.DeepEqual(rows[0].TagVotes, want) || !reflect.DeepEqual(rows[0].Tags, []string{"热血", "已购"}) {
+		t.Fatalf("tags %v votes %+v", rows[0].Tags, rows[0].TagVotes)
 	}
 }

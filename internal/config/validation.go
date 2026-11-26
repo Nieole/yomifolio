@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 )
@@ -119,6 +120,15 @@ func ValidateConfigValues(cfg *Config) ValidationResult {
 		if !slices.Contains(DefaultSourcePriority, strings.ToLower(strings.TrimSpace(key))) {
 			issues = append(issues, ValidationIssue{Field: "identification.source_priority", Message: "来源只能是 bangumi、anilist、mangadex、myanimelist 或 comicvine。", Severity: "error"})
 			break
+		}
+	}
+
+	for _, entry := range cfg.Identification.Tags.Blocklist {
+		if expr, ok := tagPattern(strings.TrimSpace(entry)); ok {
+			if _, err := regexp.Compile(expr); err != nil {
+				issues = append(issues, ValidationIssue{Field: "identification.tags.blocklist", Message: "屏蔽列表里前后带 / 的条目必须是合法的正则表达式：" + entry, Severity: "error"})
+				break
+			}
 		}
 	}
 

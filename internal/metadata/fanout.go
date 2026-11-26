@@ -127,17 +127,32 @@ func (f SourceFanout) Search(ctx context.Context, q SourceQuery, checkpoint func
 func snapshotPage(name string, total int, results []*SeriesMetadata) SourcePage {
 	page := SourcePage{Source: name, Status: SourceAvailable, Total: total}
 	for _, result := range results {
-		if result == nil || result.MatchEvidence != nil || result.SourceID < 0 || result.VolumeCount < 0 || result.Rating < 0 || result.Rating > 10 {
+		snapshot, ok := Snapshot(name, result)
+		if !ok {
 			return SourcePage{Source: name, Status: SourceInvalidResponse, Total: total}
 		}
-		raw, err := json.Marshal(result)
-		if err != nil || len(raw) > maxSnapshotBytes || len(result.Tags) > maxSnapshotItems || len(result.Authors) > maxSnapshotItems {
-			return SourcePage{Source: name, Status: SourceInvalidResponse, Total: total}
-		}
-		var snapshot SeriesMetadata
-		_ = json.Unmarshal(raw, &snapshot)
-		snapshot.Provider = name
 		page.Results = append(page.Results, snapshot)
 	}
 	return page
+}
+
+// Snapshot detaches one source result from the source's objects and stamps it with the source
+// name, or reports it invalid: a result carrying a decision record, a negative ID, volume count,
+// rating or tag vote count, a rating above ten, more than the bounded tags, tag votes or authors,
+// or more than the bounded bytes.
+func Snapshot(source string, result *SeriesMetadata) (SeriesMetadata, bool) {
+	if result == nil || result.MatchEvidence != nil || result.SourceID < 0 || result.VolumeCount < 0 || result.Rating < 0 || result.Rating > 10 {
+		return SeriesMetadata{}, false
+	}
+	raw, err := json.Marshal(result)
+	if err != nil || len(raw) > maxSnapshotBytes || len(result.Tags) > maxSnapshotItems || len(result.TagVotes) > maxSnapshotItems || len(result.Authors) > maxSnapshotItems {
+		return SeriesMetadata{}, false
+	}
+	if slices.ContainsFunc(result.TagVotes, func(v TagVote) bool { return v.Votes < 0 }) {
+		return SeriesMetadata{}, false
+	}
+	var snapshot SeriesMetadata
+	_ = json.Unmarshal(raw, &snapshot)
+	snapshot.Provider = source
+	return snapshot, true
 }

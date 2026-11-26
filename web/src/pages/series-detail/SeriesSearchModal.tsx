@@ -1,4 +1,6 @@
-import { ArrowLeft, BookImage, Building2, CheckCircle2, Download, Edit, FolderOpen, Globe, Info, Lock, Sparkles, Star } from 'lucide-react';
+import { ArrowLeft, Ban, BadgeCheck, BookImage, Building2, CheckCircle2, Download, Edit, FolderOpen, Globe, Info, Lock, Replace, Sparkles, Star } from 'lucide-react';
+import type { SeriesIdentification } from '../../api/generated';
+import { isIdentificationSource, isSameEntry } from '../../features/identification/ownerPick';
 import type { MetaTag, SearchResult, Series } from './types';
 import { ModalShell } from '../../components/ui/ModalShell';
 import { modalInputClass, modalPrimaryButtonClass, modalSecondaryButtonClass, modalSectionClass } from '../../components/ui/modalStyles';
@@ -7,6 +9,10 @@ import { useI18n } from '../../i18n/LocaleProvider';
 interface SeriesSearchModalProps {
   open: boolean;
   providerLabel: string;
+  /** 搜索的来源。目录来源的条目挑中即记为人工确认的识别；其余来源（LLM）仍生成提案。 */
+  provider?: string;
+  /** 系列此刻的识别，用来提示撤换、标出当前识别与排除候选；读不到时为 null。 */
+  identification?: SeriesIdentification | null;
   modalSearchQuery: string;
   isScraping: boolean;
   searchResults: SearchResult[];
@@ -28,7 +34,12 @@ interface PreviewField {
   label: string;
   currentValue: string;
   nextValue: string;
+  /** 当前值为空；标题还停在目录名时也算，识别会把它换成来源标题。 */
+  fillable: boolean;
 }
+
+// 字段在这次挑选后的去向：提案模式只分「将更新 / 无变化」，识别模式按识别策略只补空字段。
+type FieldOutcome = 'locked' | 'update' | 'fill' | 'keep' | 'policy' | 'none';
 
 function confidenceLabel(value: number | undefined) {
   if (!value || !Number.isFinite(value)) return '0%';
@@ -38,6 +49,8 @@ function confidenceLabel(value: number | undefined) {
 export function SeriesSearchModal({
   open,
   providerLabel,
+  provider = '',
+  identification = null,
   modalSearchQuery,
   isScraping,
   searchResults,
@@ -56,42 +69,56 @@ export function SeriesSearchModal({
   const { t } = useI18n();
   if (!open) return null;
 
+  const identifying = isIdentificationSource(provider);
+  // 同一来源已有的识别：挑中别的条目就是撤换它。
+  const replacing = identifying ? identification?.conclusions.find((c) => c.source === provider) ?? null : null;
+  const excludedEntries = identifying ? (identification?.excluded_candidates ?? []).filter((x) => x.source === provider) : [];
+  const isExcluded = (result: SearchResult) => excludedEntries.some((x) => isSameEntry(result, x));
+  const isCurrent = (result: SearchResult) => Boolean(replacing && isSameEntry(result, replacing));
+  const titlePlaceholder = Boolean(currentSeries && (!currentSeries.title?.Valid || !currentSeries.title.String || currentSeries.title.String === currentSeries.name));
+
   const previewFields: PreviewField[] = selectedResult && currentSeries ? [
     {
       key: 'title',
       label: t('series.searchModal.field.title'),
       currentValue: currentSeries.title?.Valid ? currentSeries.title.String : currentSeries.name,
       nextValue: selectedResult.Title || t('series.searchModal.notProvided'),
+      fillable: titlePlaceholder,
     },
     {
       key: 'summary',
       label: t('series.searchModal.field.summary'),
       currentValue: currentSeries.summary?.Valid ? currentSeries.summary.String : t('series.searchModal.notFilled'),
       nextValue: selectedResult.Summary || t('series.searchModal.notProvided'),
+      fillable: !currentSeries.summary?.Valid || !currentSeries.summary.String,
     },
     {
       key: 'publisher',
       label: t('series.searchModal.field.publisher'),
       currentValue: currentSeries.publisher?.Valid ? currentSeries.publisher.String : t('series.searchModal.notFilled'),
       nextValue: selectedResult.Publisher || t('series.searchModal.notProvided'),
+      fillable: !currentSeries.publisher?.Valid || !currentSeries.publisher.String,
     },
     {
       key: 'status',
       label: t('series.searchModal.field.status'),
       currentValue: currentSeries.status?.Valid ? currentSeries.status.String : t('series.searchModal.notFilled'),
       nextValue: selectedResult.Status || t('series.searchModal.notProvided'),
+      fillable: !currentSeries.status?.Valid || !currentSeries.status.String,
     },
     {
       key: 'rating',
       label: t('series.searchModal.field.rating'),
       currentValue: currentSeries.rating?.Valid ? currentSeries.rating.Float64.toFixed(1) : t('series.searchModal.notFilled'),
       nextValue: selectedResult.Rating > 0 ? selectedResult.Rating.toFixed(1) : t('series.searchModal.notProvided'),
+      fillable: !currentSeries.rating?.Valid,
     },
     {
       key: 'tags',
       label: t('series.searchModal.field.tags'),
       currentValue: currentTags.length > 0 ? [...currentTags].map((tag) => tag.name).sort((a, b) => a.localeCompare(b)).join(' / ') : t('series.searchModal.notFilled'),
       nextValue: selectedResult.Tags?.length ? [...selectedResult.Tags].sort((a, b) => a.localeCompare(b)).join(' / ') : t('series.searchModal.notProvided'),
+      fillable: false,
     },
   ] : [];
 
@@ -108,18 +135,35 @@ export function SeriesSearchModal({
     return true;
   };
 
-  const changedFieldCount = previewFields.filter((field) => {
-    if (field.nextValue === t('series.searchModal.notProvided')) return false;
-    if (field.key === 'tags') return !areTagsEqual(currentTags, selectedResult?.Tags);
-    return field.currentValue !== field.nextValue;
-  }).length;
+  const selectedExcluded = Boolean(selectedResult && isExcluded(selectedResult));
+  const replacesCurrent = Boolean(replacing && selectedResult && !isCurrent(selectedResult));
+  const outcomeOf = (field: PreviewField): FieldOutcome => {
+    const provided = field.nextValue !== t('series.searchModal.notProvided');
+    const locked = lockedFields.has(field.key);
+    if (!identifying) {
+      if (locked) return 'locked';
+      if (!provided) return 'none';
+      if (field.key === 'tags') return areTagsEqual(currentTags, selectedResult?.Tags) ? 'none' : 'update';
+      return field.currentValue !== field.nextValue ? 'update' : 'none';
+    }
+    // 识别只补空字段；目录名标题是扫描设下的占位值，带着锁也会换成来源标题。撤换时，标题若还是
+    // 原条目带来的那个，会先撤回成占位值再换成新条目的标题。
+    const placeholderTitle = field.key === 'title' && currentSeries?.title?.Valid &&
+      (currentSeries.title.String === currentSeries.name || (replacesCurrent && currentSeries.title.String === replacing?.title));
+    if (placeholderTitle && provided) return 'fill';
+    if (locked && !placeholderTitle) return 'locked';
+    if (!provided) return 'none';
+    if (field.key === 'tags') return 'policy';
+    return field.fillable ? 'fill' : 'keep';
+  };
+  const changedFieldCount = previewFields.filter((field) => ['update', 'fill'].includes(outcomeOf(field))).length;
 
   return (
     <ModalShell
       open={open}
       onClose={onClose}
-      title={t('series.searchModal.title')}
-      description={t('series.searchModal.description', { provider: providerLabel || t('series.searchModal.externalSource') })}
+      title={t(identifying ? 'series.searchModal.identifyTitle' : 'series.searchModal.title')}
+      description={t(identifying ? 'series.searchModal.identifyDescription' : 'series.searchModal.description', { provider: providerLabel || t('series.searchModal.externalSource') })}
       icon={<Globe className="h-5 w-5" />}
       size="wide"
       zIndexClassName="z-60"
@@ -176,22 +220,28 @@ export function SeriesSearchModal({
           {selectedResult ? (
             <div className="flex w-full flex-col sm:w-auto sm:flex-row items-center gap-3 sm:gap-4 lg:w-auto lg:ml-auto">
               <div className="text-sm text-gray-400 hidden sm:block text-right">
-                <p className="mb-0.5 leading-relaxed">{t('series.searchModal.lockHint')}</p>
+                {selectedExcluded ? (
+                  <p className="mb-0.5 leading-relaxed text-amber-400">{t('series.searchModal.excludedHint')}</p>
+                ) : (
+                  <p className="mb-0.5 leading-relaxed">{t(identifying ? 'series.searchModal.identifyPolicyHint' : 'series.searchModal.lockHint')}</p>
+                )}
                 <p className="text-xs text-gray-500">{t('series.searchModal.compareHint')}</p>
               </div>
               <button
                 onClick={() => onApplyMetadata(selectedResult)}
-                disabled={isScraping}
+                disabled={isScraping || selectedExcluded}
                 className={`${modalPrimaryButtonClass} w-full sm:w-auto shrink-0 shadow-lg shadow-komgaPrimary/20 hover:shadow-xl hover:shadow-komgaPrimary/30 px-6 py-2.5 justify-center`}
               >
-                {isScraping ? <div className="w-4 h-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <CheckCircle2 className="w-5 h-5" />}
-                <span className="font-bold">{t('series.searchModal.apply')}</span>
+                {isScraping ? <div className="w-4 h-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : replacesCurrent ? <Replace className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+                <span className="font-bold">
+                  {t(!identifying ? 'series.searchModal.apply' : replacesCurrent ? 'series.searchModal.replaceApply' : 'series.searchModal.identifyApply')}
+                </span>
               </button>
             </div>
           ) : (
             <p className="flex items-center gap-2 text-xs italic text-gray-500">
               <Info className="h-4 w-4" />
-              {t('series.searchModal.footerHint')}
+              {t(identifying ? 'series.searchModal.identifyFooterHint' : 'series.searchModal.footerHint')}
             </p>
           )}
         </div>
@@ -200,6 +250,12 @@ export function SeriesSearchModal({
         <div className="flex h-full min-h-0 flex-col flex-1 xl:grid xl:grid-cols-[1.1fr_0.9fr]">
           <div className={`border-gray-800 min-h-0 min-w-0 xl:border-r ${selectedResult ? 'hidden xl:block' : 'block flex-1'}`}>
             <div className="p-4 sm:p-6 overflow-y-auto space-y-4 h-full xl:max-h-full">
+              {replacing && (
+                <div data-testid="search-replacing" className="flex gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/10 p-4 text-sm leading-relaxed text-amber-200">
+                  <Replace className="mt-0.5 h-4 w-4 shrink-0" />
+                  <p>{t('series.searchModal.replacing', { provider: providerLabel, title: replacing.title || replacing.entry_id })}</p>
+                </div>
+              )}
               {searchResults.length > 0 ? (
                 searchResults.map((result, idx) => {
                   const isSelected = selectedResult?.SourceID === result.SourceID && selectedResult?.Title === result.Title;
@@ -227,12 +283,26 @@ export function SeriesSearchModal({
                               <p className="text-sm text-gray-500 truncate mt-1 italic">{result.OriginalTitle}</p>
                             )}
                           </div>
-                          {isSelected && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-komgaPrimary/30 bg-komgaPrimary/10 px-2 py-1 text-xs text-komgaPrimary">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              {t('series.searchModal.selected')}
-                            </span>
-                          )}
+                          <div className="flex shrink-0 flex-col items-end gap-1">
+                            {isSelected && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-komgaPrimary/30 bg-komgaPrimary/10 px-2 py-1 text-xs text-komgaPrimary">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                {t('series.searchModal.selected')}
+                              </span>
+                            )}
+                            {isCurrent(result) && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-1 text-xs text-cyan-200">
+                                <BadgeCheck className="w-3.5 h-3.5" />
+                                {t('series.searchModal.currentIdentification')}
+                              </span>
+                            )}
+                            {isExcluded(result) && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-xs text-amber-400">
+                                <Ban className="w-3.5 h-3.5" />
+                                {t('series.searchModal.excludedEntry')}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
@@ -319,7 +389,7 @@ export function SeriesSearchModal({
                         )}
                       </div>
                       <div className="rounded-full border border-komgaPrimary/20 bg-komgaPrimary/10 px-3 py-1 text-sm text-komgaPrimary">
-                        {t('series.searchModal.changedFields', { count: changedFieldCount })}
+                        {t(identifying ? 'series.searchModal.filledFields' : 'series.searchModal.changedFields', { count: changedFieldCount })}
                       </div>
                     </div>
                   </div>
@@ -329,25 +399,30 @@ export function SeriesSearchModal({
                       <Sparkles className="w-4 h-4 text-komgaPrimary" />
                       <h5 className="font-semibold">{t('series.searchModal.diffTitle')}</h5>
                     </div>
+                    {replacesCurrent && <p className="-mt-2 mb-4 text-xs leading-relaxed text-gray-400">{t('series.searchModal.replacePreviewHint')}</p>}
                     <div className="space-y-3">
                       {previewFields.map((field) => {
-                        const locked = lockedFields.has(field.key);
-                        const changed = field.key === 'tags'
-                          ? (field.nextValue !== t('series.searchModal.notProvided') && !areTagsEqual(currentTags, selectedResult?.Tags))
-                          : (field.currentValue !== field.nextValue && field.nextValue !== t('series.searchModal.notProvided'));
+                        const outcome = outcomeOf(field);
+                        const changed = outcome === 'update' || outcome === 'fill';
                         return (
-                          <div key={field.key} className={`rounded-xl border p-4 ${changed ? 'border-komgaPrimary/20 bg-komgaPrimary/5' : 'border-gray-800 bg-black/10'}`}>
+                          <div key={field.key} data-testid={`preview-${field.key}`} data-outcome={outcome} className={`rounded-xl border p-4 ${changed ? 'border-komgaPrimary/20 bg-komgaPrimary/5' : 'border-gray-800 bg-black/10'}`}>
                             <div className="flex items-center justify-between gap-3 mb-3">
                               <span className="text-sm font-medium text-white">{field.label}</span>
-                              {locked ? (
+                              {outcome === 'locked' ? (
                                 <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-500">
                                   <Lock className="w-3 h-3" />
                                   {t('series.searchModal.locked')}
                                 </span>
                               ) : changed ? (
-                                <span className="rounded-full border border-komgaPrimary/20 bg-komgaPrimary/10 px-2 py-1 text-xs text-komgaPrimary">{t('series.searchModal.willUpdate')}</span>
+                                <span className="rounded-full border border-komgaPrimary/20 bg-komgaPrimary/10 px-2 py-1 text-xs text-komgaPrimary">
+                                  {t(outcome === 'fill' ? 'series.searchModal.willFill' : 'series.searchModal.willUpdate')}
+                                </span>
+                              ) : outcome === 'policy' ? (
+                                <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 text-xs text-cyan-200">{t('series.searchModal.tagsByPolicy')}</span>
                               ) : (
-                                <span className="rounded-full border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-400">{t('series.searchModal.noChange')}</span>
+                                <span className="rounded-full border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-400">
+                                  {t(outcome === 'keep' ? 'series.searchModal.keepValue' : 'series.searchModal.noChange')}
+                                </span>
                               )}
                             </div>
                             <div className="grid gap-3 md:grid-cols-2">

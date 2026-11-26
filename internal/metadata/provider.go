@@ -115,6 +115,7 @@ type SeriesMetadata struct {
 	SiteRating    *SiteRating `json:",omitempty"`
 	Rating        float64
 	Tags          []string
+	TagVotes      []TagVote      `json:",omitempty"` // 投票类来源的标签及票数，与 Tags 同序；其它来源留空
 	Authors       []SeriesAuthor // 作者/绘师等参与人员
 	SourceID      int            // 外部数据源条目 ID（如 Bangumi subject ID）
 	SourceURL     string
@@ -152,6 +153,7 @@ type SourceFacts struct {
 	SiteRating    *SiteRating `json:",omitempty"`
 	Rating        float64
 	Tags          []string
+	TagVotes      []TagVote      `json:",omitempty"` // 投票类来源的标签及票数，与 Tags 同序；其它来源留空
 	Authors       []SeriesAuthor // 作者/绘师等参与人员
 	SourceID      int            // 外部数据源条目 ID（如 Bangumi subject ID）
 	SourceURL     string
@@ -160,6 +162,16 @@ type SourceFacts struct {
 	ReleaseDate   string // 发行日期
 	VolumeCount   int    // 册数/卷数
 }
+
+// TagVote is one source tag with the number of users who applied it.
+type TagVote struct {
+	Name  string `json:"name"`
+	Votes int    `json:"votes"`
+}
+
+// TagsAreVoted reports whether a catalogue source's tags are user votes that carry counts. Only
+// Bangumi's are; the other sources' tags are curated genres and categories that carry none.
+func TagsAreVoted(source string) bool { return source == "bangumi" }
 
 func siteScore(value, scale float64) *SiteRating {
 	if value <= 0 {

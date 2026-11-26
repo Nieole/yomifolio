@@ -26,6 +26,7 @@ import { useLibrarySelection } from './hooks/useLibrarySelection';
 import { useLibraryKeyboard } from './hooks/useLibraryKeyboard';
 import { useExternalLibrary } from '../../features/external-library/useExternalLibrary';
 import { useSeriesScraping } from './hooks/useSeriesScraping';
+import { ownerPickMessage } from '../../features/identification/ownerPick';
 import { useSmartFilters } from './hooks/useSmartFilters';
 import { smartFilterToSnapshot } from './hooks/smartFilterNormalize';
 import { useLibraryFilterOptions } from './hooks/useLibraryFilterOptions';
@@ -54,6 +55,7 @@ export default function LibraryPage() {
     activeTag,
     activeAuthor,
     activeStatus,
+    activeIdentification,
     activeLetter,
     advanced,
     sortByField,
@@ -65,6 +67,7 @@ export default function LibraryPage() {
     setActiveTag,
     setActiveAuthor,
     setActiveStatus,
+    setActiveIdentification,
     setActiveLetter,
     setAdvancedFilters,
     setSortByField,
@@ -117,6 +120,8 @@ export default function LibraryPage() {
     activeTag,
     activeAuthor,
     activeStatus,
+    // 识别状态筛选只给管理员；普通账号即便 URL 里带着也不发给服务端。
+    activeIdentification: isAdmin ? activeIdentification : null,
     activeLetter,
     advanced,
     sortByField,
@@ -164,7 +169,8 @@ export default function LibraryPage() {
     },
   });
 
-  const hasAnyFilter = Boolean(activeTag || activeAuthor || activeStatus || activeLetter || keyword.trim()) || hasAdvancedFilters(advanced);
+  const hasAnyFilter =
+    Boolean(activeTag || activeAuthor || activeStatus || (isAdmin && activeIdentification) || activeLetter || keyword.trim()) || hasAdvancedFilters(advanced);
 
   const smartFilterChips = useMemo(() => {
     const chips: string[] = [];
@@ -196,6 +202,12 @@ export default function LibraryPage() {
       refreshLoadedSeries();
     },
     onError: showError,
+    onIdentified: (_seriesId, result) => {
+      const message = ownerPickMessage(result);
+      showToast(t(message.key, message.params), 'success');
+      invalidateLibrary({ areas: ['reviews'] });
+      refreshLoadedSeries();
+    },
   });
 
   // 稳定化传给 LibraryCard 的刮削菜单回调，配合 LibraryCard 的 React.memo，避免库页（扫描/刷新期）
@@ -332,6 +344,9 @@ export default function LibraryPage() {
         onFiltersOpen={loadFilterOptions}
         onTagSearch={searchTagOptions}
         onAuthorSearch={searchAuthorOptions}
+        showIdentification={isAdmin}
+        activeIdentification={activeIdentification}
+        onIdentificationChange={setActiveIdentification}
       />
 
       {seriesError !== null && (
@@ -481,7 +496,7 @@ export default function LibraryPage() {
         onConfirm={transfer.confirmTransfer}
       />
 
-      <LibraryScrapeModal scraping={scraping} />
+      <LibraryScrapeModal scraping={scraping} providers={scrapeProviders} />
     </div>
   );
 }

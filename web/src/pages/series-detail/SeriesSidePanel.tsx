@@ -42,6 +42,13 @@ interface SeriesSidePanelProps {
   retryingTaskId: number | null;
   onRetryFailedTask: (taskId: number) => void;
   taskTypeLabel: (type: string) => string;
+
+  /** 识别区撤换某个来源的识别时打开该来源的手动搜索。 */
+  onReplaceIdentification: (source: string) => void;
+  /** 能手动搜索、因而能撤换识别的来源。 */
+  replaceableSources: string[];
+  /** 页面别处记下人工识别后递增，识别区随之重读。 */
+  identificationRevision: number;
 }
 
 export function SeriesSidePanel(props: SeriesSidePanelProps) {
@@ -205,7 +212,12 @@ export function SeriesSidePanel(props: SeriesSidePanelProps) {
               )
             )}
             {props.activeTab === 'identification' && isAdmin && (
-              <SeriesIdentificationPanel seriesId={props.seriesId} />
+              <SeriesIdentificationPanel
+                seriesId={props.seriesId}
+                onReplace={props.onReplaceIdentification}
+                replaceableSources={props.replaceableSources}
+                revision={props.identificationRevision}
+              />
             )}
             {props.activeTab === 'review' && (
               <SeriesReviewPanel seriesId={props.seriesId} />

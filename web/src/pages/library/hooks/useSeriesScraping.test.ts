@@ -88,7 +88,7 @@ async function deliver(seriesId: number) {
 function renderScraping() {
   const onError = vi.fn();
   const onSuccess = vi.fn();
-  const view = renderHook(() => useSeriesScraping({ onSuccess, onError }));
+  const view = renderHook(() => useSeriesScraping({ onSuccess, onError, onIdentified: vi.fn() }));
   return { ...view, onError, onSuccess };
 }
 
@@ -164,5 +164,73 @@ describe('useSeriesScraping 并发刮削', () => {
     expect(result.current.isScraping).toBe(true);
     expect(result.current.showScrapeModal).toBe(false);
     expect(result.current.scrapeSeriesDetail).toBeNull();
+  });
+});
+
+describe('useSeriesScraping 挑中即识别', () => {
+  function mockResolvedGet(identification: unknown) {
+    vi.spyOn(apiClient, 'get').mockImplementation(((url: string) => {
+      if (url.startsWith('/api/identification/series/')) return Promise.resolve({ data: identification });
+      return Promise.resolve({ data: bodyFor(url) });
+    }) as never);
+  }
+
+  it('挑中目录来源的条目时记为人工确认的识别，不再生成提案', async () => {
+    mockResolvedGet({ series_id: 2, status: 'unprocessed', conclusions: [], excluded_candidates: [] });
+    const answer = { identification: { series_id: 2, status: 'identified', conclusions: [], excluded_candidates: [] }, operation_id: 'op-1' };
+    const put = vi.spyOn(apiClient, 'put').mockResolvedValue({ data: answer } as never);
+    const post = vi.spyOn(apiClient, 'post');
+    const onIdentified = vi.fn();
+    const { result } = renderHook(() => useSeriesScraping({ onSuccess: vi.fn(), onError: vi.fn(), onIdentified }));
+
+    await act(async () => {
+      await result.current.startScrape(makeCard(2), 'bangumi');
+    });
+    expect(result.current.scrapeIdentification?.status).toBe('unprocessed');
+    const picked = result.current.scrapeSearchResults[0];
+    await act(async () => {
+      await result.current.applyScrape(picked as unknown as Record<string, unknown>);
+    });
+
+    expect(put).toHaveBeenCalledWith('/api/identification/series/2/conclusions/bangumi', { result: picked });
+    expect(post).not.toHaveBeenCalled();
+    expect(onIdentified).toHaveBeenCalledWith(2, answer);
+    expect(result.current.showScrapeModal).toBe(false);
+  });
+
+  it('被排除的条目挑不进去时报告排除，弹窗保持打开', async () => {
+    mockResolvedGet(null);
+    vi.spyOn(apiClient, 'put').mockRejectedValue(Object.assign(new Error('conflict'), { isAxiosError: true, response: { status: 409 } }));
+    const onError = vi.fn();
+    const onIdentified = vi.fn();
+    const { result } = renderHook(() => useSeriesScraping({ onSuccess: vi.fn(), onError, onIdentified }));
+
+    await act(async () => {
+      await result.current.startScrape(makeCard(2), 'bangumi');
+    });
+    await act(async () => {
+      await result.current.applyScrape(result.current.scrapeSearchResults[0] as unknown as Record<string, unknown>);
+    });
+
+    expect(onError).toHaveBeenCalledWith('identification.pick.excluded');
+    expect(onIdentified).not.toHaveBeenCalled();
+    expect(result.current.showScrapeModal).toBe(true);
+  });
+
+  it('LLM 的结果不指向来源条目，仍按原样加入审核队列', async () => {
+    mockResolvedGet(null);
+    const put = vi.spyOn(apiClient, 'put');
+    const post = vi.spyOn(apiClient, 'post').mockResolvedValue({ data: { queued: true } } as never);
+    const { result } = renderHook(() => useSeriesScraping({ onSuccess: vi.fn(), onError: vi.fn(), onIdentified: vi.fn() }));
+
+    await act(async () => {
+      await result.current.startScrape(makeCard(2), 'llm');
+    });
+    await act(async () => {
+      await result.current.applyScrape({ Title: '模型推断' });
+    });
+
+    expect(post).toHaveBeenCalledWith('/api/series/2/scrape-apply?provider=llm', { Title: '模型推断' });
+    expect(put).not.toHaveBeenCalled();
   });
 });

@@ -279,11 +279,13 @@ func (b *BangumiProvider) convertToSeriesMetadata(best bangumiSubjectResult, ran
 		rating = best.Rating.Score
 	}
 
-	// 提取标签名
+	// 提取标签名；票数一并保留，供识别补充按投票阈值过滤
 	var tags []string
+	var votes []TagVote
 	for _, t := range best.Tags {
 		if t.Name != "" {
 			tags = append(tags, t.Name)
+			votes = append(votes, TagVote{Name: t.Name, Votes: t.Count})
 		}
 	}
 
@@ -316,6 +318,7 @@ func (b *BangumiProvider) convertToSeriesMetadata(best bangumiSubjectResult, ran
 		SiteRating:    siteScore(rating, 10),
 		Rating:        rating,
 		Tags:          tags,
+		TagVotes:      votes,
 		Authors:       authors,
 		SourceID:      best.ID,
 		SourceURL:     fmt.Sprintf("https://bgm.tv/subject/%d", best.ID),
