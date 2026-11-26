@@ -56,7 +56,8 @@ func TestPublicationWaitsForWholeBookHandle(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer h.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	// The bound also covers staging a full copy of the archive, which precedes closing admission.
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	done := make(chan error, 1)
 	go func() {
