@@ -290,7 +290,7 @@ func (s *Service) judge(ctx context.Context, tx *sql.Tx, subject delegated.Subje
 		result.Problem = ProblemClaimedByOther
 		return result, nil
 	}
-	packet, facts, _, err := storedEvidence(ctx, tx, v.SeriesID)
+	packet, _, _, err := storedEvidence(ctx, tx, v.SeriesID)
 	if err != nil {
 		return VerdictResult{}, err
 	}
@@ -298,23 +298,12 @@ func (s *Service) judge(ctx context.Context, tx *sql.Tx, subject delegated.Subje
 	finished := true
 	switch v.Verdict {
 	case VerdictIdentify:
-		excluded, err := excludedIDs(ctx, tx, v.SeriesID)
+		cited, problem, err := citeEvidence(ctx, tx, v.SeriesID, v.CandidateIDs)
 		if err != nil {
 			return VerdictResult{}, err
 		}
-		var cited []citedCandidate
-		for _, id := range v.CandidateIDs {
-			index := slices.IndexFunc(packet.Candidates, func(c EvidenceCandidate) bool { return c.ID == id })
-			switch {
-			case excluded[id]:
-				result.Problem = ProblemExcludedCandidate
-			case index < 0 && result.Problem == "":
-				result.Problem = ProblemNotInEvidence
-			case index >= 0:
-				cited = append(cited, citedCandidate{EvidenceCandidate: packet.Candidates[index], facts: facts[id]})
-			}
-		}
-		if result.Problem != "" {
+		if problem != "" {
+			result.Problem = problem
 			return result, nil
 		}
 		op, err := s.confirm(ctx, tx, subject, ConfirmedByAgent, verdictReceiptKey(subject, key, v.SeriesID), v.SeriesID, cited, v.Reason)

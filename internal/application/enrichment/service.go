@@ -73,28 +73,30 @@ type Operation struct {
 	CleanedBy       string              `json:"cleaned_by,omitempty"`
 	Adjudication    *AdjudicationResult `json:"adjudication,omitempty"`
 	// Identification is set on the receipts of supplementation after identification.
-	Identification   *IdentificationBasis `json:"identification,omitempty"`
-	CoverSelection   *CoverSelection      `json:"cover_selection,omitempty"`
-	Relation         *RelationChange      `json:"relation,omitempty"`
-	OldCoverMaterial string               `json:"old_cover_material,omitempty"`
-	NewCoverMaterial string               `json:"new_cover_material,omitempty"`
-	Version          int                  `json:"version"`
-	ID               string               `json:"id"`
-	RequestKey       string               `json:"request_key"`
-	Actor            delegated.Subject    `json:"actor"`
-	SeriesID         int64                `json:"series_id"`
-	LibraryID        int64                `json:"library_id"`
-	Kind             string               `json:"kind"`
-	ParentID         string               `json:"parent_id,omitempty"`
-	CreatedAt        string               `json:"created_at"`
-	Outcome          string               `json:"outcome"`
-	Reason           string               `json:"reason"`
-	Before           State                `json:"before"`
-	After            State                `json:"after"`
-	Fields           []FieldAudit         `json:"fields"`
-	UndoneBy         string               `json:"undone_by,omitempty"`
-	Applied          bool                 `json:"applied"`
-	Replayed         bool                 `json:"replayed"`
+	Identification *IdentificationBasis `json:"identification,omitempty"`
+	// Correction is set on the receipts of an agent's field correction.
+	Correction       *CorrectionBasis  `json:"correction,omitempty"`
+	CoverSelection   *CoverSelection   `json:"cover_selection,omitempty"`
+	Relation         *RelationChange   `json:"relation,omitempty"`
+	OldCoverMaterial string            `json:"old_cover_material,omitempty"`
+	NewCoverMaterial string            `json:"new_cover_material,omitempty"`
+	Version          int               `json:"version"`
+	ID               string            `json:"id"`
+	RequestKey       string            `json:"request_key"`
+	Actor            delegated.Subject `json:"actor"`
+	SeriesID         int64             `json:"series_id"`
+	LibraryID        int64             `json:"library_id"`
+	Kind             string            `json:"kind"`
+	ParentID         string            `json:"parent_id,omitempty"`
+	CreatedAt        string            `json:"created_at"`
+	Outcome          string            `json:"outcome"`
+	Reason           string            `json:"reason"`
+	Before           State             `json:"before"`
+	After            State             `json:"after"`
+	Fields           []FieldAudit      `json:"fields"`
+	UndoneBy         string            `json:"undone_by,omitempty"`
+	Applied          bool              `json:"applied"`
+	Replayed         bool              `json:"replayed"`
 }
 type Page struct {
 	Operations []Operation `json:"operations"`

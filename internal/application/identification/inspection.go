@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 
 	"yomifolio/internal/application/delegated"
@@ -327,16 +328,27 @@ func tagSampleSeries(ctx context.Context, q queryer, tag int64, scope string) ([
 	return out, rows.Err()
 }
 
-// ReportInput is one note an agent leaves the owner on a series.
+// CategoryDisputedOwnerIdentification is the category of the recheck escalation an agent raises
+// when it believes a person's identification of the series is wrong. An agent may not replace a
+// person's identification, so this hands the question to the owner.
+const CategoryDisputedOwnerIdentification = "disputed_owner_identification"
+
+// ErrNoOwnerIdentification means a dispute names a series no person identified.
+var ErrNoOwnerIdentification = errors.New("series has no identification a person confirmed")
+
+// ReportCategories are the categories Report takes, in the order agents are offered them.
+var ReportCategories = []string{CategoryDirectoryGrouping, CategorySuspectedDuplicate, CategoryTagProblem, CategoryDisputedOwnerIdentification}
+
+// ReportInput is one report an agent leaves the owner on a series.
 type ReportInput struct {
 	SeriesID int64  `json:"series_id"`
-	Category string `json:"category" jsonschema:"directory_grouping, suspected_duplicate or tag_problem"`
+	Category string `json:"category" jsonschema:"directory_grouping, suspected_duplicate or tag_problem leave a note; disputed_owner_identification sends a series a person identified to the owner's recheck"`
 	Reason   string `json:"reason" jsonschema:"one checkable sentence, at most 1000 bytes"`
 }
 
-// Report says what a note left. Recorded is false when a note of the category was already open on
-// the series, which then keeps that note's reason. Status is the series' identification status,
-// which a note never changes.
+// Report says what a report left. Recorded is false when a report of the category was already open
+// on the series, which then keeps that report's reason. Status is the series' identification
+// status: a note never changes it, a dispute makes it needs_recheck unless the owner reviewed it.
 type Report struct {
 	SeriesID int64  `json:"series_id"`
 	Category string `json:"category"`
@@ -344,15 +356,22 @@ type Report struct {
 	Status   string `json:"status"`
 }
 
-// Report leaves the owner a note of one of the note categories on a series, under current read
-// authority re-checked in the recording transaction; a series that does not exist reads as one
-// outside it. The note stays open until the owner closes it. It changes neither the series'
-// identification status nor its metadata and needs no claim; like a note given to Submit, it is
-// not repeated while a note of the same category is open.
+// Report leaves the owner a report on a series, under current read authority re-checked in the
+// recording transaction; a series that does not exist reads as one outside it. A note of one of the
+// note categories changes neither the series' identification status nor its metadata. A dispute
+// questions an identification a person confirmed, which no agent may replace: it raises a recheck
+// escalation, so the series waits for the owner's recheck with its identification and metadata as
+// they are; a series no person identified is refused with ErrNoOwnerIdentification. A report needs
+// no claim, stays open until the owner closes it and, like a note given to Submit, is not repeated
+// while one of the same category is open.
 func (s *Service) Report(ctx context.Context, subject delegated.Subject, in ReportInput) (Report, error) {
 	in.Reason = strings.TrimSpace(in.Reason)
-	if class, ok := agentClass(in.Category); !ok || class != EscalationNote || in.SeriesID <= 0 || in.Reason == "" || len(in.Reason) > maxReasonBytes {
+	if !slices.Contains(ReportCategories, in.Category) || in.SeriesID <= 0 || in.Reason == "" || len(in.Reason) > maxReasonBytes {
 		return Report{}, delegated.ErrInvalid
+	}
+	class := EscalationNote
+	if in.Category == CategoryDisputedOwnerIdentification {
+		class = EscalationRecheck
 	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -370,8 +389,17 @@ func (s *Service) Report(ctx context.Context, subject delegated.Subject, in Repo
 	if err := delegated.AuthorizeTx(ctx, tx, subject, library, delegated.Read); err != nil {
 		return Report{}, delegated.ErrDenied
 	}
+	if class == EscalationRecheck {
+		var disputable bool
+		if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM identification_conclusions WHERE series_id = ? AND confirmer = ?)`, in.SeriesID, ConfirmedByOwner).Scan(&disputable); err != nil {
+			return Report{}, err
+		}
+		if !disputable {
+			return Report{}, ErrNoOwnerIdentification
+		}
+	}
 	out := Report{SeriesID: in.SeriesID, Category: in.Category}
-	if out.Recorded, err = raiseOnce(ctx, tx, subject, in.SeriesID, in.Category, EscalationNote, in.Reason, s.now().UnixMilli()); err != nil {
+	if out.Recorded, err = raiseOnce(ctx, tx, subject, in.SeriesID, in.Category, class, in.Reason, s.now().UnixMilli()); err != nil {
 		return Report{}, err
 	}
 	if out.Status, err = seriesStatus(ctx, tx, in.SeriesID); err != nil {

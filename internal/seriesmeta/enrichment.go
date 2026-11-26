@@ -196,3 +196,24 @@ func ForgetEnrichmentProvenance(ctx context.Context, tx *sql.Tx, series int64, o
 	}
 	return nil
 }
+
+// FieldRecord is the source record of one field's value, as RestoreFieldProvenance puts it back.
+type FieldRecord struct {
+	Value      string
+	Source     string
+	SourceURL  string
+	Confidence float64
+	Origin     FieldOrigin
+}
+
+// RestoreFieldProvenance puts back a field's earlier source record, when undoing a write that
+// replaced it brings its value back. A proposal deleted since is no longer named.
+func RestoreFieldProvenance(ctx context.Context, tx *sql.Tx, series int64, field string, record FieldRecord) error {
+	operation := sql.NullString{String: record.Origin.Operation, Valid: record.Origin.Operation != ""}
+	_, err := tx.ExecContext(ctx, `INSERT INTO series_metadata_provenance (series_id, field_name, value, source, source_url, confidence, review_id, operation_id)
+		VALUES (?, ?, ?, ?, ?, ?, (SELECT id FROM metadata_reviews WHERE id = ?), ?)
+		ON CONFLICT(series_id, field_name) DO UPDATE SET value = excluded.value, source = excluded.source, source_url = excluded.source_url,
+			confidence = excluded.confidence, review_id = excluded.review_id, operation_id = excluded.operation_id, updated_at = CURRENT_TIMESTAMP`,
+		series, field, record.Value, record.Source, record.SourceURL, record.Confidence, record.Origin.proposal(), operation)
+	return err
+}
