@@ -131,7 +131,10 @@ func snapshotPage(name string, total int, results []*SeriesMetadata) SourcePage 
 			return SourcePage{Source: name, Status: SourceInvalidResponse, Total: total}
 		}
 		raw, err := json.Marshal(result)
-		if err != nil || len(raw) > maxSnapshotBytes || len(result.Tags) > maxSnapshotItems || len(result.Authors) > maxSnapshotItems {
+		if err != nil || len(raw) > maxSnapshotBytes || len(result.Tags) > maxSnapshotItems || len(result.TagVotes) > maxSnapshotItems || len(result.Authors) > maxSnapshotItems {
+			return SourcePage{Source: name, Status: SourceInvalidResponse, Total: total}
+		}
+		if slices.ContainsFunc(result.TagVotes, func(v TagVote) bool { return v.Votes < 0 }) {
 			return SourcePage{Source: name, Status: SourceInvalidResponse, Total: total}
 		}
 		var snapshot SeriesMetadata

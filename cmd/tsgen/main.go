@@ -40,6 +40,7 @@ var targets = []reflect.Type{
 	reflect.TypeOf(delegated.Subject{}),
 	reflect.TypeOf(metadata.FieldEvidence{}),
 	reflect.TypeOf(metadata.SourceFacts{}),
+	reflect.TypeOf(metadata.TagVote{}),
 	reflect.TypeOf(metadata.SiteRating{}),
 	reflect.TypeOf(metadata.SeriesAuthor{}),
 	reflect.TypeOf(seriesmeta.Link{}),

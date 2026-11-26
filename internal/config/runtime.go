@@ -92,6 +92,8 @@ func CloneConfig(cfg Config) Config {
 	cfg.Server.TrustedProxies = cloneStrings(cfg.Server.TrustedProxies)
 	cfg.Library.Paths = cloneStrings(cfg.Library.Paths)
 	cfg.Library.StoragePolicies = cloneStoragePolicies(cfg.Library.StoragePolicies)
+	cfg.Identification.SourcePriority = cloneStrings(cfg.Identification.SourcePriority)
+	cfg.Identification.Tags.Blocklist = cloneStrings(cfg.Identification.Tags.Blocklist)
 	return cfg
 }
 

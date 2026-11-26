@@ -78,6 +78,10 @@ func TestMCPSourceSearchReportsEachCatalogueStatus(t *testing.T) {
 				return []*metadata.SeriesMetadata{{Summary: strings.Repeat("x", 33<<10)}}, 1, nil
 			case "Too many tags":
 				return []*metadata.SeriesMetadata{{Tags: make([]string, 101)}}, 1, nil
+			case "Too many tag votes":
+				return []*metadata.SeriesMetadata{{TagVotes: make([]metadata.TagVote, 101)}}, 1, nil
+			case "Negative tag votes":
+				return []*metadata.SeriesMetadata{{TagVotes: []metadata.TagVote{{Name: "tag", Votes: -1}}}}, 1, nil
 			case "Too many authors":
 				return []*metadata.SeriesMetadata{{Authors: make([]metadata.SeriesAuthor, 101)}}, 1, nil
 			case "Negative source ID":
@@ -236,6 +240,8 @@ func TestMCPSourceSearchReportsEachCatalogueStatus(t *testing.T) {
 	for _, tc := range []struct{ query, page string }{
 		{"Oversized candidate", "invalid_response"},
 		{"Too many tags", "invalid_response"},
+		{"Too many tag votes", "invalid_response"},
+		{"Negative tag votes", "invalid_response"},
 		{"Too many authors", "invalid_response"},
 		{"Negative source ID", "invalid_response"},
 		{"Negative volumes", "invalid_response"},

@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"yomifolio/internal/application/delegated"
+	"yomifolio/internal/config"
 	"yomifolio/internal/database"
 	"yomifolio/internal/metadata"
 	"yomifolio/internal/proposal"
@@ -38,6 +39,8 @@ type IdentifiedInput struct {
 	Reason string
 	// Sources are all the sources the series is identified with, highest priority first.
 	Sources []IdentifiedSource
+	// Tags is the configured tag policy with its defaults filled in; the zero policy appends no tags.
+	Tags config.TagPolicy
 }
 
 // IdentificationBasis records on a receipt the identification its supplementation followed.
@@ -66,6 +69,7 @@ var sourceLinkNames = map[string]string{"bangumi": "Bangumi", "anilist": "AniLis
 // Text fields take the first value in source priority and fill only empty, unlocked fields; a title
 // still equal to the directory name is a placeholder that is replaced under its lock. The rating is
 // computed by formula when missing, and recomputed while it is still an untouched formula result.
+// Source tags append what the tag policy admits of their union (see planTags).
 // Source links append every identified entry. Authors fill only the roles the series lacks: each
 // missing role takes the authors of the first source in priority that names it. Every written
 // field records its source, and the series' pending proposals close as superseded in the same
@@ -96,7 +100,7 @@ func (s *Service) EnrichIdentified(ctx context.Context, tx *sql.Tx, actor delega
 	for _, source := range in.Sources {
 		out.Identification.Entries = append(out.Identification.Entries, IdentifiedEntry{CandidateID: source.CandidateID, EntryURL: source.EntryURL})
 	}
-	planIdentified(current, in.Sources, formula, &out)
+	planIdentified(current, in.Sources, in.Tags, formula, &out)
 	if out.Applied {
 		if err = writeState(ctx, tx, q, current, out.After, changedFields(out.Fields)); err != nil {
 			return Operation{}, err
@@ -174,7 +178,7 @@ const (
 
 // planIdentified fills field audits and the after-state by the identification policy. Unlike plan,
 // a locked or filled field is kept on its own and never turns the series into a conflict.
-func planIdentified(current database.Series, sources []IdentifiedSource, formula bool, out *Operation) {
+func planIdentified(current database.Series, sources []IdentifiedSource, tags config.TagPolicy, formula bool, out *Operation) {
 	before := out.Before
 	record := func(field, reason string, evidence []metadata.FieldEvidence) {
 		changed := !same(before, out.After, field)
@@ -246,6 +250,15 @@ func planIdentified(current database.Series, sources []IdentifiedSource, formula
 		if last := &out.Fields[len(out.Fields)-1]; last.Changed {
 			last.Formula = formulaText
 		}
+	}
+
+	if seriesmeta.EnrichmentLocked(current, "tags") {
+		record("tags", reasonLocked, nil)
+	} else {
+		var evidence []metadata.FieldEvidence
+		var reason string
+		out.After.Tags, evidence, reason = planTags(tags, sources, before.Tags)
+		record("tags", reason, evidence)
 	}
 
 	if seriesmeta.EnrichmentLocked(current, "source_links") {
