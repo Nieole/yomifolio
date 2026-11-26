@@ -113,6 +113,7 @@ type Service struct {
 	cleanup          *CleanupAccess
 	covers           *CoverAccess
 	relationsChanged func()
+	identified       IdentifiedSources
 }
 
 func New(db *sql.DB, evidence Evidence, publish func()) *Service {
