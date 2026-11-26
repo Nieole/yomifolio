@@ -24,6 +24,8 @@ type fieldEvidence struct {
 
 // supplement is one series' command to the apply stage: selected fields, the
 // caller's expected values, confirmed evidence and explicit cover or author choices.
+// correctOnly makes the authors field apply the corrections alone instead of also
+// appending every source credit.
 type supplement struct {
 	key, digest string
 	series      int64
@@ -33,6 +35,7 @@ type supplement struct {
 	cover       *CoverSelection
 	prepared    *preparedCover
 	corrections []AuthorCorrection
+	correctOnly bool
 }
 
 // decision is the confirmation behind the evidence. The apply stage consults it only
@@ -182,7 +185,7 @@ func plan(current database.Series, c supplement, out *Operation) error {
 		switch f {
 		case "authors":
 			var e error
-			out.After.Authors, e = correctAuthors(c.expected.Authors, sources, c.corrections)
+			out.After.Authors, e = correctAuthors(c.expected.Authors, sources, c.corrections, !c.correctOnly)
 			if e != nil {
 				return e
 			}
