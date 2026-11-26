@@ -591,6 +591,9 @@ func TestIdentificationImagesReturnWhatTheyHoldWhenTheCallerLeaves(t *testing.T)
 	}, host)
 	world.web.prefetch("{}")
 	agent := world.web.identificationAgent(world.cfg, 1, []int64{world.library.lib.ID}, []string{"read"})
+	// A disconnect strands the client's idle keep-alives; the call after one drops them first, so
+	// it dials afresh instead of failing on a connection the server already closed.
+	afresh := world.web.server.Client().CloseIdleConnections
 
 	t.Run("local reads", func(t *testing.T) {
 		snapshot := world.cfg.Snapshot()
@@ -602,6 +605,7 @@ func TestIdentificationImagesReturnWhatTheyHoldWhenTheCallerLeaves(t *testing.T)
 	for _, mode := range []string{"cancel", "disconnect"} {
 		t.Run("cover download on "+mode, func(t *testing.T) {
 			hold.Clear()
+			afresh()
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			returned := make(chan struct{})
@@ -609,7 +613,12 @@ func TestIdentificationImagesReturnWhatTheyHoldWhenTheCallerLeaves(t *testing.T)
 				defer close(returned)
 				_, _ = agent.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_identification_images", Arguments: map[string]any{"series_id": world.series, "candidate_ids": []string{"bangumi:101"}}})
 			}()
-			url := <-started
+			var url string
+			select {
+			case url = <-started:
+			case <-returned:
+				t.Fatal("the call returned before its download started")
+			}
 			if mode == "cancel" {
 				cancel()
 			} else {
@@ -625,6 +634,7 @@ func TestIdentificationImagesReturnWhatTheyHoldWhenTheCallerLeaves(t *testing.T)
 		})
 	}
 	// Both download slots came back.
+	afresh()
 	call := world.images(agent, map[string]any{"series_id": world.series, "candidate_ids": []string{"bangumi:102", "bangumi:103"}})
 	for _, image := range call.out.Images {
 		if image.Status != "included" {

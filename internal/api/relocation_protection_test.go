@@ -179,6 +179,7 @@ func TestRelocationAcceptsMissingBookAndProtectsEveryRecord(t *testing.T) {
 	if op.Status != "completed" {
 		t.Fatalf("operation: %+v", op)
 	}
+	awaitRunTerminal(t, c, op.RunID)
 	libraries := httptest.NewRecorder()
 	c.families.library.getLibraries(libraries, httptest.NewRequest(http.MethodGet, "/api/libraries", nil))
 	var libraryStatus []struct {
@@ -231,7 +232,9 @@ func acceptRelocationAnomalies(t *testing.T, c *apiFixture, planID int64) Reloca
 	if err := json.Unmarshal(rec.Body.Bytes(), &op); err != nil {
 		t.Fatal(err)
 	}
-	return awaitRelocationOperation(t, c, op.ID)
+	op = awaitRelocationOperation(t, c, op.ID)
+	awaitRunTerminal(t, c, op.RunID)
+	return op
 }
 
 func TestRelocationProtectionSurvivesFreshStartupAndAllCleanupEntrypoints(t *testing.T) {
