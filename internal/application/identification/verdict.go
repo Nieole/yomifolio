@@ -120,8 +120,8 @@ type Submission struct {
 // identify records an agent conclusion per cited source; not_found records the sources the
 // series' evidence packet heard from; an identification escalation hands the series to the owner.
 // Each of these ends the lease. A note leaves the status and the lease as they are, so the same
-// lease may still answer the series; a note of a category already open on the series is not
-// repeated. No verdict changes series metadata.
+// lease may still answer the series; a note of a category the series already has, open or closed
+// by the owner, is not repeated. No verdict changes series metadata.
 func (s *Service) Submit(ctx context.Context, subject delegated.Subject, in SubmitInput) (Submission, error) {
 	if !validRequestKey(in.RequestKey) || in.LeaseID == "" || len(in.LeaseID) > 64 || len(in.Verdicts) == 0 || len(in.Verdicts) > MaxClaim {
 		return Submission{}, delegated.ErrInvalid
