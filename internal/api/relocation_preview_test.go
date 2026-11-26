@@ -643,6 +643,11 @@ func awaitRelocationPlan(t *testing.T, c *apiFixture, id int64) RelocationPlan {
 			t.Fatalf("get preview: %d %s (%v)", rec.Code, rec.Body.String(), err)
 		}
 		if plan.Status != "pending" && plan.Status != "checking" {
+			// Only a checked plan has a check run that is certain to finish; cancelled or
+			// interrupted plans may have lost theirs to pruning or a restart.
+			if plan.Status == "checked" {
+				awaitRunTerminal(t, c, plan.RunID)
+			}
 			return plan
 		}
 		select {
