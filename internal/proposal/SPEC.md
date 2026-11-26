@@ -39,4 +39,4 @@ references: [mm-adr-0011]
 
 `Read` 允许调用方使用同一个事务快照投影当前字段/锁；授权由应用提供。`AdjudicationPending` 在调用方实际写事务重读系列归属、pending 及所选剩余字段；未知/错系列与终态竞争不混为成功。`ConsumeAdjudication` 仅删除实际写入字段行，pending 期间以 applied_at 保存已接受标记，继续部分应用及关闭不重写此时间；最后剩余为空时推进 applied，终态时间沿用既有 CAS 约定；明确关闭剩余差异且有当前/既往接受时推进 supplemented_closed，无接受则 rejected。`Accepted` 在调用方已授权的同一事务内统一结合 applied_at、applied / supplemented_closed 终态及现存 review_id provenance 投影接受事实，供公开提案读取、确认入队的新建/复用响应、所有裁决收据和关闭判断共享；入队调用方在实际授权入队事务内投影，不把 reused_existing 当作未接受。旧人工部分应用仍有当前 provenance 指向该提案时也能识别已接受，不猜测已丢失的历史；当前值恰好相同、锁定、保护或 noop 均不是接受证据。清理操作快照不删除最小裁决标记或提案 provenance；重放仍是原收据，不按最新提案重算。
 
-supplemented_closed 是终态，不是 rejected 的别名；关闭保留未消费差异及已接受内容，Undo 不重新入队或恢复字段行。裁决状态推进采用同一 pending CAS，字段消费、标记、来源写入和收据失败必须由调用方整体回滚。来源保护规则与权限归 mm-application/mm-seriesmeta；普通人工 Apply/Reject 不改用新模式。
+`superseded` 是系列被识别后结案的终态，由 `SupersedePending` 在调用方写事务内以同一 pending CAS 推进，已被其他裁决结束的提案保持原终态；它既不是驳回也不是接受，不产生排除候选，剩余差异不再可裁决，此前已接受的字段仍算接受。supplemented_closed 是终态，不是 rejected 的别名；关闭保留未消费差异及已接受内容，Undo 不重新入队或恢复字段行。裁决状态推进采用同一 pending CAS，字段消费、标记、来源写入和收据失败必须由调用方整体回滚。来源保护规则与权限归 mm-application/mm-seriesmeta；普通人工 Apply/Reject 不改用新模式。

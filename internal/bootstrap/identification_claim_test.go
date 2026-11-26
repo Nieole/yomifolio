@@ -288,11 +288,12 @@ func TestParallelClaimsNeverOverlapAndExpiredLeasesReturn(t *testing.T) {
 
 // verdictResult mirrors one result of a submission.
 type verdictResult struct {
-	SeriesID int64  `json:"series_id"`
-	Accepted bool   `json:"accepted"`
-	Status   string `json:"status"`
-	Problem  string `json:"problem"`
-	Message  string `json:"message"`
+	SeriesID    int64  `json:"series_id"`
+	Accepted    bool   `json:"accepted"`
+	Status      string `json:"status"`
+	Problem     string `json:"problem"`
+	Message     string `json:"message"`
+	OperationID string `json:"operation_id"`
 }
 
 type submission struct {
@@ -414,9 +415,11 @@ func TestAgentSubmitsVerdictsSeriesBySeries(t *testing.T) {
 	if identified.Conclusions[1].OriginalTitle != "Title 1 Original" {
 		t.Fatalf("AniList conclusion keeps the original title: %+v", identified.Conclusions[1])
 	}
-	// A verdict records identity only; enrichment is not part of it.
-	if series, err := store.GetSeries(context.Background(), ids[0]); err != nil || series.Summary.Valid || series.Title.Valid || series.Publisher.Valid {
-		t.Fatalf("identified series metadata %+v %v", series, err)
+	// Only an identification supplements the series, and its result names that receipt.
+	for i, r := range results {
+		if (i == 0) != (r.OperationID != "") {
+			t.Fatalf("result %d receipt %q", i, r.OperationID)
+		}
 	}
 	missing := web.ownerVerdicts(ids[1]).NotFound
 	if missing == nil || !reflect.DeepEqual(missing.SearchedSources, []string{"bangumi", "anilist"}) || missing.Reason != "no candidate shares the title" ||
