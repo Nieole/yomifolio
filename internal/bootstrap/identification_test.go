@@ -208,7 +208,7 @@ func TestUpgradeDerivesIdentificationFromProposalHistory(t *testing.T) {
 	rejected := historicalProposal(t, store, settled, "mangadex", 0, "https://mangadex.org/title/"+mangadexEntry, `{"Title":"Wrong work","Provider":"MangaDex"}`, "rejected")
 	pending := historicalProposal(t, store, settled, "anilist", 7, "https://anilist.co/manga/7", `{"Title":"Pending","Provider":"AniList","SourceID":7}`, "pending")
 	waiting := makeSeries("waiting")
-	historicalProposal(t, store, waiting, "bangumi", 9, "https://bgm.tv/subject/9", `{"Title":"Waiting"}`, "pending")
+	waitingProposal := historicalProposal(t, store, waiting, "bangumi", 9, "https://bgm.tv/subject/9", `{"Title":"Waiting"}`, "pending")
 	guessed := makeSeries("guessed")
 	historicalProposal(t, store, guessed, "llm", 0, "", `{"Title":"Model guess","Provider":"OpenAI"}`, "applied")
 	reconsidered := makeSeries("reconsidered")
@@ -239,15 +239,29 @@ func TestUpgradeDerivesIdentificationFromProposalHistory(t *testing.T) {
 	if _, err := time.Parse(time.RFC3339, x.ExcludedAt); err != nil {
 		t.Fatalf("excluded_at %q: %v", x.ExcludedAt, err)
 	}
-	var reviews struct {
-		Reviews []struct {
-			ID     int64  `json:"id"`
-			Status string `json:"status"`
-		} `json:"reviews"`
+	// The derived identification supersedes the identified series' backlog; a series that stays
+	// unprocessed keeps its pending proposal until its own identification.
+	pendingReviews := func(series int64) []int64 {
+		var reviews struct {
+			Reviews []struct {
+				ID int64 `json:"id"`
+			} `json:"reviews"`
+		}
+		web.call("GET", "/api/series/"+strconv.FormatInt(series, 10)+"/metadata-review", http.StatusOK, &reviews)
+		ids := []int64{}
+		for _, r := range reviews.Reviews {
+			ids = append(ids, r.ID)
+		}
+		return ids
 	}
-	web.call("GET", "/api/series/"+strconv.FormatInt(settled, 10)+"/metadata-review", http.StatusOK, &reviews)
-	if len(reviews.Reviews) != 1 || reviews.Reviews[0].ID != pending || reviews.Reviews[0].Status != "pending" {
-		t.Fatalf("pending proposal must stay pending: %+v", reviews)
+	if ids := pendingReviews(settled); len(ids) != 0 {
+		t.Fatalf("identified series still has pending proposals %v", ids)
+	}
+	if row, err := store.GetMetadataReview(ctx, pending); err != nil || row.Status != proposal.StatusSuperseded || row.RejectedAt.Valid {
+		t.Fatalf("backlog proposal of an identified series %+v %v", row, err)
+	}
+	if ids := pendingReviews(waiting); len(ids) != 1 || ids[0] != waitingProposal {
+		t.Fatalf("pending proposal of an unprocessed series %v", ids)
 	}
 
 	for name, id := range map[string]int64{"pending only": waiting, "no source entry": guessed} {
@@ -631,21 +645,24 @@ func TestUpgradeTreatsPartlyAppliedProposalAsOwnerConfirmed(t *testing.T) {
 	if _, err := time.Parse(time.RFC3339, c.ConfirmedAt); err != nil {
 		t.Fatalf("confirmed_at %q: %v", c.ConfirmedAt, err)
 	}
-	// Closing the remaining fields belongs to enrichment after identification; history leaves them pending.
-	var reviews struct {
-		Reviews []struct {
-			ID     int64  `json:"id"`
-			Status string `json:"status"`
-			Fields []struct {
-				Name string `json:"name"`
-			} `json:"fields"`
-		} `json:"reviews"`
+	// The identification supersedes what is left of the proposal; the proposal of the series that
+	// stays unprocessed waits for that series' identification.
+	pendingReviews := func(series int64) int {
+		var reviews struct {
+			Reviews []struct {
+				ID int64 `json:"id"`
+			} `json:"reviews"`
+		}
+		web.call("GET", "/api/series/"+strconv.FormatInt(series, 10)+"/metadata-review", http.StatusOK, &reviews)
+		return len(reviews.Reviews)
 	}
-	web.call("GET", "/api/series/"+strconv.FormatInt(series.ID, 10)+"/metadata-review", http.StatusOK, &reviews)
-	if len(reviews.Reviews) != 1 || reviews.Reviews[0].Status != "pending" || len(reviews.Reviews[0].Fields) != 1 || reviews.Reviews[0].Fields[0].Name != "title" {
-		t.Fatalf("remaining fields must stay pending: %+v", reviews)
+	if n := pendingReviews(series.ID); n != 0 {
+		t.Fatalf("partly applied series still has %d pending proposals", n)
 	}
-	if got := web.identification(untouched.ID); got.Status != "unprocessed" || len(got.Conclusions) != 0 {
+	if row, err := store.GetMetadataReview(ctx, queued.Proposal.ID); err != nil || row.Status != proposal.StatusSuperseded {
+		t.Fatalf("partly applied proposal %+v %v", row, err)
+	}
+	if got := web.identification(untouched.ID); got.Status != "unprocessed" || len(got.Conclusions) != 0 || pendingReviews(untouched.ID) != 1 {
 		t.Fatalf("untouched pending proposal %+v", got)
 	}
 

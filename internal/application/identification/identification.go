@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"yomifolio/internal/application/delegated"
+	"yomifolio/internal/config"
 	"yomifolio/internal/task"
 )
 
@@ -67,6 +68,8 @@ type Service struct {
 	db       *sql.DB
 	access   Access
 	prefetch *Prefetcher
+	enricher Enricher
+	config   func() config.Config
 	images   *imageSources
 	now      func() time.Time
 }

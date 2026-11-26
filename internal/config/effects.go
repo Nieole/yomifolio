@@ -34,6 +34,7 @@ var fieldScopes = map[string]string{
 	"llm.endpoint": "compatibility", "llm.model": "next_operation", "llm.api_key": "next_operation", "llm.timeout": "next_operation",
 	"scrapers.mal_client_id": "next_operation", "scrapers.comicvine_api_key": "next_operation",
 	"identification.source_intervals_ms.bangumi": "immediate", "identification.source_intervals_ms.anilist": "immediate",
+	"identification.source_priority":              "immediate",
 	"identification.source_intervals_ms.mangadex": "immediate", "identification.source_intervals_ms.myanimelist": "immediate", "identification.source_intervals_ms.comicvine": "immediate",
 	"protocols.opds.enabled": "immediate", "protocols.mihon.enabled": "immediate",
 	"koreader.enabled": "immediate", "koreader.base_path": "immediate", "koreader.allow_registration": "immediate",
