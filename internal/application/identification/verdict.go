@@ -1,7 +1,6 @@
 package identification
 
 import (
-	"cmp"
 	"context"
 	"crypto/sha256"
 	"database/sql"
@@ -103,6 +102,9 @@ type VerdictResult struct {
 	Accepted bool   `json:"accepted"`
 	Status   string `json:"status,omitempty"`
 	Problem  string `json:"problem,omitempty"`
+	// OperationID is the receipt of the metadata supplementation an accepted identify verdict ran,
+	// read and undone with the metadata operation tools.
+	OperationID string `json:"operation_id,omitempty"`
 }
 
 // Submission reports every verdict of a request, in request order.
@@ -117,11 +119,12 @@ type Submission struct {
 // authority inside the transaction that records it, and its decided result is kept under the
 // request key, so retrying the same request returns the same results without writing again.
 //
-// identify records an agent conclusion per cited source; not_found records the sources the
-// series' evidence packet heard from; an identification escalation hands the series to the owner.
-// Each of these ends the lease. A note leaves the status and the lease as they are, so the same
-// lease may still answer the series; a note of a category already open on the series is not
-// repeated. No verdict changes series metadata.
+// identify records an agent conclusion per cited source and, in the same transaction, supplements
+// the series' metadata from its identified sources; not_found records the sources the series'
+// evidence packet heard from; an identification escalation hands the series to the owner. Each of
+// these ends the lease. A note leaves the status and the lease as they are, so the same lease may
+// still answer the series; a note of a category already open on the series is not repeated. Only an
+// identify verdict changes series metadata.
 func (s *Service) Submit(ctx context.Context, subject delegated.Subject, in SubmitInput) (Submission, error) {
 	if !validRequestKey(in.RequestKey) || in.LeaseID == "" || len(in.LeaseID) > 64 || len(in.Verdicts) == 0 || len(in.Verdicts) > MaxClaim {
 		return Submission{}, delegated.ErrInvalid
@@ -242,7 +245,7 @@ func (s *Service) decide(ctx context.Context, subject delegated.Subject, key, le
 	case !errors.Is(err, sql.ErrNoRows):
 		return VerdictResult{}, err
 	}
-	result, err := s.judge(ctx, tx, subject, lease, v)
+	result, err := s.judge(ctx, tx, subject, key, lease, v)
 	if err != nil {
 		return VerdictResult{}, err
 	}
@@ -254,12 +257,18 @@ func (s *Service) decide(ctx context.Context, subject delegated.Subject, key, le
 		VALUES (?, ?, ?, ?, ?, ?, ?)`, subject.CredentialID, key, v.SeriesID, subject.UserID, digest, string(raw), s.now().UnixMilli()); err != nil {
 		return VerdictResult{}, err
 	}
-	return result, tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return VerdictResult{}, err
+	}
+	if result.OperationID != "" {
+		s.enricher.Publish()
+	}
+	return result, nil
 }
 
 // judge checks the series is still the lease's to answer and the verdict against its evidence,
 // then writes what the verdict records.
-func (s *Service) judge(ctx context.Context, tx *sql.Tx, subject delegated.Subject, lease string, v Verdict) (VerdictResult, error) {
+func (s *Service) judge(ctx context.Context, tx *sql.Tx, subject delegated.Subject, key, lease string, v Verdict) (VerdictResult, error) {
 	result := VerdictResult{SeriesID: v.SeriesID}
 	status, err := seriesStatus(ctx, tx, v.SeriesID)
 	if err != nil {
@@ -293,7 +302,7 @@ func (s *Service) judge(ctx context.Context, tx *sql.Tx, subject delegated.Subje
 		if err != nil {
 			return VerdictResult{}, err
 		}
-		var cited []EvidenceCandidate
+		var cited []citedCandidate
 		for _, id := range v.CandidateIDs {
 			index := slices.IndexFunc(packet.Candidates, func(c EvidenceCandidate) bool { return c.ID == id })
 			switch {
@@ -302,26 +311,21 @@ func (s *Service) judge(ctx context.Context, tx *sql.Tx, subject delegated.Subje
 			case index < 0 && result.Problem == "":
 				result.Problem = ProblemNotInEvidence
 			case index >= 0:
-				cited = append(cited, packet.Candidates[index])
+				cited = append(cited, citedCandidate{EvidenceCandidate: packet.Candidates[index], facts: facts[id]})
 			}
 		}
 		if result.Problem != "" {
 			return result, nil
 		}
-		for _, c := range cited {
-			fact := facts[c.ID]
-			title, original := cmp.Or(fact.Title, c.Title), cmp.Or(fact.OriginalTitle, c.OriginalTitle)
-			_, entry, _ := strings.Cut(c.ID, ":")
-			if _, err := tx.ExecContext(ctx, `INSERT INTO identification_conclusions (series_id, source, entry_id, entry_url, title, original_title, aliases,
-					confirmer, user_id, credential_id, confirmed_at_ms, reason) VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?, ?, ?, ?)`,
-				v.SeriesID, c.Source, entry, c.EntryURL, title, original, ConfirmedByAgent, subject.UserID, subject.CredentialID, now, v.Reason); err != nil {
-				return VerdictResult{}, err
-			}
+		op, err := s.confirm(ctx, tx, subject, ConfirmedByAgent, verdictReceiptKey(subject, key, v.SeriesID), v.SeriesID, cited, v.Reason)
+		if err != nil {
+			return VerdictResult{}, err
 		}
 		// The series was unprocessed, so a not-found verdict here is one a new source reopened.
 		if _, err := tx.ExecContext(ctx, `DELETE FROM identification_not_found WHERE series_id = ?`, v.SeriesID); err != nil {
 			return VerdictResult{}, err
 		}
+		result.OperationID = op.ID
 	case VerdictNotFound:
 		var searched []string
 		for _, source := range packet.Sources {

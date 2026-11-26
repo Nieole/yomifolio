@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -112,6 +113,13 @@ func ValidateConfigValues(cfg *Config) ValidationResult {
 	case LogLevelDebug, LogLevelInfo, LogLevelWarn, LogLevelError:
 	default:
 		issues = append(issues, ValidationIssue{Field: "logging.level", Message: "日志级别必须是 debug、info、warn 或 error。", Severity: "error"})
+	}
+
+	for _, key := range cfg.Identification.SourcePriority {
+		if !slices.Contains(DefaultSourcePriority, strings.ToLower(strings.TrimSpace(key))) {
+			issues = append(issues, ValidationIssue{Field: "identification.source_priority", Message: "来源只能是 bangumi、anilist、mangadex、myanimelist 或 comicvine。", Severity: "error"})
+			break
+		}
 	}
 
 	if cfg.Scanner.Workers < 0 {

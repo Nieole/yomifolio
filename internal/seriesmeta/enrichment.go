@@ -78,6 +78,13 @@ func EnrichmentLocked(current database.Series, field string) bool {
 	return false
 }
 
+// TitlePlaceholder reports whether the series title is still exactly its directory name, the
+// placeholder a scan sets and locks. Identification enrichment alone may replace it, and the
+// replacement keeps the lock; a title that differs from the directory name is someone's choice.
+func TitlePlaceholder(current database.Series) bool {
+	return current.Title.Valid && current.Title.String == current.Name
+}
+
 // EnrichmentQueries is the transaction-bound persistence for prepared enrichment states.
 type EnrichmentQueries interface {
 	ClearSeriesAuthors(context.Context, int64) error

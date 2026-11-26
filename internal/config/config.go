@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -199,6 +200,8 @@ type Config struct {
 	Identification struct {
 		// SourceIntervalsMS 是证据包预取向同一来源连发两次请求的最小间隔（毫秒）。
 		SourceIntervalsMS SourceIntervals `yaml:"source_intervals_ms" json:"source_intervals_ms"`
+		// SourcePriority 是识别补充取文本字段与作者时的来源先后，排前的先取。
+		SourcePriority SourcePriority `yaml:"source_priority" json:"source_priority"`
 	} `yaml:"identification" json:"identification"`
 	Protocols struct {
 		OPDS struct {
@@ -267,6 +270,25 @@ func (s SourceIntervals) withDefaults() SourceIntervals {
 		}
 	}
 	return s
+}
+
+// SourcePriority lists catalogue source keys, highest priority first.
+type SourcePriority []string
+
+// DefaultSourcePriority is the order identification enrichment takes source values in by default.
+var DefaultSourcePriority = SourcePriority{"bangumi", "anilist", "mangadex", "myanimelist", "comicvine"}
+
+// Order returns every catalogue source in priority order: the listed sources first, as listed, then
+// the unlisted ones in the default order. Unknown and repeated keys are ignored.
+func (p SourcePriority) Order() []string {
+	out := make([]string, 0, len(DefaultSourcePriority))
+	for _, key := range append(slices.Clone(p), DefaultSourcePriority...) {
+		key = strings.ToLower(strings.TrimSpace(key))
+		if slices.Contains(DefaultSourcePriority, key) && !slices.Contains(out, key) {
+			out = append(out, key)
+		}
+	}
+	return out
 }
 
 const (
@@ -427,6 +449,7 @@ func createDefaultConfig(path string) (*Config, error) {
 	cfg.Cache.PageDiskCacheEnabled = false
 	cfg.Cache.PageDiskCacheMaxBytes = DefaultPageDiskCacheMaxBytes
 	cfg.Identification.SourceIntervalsMS = DefaultSourceIntervals
+	cfg.Identification.SourcePriority = slices.Clone(DefaultSourcePriority)
 	cfg.Logging.Level = LogLevelInfo
 	cfg.Scanner.Workers = 0 // 0 表示自动使用 runtime.NumCPU() * 2
 	cfg.Scanner.ScanProfile = ScanProfileMetadata
@@ -511,6 +534,9 @@ func NormalizeConfig(cfg *Config) {
 		cfg.Cache.PageDiskCacheMaxBytes = DefaultPageDiskCacheMaxBytes
 	}
 	cfg.Identification.SourceIntervalsMS = cfg.Identification.SourceIntervalsMS.withDefaults()
+	if len(cfg.Identification.SourcePriority) == 0 {
+		cfg.Identification.SourcePriority = slices.Clone(DefaultSourcePriority)
+	}
 	level := strings.ToLower(strings.TrimSpace(cfg.Logging.Level))
 	switch level {
 	case LogLevelDebug, LogLevelInfo, LogLevelWarn, LogLevelError:
