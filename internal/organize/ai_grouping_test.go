@@ -170,6 +170,46 @@ func TestAIGroupingLateFailureRollsBackIdentityAndDecision(t *testing.T) {
 		t.Fatalf("refresh=%d", refresh)
 	}
 }
+
+// adjudicateBeforeWrite lets a single apply commit after ApplyReview has read the review and
+// before its write transaction starts, the window a concurrent adjudication can land in.
+type adjudicateBeforeWrite struct {
+	organize.AIGroupingStore
+	before func()
+}
+
+func (s *adjudicateBeforeWrite) WithAIGroupingWrite(ctx context.Context, apply func(database.AIGroupingWrite) error) error {
+	if before := s.before; before != nil {
+		s.before = nil
+		before()
+	}
+	return s.AIGroupingStore.WithAIGroupingWrite(ctx, apply)
+}
+
+func TestAIGroupingApplyReviewAppliesCandidatesStillPendingAfterAConcurrentApply(t *testing.T) {
+	store, manual := newCollections(t)
+	ctx := context.Background()
+	review, rows := seedGrouping(t, store, "First", "Second")
+	single := organize.NewAIGrouping(store, func() {})
+	racing := &adjudicateBeforeWrite{AIGroupingStore: store, before: func() {
+		if _, err := single.ApplyCollection(ctx, review.ID, rows[0].ID); err != nil {
+			t.Fatal(err)
+		}
+	}}
+	outcome, err := organize.NewAIGrouping(racing, func() {}).ApplyReview(ctx, review.ID)
+	if err != nil || outcome.Applied != 1 {
+		t.Fatalf("batch after concurrent single apply: applied=%d err=%v", outcome.Applied, err)
+	}
+	list, err := manual.List(ctx)
+	if err != nil || len(list) != 2 {
+		t.Fatalf("list=%+v err=%v", list, err)
+	}
+	state, err := single.Review(ctx, review.ID)
+	if err != nil || state.Review.Status != "applied" || state.Collections[0].Status != "applied" || state.Collections[1].Status != "applied" {
+		t.Fatalf("state=%+v err=%v", state, err)
+	}
+}
+
 func TestAIGroupingConcurrentSingleAndBatchCreateEachIdentityOnce(t *testing.T) {
 	for _, mode := range []string{"single", "batch"} {
 		t.Run(mode, func(t *testing.T) {

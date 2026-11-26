@@ -121,22 +121,18 @@ func (s *AIGrouping) applyCollection(ctx context.Context, reviewID, collectionID
 type AIGroupingApplyResult struct{ Applied, Skipped int }
 
 func (s *AIGrouping) applyReview(ctx context.Context, reviewID int64, outcome *AIGroupingReview) (AIGroupingApplyResult, error) {
-	snapshot, err := s.Review(ctx, reviewID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return AIGroupingApplyResult{}, ErrAIGroupingNotFound
-	}
-	if err != nil {
-		return AIGroupingApplyResult{}, err
-	}
-	if snapshot.Review.Status != "pending" {
-		return AIGroupingApplyResult{}, ErrAIGroupingNotPending
-	}
 	var result AIGroupingApplyResult
-	err = s.store.WithAIGroupingWrite(ctx, func(q database.AIGroupingWrite) error {
+	err := s.store.WithAIGroupingWrite(ctx, func(q database.AIGroupingWrite) error {
 		if _, err := pendingAIGrouping(ctx, q, reviewID); err != nil {
 			return err
 		}
-		for _, candidate := range snapshot.Collections {
+		// Candidates are read under the write transaction: a list read before it can still name
+		// one that a concurrent single apply has committed, and that one would abort the batch.
+		candidates, err := q.ListAIGroupingReviewCollections(ctx, reviewID)
+		if err != nil {
+			return err
+		}
+		for _, candidate := range candidates {
 			if candidate.Status != "pending" {
 				continue
 			}
