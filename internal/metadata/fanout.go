@@ -7,24 +7,9 @@ import (
 	"context"
 	"encoding/json"
 	"slices"
-	"strings"
 
 	"yomifolio/internal/config"
 )
-
-// CatalogueSources lists the catalogue sources the configuration enables, in fan-out order:
-// Bangumi, AniList and MangaDex always, MyAnimeList and Comic Vine only with their credentials.
-// Model aliases are never catalogue sources.
-func CatalogueSources(cfg config.Config) []string {
-	names := []string{"bangumi", "anilist", "mangadex"}
-	if strings.TrimSpace(cfg.Scrapers.MALClientID) != "" {
-		names = append(names, "myanimelist")
-	}
-	if strings.TrimSpace(cfg.Scrapers.ComicVineAPIKey) != "" {
-		names = append(names, "comicvine")
-	}
-	return names
-}
 
 // SourceStatus is how one catalogue source answered one fan-out query.
 type SourceStatus string
@@ -138,14 +123,14 @@ func snapshotPage(name string, total int, results []*SeriesMetadata) SourcePage 
 
 // Snapshot detaches one source result from the source's objects and stamps it with the source
 // name, or reports it invalid: a result carrying a decision record, a negative ID, volume count,
-// rating or tag vote count, a rating above ten, more than the bounded tags, tag votes or authors,
-// or more than the bounded bytes.
+// rating or tag vote count, a rating above ten, more than the bounded tags, tag votes, authors or
+// aliases, or more than the bounded bytes.
 func Snapshot(source string, result *SeriesMetadata) (SeriesMetadata, bool) {
 	if result == nil || result.MatchEvidence != nil || result.SourceID < 0 || result.VolumeCount < 0 || result.Rating < 0 || result.Rating > 10 {
 		return SeriesMetadata{}, false
 	}
 	raw, err := json.Marshal(result)
-	if err != nil || len(raw) > maxSnapshotBytes || len(result.Tags) > maxSnapshotItems || len(result.TagVotes) > maxSnapshotItems || len(result.Authors) > maxSnapshotItems {
+	if err != nil || len(raw) > maxSnapshotBytes || len(result.Tags) > maxSnapshotItems || len(result.TagVotes) > maxSnapshotItems || len(result.Authors) > maxSnapshotItems || len(result.Aliases) > maxSnapshotItems {
 		return SeriesMetadata{}, false
 	}
 	if slices.ContainsFunc(result.TagVotes, func(v TagVote) bool { return v.Votes < 0 }) {

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { ArrowLeft, Ban, BadgeCheck, BookImage, Building2, CheckCircle2, Download, Edit, FolderOpen, Globe, Info, Lock, Replace, Sparkles, Star } from 'lucide-react';
 import type { SeriesIdentification } from '../../api/generated';
-import { isIdentificationSource, isSameEntry } from '../../features/identification/ownerPick';
+import { isSameEntry } from '../../features/identification/ownerPick';
+import { isIdentificationSource } from '../../features/identification/sources';
 import type { MetaTag, SearchResult, Series } from './types';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { ModalShell } from '../../components/ui/ModalShell';

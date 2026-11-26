@@ -24,7 +24,7 @@ func Restarts() []RestartDefinition {
 	return []RestartDefinition{{Type: "ai_grouping"}}
 }
 
-// Restart replays the persisted locale, using the request locale only for older runs.
+// Restart replays the persisted locale; a run that persisted none takes the request locale.
 func (c *Service) Restart(ctx context.Context, identity task.Identity, args map[string]string, trigger task.Trigger) (task.Launched, error) {
 	for _, definition := range Restarts() {
 		if definition.Type != identity.Type || definition.Variant != identity.Variant {

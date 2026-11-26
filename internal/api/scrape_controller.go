@@ -56,21 +56,12 @@ func (c *providerClients) getMetadataFetcher(name string) metadata.Fetcher {
 	return c.sources.metadata(c.currentConfig(), name)
 }
 
-// catalogueLabels names every source metadata.CatalogueSources can enable.
-var catalogueLabels = map[string][2]string{
-	"bangumi":     {"Bangumi", "从 Bangumi 番组计划获取漫画元数据"},
-	"anilist":     {"AniList", "从 AniList 获取漫画元数据（英文/罗马音/原名、评分、标签、作者）"},
-	"mangadex":    {"MangaDex", "从 MangaDex 获取漫画元数据（多语言标题、标签、作者、封面）"},
-	"myanimelist": {"MyAnimeList", "从 MyAnimeList 获取漫画元数据（需配置 Client ID）"},
-	"comicvine":   {"Comic Vine", "从 Comic Vine 获取欧美 comics 元数据（需配置 API Key）"},
-}
-
 // listProviders 返回当前可选的刮削来源：配置启用的目录型来源加 LLM，缺凭据的来源不出现，避免误选。
 func (c *providerHTTP) listProviders(w http.ResponseWriter, r *http.Request) {
 	providers := []map[string]string{}
 	for _, id := range metadata.CatalogueSources(c.currentConfig()) {
-		label := catalogueLabels[id]
-		providers = append(providers, map[string]string{"id": id, "name": label[0], "description": label[1]})
+		source, _ := metadata.LookupCatalogueSource(id)
+		providers = append(providers, map[string]string{"id": id, "name": source.Name, "description": source.Description})
 	}
 	providers = append(providers, map[string]string{"id": "llm", "name": "AI/LLM 解析", "description": "通过配置的大语言模型(如 Ollama, LM Studio, OpenAI)推理生成元数据"})
 	jsonResponse(w, http.StatusOK, providers)

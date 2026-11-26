@@ -63,8 +63,5 @@ func (s *Service) StartPrefetch(ctx context.Context, actor, libraryID int64) (Pr
 	if err := requireAdmin(ctx, s.db, actor); err != nil {
 		return PrefetchLaunch{}, err
 	}
-	if s.prefetch == nil {
-		return PrefetchLaunch{}, ErrDenied
-	}
 	return s.prefetch.Start(ctx, libraryID, task.TriggerManual)
 }

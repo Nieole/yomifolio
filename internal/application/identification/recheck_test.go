@@ -51,7 +51,7 @@ func TestRecheckComparesTheSeriesNameWithEveryIdentifiedName(t *testing.T) {
 		{"a series name of punctuation only", []names{{"Monster", "", "[]"}}, "--", identification.StatusIdentified},
 		{"no conclusion", nil, "Pluto", identification.StatusUnprocessed},
 	}
-	service := identification.New(db, nil)
+	service := identification.New(identification.Dependencies{DB: db})
 	for i, tc := range cases {
 		series, err := store.CreateSeries(ctx, database.CreateSeriesParams{LibraryID: lib.ID, Name: tc.name, Path: filepath.Join(lib.Path, string(rune('a'+i)))})
 		if err != nil {

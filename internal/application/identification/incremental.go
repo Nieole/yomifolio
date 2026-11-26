@@ -93,7 +93,7 @@ func (p *Prefetcher) StartIncremental(ctx context.Context, libraryID int64, trig
 
 // requested lists, by name, the requested series of the library that still need a packet: still
 // unprocessed, with no current packet. It first drops the requests that no longer need one.
-func (p *Prefetcher) requested(ctx context.Context, libraryID int64) ([]pendingSeries, error) {
+func (p *Prefetcher) requested(ctx context.Context, libraryID int64) ([]prefetchTarget, error) {
 	cutoff := packetCutoff(p.now())
 	const needs = `st.status = 'unprocessed' AND (e.series_id IS NULL OR NOT ` + currentPacket + `)`
 	const from = ` FROM identification_prefetch_requests r JOIN series s ON s.id = r.series_id
@@ -108,9 +108,9 @@ func (p *Prefetcher) requested(ctx context.Context, libraryID int64) ([]pendingS
 		return nil, err
 	}
 	defer rows.Close()
-	var out []pendingSeries
+	var out []prefetchTarget
 	for rows.Next() {
-		var s pendingSeries
+		var s prefetchTarget
 		if err := rows.Scan(&s.id, &s.name); err != nil {
 			return nil, err
 		}
@@ -189,7 +189,7 @@ func recordNotFound(ctx context.Context, tx *sql.Tx, seriesID int64, searched []
 			covered = append(covered, source)
 		}
 	}
-	slices.SortFunc(covered, func(a, b string) int { return cmp.Compare(sourceRank(a), sourceRank(b)) })
+	slices.SortFunc(covered, func(a, b string) int { return cmp.Compare(defaultRank(a), defaultRank(b)) })
 	raw, _ := json.Marshal(append([]string{}, covered...))
 	_, err = tx.ExecContext(ctx, `INSERT INTO identification_not_found (series_id, searched_sources, confirmer, user_id, credential_id, concluded_at_ms, reason)
 		VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(series_id) DO UPDATE SET searched_sources = excluded.searched_sources, confirmer = excluded.confirmer,

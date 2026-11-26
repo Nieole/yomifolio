@@ -431,10 +431,18 @@ func TestInspectionNeedsOnlyReadAndGrantsNoWrite(t *testing.T) {
 				t.Fatalf("%s: %s is not usable", tc.name, name)
 			}
 		}
+		// Neither the listing nor the initialization names a tool the credential cannot use.
+		instructions := agent.session.InitializeResult().Instructions
 		for name, args := range writes {
 			if !refused(agent, name, args) {
 				t.Fatalf("%s: %s was taken", tc.name, name)
 			}
+			if offersTool(listed, name) || strings.Contains(instructions, name) {
+				t.Fatalf("%s: %s is offered though every call is refused:\n%s", tc.name, name, instructions)
+			}
+		}
+		if strings.Contains(strings.ToLower(instructions), "write directly") {
+			t.Fatalf("%s: told to write directly:\n%s", tc.name, instructions)
 		}
 	}
 	writer := web.mainLoopAgent(cfg, 1, []int64{library.lib.ID}, []string{delegated.MetadataWrite})

@@ -16,6 +16,17 @@ import (
 // series is currently identified to.
 type IdentifiedSources func(ctx context.Context, tx *sql.Tx, series int64) ([]metadata.FieldEvidence, error)
 
+// OwnerConfirmedEntries reports, in the caller's transaction, whether the owner currently confirms
+// the series' identification with any of the entries candidateIDs name.
+type OwnerConfirmedEntries func(ctx context.Context, tx *sql.Tx, series int64, candidateIDs []string) (bool, error)
+
+// WithOwnerConfirmed lets an undo tell the supplement of an identification the owner confirmed, which
+// no agent undoes.
+func (s *Service) WithOwnerConfirmed(confirmed OwnerConfirmedEntries) *Service {
+	s.ownerConfirmed = confirmed
+	return s
+}
+
 // WithIdentifiedSources lets author corrections rest on the series' identification.
 func (s *Service) WithIdentifiedSources(read IdentifiedSources) *Service {
 	s.identified = read

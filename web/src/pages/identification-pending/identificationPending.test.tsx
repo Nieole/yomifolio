@@ -12,7 +12,7 @@ import { MemoryRouter } from 'react-router-dom';
 import type { AxiosRequestConfig } from 'axios';
 
 import { apiClient } from '../../api/client';
-import type { EvidencePacket, PendingPage, PendingSeries, SeriesIdentification } from '../../api/generated';
+import type { EvidencePacket, AwaitingPage, AwaitingSeries, SeriesIdentification } from '../../api/generated';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { messages as zhCN } from '../../i18n/locales/zh-CN';
 import { ToastProvider } from '../../components/ToastProvider';
@@ -83,11 +83,11 @@ const contradicted: SeriesIdentification = {
   }],
 };
 
-function item(identification: SeriesIdentification, title: string): PendingSeries {
+function item(identification: SeriesIdentification, title: string): AwaitingSeries {
   return { series_id: identification.series_id, library_name: '漫画', directory_name: `${title} 目录`, title, book_count: 3, cover_book_id: 0, identification };
 }
 
-const fullPage: PendingPage = {
+const fullPage: AwaitingPage = {
   items: [item(escalated, '某作'), item(noted, '另一部'), item(contradicted, '第三部')],
   total: 3,
   categories: [

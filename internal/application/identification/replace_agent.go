@@ -60,7 +60,7 @@ type AgentReplacement struct {
 // makes. The result is kept under the request key, so a retry returns it again.
 func (s *Service) Replace(ctx context.Context, subject delegated.Subject, in ReplaceInput) (AgentReplacement, error) {
 	in.Reason = strings.TrimSpace(in.Reason)
-	if !validRequestKey(in.RequestKey) || in.SeriesID <= 0 || in.Reason == "" || len(in.Reason) > maxReasonBytes || !wellFormedIDs(in.CandidateIDs) {
+	if !validRequestKey(in.RequestKey) || in.SeriesID <= 0 || in.Reason == "" || len(in.Reason) > maxReasonBytes || !citable(in.CandidateIDs) {
 		return AgentReplacement{}, delegated.ErrInvalid
 	}
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -85,26 +85,10 @@ func (s *Service) Replace(ctx context.Context, subject delegated.Subject, in Rep
 	if err := tx.Commit(); err != nil {
 		return AgentReplacement{}, err
 	}
-	if result.Accepted && s.enricher != nil {
+	if result.Accepted {
 		s.enricher.Publish()
 	}
 	return result, nil
-}
-
-// wellFormedIDs checks 1-5 source:entry IDs of known sources, at most one per source.
-func wellFormedIDs(ids []string) bool {
-	if len(ids) == 0 || len(ids) > len(Sources) {
-		return false
-	}
-	var sources []string
-	for _, id := range ids {
-		source, entry, ok := strings.Cut(id, ":")
-		if !ok || entry == "" || !slices.Contains(Sources, source) || slices.Contains(sources, source) {
-			return false
-		}
-		sources = append(sources, source)
-	}
-	return true
 }
 
 func (s *Service) judgeReplacement(ctx context.Context, tx *sql.Tx, subject delegated.Subject, in ReplaceInput) (AgentReplacement, error) {
@@ -126,7 +110,7 @@ func (s *Service) judgeReplacement(ctx context.Context, tx *sql.Tx, subject dele
 		return AgentReplacement{}, err
 	}
 	for _, id := range in.CandidateIDs {
-		source, entry, _ := strings.Cut(id, ":")
+		source, entry, _ := parseCandidate(id)
 		index := slices.IndexFunc(held, func(c Conclusion) bool { return c.Source == source })
 		switch {
 		case index < 0:

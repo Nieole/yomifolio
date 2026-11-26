@@ -66,8 +66,8 @@ MCP 安全入口仅接受 `mcp.public_url` 配置的精确 authority；有 Origi
 - 每个成功结果在 structuredContent 之外都带一个文本块，内容是同一份 JSON，只读文本的客户端不读 structuredContent 也能拿到完整结果。
 - 拒绝只有一句：`errMCPDenied`。它附下一步提示（ID 取自本凭据自己的查询结果；已是如此则说明授权不再覆盖，应上报而非重试），但对象不存在、跨资料库与能力不足读来完全相同，不泄露存在性。
 - 工具描述不超过 400 字符，以一个可直接照抄的 `Example: {...}` 调用结尾，示例参数都在输入 schema 中声明。
-- 工具清单按凭据当前能力过滤（`listOnlyGranted`），清单只披露授权，每个处理器仍自行鉴权。不在清单里的工具名（含已下线的）按 SDK 的未知工具统一拒绝。
-- initialize 的 instructions 由 `mcpInstructions` 按同一份授权生成：凭据能领取时先写主循环（领取 → 提交裁决 → 难判上报，有权限即直接写入、不请示人），再给清单里其余每个工具一句用途（`toolPurposes`）。新工具须在那里补一句，否则说明会漏掉它。
+- 工具清单按凭据当前的**有效**能力过滤（`delegated.Service.GrantedCapabilities` 与 `listOnlyGranted`）：凭据带着、`Authorize` 也会认的能力，所以普通用户的凭据只按 `read` 列。清单只披露授权，每个处理器仍自行鉴权。不在清单里的工具名（含已下线的）按 SDK 的未知工具统一拒绝。运行类工具随任一能力列出。
+- initialize 的 instructions 由 `mcpInstructions` 按同一份有效能力生成：凭据能领取时先写主循环（领取 → 提交裁决 → 难判上报，有权限即直接写入、不请示人），再给清单里其余每个工具一句用途（`toolPurposes`；能力不同、用途不同的工具另写一句带 `metadata_write` 时的用途）。新工具须在那里补一句，否则说明会漏掉它。
 
 核对入口：`bootstrap` 的 `TestMCPEveryToolResultCarriesItsJSONText`、`TestMCPListingFollowsGrantedCapabilities`、`TestInitializationExplainsTheMainLoopAndEveryListedTool`、`TestRetiredToolsAreNeitherListedNorAnswered`、`TestMCPDelegatedSeriesLifecycle`、`TestMCPAccountPasswordAndManagementIsolation`、`TestMCPRejectsUnsafeTransport`；独立凭据与交集规则归 `mm-application`，配置合法性归 `mm-config`。
 
@@ -83,7 +83,8 @@ MCP 安全入口仅接受 `mcp.public_url` 配置的精确 authority；有 Origi
 MCP 的识别工具只映射 `identification.Service` 与 `enrichment.Service` 的完整用例，身份来自认证凭据；工具名、所需能力与清单过滤以 `listingCapability` 为准，用途句以 `toolPurposes` 为准，用例契约归 `mm-identification`。
 
 - 主循环是 `library_claim_series`、`library_submit_verdicts`、`library_research_series`（`metadata_write`）与 `library_identification_progress`（`read`）。凭据能领取时，initialize 的说明先写主循环。
-- 原语中 `library_replace_identification`、`library_correct_series_field`、`library_correct_authors`、`library_improve_cover`、`library_add_series_relation` 与撤销挂 `metadata_write`；`library_get_series_authors`、`library_get_identification_images`、`library_find_duplicate_series`、`library_count_tags`、`library_report_series` 挂 `read`。所以只读凭据与普通用户的凭据能巡检与上报，不能领取或写入。
+- 原语中 `library_replace_identification`、`library_correct_series_field`、`library_correct_authors`、`library_improve_cover`、`library_add_series_relation` 与撤销挂 `metadata_write`；`library_get_series_authors`、`library_get_identification_images`、`library_find_duplicate_series`、`library_count_tags`、`library_report_series` 挂 `read`。所以只读凭据与普通用户的凭据能巡检与挂备注，不能领取或写入。`library_report_series` 的 `disputed_identification` 会改识别状态，另要 `metadata_write`（用户决定）：输入 schema 的分类 enum 与工具描述按有效能力生成，没有 `metadata_write` 的凭据看不到这个分类；授权在用例里另查，事务内被收回时拒绝并提示只能挂备注。
+- `library_undo_metadata_operation` 拒绝撤销所有者网页操作留下的收据，以及跟随当前由所有者确认的识别的补充收据（`enrichment.ErrOwnerOperation`），提示改为上报；其它凭据的收据照撤销规则处理。
 - 能逐系列判定的业务拒绝（裁决、撤换、改正）不是工具错误：结果逐项给 `problem` 代码与一句 `message` 下一步，成功项照常返回。格式错误与授权拒绝仍是工具错误，授权拒绝统一为 `errMCPDenied`。领取结果带 `next` 提示，空批带 `empty_reason`；`library_improve_cover` 得到冲突收据时附一句 `message`，指向 `protected_value_doubt` 上报。
 - 提交、撤换、改正与补充类原语带 `request_key`；领取每次都是新的领取，重搜按搜索词去重、上报按分类去重，都不需要请求键。
 - 取值有限的参数（裁决种类、上报分类、可改正字段、关系类型、标签排序）以 enum 写进输入 schema，弱模型直接从 schema 挑值，描述不必列一长串。
@@ -97,10 +98,10 @@ MCP 的识别工具只映射 `identification.Service` 与 `enrichment.Service` �
 - 重搜：`POST series/{id}/research`，请求体 `{query, wait_ms?}`，与 MCP 共用用例。
 - 待人工：`GET pending?category=&offset=&limit=`（默认 20、上限 50，`limit=0` 只回计数）；决定为 `POST series/{id}/identify {candidate_ids}`、`exclusions {candidate_id}`、`not-found`、`keep-identification`、`notes/{noteId}/close`。
 - 手动搜索与详情：`PUT series/{id}/conclusions/{source}` 的请求体是 `{"result": <搜索结果>}`，按来源快照规则校验，LLM 等非目录来源回 400，挑中排除候选时响应带 `lifted_exclusion`；`DELETE series/{id}/conclusions/{source}` 撤回识别。
-- 决定落到已经变了的系列时回 409 与 `code`：`not_pending`、`candidate_unavailable`、`not_a_note`，前端据此重读这个系列；重复否决同一候选、关闭已关闭的备注回 200 且不改动。
+- 决定落到已经变了的系列时回 409 与 `code`：`not_pending`、`candidate_unavailable`、`not_a_note`，前端据此重读这个系列；重复否决同一候选、关闭已关闭的备注回 200 且不改动。识别用例的拒绝到状态码、`code` 与文案的映射只在 `identificationRefusals` 一张表里，各路由不另写 switch。
 - 资料库浏览 `GET /api/series/search?identification=<状态>` 读同一状态视图，可与其它条件组合；普通账号带这个参数回 403，取值不在六个状态里回 400。
 
-核对入口：`bootstrap` 的 `TestPendingListAndDecisionsNeedAnAdministrator`、`TestLibraryBrowsingFiltersByIdentificationStatus`、`TestInspectionNeedsOnlyReadAndGrantsNoWrite`、`TestAgentSubmitsVerdictsSeriesBySeries`、`TestIdentificationImagesLeaveOutWholeImagesBeyondTheResultBudget`。
+核对入口：`bootstrap` 的 `TestPendingListAndDecisionsNeedAnAdministrator`、`TestAgentDisputesAPersonsIdentificationForTheOwnerToRecheck`、`TestRunListingFollowsEachRunsCapability`、`TestLibraryBrowsingFiltersByIdentificationStatus`、`TestInspectionNeedsOnlyReadAndGrantsNoWrite`、`TestAgentSubmitsVerdictsSeriesBySeries`、`TestIdentificationImagesLeaveOutWholeImagesBeyondTheResultBudget`。
 
 ## 受限补充和操作历史
 

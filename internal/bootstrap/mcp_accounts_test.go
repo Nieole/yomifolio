@@ -131,13 +131,22 @@ func TestMCPAccountPasswordAndManagementIsolation(t *testing.T) {
 	if err != nil || result.IsError {
 		t.Fatalf("regular read %+v %v", result, err)
 	}
-	// Scan tools are discoverable but cannot elevate a regular account.
+	// A regular account's credential acts with read alone: the listing leaves out the tools it names
+	// beyond read, and calling one anyway cannot elevate the account.
 	deniedScan, err := s.CallTool(ctx, &mcp.CallToolParams{Name: "library_start_scan", Arguments: map[string]any{"library_id": lib.ID}})
 	if err != nil || !deniedScan.IsError {
 		t.Fatalf("regular scan %+v %v", deniedScan, err)
 	}
 	tools, err := s.ListTools(ctx, nil)
-	assertMCPToolDiscovery(t, tools, err)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, want := range map[string]bool{"library_get_series": true, "library_report_series": true, "library_list_runs": true,
+		"library_start_scan": false, "library_claim_series": false, "library_undo_metadata_operation": false, "library_start_metadata_cleanup": false} {
+		if offersTool(tools, name) != want {
+			t.Errorf("regular account's listing offers %s: %v", name, !want)
+		}
+	}
 	// An unsuccessful password change must leave both browser and delegated access intact.
 	failed := request("POST", "/api/auth/change-password", `{"current_password":"wrong-password","new_password":"replacement"}`, reader)
 	if failed.Code == 200 {

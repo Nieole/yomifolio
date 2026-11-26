@@ -6,9 +6,12 @@ package bootstrap_test
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -191,7 +194,7 @@ func TestAgentReplacesOnlyAgentIdentificationsOfIdentifiedSeries(t *testing.T) {
 	// A person's identification is out of reach; the refusal points at the report instead.
 	refused := agent.replace("owner", owned, []string{"bangumi:2"}, "another work")
 	wantRefused(t, refused, "owner_confirmed")
-	if !strings.Contains(refused.Message, "library_report_series") || !strings.Contains(refused.Message, "disputed_owner_identification") {
+	if !strings.Contains(refused.Message, "library_report_series") || !strings.Contains(refused.Message, "disputed_identification") {
 		t.Fatalf("refusal names no report: %s", refused.Message)
 	}
 	if got := web.identification(owned); got.Status != "identified" || len(got.Conclusions) != 1 || got.Conclusions[0].EntryID != "4711" {
@@ -412,6 +415,35 @@ func TestAgentMayNotCorrectWhatAPersonOrComicInfoOrALockDecided(t *testing.T) {
 	}
 }
 
+// reportCategories lists the report categories a session's listing offers in the report tool's
+// input schema.
+func reportCategories(t *testing.T, session *mcp.ClientSession) []string {
+	t.Helper()
+	listed, err := session.ListTools(t.Context(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tool := range listed.Tools {
+		if tool.Name != "library_report_series" {
+			continue
+		}
+		raw, _ := json.Marshal(tool.InputSchema)
+		var schema struct {
+			Properties struct {
+				Category struct {
+					Enum []string `json:"enum"`
+				} `json:"category"`
+			} `json:"properties"`
+		}
+		if err := json.Unmarshal(raw, &schema); err != nil {
+			t.Fatal(err)
+		}
+		return schema.Properties.Category.Enum
+	}
+	t.Fatal("library_report_series is not listed")
+	return nil
+}
+
 func TestAgentDisputesAPersonsIdentificationForTheOwnerToRecheck(t *testing.T) {
 	store, cfg := fixture(t)
 	lib, series := identifiedSeries(t, store, `<ComicInfo><Series>Monster</Series></ComicInfo>`)
@@ -420,13 +452,42 @@ func TestAgentDisputesAPersonsIdentificationForTheOwnerToRecheck(t *testing.T) {
 	web := openIdentificationWeb(t, store, cfg)
 	defer web.process.Close()
 	web.setupAdmin()
+	regular, err := store.CreateUser(t.Context(), database.CreateUserParams{Username: "regular", PasswordHash: "unused", Role: database.RoleRegular})
+	if err != nil {
+		t.Fatal(err)
+	}
 	before := web.series(series.ID)
 	conclusions := web.identification(series.ID).Conclusions
-	// Reporting needs only read, so a read-only inspection agent can question it too.
-	agent := web.mainLoopAgent(cfg, 1, []int64{lib.ID, agentMade.lib.ID}, []string{delegated.Read})
 
-	got, result := agent.report(series.ID, "disputed_owner_identification", "  ComicInfo and every volume name the 2004 anime book, not the manga  ")
-	if result.IsError || got != (seriesReport{SeriesID: series.ID, Category: "disputed_owner_identification", Recorded: true, Status: "needs_recheck"}) {
+	// Sending a series to recheck changes its status, so it needs metadata_write: a read-only
+	// inspection agent and a regular account's credential leave notes only, and neither is offered
+	// the dispute.
+	for _, reader := range []*mainLoopAgent{
+		web.mainLoopAgent(cfg, 1, []int64{lib.ID}, []string{delegated.Read}),
+		web.mainLoopAgent(cfg, regular.ID, []int64{lib.ID}, []string{delegated.Read, delegated.MetadataWrite}),
+	} {
+		if categories := reportCategories(t, reader.session); slices.Contains(categories, "disputed_identification") || !slices.Contains(categories, "protected_value_doubt") {
+			t.Fatalf("report categories offered to a reader %v", categories)
+		}
+		if instructions := reader.session.InitializeResult().Instructions; strings.Contains(instructions, "recheck") {
+			t.Fatalf("a reader is told to send series to recheck:\n%s", instructions)
+		}
+		// The refusal names the categories the reader may use instead.
+		refused, err := reader.session.CallTool(t.Context(), &mcp.CallToolParams{Name: "library_report_series", Arguments: map[string]any{"series_id": series.ID, "category": "disputed_identification", "reason": "looks wrong"}})
+		if err != nil || !refused.IsError || !strings.Contains(resultText(refused), "protected_value_doubt") {
+			t.Fatalf("a reader's dispute %s %v", resultText(refused), err)
+		}
+	}
+	if after := web.identification(series.ID); after.Status != "identified" || len(web.ownerVerdicts(series.ID).Escalations) != 0 {
+		t.Fatalf("a refused dispute changed the series %+v", after)
+	}
+
+	agent := web.mainLoopAgent(cfg, 1, []int64{lib.ID, agentMade.lib.ID}, []string{delegated.Read, delegated.MetadataWrite})
+	if categories := reportCategories(t, agent.session); !slices.Contains(categories, "disputed_identification") {
+		t.Fatalf("report categories offered to a writer %v", categories)
+	}
+	got, result := agent.report(series.ID, "disputed_identification", "  ComicInfo and every volume name the 2004 anime book, not the manga  ")
+	if result.IsError || got != (seriesReport{SeriesID: series.ID, Category: "disputed_identification", Recorded: true, Status: "needs_recheck"}) {
 		t.Fatalf("dispute %+v %s", got, resultText(result))
 	}
 	escalations := web.ownerVerdicts(series.ID).Escalations
@@ -441,17 +502,64 @@ func TestAgentDisputesAPersonsIdentificationForTheOwnerToRecheck(t *testing.T) {
 	if after := web.series(series.ID); !reflect.DeepEqual(after, before) {
 		t.Fatalf("the dispute changed the series %+v, was %+v", after, before)
 	}
-	if again, _ := agent.report(series.ID, "disputed_owner_identification", "still the anime book"); again.Recorded || again.Status != "needs_recheck" {
+	if again, _ := agent.report(series.ID, "disputed_identification", "still the anime book"); again.Recorded || again.Status != "needs_recheck" {
 		t.Fatalf("repeated dispute %+v", again)
 	}
 
-	// Without a person's identification there is nothing to dispute.
-	refused, err := agent.session.CallTool(t.Context(), &mcp.CallToolParams{Name: "library_report_series", Arguments: map[string]any{"series_id": unconcluded, "category": "disputed_owner_identification", "reason": "looks wrong"}})
-	if err != nil || !refused.IsError || !strings.Contains(resultText(refused), "library_replace_identification") {
-		t.Fatalf("dispute without a person's identification %+v %v", refused, err)
+	// Without any identification there is nothing to dispute.
+	refused, err := agent.session.CallTool(t.Context(), &mcp.CallToolParams{Name: "library_report_series", Arguments: map[string]any{"series_id": unconcluded, "category": "disputed_identification", "reason": "looks wrong"}})
+	if err != nil || !refused.IsError || !strings.Contains(resultText(refused), "library_submit_verdicts") {
+		t.Fatalf("dispute without an identification %+v %v", refused, err)
 	}
 	if got := web.identification(unconcluded); got.Status != "unprocessed" {
 		t.Fatalf("refused dispute changed the status %+v", got)
+	}
+}
+
+func TestAgentDisputesItsOwnIdentificationAndTheOwnerSettlesIt(t *testing.T) {
+	web, agent, _, _, ids := questionedLibrary(t, 2)
+	batch := agent.claim(map[string]any{})
+	for i, r := range agent.submit("identify", batch.LeaseID,
+		identifyVerdict(ids[0], "the Bangumi title equals the directory", "bangumi:1"),
+		identifyVerdict(ids[1], "the Bangumi title equals the directory", "bangumi:2")) {
+		wantResult(t, r, ids[i], true, "identified")
+	}
+	identified := []database.Series{web.series(ids[0]), web.series(ids[1])}
+
+	// The agent questions what it identified itself: the series waits for the owner, its fields as
+	// they are, and the agent may no longer replace that identification.
+	for i, id := range ids {
+		got, result := agent.report(id, "disputed_identification", "the cover shows another work")
+		if result.IsError || got != (seriesReport{SeriesID: id, Category: "disputed_identification", Recorded: true, Status: "needs_recheck"}) {
+			t.Fatalf("dispute of the agent's own identification %+v %s", got, resultText(result))
+		}
+		if after := web.series(id); !reflect.DeepEqual(after, identified[i]) {
+			t.Fatalf("the dispute changed the series %+v, was %+v", after, identified[i])
+		}
+	}
+	if got := agent.replace("fix", ids[0], []string{"anilist:1"}, "another work"); got.Status != "needs_recheck" {
+		t.Fatalf("replacement of a disputed identification %+v", got)
+	} else {
+		wantRefused(t, got, "owner_holds")
+	}
+	if page := web.pending("?category=disputed_identification"); !reflect.DeepEqual(page.ids(), ids) {
+		t.Fatalf("disputes on the pending list %+v", page)
+	}
+
+	// The owner withdraws the first identification from the series page: its entry is excluded and
+	// the series goes back to the agents.
+	withdrawn := web.withdrawIdentification(ids[0], "bangumi", http.StatusOK)
+	if got := withdrawn.Identification; got.Status != "unprocessed" || len(got.Conclusions) != 0 || len(got.Excluded) != 1 || got.Excluded[0].EntryID != "1" {
+		t.Fatalf("withdrawn disputed identification %+v", got)
+	}
+	// The owner finds the second one right: the conclusion becomes the owner's.
+	var kept fullIdentification
+	web.decide(seriesPath(ids[1], "keep-identification"), ``, http.StatusOK, &kept)
+	if kept.Status != "identified" || len(kept.Escalations) != 0 || len(kept.Conclusions) != 1 || kept.Conclusions[0].Confirmer.Kind != "owner" {
+		t.Fatalf("kept disputed identification %+v", kept)
+	}
+	if page := web.pending(""); page.Total != 0 {
+		t.Fatalf("pending after the owner settled both %+v", page)
 	}
 }
 

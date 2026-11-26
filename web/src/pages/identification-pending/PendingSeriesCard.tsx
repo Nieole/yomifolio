@@ -7,12 +7,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Ban, BookOpen, CheckCircle2, ExternalLink, Loader2, Search, ShieldCheck, X } from 'lucide-react';
 import { apiClient, getApiErrorMessage, isAxiosError } from '../../api/client';
-import type { Escalation, EvidenceCandidate, OwnerIdentified, PendingSeries, ResearchResult, SeriesIdentification } from '../../api/generated';
+import type { Escalation, EvidenceCandidate, OwnerIdentified, AwaitingSeries, ResearchResult, SeriesIdentification } from '../../api/generated';
 import { useI18n } from '../../i18n/LocaleProvider';
 import { useToast } from '../../components/ToastProvider';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useRequestLifetime } from '../../session/useRequestLifetime';
-import { categoryLabel, sourceLabel, waitingEscalations } from './labels';
+import { sourceLabel } from '../../features/identification/sources';
+import { categoryLabel, waitingEscalations } from './labels';
 
 const CONFLICT_CODES = new Set(['not_pending', 'candidate_unavailable', 'not_a_note']);
 
@@ -23,7 +24,7 @@ function conflictCode(error: unknown) {
 }
 
 interface PendingSeriesCardProps {
-  item: PendingSeries;
+  item: AwaitingSeries;
   // 系列不再等人、或者被别处改过之后调用，让外层重取计数。
   onChange?: () => void;
 }

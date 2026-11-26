@@ -110,19 +110,19 @@ func (p *Prefetcher) Start(ctx context.Context, libraryID int64, trigger task.Tr
 		spec.Key = fmt.Sprintf("evidence_prefetch_library_%d", libraryID)
 		spec.ScopeName = name
 	}
-	pending, err := p.pending(ctx, libraryID)
-	if err != nil || len(pending) == 0 {
+	targets, err := p.unprepared(ctx, libraryID)
+	if err != nil || len(targets) == 0 {
 		return PrefetchLaunch{}, err
 	}
-	spec.Total = len(pending)
-	spec.StartParams = map[string]string{"series": strconv.Itoa(len(pending))}
+	spec.Total = len(targets)
+	spec.StartParams = map[string]string{"series": strconv.Itoa(len(targets))}
 	launched, err := p.start(ctx, spec, func(ctx context.Context, h *runhandle.Handle) (task.Result, error) {
-		return p.run(ctx, h, pending)
+		return p.run(ctx, h, targets)
 	})
 	if err != nil {
 		return PrefetchLaunch{}, err
 	}
-	return PrefetchLaunch{RunID: launched.Run.ID, Series: len(pending)}, nil
+	return PrefetchLaunch{RunID: launched.Run.ID, Series: len(targets)}, nil
 }
 
 // Restart launches a new run of a finished prefetch identity.
@@ -143,13 +143,14 @@ func (p *Prefetcher) Restart(ctx context.Context, identity task.Identity, _ map[
 	return fmt.Errorf("unsupported prefetch identity: %+v", identity)
 }
 
-type pendingSeries struct {
+// prefetchTarget is one series a prefetch run prepares a packet for.
+type prefetchTarget struct {
 	id   int64
 	name string
 }
 
-// pending lists the unprocessed series without a packet, library by library and by name.
-func (p *Prefetcher) pending(ctx context.Context, libraryID int64) ([]pendingSeries, error) {
+// unprepared lists the unprocessed series without a packet, library by library and by name.
+func (p *Prefetcher) unprepared(ctx context.Context, libraryID int64) ([]prefetchTarget, error) {
 	query := `SELECT s.id, s.name FROM series_identification_status st JOIN series s ON s.id = st.series_id
 		WHERE st.status = 'unprocessed' AND NOT EXISTS (SELECT 1 FROM identification_evidence e WHERE e.series_id = s.id)`
 	var args []any
@@ -162,9 +163,9 @@ func (p *Prefetcher) pending(ctx context.Context, libraryID int64) ([]pendingSer
 		return nil, err
 	}
 	defer rows.Close()
-	var out []pendingSeries
+	var out []prefetchTarget
 	for rows.Next() {
-		var s pendingSeries
+		var s prefetchTarget
 		if err := rows.Scan(&s.id, &s.name); err != nil {
 			return nil, err
 		}
@@ -179,11 +180,11 @@ const (
 	prefetchReady prefetchOutcome = iota
 	// prefetchSkipped: the series was deleted, processed or given a packet since the run began.
 	prefetchSkipped
-	// prefetchUnanswered: no source answered, so the series stays pending for a later run.
+	// prefetchUnanswered: no source answered, so the series stays without a packet for a later run.
 	prefetchUnanswered
 )
 
-func (p *Prefetcher) run(ctx context.Context, h *runhandle.Handle, series []pendingSeries) (task.Result, error) {
+func (p *Prefetcher) run(ctx context.Context, h *runhandle.Handle, series []prefetchTarget) (task.Result, error) {
 	ready, unanswered, skipped := 0, 0, 0
 	result := func() task.Result {
 		return task.Result{Params: map[string]string{"ready": strconv.Itoa(ready), "unanswered": strconv.Itoa(unanswered), "total": strconv.Itoa(len(series))}}

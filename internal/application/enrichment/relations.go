@@ -122,6 +122,9 @@ func (s *Service) undoRelation(ctx context.Context, tx *sql.Tx, actor delegated.
 	if err = authorize(ctx, tx, actor, current.LibraryID, true); err != nil {
 		return Operation{}, err
 	}
+	if err = s.undoableBy(ctx, tx, actor, original); err != nil {
+		return Operation{}, err
+	}
 	added := original.Relation
 	if added != nil {
 		other := added.TargetSeriesID

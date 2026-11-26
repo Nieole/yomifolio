@@ -54,8 +54,8 @@ func rankedTags(source IdentifiedSource) []sourceTag {
 //
 // The sources' tags are united in priority order, a voted source's by votes. A tag passes the
 // threshold when one source applies it with enough votes; a source whose tags are not votes (every
-// source but Bangumi) vouches for each of its tags. A voted source's snapshot kept before votes were
-// has unknown counts, which never meet an active threshold. Blocked tags drop out, the series takes
+// source but Bangumi) vouches for each of its tags. A voted source's snapshot without tag votes has
+// unknown counts, which never meet an active threshold. Blocked tags drop out, the series takes
 // the first MaxPerSeries of the rest, and only those it lacks are appended: a series keeps every tag
 // it has, and spellings that fold to the same catalogue search text are one tag.
 func planTags(policy config.TagPolicy, sources []IdentifiedSource, before []string) ([]string, []metadata.FieldEvidence, string) {

@@ -38,7 +38,7 @@ mcp:
 - **An empty library selection is not "all libraries"**: it grants no access.
 - The four capabilities are independent: `read`, `metadata_write`, `scan_control`, `cleanup`. An older credential that still carries `internal_llm` keeps its other capabilities; `internal_llm` itself grants nothing, is no longer shown, and is dropped the next time the credential is narrowed.
 - The secret is shown **once at issuance**; save it then, otherwise issue a new one.
-- Any account can be delegated; the credential works under that account's current permissions and restrictions. Every capability except `read` also needs the account to be an administrator, so a regular user's credential can only read and report.
+- Any account can be delegated; the credential works under that account's current permissions and restrictions. Every capability except `read` also needs the account to be an administrator, so a regular user's credential can only read and leave notes, and its tool listing and initialization instructions show only those tools.
 - Changing or resetting that account's password revokes all of its MCP credentials. Revocation stops queued work before dispatch and running work at a safe checkpoint, and **does not undo committed changes**.
 - Narrowing capabilities or libraries also applies immediately: the next tool listing no longer shows the withdrawn tools. The listing only discloses what the credential may use; a call to a tool it omits is still refused with the same uniform denial, because every tool authorizes its own operation.
 
@@ -89,7 +89,7 @@ go build -o mcp-proxy ./cmd/mcp-proxy
 
 ## 4. Tools by capability
 
-A client only sees the tools its credential currently allows, and the initialization instructions describe exactly those tools.
+A client only sees the tools its credential can currently use, and the initialization instructions describe exactly those tools. For a regular user's credential that is the `read` row whatever else it names.
 
 | Capability | Tools |
 | --- | --- |
@@ -103,7 +103,7 @@ Most tools work locally. These reach outside the machine: `library_research_seri
 
 Every successful result carries its JSON twice: as `structuredContent` and as a text block, so clients that read only text still get the whole result. Image tools put that JSON text block first, followed by the images in the order of its `images` list. Every tool description stays within 400 characters and ends with an `Example:` call you can copy.
 
-Run tools only reach this credential's own runs and re-authorize against the capability that run belongs to. Every capability can create runs, so all four run tools are listed with any of them; calling `library_list_runs` still needs one of `scan_control`, `read` or `cleanup`, so a `metadata_write`-only credential follows its research runs by `run_id` instead.
+Run tools only reach this credential's own runs and re-authorize against the capability that run belongs to. Every capability can create runs, so all four run tools work with any one of them: a `metadata_write`-only credential lists and follows its research runs, and sees no run of a capability it no longer holds.
 
 Retired tools are neither listed nor answered: `library_search_sources`, `library_get_source_search`, `library_propose_match`, `library_get_match_proposal`, `library_get_enrichment_state`, `library_enrich_metadata`, `library_enrich_metadata_batch`, `library_assess_match` and `library_get_model_operation` get the protocol's unknown-tool error. Author correction and cover improvement live on as their own tools above.
 
@@ -126,8 +126,9 @@ What happens after `identify`: the server fills **empty** fields only, from the 
 Outside the loop:
 
 - **Corrections** (`metadata_write`): `library_replace_identification` replaces an agent's own wrong identification and takes back what it filled, unchanged since; `library_correct_series_field` fixes a title, summary, publisher, status or rating a source supplied and nobody changed since; `library_correct_authors` (read the evidence first with `library_get_series_authors`) and `library_improve_cover` fix authors and automatic covers. Every correction leaves an undoable receipt.
-- **Protected values**: a person's edits, ComicInfo values, locked fields, manual covers and a person's identification are never changed by an agent. Report them instead: `protected_value_doubt` leaves a note; `disputed_owner_identification` (through `library_report_series`) sends the series to recheck.
-- **Inspection** (`read`): `library_find_duplicate_series`, `library_count_tags` and `library_report_series` let a read-only credential inspect the library and leave notes without changing anything.
+- **Protected values**: a person's edits, ComicInfo values, locked fields, manual covers and a person's identification are never changed by an agent, and `library_undo_metadata_operation` refuses the receipts of the owner's own changes and of what an identification the owner confirmed brought, including one the owner found right or picked again. Report them instead: `protected_value_doubt` leaves a note.
+- **Disputes** (`metadata_write`): when an identification looks wrong, a person's or the agent's own, `library_report_series` with `disputed_identification` sends the series to recheck; its identification and fields stay as they are. The owner then withdraws the identification on the series page (its entry becomes an excluded candidate) or confirms it on **Awaiting you**. An agent never withdraws an identification itself.
+- **Inspection** (`read`): `library_find_duplicate_series`, `library_count_tags` and `library_report_series` let a read-only credential inspect the library and leave notes without changing anything; it is not offered the dispute.
 - **Relations**: `library_add_series_relation` adds a franchise relation such as a sequel between two series, with an undoable receipt; existing relations are never edited.
 
 The owner handles escalations and rechecks on **Review center → Awaiting you**, and sees each series' identifications on its detail page.

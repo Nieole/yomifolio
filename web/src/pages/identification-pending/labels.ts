@@ -2,18 +2,6 @@ import type { Escalation, SeriesIdentification } from '../../api/generated';
 
 type Translate = (key: string, params?: Record<string, string | number>, defaultValue?: string) => string;
 
-const SOURCE_LABELS: Record<string, string> = {
-  bangumi: 'Bangumi',
-  anilist: 'AniList',
-  mangadex: 'MangaDex',
-  myanimelist: 'MyAnimeList',
-  comicvine: 'Comic Vine',
-};
-
-export function sourceLabel(source: string) {
-  return SOURCE_LABELS[source] ?? source;
-}
-
 // 分类没有词条时（比如之后新增的分类）退到它所属的类别名，原始分类键照样露出来。
 export function categoryLabel(t: Translate, category: string, escalationClass: string) {
   const fallback = `${t(`identification.class.${escalationClass}`, undefined, escalationClass)} · ${category}`;

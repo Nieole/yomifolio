@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
-	"slices"
 	"strings"
 
 	"yomifolio/internal/application/delegated"
@@ -179,16 +178,8 @@ func shape(v Verdict) (Verdict, bool) {
 	}
 	switch v.Verdict {
 	case VerdictIdentify:
-		if v.Category != "" || len(v.CandidateIDs) == 0 || len(v.CandidateIDs) > len(Sources) {
+		if v.Category != "" || !citable(v.CandidateIDs) {
 			return v, false
-		}
-		var sources []string
-		for _, id := range v.CandidateIDs {
-			source, entry, ok := strings.Cut(id, ":")
-			if !ok || entry == "" || !slices.Contains(Sources, source) || slices.Contains(sources, source) {
-				return v, false
-			}
-			sources = append(sources, source)
 		}
 	case VerdictNotFound:
 		if v.Category != "" || len(v.CandidateIDs) > 0 {

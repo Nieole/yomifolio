@@ -6,9 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"net/http"
 	"slices"
-	"strings"
 	"sync"
 
 	"yomifolio/internal/application/delegated"
@@ -107,26 +105,16 @@ type ImageAccess interface {
 	PageThumbnails(context.Context, delegated.Subject, delegated.PageThumbnailsInput) (delegated.ImageEvidence, error)
 }
 
-var errNoImages = errors.New("identification images are not assembled")
-
+// imageSources are where a series' images come from: its own books, and the candidate covers the
+// fetcher downloads.
 type imageSources struct {
 	local  ImageAccess
 	covers *coverFetcher
 }
 
-// WithImages lets agents look at a series' own images and its candidates' covers. covers carries
-// the candidate cover downloads; nil uses the default transport.
-func (s *Service) WithImages(local ImageAccess, covers http.RoundTripper) *Service {
-	s.images = &imageSources{local: local, covers: newCoverFetcher(covers)}
-	return s
-}
-
 // Images reads the requested images of one series the credential may read. A denial, invalid
 // selection or cancellation fails the call; any other trouble with one image is its status.
 func (s *Service) Images(ctx context.Context, subject delegated.Subject, in ImagesInput) (ImageSet, error) {
-	if s.images == nil {
-		return ImageSet{}, errNoImages
-	}
 	if !in.valid() {
 		return ImageSet{}, delegated.ErrInvalid
 	}
@@ -237,7 +225,7 @@ func (s *Service) candidateImages(ctx context.Context, seriesID int64, ids []str
 			out[i].Status = ImageNotInEvidence
 			continue
 		}
-		source, _, _ := strings.Cut(id, ":")
+		source, _, _ := parseCandidate(id)
 		wg.Go(func() { errs[i] = s.images.covers.fetch(ctx, source, address, &out[i]) })
 	}
 	wg.Wait()

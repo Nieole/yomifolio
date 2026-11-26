@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"fmt"
 	"image"
 	"image/png"
 	"net/http"
@@ -20,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/database"
 	"yomifolio/internal/metadata"
 	"yomifolio/internal/seriesmeta"
@@ -274,5 +276,49 @@ func TestFailedRecheckLeavesTheScanCompleted(t *testing.T) {
 	}
 	if got := web.identification(series.ID).Status; got != "identified" {
 		t.Fatalf("status after a failed check: %s", got)
+	}
+}
+
+func TestIdentificationKeepsTheEntrysAliasesAndTheRecheckAcceptsThem(t *testing.T) {
+	store, cfg := fixture(t)
+	unpaced(t, cfg)
+	library := newPrefetchLibrary(t, store, "Aliases")
+	agentMade := library.series("Monster", "", "01.cbz")
+	ownerMade := library.series("Boys", "", "01.cbz")
+	fromHistory := library.series("Pluto", "", "01.cbz")
+	historicalProposal(t, store, fromHistory, "Bangumi", 4711, "https://bgm.tv/subject/4711", `{"Title":"冥王","OriginalTitle":"PLUTO","Aliases":["Puruto"]}`, "applied")
+	sources := &recordingSources{answer: catalogue(map[string]map[string]*metadata.SeriesMetadata{
+		"bangumi": {
+			"Monster": {Title: "怪物", OriginalTitle: "MONSTER", Aliases: []string{"Kaibutsu", "莫扎特的怪物"}, SourceID: 1, SourceURL: "https://bgm.tv/subject/1"},
+			"Boys":    {Title: "二十世纪少年", OriginalTitle: "20世紀少年", Aliases: []string{"Nijusseiki Shonen"}, SourceID: 2, SourceURL: "https://bgm.tv/subject/2"},
+		},
+	})}
+	web := openClaimWeb(t, store, cfg, sources, &handClock{now: time.Date(2026, 3, 1, 9, 0, 0, 0, time.UTC)})
+	if _, run := web.prefetch(fmt.Sprintf(`{"library_id":%d}`, library.lib.ID)); run.Status != task.StatusCompleted {
+		t.Fatalf("prefetch run %+v", run)
+	}
+	agent := web.mainLoopAgent(cfg, 1, []int64{library.lib.ID}, []string{delegated.Read, delegated.MetadataWrite})
+	agent.identifyAll("identify", map[int64][]string{agentMade: {"bangumi:1"}})
+	web.pickEntry(ownerMade, "bangumi", web.manualSearch(ownerMade, "bangumi", "Boys")[0], http.StatusOK)
+
+	// Each conclusion keeps the entry's original title and aliases, however it was reached.
+	for series, want := range map[int64][]string{agentMade: {"Kaibutsu", "莫扎特的怪物"}, ownerMade: {"Nijusseiki Shonen"}, fromHistory: {"Puruto"}} {
+		if got := web.identification(series).Conclusions; len(got) != 1 || !reflect.DeepEqual(got[0].Aliases, want) {
+			t.Fatalf("series %d conclusions %+v, want aliases %q", series, got, want)
+		}
+	}
+
+	// A new book named by an alias is the identified work; another name still questions it.
+	web.addBook(library, "Monster", "02.cbz", "Kaibutsu")
+	web.addBook(library, "Boys", "02.cbz", "nijusseiki shonen")
+	web.addBook(library, "Pluto", "02.cbz", "PURUTO")
+	for _, series := range []int64{agentMade, ownerMade, fromHistory} {
+		if got := web.identification(series).Status; got != "identified" {
+			t.Fatalf("series %d named by an alias: %s", series, got)
+		}
+	}
+	web.addBook(library, "Monster", "03.cbz", "Astro Boy")
+	if got := web.identification(agentMade).Status; got != "needs_recheck" {
+		t.Fatalf("series named by another work: %s", got)
 	}
 }

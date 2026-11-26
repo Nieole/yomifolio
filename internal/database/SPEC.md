@@ -57,7 +57,7 @@ references: [mm-adr-0003]
 
 ## 系列识别持久化
 
-`schema_identification.sql` 是 handwritten DDL，由统一 Migrate 安装，不进入 sqlc 模型输入：识别结论、排除候选、上报、认可的系列名、查无此作、已审定、证据包、领取租约、裁决重放、增量预取请求、来源启用时间与存量推导完成标记，全部按 `series_id` 外键随系列级联删除（来源启用时间与完成标记不属于系列）。路径迁移不换系列 ID，结论随之保留。视图 `series_identification_status` 是识别状态的唯一定义，每次启动重建，规则改动对存量库立即生效；存量库缺的列经 `ensureColumn` 补上。时间存 Unix 毫秒，由应用以注入的时钟写入。推导、判定、租约与授权规则归 `mm-identification`，持久层不另造工作流。
+`schema_identification.sql` 是 handwritten DDL，由统一 Migrate 安装，不进入 sqlc 模型输入：识别结论、排除候选、上报、认可的系列名、查无此作、已审定、证据包、领取租约、裁决重放、增量预取请求、来源启用时间与存量推导完成标记，全部按 `series_id` 外键随系列级联删除（来源启用时间与完成标记不属于系列）。路径迁移不换系列 ID，结论随之保留。视图 `series_identification_status` 是识别状态的唯一定义，每次启动重建，规则改动对存量库立即生效。时间存 Unix 毫秒，由应用以注入的时钟写入。推导、判定、租约与授权规则归 `mm-identification`，持久层不另造工作流。
 
 ## 共享作者身份
 

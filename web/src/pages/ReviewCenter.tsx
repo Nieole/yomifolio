@@ -4,7 +4,7 @@ import { GitCompareArrows, Layers3, Loader2, ShieldCheck, UserCheck } from 'luci
 import { PageShell, PageHeader } from '../components/PageShell';
 import { useI18n } from '../i18n/LocaleProvider';
 import { apiClient } from '../api/client';
-import type { PendingPage } from '../api/generated';
+import type { AwaitingPage } from '../api/generated';
 
 const MetadataReviews = lazy(() => import('./MetadataReviews'));
 const AIGroupingReviews = lazy(() => import('./AIGroupingReviews'));
@@ -35,7 +35,7 @@ export default function ReviewCenter() {
         // 请求失败不代表「没有待办」。清零会让角标消失，用户以为已处理完；
         // 保留上一次的计数更接近真实状态。
       });
-    apiClient.get<PendingPage>('/api/identification/pending?limit=0')
+    apiClient.get<AwaitingPage>('/api/identification/pending?limit=0')
       .then(({ data }) => setPendingCount(data.total))
       .catch(() => {
         // 同上：取不到计数时保留上一次的。

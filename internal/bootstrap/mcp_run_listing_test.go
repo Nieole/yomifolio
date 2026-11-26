@@ -119,13 +119,9 @@ func TestRunListingFollowsEachRunsCapability(t *testing.T) {
 				t.Fatal("listed the runs of a library outside the credential")
 			}
 
-			// Narrowed to one capability, only the runs it started stay visible. Listing runs needs read,
-			// scan_control or cleanup, so metadata_write keeps read beside it.
-			narrowed := []string{final}
-			if final == delegated.MetadataWrite {
-				narrowed = append(narrowed, delegated.Read)
-			}
-			body, _ := json.Marshal(map[string]any{"user_id": 1, "name": "main loop agent", "library_ids": []int64{library.lib.ID}, "capabilities": narrowed})
+			// Narrowed to one capability, only the runs it started stay visible; any one capability of
+			// the library is enough to list them, metadata_write alone included.
+			body, _ := json.Marshal(map[string]any{"user_id": 1, "name": "main loop agent", "library_ids": []int64{library.lib.ID}, "capabilities": []string{final}})
 			if rec := web.raw("PATCH", "/api/mcp/credentials/"+agent.credential, string(body)); rec.Code != 200 {
 				t.Fatalf("narrow %d %s", rec.Code, rec.Body)
 			}

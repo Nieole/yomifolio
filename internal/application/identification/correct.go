@@ -52,9 +52,6 @@ func (s *Service) CorrectField(ctx context.Context, subject delegated.Subject, i
 	if !validRequestKey(in.RequestKey) || in.SeriesID <= 0 || in.Reason == "" || len(in.Reason) > maxReasonBytes || !slices.Contains(enrichment.CorrectableFields, in.Field) {
 		return Correction{}, delegated.ErrInvalid
 	}
-	if s.enricher == nil {
-		return Correction{}, delegated.ErrDenied
-	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return Correction{}, err

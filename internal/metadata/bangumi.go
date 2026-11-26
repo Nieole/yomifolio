@@ -312,6 +312,7 @@ func (b *BangumiProvider) convertToSeriesMetadata(best bangumiSubjectResult, ran
 	return &SeriesMetadata{
 		Title:         displayTitle,
 		OriginalTitle: best.Name,
+		Aliases:       aliasesOf(displayTitle, best.Name, infoboxValues(best.Infobox, "别名")...),
 		Summary:       best.Summary,
 		Publisher:     publisher,
 		CoverURL:      coverURL,
@@ -344,6 +345,36 @@ func extractPublisherFromInfobox(infobox []interface{}) string {
 		}
 	}
 	return ""
+}
+
+// infoboxValues 取 Bangumi infobox 中某个键的全部取值：字符串值按行拆分，列表值取每项的 v。
+func infoboxValues(infobox []interface{}, key string) []string {
+	var out []string
+	for _, item := range infobox {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if k, _ := m["key"].(string); strings.TrimSpace(k) != key {
+			continue
+		}
+		switch v := m["value"].(type) {
+		case string:
+			out = append(out, strings.Split(v, "\n")...)
+		case []interface{}:
+			for _, entry := range v {
+				switch entry := entry.(type) {
+				case string:
+					out = append(out, entry)
+				case map[string]interface{}:
+					if name, ok := entry["v"].(string); ok {
+						out = append(out, name)
+					}
+				}
+			}
+		}
+	}
+	return out
 }
 
 // extractAuthorsFromInfobox 从 Bangumi infobox 抽取作者/作画/原作等参与人员

@@ -11,9 +11,12 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/database"
 	"yomifolio/internal/metadata"
@@ -608,5 +611,123 @@ func TestOwnerWithdrawingOneSourceSupplementsFromTheOthersAgain(t *testing.T) {
 	}
 	if links := web.seriesLinks(id); !reflect.DeepEqual(links, map[string]string{"AniList": "https://anilist.co/manga/5"}) {
 		t.Fatalf("links after withdrawing Bangumi %v", links)
+	}
+}
+
+// operationIDs lists the receipt IDs of one series as an agent's operation tools page them.
+func (a *mainLoopAgent) operationIDs(series int64) []string {
+	a.t.Helper()
+	var page struct {
+		Operations []struct {
+			ID string `json:"id"`
+		} `json:"operations"`
+	}
+	if result := a.call("library_list_metadata_operations", map[string]any{"series_id": series, "limit": 50}, &page); result.IsError {
+		a.t.Fatalf("operations of series %d refused: %s", series, resultText(result))
+	}
+	ids := []string{}
+	for _, op := range page.Operations {
+		ids = append(ids, op.ID)
+	}
+	return ids
+}
+
+func TestAgentMayNotUndoTheOwnersReceipts(t *testing.T) {
+	store, cfg := fixture(t)
+	unpaced(t, cfg)
+	library := newPrefetchLibrary(t, store, "Receipts")
+	owned := library.series("Owned", "", "01.cbz")
+	setSeries(t, store, owned, func(p *database.UpdateSeriesMetadataParams) {
+		p.Title, p.LockedFields = sqlText("Owned"), sqlText("title")
+	})
+	agentMade := library.series("Title 2", "", "01.cbz")
+	sources := &recordingSources{answer: catalogue(map[string]map[string]*metadata.SeriesMetadata{
+		"bangumi": {
+			"Monster": {Title: "怪物", Summary: "Owner's pick", SourceID: 7, SourceURL: "https://bgm.tv/subject/7"},
+			"Title 2": {Title: "第二部", Summary: "Agent's pick", SourceID: 2, SourceURL: "https://bgm.tv/subject/2"},
+		},
+	})}
+	web := openClaimWeb(t, store, cfg, sources, &handClock{now: time.Date(2026, 3, 1, 9, 0, 0, 0, time.UTC)})
+	pick := web.pickEntry(owned, "bangumi", web.manualSearch(owned, "bangumi", "Monster")[0], http.StatusOK)
+	if _, run := web.prefetch("{}"); run.Status != task.StatusCompleted {
+		t.Fatalf("prefetch run %+v", run)
+	}
+	identifier := web.mainLoopAgent(cfg, 1, []int64{library.lib.ID}, []string{delegated.Read, delegated.MetadataWrite})
+	identified := identifier.identifyAll("identify", map[int64][]string{agentMade: {"bangumi:2"}})
+	other := web.mainLoopAgent(cfg, 1, []int64{library.lib.ID}, []string{delegated.Read, delegated.MetadataWrite})
+
+	// The owner's receipt is listed to an agent, but undoing it is refused with the report to use.
+	if ids := other.operationIDs(owned); !slices.Contains(ids, pick.OperationID) {
+		t.Fatalf("operations of the owner's series %v miss %s", ids, pick.OperationID)
+	}
+	before := web.series(owned)
+	refused, err := other.session.CallTool(t.Context(), &mcp.CallToolParams{Name: "library_undo_metadata_operation",
+		Arguments: map[string]any{"request_key": "undo-owner", "operation_id": pick.OperationID}})
+	if err != nil || !refused.IsError || !strings.Contains(resultText(refused), "library_report_series") {
+		t.Fatalf("undo of the owner's receipt %+v %v", refused, err)
+	}
+	if after := web.series(owned); !reflect.DeepEqual(after, before) || after.Title.String != "怪物" {
+		t.Fatalf("a refused undo changed the series %+v, was %+v", after, before)
+	}
+	if ids := other.operationIDs(owned); len(ids) != 1 {
+		t.Fatalf("a refused undo left a receipt: %v", ids)
+	}
+	if got := web.ownerReceipt(pick.OperationID); got.Outcome != "changed" {
+		t.Fatalf("owner receipt after the refused undo %+v", got)
+	}
+
+	// Another credential's receipt stays within the ordinary undo rules.
+	var undone undoReceipt
+	result := other.call("library_undo_metadata_operation", map[string]any{"request_key": "undo-agent", "operation_id": identified[agentMade].OperationID}, &undone)
+	if result.IsError || undone.Outcome != "changed" {
+		t.Fatalf("undo of another credential's receipt %+v %s", undone, resultText(result))
+	}
+	if got := web.series(agentMade); got.Summary.Valid {
+		t.Fatalf("series after undoing the agent's receipt %+v", got)
+	}
+}
+
+func TestAgentMayNotUndoTheSupplementOfAnIdentificationTheOwnerConfirmed(t *testing.T) {
+	web, agent, _, _, ids := questionedLibrary(t, 3)
+	batch := agent.claim(map[string]any{})
+	operations := map[int64]string{}
+	for i, r := range agent.submit("identify", batch.LeaseID,
+		identifyVerdict(ids[0], "the Bangumi title equals the directory", "bangumi:1"),
+		identifyVerdict(ids[1], "the Bangumi title equals the directory", "bangumi:2"),
+		identifyVerdict(ids[2], "the Bangumi title equals the directory", "bangumi:3")) {
+		wantResult(t, r, ids[i], true, "identified")
+		operations[r.SeriesID] = r.OperationID
+	}
+	// The owner makes two of the agent's identifications the owner's: one by finding a disputed
+	// identification right, one by picking the same entry in a manual search.
+	if _, result := agent.report(ids[0], "disputed_identification", "the cover shows another work"); result.IsError {
+		t.Fatalf("dispute refused: %s", resultText(result))
+	}
+	var kept fullIdentification
+	web.decide(seriesPath(ids[0], "keep-identification"), ``, http.StatusOK, &kept)
+	if kept.Conclusions[0].Confirmer.Kind != "owner" {
+		t.Fatalf("kept identification %+v", kept)
+	}
+	if pick := web.pickEntry(ids[1], "bangumi", web.manualSearch(ids[1], "bangumi", "Title 2")[0], http.StatusOK); pick.Identification.Conclusions[0].Confirmer.Kind != "owner" {
+		t.Fatalf("owner's pick of the identified entry %+v", pick)
+	}
+
+	// What those identifications supplemented is the owner's now: no agent undoes it, and the
+	// refusal names the report instead.
+	for _, id := range ids[:2] {
+		before := web.series(id)
+		refused, err := agent.session.CallTool(t.Context(), &mcp.CallToolParams{Name: "library_undo_metadata_operation",
+			Arguments: map[string]any{"request_key": fmt.Sprintf("undo-%d", id), "operation_id": operations[id]}})
+		if err != nil || !refused.IsError || !strings.Contains(resultText(refused), "library_report_series") {
+			t.Fatalf("undo of the supplement of series %d the owner confirmed %+v %v", id, refused, err)
+		}
+		if after := web.series(id); !reflect.DeepEqual(after, before) {
+			t.Fatalf("a refused undo changed series %d: %+v, was %+v", id, after, before)
+		}
+	}
+	// An identification still the agent's keeps its supplement undoable.
+	var undone undoReceipt
+	if result := agent.call("library_undo_metadata_operation", map[string]any{"request_key": "undo-agent", "operation_id": operations[ids[2]]}, &undone); result.IsError || undone.Outcome != "changed" {
+		t.Fatalf("undo of the agent's own supplement %+v %s", undone, resultText(result))
 	}
 }

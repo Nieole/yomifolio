@@ -231,17 +231,23 @@ func (s *Service) Authorize(ctx context.Context, subject Subject, library int64,
 	return authorizeAuthority(authority, library, capability)
 }
 
-// GrantedCapabilities reports the flags the credential currently carries, for deciding which
-// tools a listing may show. Visibility follows the granted flags, not the account's own
-// permissions: a regular account still lists the scan tools its credential holds and every call
-// stays denied by Authorize. Each request re-reads them, so narrowing and revocation apply to the
-// next listing.
+// GrantedCapabilities reports the capabilities the credential can currently exercise, for deciding
+// which tools a listing and the initialization name: the flags it carries that Authorize would
+// honour. A regular account's credential exercises read alone, whatever else it names, so its
+// listing offers no tool every call of which is denied. Each request re-reads them, so narrowing
+// and revocation apply to the next listing.
 func (s *Service) GrantedCapabilities(ctx context.Context, subject Subject) ([]string, error) {
 	authority, err := s.store.Authority(ctx, subject)
 	if err != nil || authority.Credential.Revoked || authority.MustChangePassword {
 		return nil, ErrDenied
 	}
-	return authority.Credential.Capabilities, nil
+	effective := []string{}
+	for _, capability := range authority.Credential.Capabilities {
+		if slices.Contains(capabilities, capability) && (capability == Read || authority.Admin) {
+			effective = append(effective, capability)
+		}
+	}
+	return effective, nil
 }
 
 func authorizeAuthority(authority Authority, library int64, capability string) error {

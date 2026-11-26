@@ -1,18 +1,11 @@
 /**
- * 手动搜索弹窗里「挑中即识别」的共用逻辑：哪些来源的结果能记为系列识别、把挑中的结果交给服务端、
+ * 手动搜索弹窗里「挑中即识别」的共用逻辑：把挑中的结果交给服务端（哪些来源能记为识别见 sources.ts）、
  * 按服务端的权威结果组出提示，以及判断一条搜索结果是不是某条识别结论或排除候选的条目。
  * 详情页与资料库网格各有一份弹窗状态，这里是两边唯一的口径。
  */
 
 import { apiClient } from '../../api/client';
 import type { Conclusion, ExcludedCandidate, OwnerIdentification, SeriesIdentification } from '../../api/generated';
-
-/** 能记为系列识别的来源。LLM 的回答不指向任何来源条目，挑中它仍只生成提案。 */
-export const IDENTIFICATION_SOURCES = ['bangumi', 'anilist', 'mangadex', 'myanimelist', 'comicvine'];
-
-export function isIdentificationSource(provider: string): boolean {
-  return IDENTIFICATION_SOURCES.includes(provider);
-}
 
 /** 读系列的识别，供弹窗提示撤换与标出排除候选；读不到时弹窗照常可用，由服务端把关。 */
 export async function loadIdentification(seriesId: number | string): Promise<SeriesIdentification | null> {

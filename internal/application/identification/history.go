@@ -19,6 +19,7 @@ type historicalProposal struct {
 	entry      Entry
 	title      string
 	original   string
+	aliases    []string
 	decidedAt  time.Time
 }
 
@@ -73,8 +74,8 @@ func (s *Service) DeriveFromHistory(ctx context.Context) error {
 		chosen[k] = true
 		if _, err := tx.ExecContext(ctx, `INSERT OR IGNORE INTO identification_conclusions
 			(series_id, source, entry_id, entry_url, title, original_title, aliases, confirmer, user_id, credential_id, confirmed_at_ms, reason, proposal_id)
-			VALUES (?, ?, ?, ?, ?, ?, '[]', ?, 0, '', ?, '', ?)`,
-			p.series, p.entry.Source, p.entry.ID, p.entry.URL, p.title, p.original, ConfirmedByOwner, p.decidedAt.UnixMilli(), p.id); err != nil {
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, '', ?, '', ?)`,
+			p.series, p.entry.Source, p.entry.ID, p.entry.URL, p.title, p.original, encodeAliases(p.aliases), ConfirmedByOwner, p.decidedAt.UnixMilli(), p.id); err != nil {
 			return err
 		}
 		conclusions++
@@ -149,6 +150,7 @@ func historicalProposals(ctx context.Context, tx *sql.Tx) ([]historicalProposal,
 		// leaves the row's own source identity usable.
 		var result struct {
 			Title, OriginalTitle, Provider string
+			Aliases                        []string
 		}
 		_ = json.Unmarshal([]byte(payload), &result)
 		name := provider
@@ -162,7 +164,7 @@ func historicalProposals(ctx context.Context, tx *sql.Tx) ([]historicalProposal,
 		if r.entry, ok = EntryOf(source, sourceID, link); !ok {
 			continue
 		}
-		r.title, r.original = result.Title, result.OriginalTitle
+		r.title, r.original, r.aliases = result.Title, result.OriginalTitle, result.Aliases
 		candidates = append(candidates, r)
 	}
 	rows.Close()
