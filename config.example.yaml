@@ -104,6 +104,105 @@ identification:
     # 识别补充取文本字段与作者的来源先后，排前的先取；没列出的来源按默认顺序接在后面。
     # Order identification enrichment takes text fields and authors in; unlisted sources follow in the default order.
     source_priority: [bangumi, anilist, mangadex, myanimelist, comicvine]
+    # 识别补充追加来源标签前依次经过的三道过滤：投票阈值、屏蔽列表、每系列上限。只追加，不删除已有标签。
+    # Filters identification enrichment applies, in order, before appending source tags; existing tags are never removed.
+    tags:
+        # 投票类来源（目前只有 Bangumi）的标签至少要有这么多票；其它来源的标签是编目分类，不看票数。
+        # 0 取默认值，负数不设阈值。没有保存票数的旧证据里，Bangumi 标签在阈值开着时一律不追加。
+        # Votes a tag needs from a source whose tags are votes (Bangumi). 0 uses the default, negative disables it.
+        min_votes: 3
+        # 不追加的标签，比较时忽略全半角、大小写、空白与标点；前后带 / 的条目是正则表达式，匹配同样处理过的标签。
+        # 默认覆盖媒介、地区、年份、连载状态与个人状态。写成 [] 表示不屏蔽任何标签。
+        # Tags never appended, compared ignoring width, case, whitespace and punctuation; /.../ is a regular expression.
+        blocklist:
+            # 媒介 / medium
+            - 漫画
+            - 漫畫
+            - マンガ
+            - まんが
+            - コミック
+            - 日漫
+            - 国漫
+            - 韩漫
+            - 美漫
+            - 港漫
+            - 台漫
+            - 条漫
+            - 单行本
+            - 轻小说
+            - 小说
+            - 画集
+            - manga
+            - manhwa
+            - manhua
+            - comic
+            - comics
+            - webtoon
+            - web comic
+            - long strip
+            - full color
+            - official colored
+            # 地区 / region
+            - 日本
+            - 中国
+            - 国产
+            - 大陆
+            - 台湾
+            - 香港
+            - 韩国
+            - 美国
+            - 欧美
+            - 法国
+            - japan
+            - japanese
+            - korea
+            - korean
+            - china
+            - chinese
+            # 年份：2010、2010年、2010年4月、2010年代、2010s；80年代、90s / years and decades
+            - '/^(19|20)\d{2}(年代|s|年?(\d{1,2}月?)?)$/'
+            - '/^\d{2}(年代|s)$/'
+            # 连载状态 / publication status
+            - 连载
+            - 连载中
+            - 完结
+            - 已完结
+            - 完結
+            - 未完结
+            # 个人状态 / a reader's own status
+            - 已购
+            - 已购入
+            - 购入
+            - 已买
+            - 入手
+            - 已入手
+            - 收藏
+            - 已收藏
+            - 藏书
+            - 实体书
+            - 已读
+            - 读过
+            - 在读
+            - 想读
+            - 未读
+            - 看过
+            - 在看
+            - 想看
+            - 补完
+            - 弃坑
+            - 养肥
+            - 追更
+            - owned
+            - read
+            - reading
+            - plan to read
+            - dropped
+            - favorite
+        # 每个系列最多从来源选多少个标签（先按来源优先级、再按票数排序），系列已有的也算在内、不重复追加。
+        # 0 取默认值，负数不设上限。
+        # Source tags one series takes at most, by source priority then votes, counting those it already has.
+        # 0 uses the default, negative disables the limit.
+        max_per_series: 10
 protocols:
     opds:
         enabled: false

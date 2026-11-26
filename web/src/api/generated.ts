@@ -135,6 +135,7 @@ export interface SourceFacts {
   SiteRating?: SiteRating;
   Rating: number;
   Tags: string[];
+  TagVotes?: TagVote[];
   Authors: SeriesAuthor[];
   SourceID: number;
   SourceURL: string;
@@ -142,6 +143,11 @@ export interface SourceFacts {
   Confidence: number;
   ReleaseDate: string;
   VolumeCount: number;
+}
+
+export interface TagVote {
+  name: string;
+  votes: number;
 }
 
 export interface SiteRating {

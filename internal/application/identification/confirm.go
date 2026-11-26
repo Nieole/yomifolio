@@ -71,7 +71,11 @@ func (s *Service) confirm(ctx context.Context, tx *sql.Tx, actor delegated.Subje
 	if err != nil {
 		return enrichment.Operation{}, err
 	}
-	return s.enricher.EnrichIdentified(ctx, tx, actor, enrichment.IdentifiedInput{RequestKey: receiptKey, SeriesID: seriesID, Reason: reason, Sources: sources})
+	tags := config.DefaultTagPolicy
+	if s.config != nil {
+		tags = s.config().Identification.Tags
+	}
+	return s.enricher.EnrichIdentified(ctx, tx, actor, enrichment.IdentifiedInput{RequestKey: receiptKey, SeriesID: seriesID, Reason: reason, Sources: sources, Tags: tags})
 }
 
 // identifiedSources lists every source the series is identified with, in the configured priority.
