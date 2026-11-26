@@ -1810,6 +1810,8 @@ export const messages: MessageCatalog = {
     'identification.category.directory_grouping': '疑似目录分组错误',
     'identification.category.suspected_duplicate': '疑似重复',
     'identification.category.tag_problem': '标签问题',
+    'identification.category.protected_value_doubt': '受保护的值疑似有误',
+    'identification.category.disputed_owner_identification': '质疑人工确认的识别',
     'identification.class.identification': '识别类上报',
     'identification.class.recheck': '待复核',
     'identification.class.note': '备注',

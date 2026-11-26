@@ -490,7 +490,7 @@ func TestAgentNotesAProtectedValueInsteadOfChangingIt(t *testing.T) {
 		t.Fatalf("the note changed the series %+v, was %+v", after, before)
 	}
 	// Like every note, one the owner closed is not raised again.
-	closeNotes(t, store, series.ID, "protected_value_doubt")
+	web.closeNotes(series.ID, "protected_value_doubt")
 	if again, _ := agent.report(series.ID, "protected_value_doubt", "still the wrong publisher"); again.Recorded || again.Status != "identified" {
 		t.Fatalf("note after the owner closed it %+v", again)
 	}

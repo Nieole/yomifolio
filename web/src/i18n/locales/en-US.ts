@@ -1810,6 +1810,8 @@ export const messages: MessageCatalog = {
     'identification.category.directory_grouping': 'Directory grouping',
     'identification.category.suspected_duplicate': 'Suspected duplicate',
     'identification.category.tag_problem': 'Tag problem',
+    'identification.category.protected_value_doubt': 'Protected value in doubt',
+    'identification.category.disputed_owner_identification': 'Disputed owner identification',
     'identification.class.identification': 'Identification escalation',
     'identification.class.recheck': 'Needs recheck',
     'identification.class.note': 'Note',
