@@ -558,7 +558,11 @@ func TestRelocationKeepsIdentification(t *testing.T) {
 	if err := os.Rename(source, target); err != nil {
 		t.Fatal(err)
 	}
-	rec := web.raw("POST", "/api/libraries/"+strconv.FormatInt(lib.ID, 10)+"/relocation-plans", `{"target_root":"`+target+`"}`)
+	preview, err := json.Marshal(map[string]string{"target_root": target})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := web.raw("POST", "/api/libraries/"+strconv.FormatInt(lib.ID, 10)+"/relocation-plans", string(preview))
 	if rec.Code != http.StatusAccepted {
 		t.Fatalf("relocation preview %d %s", rec.Code, rec.Body)
 	}
