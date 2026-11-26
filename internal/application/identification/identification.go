@@ -5,9 +5,8 @@
 // packets that background prefetch runs prepare for the unprocessed series, and the agents' main
 // loop over them: claim leases and the verdicts that answer them.
 //
-// Agent-facing use cases re-check delegated authority through Access on every call. Owner-facing
-// use cases take the acting account and re-check that it is an administrator in the same
-// transaction as the change.
+// Agent-facing use cases re-check delegated authority through Access on every call; owner-facing
+// ones take the acting account and re-check it is an administrator in the change's transaction.
 package identification
 
 import (
