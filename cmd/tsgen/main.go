@@ -79,6 +79,8 @@ var targets = []reflect.Type{
 	reflect.TypeOf(identification.Confirmer{}),
 	reflect.TypeOf(identification.ExcludedCandidate{}),
 	reflect.TypeOf(identification.OwnerReview{}),
+	reflect.TypeOf(identification.NotFoundVerdict{}),
+	reflect.TypeOf(identification.Escalation{}),
 	reflect.TypeOf(identification.EvidencePacket{}),
 	reflect.TypeOf(identification.EvidenceSearch{}),
 	reflect.TypeOf(identification.EvidenceLocalClues{}),

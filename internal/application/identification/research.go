@@ -281,19 +281,18 @@ func (p *Prefetcher) research(ctx context.Context, h *runhandle.Handle, target r
 		return task.Result{}, err
 	}
 	params := map[string]string{"series": target.name, "query": query, "added": "0"}
-	stored, _, err := storedEvidence(ctx, p.db, target.id)
+	stored, _, found, err := storedEvidence(ctx, p.db, target.id)
 	if err != nil {
 		return task.Result{}, err
 	}
 	var local EvidenceLocalClues
 	var derived []string
-	if stored != nil {
+	if found {
 		if _, done := stored.searched(query); done {
 			return task.Result{Params: params}, nil
 		}
 		local = stored.Local
 	} else {
-		var found bool
 		if local, found, err = p.localClues(ctx, h, target.id); err != nil {
 			return task.Result{}, err
 		}
@@ -352,13 +351,13 @@ func (p *Prefetcher) saveResearch(ctx context.Context, seriesID int64, query str
 	if err != nil {
 		return 0, err
 	}
-	stored, facts, err := storedEvidence(ctx, tx, seriesID)
+	stored, facts, found, err := storedEvidence(ctx, tx, seriesID)
 	if err != nil {
 		return 0, err
 	}
 	now := p.now()
-	if stored != nil {
-		merged, mergedFacts, search, answered := merge(*stored, facts, query, pages, excluded, now)
+	if found {
+		merged, mergedFacts, search, answered := merge(stored, facts, query, pages, excluded, now)
 		if !answered {
 			// A research of the same term may have stored it while this one searched.
 			if _, done := stored.searched(query); done {

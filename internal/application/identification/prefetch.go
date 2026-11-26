@@ -67,6 +67,9 @@ func NewPrefetcher(db *sql.DB, start func(context.Context, task.RunSpec, task.Bo
 	return &Prefetcher{db: db, start: start, await: await, config: cfg, open: open, pacer: metadata.NewSourcePacer(), now: time.Now}
 }
 
+// WithClock replaces the current time packets are stamped with. It must be set before any run starts.
+func (p *Prefetcher) WithClock(now func() time.Time) *Prefetcher { p.now = now; return p }
+
 // PrefetchLaunch reports a launched prefetch. Series is how many series it will search; when it
 // is zero nothing needed a packet and no run was started.
 type PrefetchLaunch struct {

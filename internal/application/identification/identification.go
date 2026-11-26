@@ -2,12 +2,11 @@
 // entries a person excluded, escalations, not-found verdicts and the owner-reviewed decision, and
 // the identification status derived from them. The status is never stored or edited on its own;
 // the series_identification_status view is its single definition. It also owns the evidence
-// packets that background prefetch runs prepare for the unprocessed series, and that a research of
-// one series with a custom term adds to.
+// packets that prefetch and research runs prepare, and the agents' main loop over them: claim
+// leases and the verdicts that answer them.
 //
-// Agent-facing use cases re-check delegated authority through Access on every call. Owner-facing
-// use cases take the acting account and re-check that it is an administrator in the same
-// transaction as the change.
+// Agent-facing use cases re-check delegated authority through Access on every call; owner-facing
+// ones take the acting account and re-check it is an administrator in the change's transaction.
 package identification
 
 import (
@@ -80,7 +79,12 @@ func New(db *sql.DB, access Access) *Service {
 // series, through this service.
 func (s *Service) WithPrefetch(p *Prefetcher) *Service { s.prefetch = p; return s }
 
-// Confirmer says who confirmed a conclusion. An owner row from history has no user.
+// WithClock replaces the current time every identification record and lease is stamped and
+// compared with. It must be set before the service is used.
+func (s *Service) WithClock(now func() time.Time) *Service { s.now = now; return s }
+
+// Confirmer says who made an identification decision: the owner, an agent and its credential,
+// or, for an escalation only, the system. An owner row from history has no user.
 type Confirmer struct {
 	Kind           string `json:"kind"`
 	UserID         int64  `json:"user_id"`
@@ -116,6 +120,24 @@ type ExcludedCandidate struct {
 	ProposalID int64 `json:"proposal_id"`
 }
 
+// NotFoundVerdict records that the searched sources have no entry for the series.
+type NotFoundVerdict struct {
+	SearchedSources []string  `json:"searched_sources"`
+	Confirmer       Confirmer `json:"confirmer"`
+	ConcludedAt     string    `json:"concluded_at"`
+	Reason          string    `json:"reason"`
+}
+
+// Escalation is one open escalation of the series. Class decides what it means for the status.
+type Escalation struct {
+	ID       int64     `json:"id"`
+	Category string    `json:"category"`
+	Class    string    `json:"class"`
+	Reason   string    `json:"reason"`
+	RaisedBy Confirmer `json:"raised_by"`
+	RaisedAt string    `json:"raised_at"`
+}
+
 // OwnerReview records who set the series owner-reviewed and when.
 type OwnerReview struct {
 	UserID     int64  `json:"user_id"`
@@ -130,6 +152,8 @@ type SeriesIdentification struct {
 	Status             string              `json:"status"`
 	Conclusions        []Conclusion        `json:"conclusions"`
 	ExcludedCandidates []ExcludedCandidate `json:"excluded_candidates"`
+	NotFound           *NotFoundVerdict    `json:"not_found,omitempty"`
+	Escalations        []Escalation        `json:"escalations,omitempty"`
 	OwnerReview        *OwnerReview        `json:"owner_review,omitempty"`
 	// Evidence is the series' evidence packet without the candidates excluded since its fetch;
 	// absent until a prefetch stored one.
@@ -178,6 +202,12 @@ func read(ctx context.Context, q queryer, seriesID int64) (SeriesIdentification,
 	if out.Evidence, err = readEvidence(ctx, q, seriesID, out.ExcludedCandidates); err != nil {
 		return SeriesIdentification{}, err
 	}
+	if out.NotFound, err = notFound(ctx, q, seriesID); err != nil {
+		return SeriesIdentification{}, err
+	}
+	if out.Escalations, err = openEscalations(ctx, q, seriesID); err != nil {
+		return SeriesIdentification{}, err
+	}
 	var review OwnerReview
 	var reviewedAt int64
 	err = q.QueryRowContext(ctx, `SELECT o.user_id, COALESCE(NULLIF(u.display_name, ''), u.username, ''), o.reviewed_at_ms
@@ -221,6 +251,55 @@ func conclusions(ctx context.Context, q queryer, seriesID int64) ([]Conclusion, 
 		out = append(out, c)
 	}
 	slices.SortFunc(out, func(a, b Conclusion) int { return cmp.Compare(sourceRank(a.Source), sourceRank(b.Source)) })
+	return out, rows.Err()
+}
+
+func notFound(ctx context.Context, q queryer, seriesID int64) (*NotFoundVerdict, error) {
+	var out NotFoundVerdict
+	var searched string
+	var concludedAt int64
+	err := q.QueryRowContext(ctx, `SELECT n.searched_sources, n.confirmer, n.user_id, COALESCE(NULLIF(u.display_name, ''), u.username, ''), n.credential_id,
+			COALESCE(m.name, ''), n.concluded_at_ms, n.reason
+		FROM identification_not_found n
+		LEFT JOIN users u ON u.id = n.user_id
+		LEFT JOIN mcp_credentials m ON m.id = n.credential_id
+		WHERE n.series_id = ?`, seriesID).Scan(&searched, &out.Confirmer.Kind, &out.Confirmer.UserID, &out.Confirmer.UserName, &out.Confirmer.CredentialID,
+		&out.Confirmer.CredentialName, &concludedAt, &out.Reason)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(searched), &out.SearchedSources); err != nil || out.SearchedSources == nil {
+		out.SearchedSources = []string{}
+	}
+	out.ConcludedAt = stamp(concludedAt)
+	return &out, nil
+}
+
+func openEscalations(ctx context.Context, q queryer, seriesID int64) ([]Escalation, error) {
+	rows, err := q.QueryContext(ctx, `SELECT e.id, e.category, e.class, e.reason, e.raised_by, e.user_id, COALESCE(NULLIF(u.display_name, ''), u.username, ''),
+			e.credential_id, COALESCE(m.name, ''), e.raised_at_ms
+		FROM identification_escalations e
+		LEFT JOIN users u ON u.id = e.user_id
+		LEFT JOIN mcp_credentials m ON m.id = e.credential_id
+		WHERE e.series_id = ? AND e.resolved_at_ms IS NULL ORDER BY e.id`, seriesID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Escalation
+	for rows.Next() {
+		var e Escalation
+		var raisedAt int64
+		if err := rows.Scan(&e.ID, &e.Category, &e.Class, &e.Reason, &e.RaisedBy.Kind, &e.RaisedBy.UserID, &e.RaisedBy.UserName,
+			&e.RaisedBy.CredentialID, &e.RaisedBy.CredentialName, &raisedAt); err != nil {
+			return nil, err
+		}
+		e.RaisedAt = stamp(raisedAt)
+		out = append(out, e)
+	}
 	return out, rows.Err()
 }
 

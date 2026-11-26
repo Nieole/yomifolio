@@ -306,26 +306,22 @@ func readEvidence(ctx context.Context, q queryer, seriesID int64, excluded []Exc
 	return &packet, nil
 }
 
-// storedEvidence loads the series' packet as stored, excluded candidates included, with the source
-// facts of its candidates; the packet is nil when the series has none.
-func storedEvidence(ctx context.Context, q queryer, seriesID int64) (*EvidencePacket, map[string]metadata.SeriesMetadata, error) {
+// storedEvidence reads the series' packet as stored, excluded candidates included, and the source
+// snapshot of each candidate. A series without a packet reads as an empty one with found false.
+func storedEvidence(ctx context.Context, q queryer, seriesID int64) (packet EvidencePacket, facts map[string]metadata.SeriesMetadata, found bool, err error) {
+	facts = map[string]metadata.SeriesMetadata{}
 	var rawPacket, rawFacts string
-	err := q.QueryRowContext(ctx, `SELECT packet, source_facts FROM identification_evidence WHERE series_id = ?`, seriesID).Scan(&rawPacket, &rawFacts)
+	err = q.QueryRowContext(ctx, `SELECT packet, source_facts FROM identification_evidence WHERE series_id = ?`, seriesID).Scan(&rawPacket, &rawFacts)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil, nil
+		return packet, facts, false, nil
 	}
 	if err != nil {
-		return nil, nil, err
+		return packet, nil, false, err
 	}
-	var packet EvidencePacket
-	facts := map[string]metadata.SeriesMetadata{}
 	if err := json.Unmarshal([]byte(rawPacket), &packet); err != nil {
-		return nil, nil, err
+		return packet, nil, false, err
 	}
-	if err := json.Unmarshal([]byte(rawFacts), &facts); err != nil {
-		return nil, nil, err
-	}
-	return &packet, facts, nil
+	return packet, facts, true, json.Unmarshal([]byte(rawFacts), &facts)
 }
 
 // writeEvidence stores the series' packet with its source facts. A fetch time replaces the whole row;

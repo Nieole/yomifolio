@@ -208,6 +208,22 @@ func TestMCPEveryToolResultCarriesItsJSONText(t *testing.T) {
 	}
 	call("library_add_series_relation", map[string]any{"request_key": "text-relation", "series_id": series.ID, "target_series_id": sequel.ID, "relation_type": "sequel", "reason": "Sequel volume names it"})
 
+	unpaced(t, cfg)
+	var launch struct {
+		RunID int64 `json:"run_id"`
+	}
+	if err = json.Unmarshal(web("POST", "/identification/prefetch", fmt.Sprintf(`{"library_id":%d}`, lib.ID), 200).Body.Bytes(), &launch); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = process.Application.Engine.Await(ctx, launch.RunID); err != nil {
+		t.Fatal(err)
+	}
+	claimed := call("library_claim_series", map[string]any{"library_ids": []int64{lib.ID}})
+	first := claimed["series"].([]any)[0].(map[string]any)["series_id"]
+	call("library_submit_verdicts", map[string]any{"request_key": "text-verdicts", "lease_id": claimed["lease_id"], "verdicts": []any{
+		map[string]any{"series_id": first, "verdict": "escalate", "category": "tag_problem", "reason": "tags name the shop"},
+	}})
+
 	listed, err := session.ListTools(ctx, nil)
 	if err != nil {
 		t.Fatal(err)
