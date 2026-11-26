@@ -95,6 +95,10 @@ var targets = []reflect.Type{
 	reflect.TypeOf(identification.EvidenceSignals{}),
 	reflect.TypeOf(identification.PrefetchLaunch{}),
 	reflect.TypeOf(identification.ResearchResult{}),
+	reflect.TypeOf(identification.PendingPage{}),
+	reflect.TypeOf(identification.PendingCategory{}),
+	reflect.TypeOf(identification.PendingSeries{}),
+	reflect.TypeOf(identification.OwnerIdentified{}),
 	reflect.TypeOf(identification.OwnerIdentification{}),
 	reflect.TypeOf(identification.OwnerWithdrawal{}),
 }

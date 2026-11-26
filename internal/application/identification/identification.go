@@ -134,10 +134,12 @@ type NotFoundVerdict struct {
 
 // Escalation is one open escalation of the series. Class decides what it means for the status.
 type Escalation struct {
-	ID       int64     `json:"id"`
-	Category string    `json:"category"`
-	Class    string    `json:"class"`
-	Reason   string    `json:"reason"`
+	ID       int64  `json:"id"`
+	Category string `json:"category"`
+	Class    string `json:"class"`
+	Reason   string `json:"reason"`
+	// Clue is the ComicInfo series name a system recheck found contradicting the identification.
+	Clue     string    `json:"clue,omitempty"`
 	RaisedBy Confirmer `json:"raised_by"`
 	RaisedAt string    `json:"raised_at"`
 }
@@ -283,7 +285,7 @@ func notFound(ctx context.Context, q queryer, seriesID int64) (*NotFoundVerdict,
 }
 
 func openEscalations(ctx context.Context, q queryer, seriesID int64) ([]Escalation, error) {
-	rows, err := q.QueryContext(ctx, `SELECT e.id, e.category, e.class, e.reason, e.raised_by, e.user_id, COALESCE(NULLIF(u.display_name, ''), u.username, ''),
+	rows, err := q.QueryContext(ctx, `SELECT e.id, e.category, e.class, e.reason, e.clue, e.raised_by, e.user_id, COALESCE(NULLIF(u.display_name, ''), u.username, ''),
 			e.credential_id, COALESCE(m.name, ''), e.raised_at_ms
 		FROM identification_escalations e
 		LEFT JOIN users u ON u.id = e.user_id
@@ -297,7 +299,7 @@ func openEscalations(ctx context.Context, q queryer, seriesID int64) ([]Escalati
 	for rows.Next() {
 		var e Escalation
 		var raisedAt int64
-		if err := rows.Scan(&e.ID, &e.Category, &e.Class, &e.Reason, &e.RaisedBy.Kind, &e.RaisedBy.UserID, &e.RaisedBy.UserName,
+		if err := rows.Scan(&e.ID, &e.Category, &e.Class, &e.Reason, &e.Clue, &e.RaisedBy.Kind, &e.RaisedBy.UserID, &e.RaisedBy.UserName,
 			&e.RaisedBy.CredentialID, &e.RaisedBy.CredentialName, &raisedAt); err != nil {
 			return nil, err
 		}
