@@ -92,6 +92,10 @@ var targets = []reflect.Type{
 	reflect.TypeOf(identification.EvidenceSignals{}),
 	reflect.TypeOf(identification.PrefetchLaunch{}),
 	reflect.TypeOf(identification.ResearchResult{}),
+	reflect.TypeOf(identification.PendingPage{}),
+	reflect.TypeOf(identification.PendingCategory{}),
+	reflect.TypeOf(identification.PendingSeries{}),
+	reflect.TypeOf(identification.OwnerIdentified{}),
 }
 
 // nullTypes 记录 sql.Null* 到 contracts.ts 导出名的映射；用到哪些就 import 哪些。
