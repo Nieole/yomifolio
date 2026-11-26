@@ -101,7 +101,7 @@ MCP 的识别工具只映射 `identification.Service` 与 `enrichment.Service` �
 - 决定落到已经变了的系列时回 409 与 `code`：`not_pending`、`candidate_unavailable`、`not_a_note`，前端据此重读这个系列；重复否决同一候选、关闭已关闭的备注回 200 且不改动。识别用例的拒绝到状态码、`code` 与文案的映射只在 `identificationRefusals` 一张表里，各路由不另写 switch。
 - 资料库浏览 `GET /api/series/search?identification=<状态>` 读同一状态视图，可与其它条件组合；普通账号带这个参数回 403，取值不在六个状态里回 400。
 
-核对入口：`bootstrap` 的 `TestPendingListAndDecisionsNeedAnAdministrator`、`TestLibraryBrowsingFiltersByIdentificationStatus`、`TestInspectionNeedsOnlyReadAndGrantsNoWrite`、`TestAgentSubmitsVerdictsSeriesBySeries`、`TestIdentificationImagesLeaveOutWholeImagesBeyondTheResultBudget`。
+核对入口：`bootstrap` 的 `TestPendingListAndDecisionsNeedAnAdministrator`、`TestAgentDisputesAPersonsIdentificationForTheOwnerToRecheck`、`TestRunListingFollowsEachRunsCapability`、`TestLibraryBrowsingFiltersByIdentificationStatus`、`TestInspectionNeedsOnlyReadAndGrantsNoWrite`、`TestAgentSubmitsVerdictsSeriesBySeries`、`TestIdentificationImagesLeaveOutWholeImagesBeyondTheResultBudget`。
 
 ## 受限补充和操作历史
 
