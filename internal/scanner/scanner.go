@@ -61,6 +61,8 @@ type Scanner struct {
 	// 它刻意仍是装配期注册的进程级回调，与**扫描观察者**分属两件事：这几条事件从入库批次
 	// 和封面 worker 两处发出，消费方是缓存失效与 SSE 广播，与「哪一次扫描」无关。
 	onBatchIngested func(action string)
+	// onBooksAdded receives each committed batch's added books; see SetAddedBooksHook.
+	onBooksAdded func(context.Context, []AddedBook)
 	// dirtyRefreshInterval 是系列读模型的节流刷新间隔。做成字段而不是常量，是为了让
 	// 回归测试能在毫秒级触发 ticker 分支——否则「刷新失败保留脏标记、下一次 tick 重试」
 	// 这条路径需要一次跑满 10 秒的扫描才能覆盖到。
@@ -92,6 +94,23 @@ func NewScanner(store database.Store, cfg *config.Manager) *Scanner {
 // SetBatchCallback 允许外部注册事件通知钩子
 func (s *Scanner) SetBatchCallback(cb func(string)) {
 	s.onBatchIngested = cb
+}
+
+// AddedBook is a book a scan inserted into a series that existed before the scan began, with the
+// ComicInfo it carried (nil when none). A renamed book reconnected to its old record is not added.
+type AddedBook struct {
+	SeriesID  int64
+	BookID    int64
+	Name      string
+	ComicInfo *parser.ComicInfo
+}
+
+// SetAddedBooksHook registers the receiver of the books each committed batch added. The scan's
+// writer calls it after the commit and before the next batch, with a context that outlives the
+// scan's cancellation, so a hook only delays the scan and cannot fail it. Register before scans
+// start; nil disables it.
+func (s *Scanner) SetAddedBooksHook(hook func(context.Context, []AddedBook)) {
+	s.onBooksAdded = hook
 }
 
 // ScanObserver 是一次扫描把**计数推进**与收尾指标交给的对象，由发起方在调用扫描时交出。
@@ -200,6 +219,8 @@ func (s *Scanner) LibraryScanActive(libraryID int64) bool {
 type archiveCandidate struct {
 	path string
 	info os.FileInfo
+	// known says the path was already a book when the scan began.
+	known bool
 }
 
 type scanMetrics struct {
@@ -626,6 +647,7 @@ func (s *Scanner) IngestSeries(ctx context.Context, seriesID int64, force bool, 
 		renames = newRenameIndex(rehomeCandidatesFromBooks(existingBooks))
 	} else {
 		metrics.uncertainEntries.Add(1)
+		bookCache = nil
 	}
 
 	walkErr := s.ingest(ctx, ingestionPlan{libraryID: series.LibraryID, libraryRoot: library.Path, scanPath: series.Path, options: opts, formats: formats, existing: bookCache, renames: renames, queueSize: 100}, metrics, progress, covers)

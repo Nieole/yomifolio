@@ -4,6 +4,7 @@ package bootstrap
 
 import (
 	"context"
+	"log/slog"
 	"time"
 	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/application/enrichment"
@@ -65,6 +66,7 @@ func Open(ctx context.Context, store database.Store, cfg *config.Manager, option
 		app.Close()
 		return nil, err
 	}
+	app.Scanner.SetAddedBooksHook(recheckAddedBooks(identificationService))
 	host := transport.Bind(api.HostDependencies{
 		Catalogue: store, CoverQueries: store,
 		Reading: api.ReadingDependencies{ContentQueries: store, StatisticsQueries: store, Capabilities: reader, Content: content, ImageCache: memory, Statistics: stats, Recommendations: recommendation.New(24 * time.Hour)},
@@ -84,6 +86,24 @@ func Open(ctx context.Context, store database.Store, cfg *config.Manager, option
 		return nil, err
 	}
 	return &Process{Application: app, HTTP: host}, nil
+}
+
+// recheckAddedBooks hands the books a scan added to the identification check. The check only
+// reads local state; its failure is logged and never reaches the scan.
+func recheckAddedBooks(service *identification.Service) func(context.Context, []scanner.AddedBook) {
+	return func(ctx context.Context, added []scanner.AddedBook) {
+		books := make([]identification.NewBook, 0, len(added))
+		for _, book := range added {
+			clue := identification.NewBook{SeriesID: book.SeriesID, Name: book.Name}
+			if book.ComicInfo != nil {
+				clue.ComicInfoSeries = book.ComicInfo.Series
+			}
+			books = append(books, clue)
+		}
+		if err := service.RecheckNewBooks(ctx, books); err != nil {
+			slog.WarnContext(ctx, "Identification recheck of added books failed", "books", len(books), "error", err)
+		}
+	}
 }
 
 func (p *Process) Close() { p.Application.Close() }

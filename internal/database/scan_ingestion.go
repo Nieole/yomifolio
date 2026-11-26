@@ -3,8 +3,11 @@ package database
 import "context"
 
 // ScanIngestionWrite is the batch's series, book, evidence and append-only association capability.
-// It cannot read or mutate unrelated features or expose a database handle.
+// It cannot read or mutate unrelated features or expose a database handle. Its reads see the
+// batch's own writes, so a series' current row and source records are read as the update sees them.
 type ScanIngestionWrite interface {
+	GetSeries(context.Context, int64) (Series, error)
+	GetSeriesMetadataProvenance(context.Context, int64) ([]SeriesMetadataProvenance, error)
 	UpsertSeriesByPath(context.Context, UpsertSeriesByPathParams) (Series, error)
 	RehomeBookPath(context.Context, RehomeBookPathParams) (int64, error)
 	UpsertBookByPath(context.Context, UpsertBookByPathParams) (Book, error)
@@ -22,6 +25,13 @@ func (s *SqlStore) WithScanIngestion(ctx context.Context, apply func(ScanIngesti
 }
 
 type scanIngestionWrite struct{ q *Queries }
+
+func (tx scanIngestionWrite) GetSeries(ctx context.Context, id int64) (Series, error) {
+	return tx.q.GetSeries(ctx, id)
+}
+func (tx scanIngestionWrite) GetSeriesMetadataProvenance(ctx context.Context, seriesID int64) ([]SeriesMetadataProvenance, error) {
+	return tx.q.GetSeriesMetadataProvenance(ctx, seriesID)
+}
 
 func (tx scanIngestionWrite) UpsertSeriesByPath(ctx context.Context, p UpsertSeriesByPathParams) (Series, error) {
 	return tx.q.UpsertSeriesByPath(ctx, p)

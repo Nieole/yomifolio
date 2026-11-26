@@ -18,10 +18,11 @@ type ingestionPlan struct {
 	scanPath    string
 	options     ScanOptions
 	formats     config.ScanFormatSet
-	existing    map[string]bookScanSnapshot
-	renames     *renameIndex
-	queueSize   int
-	skipCovers  bool
+	// existing is the books as the scan began, nil when they could not be read.
+	existing   map[string]bookScanSnapshot
+	renames    *renameIndex
+	queueSize  int
+	skipCovers bool
 }
 
 // ingest owns discovery, bounded interpretation and the sole writer's drain.
@@ -30,7 +31,7 @@ func (s *Scanner) ingest(ctx context.Context, plan ingestionPlan, metrics *scanM
 	jobs := make(chan archiveCandidate, plan.queueSize)
 	results := make(chan interpretedArchive, plan.queueSize)
 	interpreter := &archiveInterpreter{rootPath: plan.libraryRoot, options: plan.options, metrics: metrics, progress: progress, currentConfig: s.currentConfig, diskWork: s.diskWork, openArchive: s.openArchive}
-	writer := &ingestionWriter{store: s.store, libraryID: plan.libraryID, metrics: metrics, progress: progress, renames: plan.renames, refreshInterval: s.dirtyRefreshInterval, onBatch: s.onBatchIngested, enqueueCovers: func(ctx context.Context, jobs []coverJob) {
+	writer := &ingestionWriter{store: s.store, libraryID: plan.libraryID, metrics: metrics, progress: progress, renames: plan.renames, refreshInterval: s.dirtyRefreshInterval, onBatch: s.onBatchIngested, onAdded: s.onBooksAdded, enqueueCovers: func(ctx context.Context, jobs []coverJob) {
 		if !plan.skipCovers {
 			s.enqueueCoverJobs(ctx, covers, metrics, jobs)
 		}
@@ -116,18 +117,16 @@ func (d *archiveDiscovery) discover(ctx context.Context, jobs chan<- archiveCand
 			}
 
 			// 增量拦截：非强制扫描下，文件没变**且**本档位补不出这本书缺的数据，才跳过解析派发。
-			if !opts.Force {
-				if existing, exists := bookCache[path]; exists {
-					if existing.unchanged(info) && !opts.Profile.backfills(existing) {
-						metrics.skippedArchives.Add(1)
-						progress.publish("comparing", path, false)
-						return nil
-					}
-				}
+			existing, exists := bookCache[path]
+			if !opts.Force && exists && existing.unchanged(info) && !opts.Profile.backfills(existing) {
+				metrics.skippedArchives.Add(1)
+				progress.publish("comparing", path, false)
+				return nil
 			}
 
 			select {
-			case jobs <- archiveCandidate{path: path, info: info}:
+			// Without a snapshot no path can be told new, so every one counts as known.
+			case jobs <- archiveCandidate{path: path, info: info, known: exists || bookCache == nil}:
 				metrics.processedArchives.Add(1)
 				progress.publish("reading_metadata", path, false)
 			case <-ctx.Done():
