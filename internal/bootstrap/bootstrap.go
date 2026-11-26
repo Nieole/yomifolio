@@ -74,7 +74,12 @@ func Open(ctx context.Context, store database.Store, cfg *config.Manager, option
 		app.Close()
 		return nil, err
 	}
+	if err := app.Prefetch.SyncSources(ctx); err != nil {
+		app.Close()
+		return nil, err
+	}
 	app.Scanner.SetAddedBooksHook(recheckAddedBooks(identificationService))
+	app.Scanner.SetCreatedSeriesHook(requestPrefetch(app.Prefetch))
 	host := transport.Bind(api.HostDependencies{
 		Catalogue: store, CoverQueries: store,
 		Reading: api.ReadingDependencies{ContentQueries: store, StatisticsQueries: store, Capabilities: reader, Content: content, ImageCache: memory, Statistics: stats, Recommendations: recommendation.New(24 * time.Hour)},
@@ -110,6 +115,16 @@ func recheckAddedBooks(service *identification.Service) func(context.Context, []
 		}
 		if err := service.RecheckNewBooks(ctx, books); err != nil {
 			slog.WarnContext(ctx, "Identification recheck of added books failed", "books", len(books), "error", err)
+		}
+	}
+}
+
+// requestPrefetch asks the incremental prefetch for packets of the series a scan created. Its
+// failure is logged and never reaches the scan; the series then wait for a backfill.
+func requestPrefetch(prefetch *identification.Prefetcher) func(context.Context, []int64) {
+	return func(ctx context.Context, created []int64) {
+		if err := prefetch.Request(ctx, created); err != nil {
+			slog.WarnContext(ctx, "Evidence prefetch request for created series failed", "series", len(created), "error", err)
 		}
 	}
 }

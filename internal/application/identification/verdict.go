@@ -318,31 +318,25 @@ func (s *Service) judge(ctx context.Context, tx *sql.Tx, subject delegated.Subje
 				return VerdictResult{}, err
 			}
 		}
+		// The series was unprocessed, so a not-found verdict here is one a new source reopened.
+		if _, err := tx.ExecContext(ctx, `DELETE FROM identification_not_found WHERE series_id = ?`, v.SeriesID); err != nil {
+			return VerdictResult{}, err
+		}
 	case VerdictNotFound:
-		searched := []string{}
+		var searched []string
 		for _, source := range packet.Sources {
 			if source.Status == SourceAvailable {
 				searched = append(searched, source.Source)
 			}
 		}
-		raw, _ := json.Marshal(searched)
-		if _, err := tx.ExecContext(ctx, `INSERT INTO identification_not_found (series_id, searched_sources, confirmer, user_id, credential_id, concluded_at_ms, reason)
-			VALUES (?, ?, ?, ?, ?, ?, ?)`, v.SeriesID, string(raw), ConfirmedByAgent, subject.UserID, subject.CredentialID, now, v.Reason); err != nil {
+		if err := recordNotFound(ctx, tx, v.SeriesID, searched, ConfirmedByAgent, subject.UserID, subject.CredentialID, now, v.Reason); err != nil {
 			return VerdictResult{}, err
 		}
 	case VerdictEscalate:
 		class, _ := agentClass(v.Category)
 		finished = class != EscalationNote
-		var open bool
-		if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM identification_escalations WHERE series_id = ? AND category = ? AND resolved_at_ms IS NULL)`,
-			v.SeriesID, v.Category).Scan(&open); err != nil {
+		if _, err := raiseOnce(ctx, tx, subject, v.SeriesID, v.Category, class, v.Reason, now); err != nil {
 			return VerdictResult{}, err
-		}
-		if !open {
-			if _, err := tx.ExecContext(ctx, `INSERT INTO identification_escalations (series_id, category, class, reason, raised_by, user_id, credential_id, raised_at_ms)
-				VALUES (?, ?, ?, ?, 'agent', ?, ?, ?)`, v.SeriesID, v.Category, class, v.Reason, subject.UserID, subject.CredentialID, now); err != nil {
-				return VerdictResult{}, err
-			}
 		}
 	}
 	if finished {

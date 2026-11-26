@@ -162,7 +162,8 @@ func New(store database.Store, cfg *config.Manager, options Options) (*Runtime, 
 	r.Relations = organize.NewRelations(store, func(work func()) {
 		r.Go(func() { work(); e.Publish("refresh") })
 	})
-	r.Scans = scanning.New(r.Runs, store, r.Scanner, cfg.Snapshot, scanning.Effects{PurgeReadingPaths: e.PurgeReadingPaths, InvalidateStats: e.InvalidateStats, WarmStats: e.WarmStats, Publish: e.Publish, Backfill: func(ctx context.Context, reason string) { r.Maintenance.ChainBookHashBackfill(ctx, reason) }})
+	r.Scans = scanning.New(r.Runs, store, r.Scanner, cfg.Snapshot, scanning.Effects{PurgeReadingPaths: e.PurgeReadingPaths, InvalidateStats: e.InvalidateStats, WarmStats: e.WarmStats, Publish: e.Publish, Backfill: func(ctx context.Context, reason string) { r.Maintenance.ChainBookHashBackfill(ctx, reason) },
+		Prefetch: func(ctx context.Context, libraryID int64) { r.Prefetch.ChainIncremental(ctx, libraryID) }})
 	r.Maintenance = maintenance.New(r.Runs, store, r.Scans, r.KOReader, cfg.Snapshot, maintenance.Effects{Publish: e.Publish, WarmStats: e.WarmStats})
 	r.Scanner.SetBatchCallback(func(action string) { r.Scans.BatchEvent(action) })
 	r.Scanner.SetCoverRunLauncher(func(ctx context.Context, batch *scanner.CoverBatch) { r.Scans.DispatchCoverBatch(ctx, batch) })
@@ -204,7 +205,12 @@ func New(store database.Store, cfg *config.Manager, options Options) (*Runtime, 
 		return r.Watcher, r.WatcherError
 	}})
 	r.Registry = newRegistry(r)
-	cfg.SetAfterUpdate(r.Engine.ReleaseQueued)
+	cfg.SetAfterUpdate(func() {
+		r.Engine.ReleaseQueued()
+		if err := r.Prefetch.SyncSources(context.Background()); err != nil {
+			slog.Warn("Enabled identification sources not recorded", "error", err)
+		}
+	})
 	return r, nil
 }
 

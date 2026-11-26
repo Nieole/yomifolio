@@ -163,8 +163,9 @@ func TestResumableIsStricterThanRetryable(t *testing.T) {
 	}
 }
 
-// 白名单的成员就是规格关键决定 7 那一份清单，一个不多一个不少：多一个就是无人值守时
-// 多一类自己跑起来的活，少一个就是重启后还得有人登录去点。
+// 白名单的成员就是规格关键决定 7 那一份清单，加上系列识别规格「任务与运行」定下的增量证据包
+// 预取，一个不多一个不少：多一个就是无人值守时多一类自己跑起来的活，少一个就是重启后还得有人
+// 登录去点。
 func TestResumeWhitelistMatchesTheSpec(t *testing.T) {
 	controller, _, _, _ := newTestController(t)
 
@@ -179,6 +180,7 @@ func TestResumeWhitelistMatchesTheSpec(t *testing.T) {
 		{Type: "rebuild_file_identities", Variant: variantSole}:              true,
 		{Type: "reconcile_koreader_progress", Variant: variantSole}:          true,
 		{Type: "refresh_koreader_matching", Variant: variantSole}:            true,
+		{Type: "evidence_prefetch", Variant: "incremental"}:                  true,
 	}
 	got := map[taskDispatchKey]bool{}
 	for key, entry := range controller.taskEngine.dispatch {

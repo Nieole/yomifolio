@@ -109,6 +109,22 @@ CREATE TABLE IF NOT EXISTS identification_verdicts (
 );
 CREATE INDEX IF NOT EXISTS idx_identification_verdicts_series ON identification_verdicts(series_id);
 
+-- Series the incremental prefetch is asked to prepare a packet for: ones a scan created, and
+-- ones a claim found with a packet no longer current. Storing a packet ends the request, and a
+-- request whose series no longer needs one is dropped by the next incremental run.
+CREATE TABLE IF NOT EXISTS identification_prefetch_requests (
+    series_id INTEGER PRIMARY KEY REFERENCES series(id) ON DELETE CASCADE,
+    requested_at_ms INTEGER NOT NULL
+);
+
+-- The catalogue sources the configuration enables and since when. Sources enabled when the table
+-- was first filled carry 0. A not-found verdict concluded before a source was enabled, and that did
+-- not search it, is reopened for that source.
+CREATE TABLE IF NOT EXISTS identification_enabled_sources (
+    source TEXT PRIMARY KEY,
+    enabled_at_ms INTEGER NOT NULL
+);
+
 -- Completion marker of the one-time derivation from proposal history.
 CREATE TABLE IF NOT EXISTS identification_history_derivation (
     id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -116,7 +132,8 @@ CREATE TABLE IF NOT EXISTS identification_history_derivation (
 );
 
 -- The single definition of the identification status. Recreated on every start so a changed
--- rule reaches existing databases. Precedence runs top to bottom.
+-- rule reaches existing databases. Precedence runs top to bottom. A not-found verdict a newly
+-- enabled source reopens leaves the series unprocessed.
 DROP VIEW IF EXISTS series_identification_status;
 CREATE VIEW series_identification_status AS
 SELECT s.id AS series_id,
@@ -132,7 +149,10 @@ SELECT s.id AS series_id,
                THEN 'awaiting_owner'
            WHEN EXISTS (SELECT 1 FROM identification_conclusions c WHERE c.series_id = s.id)
                THEN 'identified'
-           WHEN EXISTS (SELECT 1 FROM identification_not_found n WHERE n.series_id = s.id)
+           WHEN EXISTS (SELECT 1 FROM identification_not_found n WHERE n.series_id = s.id
+                        AND NOT EXISTS (SELECT 1 FROM identification_enabled_sources x
+                                        WHERE x.enabled_at_ms > n.concluded_at_ms
+                                          AND x.source NOT IN (SELECT value FROM json_each(n.searched_sources))))
                THEN 'not_found'
            ELSE 'unprocessed'
        END AS status

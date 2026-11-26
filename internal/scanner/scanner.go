@@ -63,6 +63,8 @@ type Scanner struct {
 	onBatchIngested func(action string)
 	// onBooksAdded receives each committed batch's added books; see SetAddedBooksHook.
 	onBooksAdded func(context.Context, []AddedBook)
+	// onSeriesCreated receives each committed batch's new series; see SetCreatedSeriesHook.
+	onSeriesCreated func(context.Context, []int64)
 	// dirtyRefreshInterval 是系列读模型的节流刷新间隔。做成字段而不是常量，是为了让
 	// 回归测试能在毫秒级触发 ticker 分支——否则「刷新失败保留脏标记、下一次 tick 重试」
 	// 这条路径需要一次跑满 10 秒的扫描才能覆盖到。
@@ -111,6 +113,14 @@ type AddedBook struct {
 // start; nil disables it.
 func (s *Scanner) SetAddedBooksHook(hook func(context.Context, []AddedBook)) {
 	s.onBooksAdded = hook
+}
+
+// SetCreatedSeriesHook registers the receiver of the IDs of the series each committed batch created,
+// that is the series that did not exist when the scan began. It is called like the added-books
+// hook: after the commit, before the next batch, with a context that outlives the scan's
+// cancellation. Register before scans start; nil disables it.
+func (s *Scanner) SetCreatedSeriesHook(hook func(context.Context, []int64)) {
+	s.onSeriesCreated = hook
 }
 
 // ScanObserver 是一次扫描把**计数推进**与收尾指标交给的对象，由发起方在调用扫描时交出。
