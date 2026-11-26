@@ -21,7 +21,7 @@
 
 ## Comments
 
-**用户决定（2026-11-25）**：作者校正要有一个读取入口，新增只读原语，不扩展既有工具，也不放宽整组期望值。落成 `library_get_series_authors {series_id}`（`read`），返回 `authors`（当前作者组，原样可当 `expected_authors`）和 `sources`（每个已识别来源的 `source`、`entry_id` 与快照里的署名 name+role）。证据规则与 `library_correct_authors` 同一份（`identification.SourceEvidence`，经同一个注入函数读取），没有任何已识别来源时 `sources` 为空。普通用户和只读凭据可读；越出凭据授权的系列与不存在的系列读来同一句拒绝。作者校正的描述指向它。
+**用户决定（2026-11-25）**：作者校正要有一个读取入口，新增只读原语，不扩展既有工具，也不放宽整组期望值。落成 `library_get_series_authors {series_id}`（`read`），返回 `authors`（当前作者组，原样可当 `expected_authors`）和 `sources`（每个已识别来源的 `source`、`entry_id` 与快照里的署名 name+role）。证据规则与 `library_correct_authors` 同一份（`identification.SourceEvidence`，经同一个注入函数读取），没有任何已识别来源时 `sources` 为空。只要 `read` 就能读；越出凭据授权的系列与不存在的系列读来同一句拒绝。作者校正的描述指向它。
 
 本票按规格「留给实施决定的工程细节」（工具命名与参数形状）自己定下的取值：
 
