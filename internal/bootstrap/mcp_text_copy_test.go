@@ -17,7 +17,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -83,12 +82,7 @@ func TestMCPEveryToolResultCarriesItsJSONText(t *testing.T) {
 	if _, err = store.DB().Exec(`UPDATE books SET cover_path=? WHERE id=?`, cover, book.ID); err != nil {
 		t.Fatal(err)
 	}
-	var modelCalls atomic.Int32
-	var hold atomic.Bool
 	sources := api.ExternalSources{
-		AI: func(string, string, string, string, string, string, int) metadata.AIProvider {
-			return budgetAI{calls: &modelCalls, hold: &hold, entered: make(chan struct{}, 1)}
-		},
 		Metadata: func(config.Config, string) metadata.Provider {
 			return &controlledSource{search: func(context.Context, string, int, int) ([]*metadata.SeriesMetadata, int, error) {
 				return []*metadata.SeriesMetadata{{Title: "Copy", Summary: "Copied summary", Publisher: "Copy press", SourceID: 1, Authors: []metadata.SeriesAuthor{{Name: "Copy Writer", Role: "Writer"}}}}, 1, nil
@@ -102,7 +96,7 @@ func TestMCPEveryToolResultCarriesItsJSONText(t *testing.T) {
 	defer process.Close()
 	web := sourceHTTP(t, process)
 	var issued struct{ Token string }
-	raw := web("POST", "/mcp/credentials", fmt.Sprintf(`{"user_id":1,"name":"text","library_ids":[%d],"capabilities":["read","metadata_write","scan_control","internal_llm","cleanup"]}`, lib.ID), 200)
+	raw := web("POST", "/mcp/credentials", fmt.Sprintf(`{"user_id":1,"name":"text","library_ids":[%d],"capabilities":["read","metadata_write","scan_control","cleanup"]}`, lib.ID), 200)
 	if err = json.Unmarshal(raw.Body.Bytes(), &issued); err != nil {
 		t.Fatal(err)
 	}
@@ -164,23 +158,10 @@ func TestMCPEveryToolResultCarriesItsJSONText(t *testing.T) {
 	call("library_get_page_thumbnails", map[string]any{"series_id": series.ID, "book_id": book.ID, "pages": []int{1}})
 	call("library_get_identification_images", map[string]any{"series_id": series.ID, "cover": true})
 
-	started := call("library_search_sources", map[string]any{"series_id": series.ID, "query": "Copy", "limit": 1})
-	wait(started["run"].(map[string]any)["run_id"])
-	call("library_get_source_search", map[string]any{"search_id": started["search_id"]})
-	proposal := call("library_propose_match", map[string]any{"search_id": started["search_id"], "identity_confirmed": true, "edition_confirmed": true, "summary": "ComicInfo series and title agree", "fields": map[string]string{"summary": "bangumi:0", "publisher": "bangumi:0"}})["proposal_id"]
-	call("library_get_match_proposal", map[string]any{"series_id": series.ID, "proposal_id": proposal})
-	state := func() map[string]any {
-		return call("library_get_enrichment_state", map[string]any{"series_id": series.ID})
-	}
-	single := call("library_enrich_metadata", map[string]any{"request_key": "text-single", "series_id": series.ID, "proposal_ids": []any{proposal}, "fields": []string{"summary"}, "expected": state()})
-	batch := call("library_enrich_metadata_batch", map[string]any{"operations": []any{map[string]any{"request_key": "text-batch", "series_id": series.ID, "proposal_ids": []any{proposal}, "fields": []string{"publisher"}, "expected": state()}}})
-	call("library_get_metadata_operation", map[string]any{"operation_id": single["id"]})
+	improved := call("library_improve_cover", map[string]any{"request_key": "text-cover", "series_id": series.ID, "book_id": book.ID, "page": 1, "reason": "page 1 is the full cover art"})
+	call("library_get_metadata_operation", map[string]any{"operation_id": improved["id"]})
 	call("library_list_metadata_operations", map[string]any{"series_id": series.ID})
-	call("library_undo_metadata_operation", map[string]any{"request_key": "text-undo", "operation_id": single["id"]})
-
-	model := call("library_assess_match", map[string]any{"search_id": started["search_id"], "allowance": 1})
-	wait(model["run_id"])
-	call("library_get_model_operation", map[string]any{"operation_id": model["operation_id"]})
+	undo := call("library_undo_metadata_operation", map[string]any{"request_key": "text-undo", "operation_id": improved["id"]})
 
 	// A paused engine keeps the scan from touching the curated fixture while it still yields a run.
 	if _, err = process.Application.Engine.PauseAll(ctx); err != nil {
@@ -194,9 +175,8 @@ func TestMCPEveryToolResultCarriesItsJSONText(t *testing.T) {
 	}
 	call("library_list_runs", map[string]any{"library_id": lib.ID})
 
-	call("library_cleanup_metadata_operation", map[string]any{"request_key": "text-cleanup-single", "operation_id": single["id"]})
-	batched := batch["operations"].([]any)[0].(map[string]any)["id"]
-	cleanup := call("library_start_metadata_cleanup", map[string]any{"library_id": lib.ID, "operations": []any{map[string]any{"operation_id": batched, "request_key": "text-cleanup-batch"}}})
+	call("library_cleanup_metadata_operation", map[string]any{"request_key": "text-cleanup-single", "operation_id": improved["id"]})
+	cleanup := call("library_start_metadata_cleanup", map[string]any{"library_id": lib.ID, "operations": []any{map[string]any{"operation_id": undo["id"], "request_key": "text-cleanup-batch"}}})
 	wait(cleanup["run_id"])
 	call("library_get_metadata_cleanup", map[string]any{"request_key": "text-cleanup-batch"})
 
@@ -236,7 +216,6 @@ func TestMCPEveryToolResultCarriesItsJSONText(t *testing.T) {
 	call("library_get_series_authors", map[string]any{"series_id": first})
 	call("library_correct_authors", map[string]any{"request_key": "text-authors", "series_id": first, "expected_authors": []any{map[string]string{"name": "Copy Alias", "role": "Writer"}},
 		"corrections": []any{map[string]any{"from": map[string]string{"name": "Copy Alias", "role": "Writer"}, "to": map[string]string{"name": "Copy Writer", "role": "Writer"}, "reason": "source credit"}}})
-	call("library_improve_cover", map[string]any{"request_key": "text-cover", "series_id": series.ID, "book_id": book.ID, "page": 1, "reason": "page 1 is the full cover art"})
 
 	listed, err := session.ListTools(ctx, nil)
 	if err != nil {

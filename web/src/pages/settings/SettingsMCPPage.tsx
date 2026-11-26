@@ -10,7 +10,7 @@ import { McpServerSettings } from './McpServerSettings';
 import { McpSetupGuide } from './McpSetupGuide';
 import { SettingsPageIntro, inputClassName, sectionClassName } from './shared';
 
-const capabilities = ['read', 'metadata_write', 'scan_control', 'internal_llm', 'cleanup'];
+const capabilities = ['read', 'metadata_write', 'scan_control', 'cleanup'];
 const buttonClass = 'rounded-lg border border-gray-700 px-4 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-50';
 type Choice = { id: number; name: string };
 

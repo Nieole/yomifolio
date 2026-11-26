@@ -1,10 +1,13 @@
 package bootstrap_test
 
 import (
+	"archive/zip"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"image"
+	"image/color"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -15,13 +18,181 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"yomifolio/internal/bootstrap"
 	"yomifolio/internal/config"
 	"yomifolio/internal/covermaterial"
 	"yomifolio/internal/database"
 	"yomifolio/internal/task"
-
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+// Cleanup of a receipt discards only its undo material, under cleanup authority alone, and keeps
+// every boundary while doing so: scope, current role, materials still referenced, races with
+// undo and cover changes, file system faults, running and queued runs, both transports, and a
+// restart in the middle. The receipts come from the cover improvement primitive, whose materials
+// are files the cleanup must reclaim.
+func TestCoverReceiptCleanupKeepsItsBoundaries(t *testing.T) {
+	ctx := t.Context()
+	store, cfg := fixture(t)
+	lib, err := store.CreateLibrary(ctx, database.CreateLibraryParams{Name: "Comics", Path: t.TempDir(), ScanMode: "none"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Another library gives the cleanup a scope it must stay out of.
+	if _, err = store.CreateLibrary(ctx, database.CreateLibraryParams{Name: "Elsewhere", Path: t.TempDir(), ScanMode: "none"}); err != nil {
+		t.Fatal(err)
+	}
+	cleanupGate := &cleanupProgressGate{}
+	options := bootstrap.Options{Tasks: task.Config{Publish: cleanupGate.publish}}
+	process, err := bootstrap.Open(ctx, store, cfg, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { process.Close() }()
+	router := chi.NewRouter()
+	process.HTTP.SetupRoutes(router)
+	server := httptest.NewTLSServer(router)
+	defer func() { server.Close() }()
+	snapshot := cfg.Snapshot()
+	snapshot.MCP.PublicURL = server.URL
+	cfg.Replace(&snapshot)
+	var cookie *http.Cookie
+	csrf := ""
+	web := func(method, path string, body any, status int) []byte {
+		t.Helper()
+		raw, _ := json.Marshal(body)
+		req, e := http.NewRequestWithContext(ctx, method, server.URL+"/api"+path, bytes.NewReader(raw))
+		if e != nil {
+			t.Fatal(e)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		if cookie != nil {
+			req.AddCookie(cookie)
+			req.Header.Set("X-CSRF-Token", csrf)
+		}
+		response, e := server.Client().Do(req)
+		if e != nil {
+			t.Fatal(e)
+		}
+		defer response.Body.Close()
+		data, e := io.ReadAll(response.Body)
+		if e != nil || response.StatusCode != status {
+			t.Fatalf("web %s %s: %d %s %v", method, path, response.StatusCode, data, e)
+		}
+		if path == "/auth/setup" {
+			cookie = response.Cookies()[0]
+		}
+		return data
+	}
+	var login struct {
+		CSRF string `json:"csrf_token"`
+	}
+	_ = json.Unmarshal(web("POST", "/auth/setup", map[string]string{"username": "owner", "password": "correct horse battery staple"}, 200), &login)
+	csrf = login.CSRF
+	var issued struct{ ID, Token string }
+	_ = json.Unmarshal(web("POST", "/mcp/credentials", map[string]any{"user_id": 1, "name": "covers", "library_ids": []int64{lib.ID}, "capabilities": []string{"read", "metadata_write"}}, 200), &issued)
+	session, err := mcp.NewClient(&mcp.Implementation{Name: "cleanup-acceptance", Version: "1"}, nil).Connect(ctx, &mcp.StreamableClientTransport{Endpoint: server.URL + "/mcp", HTTPClient: &http.Client{Transport: &bearerTransport{base: server.Client().Transport, token: issued.Token}}}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = session.Close() }()
+	call := func(name string, input any) map[string]any {
+		t.Helper()
+		result, e := session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: input})
+		if e != nil || result.IsError {
+			t.Fatalf("%s: %+v %v", name, result, e)
+		}
+		raw, _ := json.Marshal(result.StructuredContent)
+		out := map[string]any{}
+		_ = json.Unmarshal(raw, &out)
+		return out
+	}
+	// coverSeries is a series whose two-page book shows a red first page as its automatic cover.
+	coverSeries := func(name string) (int64, int64) {
+		t.Helper()
+		series, e := store.CreateSeries(ctx, database.CreateSeriesParams{Name: name, Path: filepath.Join(lib.Path, name), LibraryID: lib.ID})
+		if e != nil {
+			t.Fatal(e)
+		}
+		red := solidPNG(t, 64, 96, color.RGBA{R: 220, A: 255})
+		var archive bytes.Buffer
+		z := zip.NewWriter(&archive)
+		for i, page := range [][]byte{red, solidPNG(t, 64, 96, color.RGBA{B: 220, A: 255})} {
+			w, e := z.Create(fmt.Sprintf("%02d.png", i+1))
+			if e != nil {
+				t.Fatal(e)
+			}
+			if _, e = w.Write(page); e != nil {
+				t.Fatal(e)
+			}
+		}
+		if e = z.Close(); e != nil {
+			t.Fatal(e)
+		}
+		path := filepath.Join(lib.Path, name+".cbz")
+		if e = os.WriteFile(path, archive.Bytes(), 0o600); e != nil {
+			t.Fatal(e)
+		}
+		modified := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+		book, e := store.CreateBook(ctx, database.CreateBookParams{LibraryID: lib.ID, SeriesID: series.ID, Name: name, Path: path, Size: int64(archive.Len()), FileModifiedAt: modified, PageCount: 2})
+		if e != nil {
+			t.Fatal(e)
+		}
+		cover := automaticCoverPath(path, modified, int64(archive.Len()))
+		file := filepath.Join(config.ThumbnailDir(cfg.Snapshot()), cover)
+		if e = os.MkdirAll(filepath.Dir(file), 0o755); e != nil {
+			t.Fatal(e)
+		}
+		if e = os.WriteFile(file, red, 0o600); e != nil {
+			t.Fatal(e)
+		}
+		if _, e = store.DB().Exec(`UPDATE books SET cover_path=? WHERE id=?`, cover, book.ID); e != nil {
+			t.Fatal(e)
+		}
+		return series.ID, book.ID
+	}
+	improve := func(key string, series, book int64) map[string]any {
+		t.Helper()
+		out := call("library_improve_cover", map[string]any{"request_key": key, "series_id": series, "book_id": book, "page": 2, "reason": "page 2 is upright complete artwork without the red advertisement on page 1"})
+		if out["outcome"] != "changed" {
+			t.Fatalf("cover %s not improved: %v", key, out)
+		}
+		return out
+	}
+
+	other, otherBook := coverSeries("Cleanup series")
+	verifyCleanup(t, session, call, web, improve("cleanup13-source", other, otherBook))
+	series, book := coverSeries("Cover series")
+	original := improve("cover-success", series, book)
+	undo := call("library_undo_metadata_operation", map[string]any{"request_key": "cover-undo", "operation_id": original["id"]})
+	if undo["outcome"] != "changed" {
+		t.Fatal(undo)
+	}
+	verifyAfterReopen := verifyCoverCleanup(t, store, cfg, process.Application.Engine, router, call, web, original, undo, book, cleanupGate)
+
+	// Reopen the production graph and the real SQLite connection, keeping the browser session.
+	_ = session.Close()
+	server.Close()
+	process.Close()
+	if err = store.Close(); err != nil {
+		t.Fatal(err)
+	}
+	reopened, err := database.NewStore(cfg.Snapshot().Database.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reopened.Close()
+	if process, err = bootstrap.Open(ctx, reopened, cfg, options); err != nil {
+		t.Fatal(err)
+	}
+	router = chi.NewRouter()
+	process.HTTP.SetupRoutes(router)
+	server = httptest.NewTLSServer(router)
+	verifyAfterReopen(web)
+}
 
 func verifyCleanup(t *testing.T, session *mcp.ClientSession, call func(string, any) map[string]any, web func(string, string, any, int) []byte, op map[string]any) {
 	t.Helper()
@@ -161,8 +332,8 @@ func verifyCoverCleanup(t *testing.T, store database.Store, cfg *config.Manager,
 	if _, e = store.DB().Exec(`UPDATE books SET cover_path=? WHERE id=?`, newKey, book); e == nil {
 		t.Fatal("retired cover resurrected")
 	}
-	// Cleanup authority alone cannot perform enrichment, nor query another scope.
-	denied, e := client.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_enrichment_state", Arguments: map[string]any{"series_id": original["series_id"]}})
+	// Cleanup authority alone cannot read the series, nor query another scope.
+	denied, e := client.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_series", Arguments: map[string]any{"series_id": original["series_id"]}})
 	if e != nil || !denied.IsError {
 		t.Fatal(denied, e)
 	}
@@ -179,7 +350,8 @@ func verifyCoverCleanup(t *testing.T, store database.Store, cfg *config.Manager,
 	makeCover := func(key string) map[string]any {
 		cfg.Replace(&previous)
 		defer cfg.Replace(&snapshot)
-		return call("library_enrich_metadata", map[string]any{"request_key": key, "series_id": original["series_id"], "fields": []string{"cover"}, "proposal_ids": []int64{}, "expected": call("library_get_enrichment_state", map[string]any{"series_id": original["series_id"]}), "cover": original["cover_selection"]})
+		selection := original["cover_selection"].(map[string]any)
+		return call("library_improve_cover", map[string]any{"request_key": key, "series_id": original["series_id"], "book_id": selection["book_id"], "page": selection["page"], "reason": selection["reason"]})
 	}
 	failedOp := makeCover("cleanup13-filefail-source")
 	badKey := failedOp["old_cover_material"].(string)

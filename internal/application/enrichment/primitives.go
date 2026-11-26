@@ -145,18 +145,17 @@ func (s *Service) ImproveCover(ctx context.Context, actor delegated.Subject, in 
 		return out, err
 	}
 	selection := &CoverSelection{BookID: in.BookID, Page: in.Page, QualityCompared: true, Reason: in.Reason}
-	admitted, _, err := s.coverAdmission(ctx, actor, Input{SeriesID: in.SeriesID, Cover: selection})
+	admitted, _, err := s.coverAdmission(ctx, actor, coverCommand{series: in.SeriesID, cover: selection})
 	if err != nil {
 		return Operation{}, err
 	}
-	command := Input{RequestKey: in.RequestKey, SeriesID: in.SeriesID, Fields: []string{"cover"}, Expected: ExpectedState{Cover: admitted.Cover}, Cover: selection}
 	var prepared *preparedCover
 	if eligibleCover(admitted.Cover) {
-		if prepared, err = s.prepareCover(ctx, actor, command); err != nil {
+		if prepared, err = s.prepareCover(ctx, actor, coverCommand{series: in.SeriesID, cover: selection, expected: admitted.Cover}); err != nil {
 			return Operation{}, err
 		}
 	}
-	c := supplement{key: in.RequestKey, digest: digest, series: in.SeriesID, fields: command.Fields, expected: command.Expected.state(), cover: selection, prepared: prepared}
+	c := supplement{key: in.RequestKey, digest: digest, series: in.SeriesID, fields: []string{"cover"}, expected: State{Cover: admitted.Cover}, cover: selection, prepared: prepared}
 	return s.applyEvidence(ctx, actor, c, coverDecision{})
 }
 

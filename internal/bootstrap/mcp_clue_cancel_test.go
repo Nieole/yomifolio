@@ -2,6 +2,7 @@ package bootstrap_test
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -10,15 +11,124 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"yomifolio/internal/bootstrap"
 	"yomifolio/internal/config"
+	"yomifolio/internal/database"
 	"yomifolio/internal/parser"
 	"yomifolio/internal/storageio"
 	"yomifolio/internal/task"
 )
+
+// Real RAR clues hold a request-owned admission and volume IO lease; a client that goes away lets
+// go of both over HTTPS and over the stdio helper. A solid stream whose first declaration is
+// undersized reads as unavailable clues and yields no page image.
+func TestComicInfoCluesLetGoWhenTheClientLeaves(t *testing.T) {
+	for _, stdio := range []bool{false, true} {
+		t.Run(map[bool]string{false: "https", true: "stdio"}[stdio], func(t *testing.T) {
+			ctx := context.Background()
+			store, cfg := fixture(t)
+			lib, err := store.CreateLibrary(ctx, database.CreateLibraryParams{Name: "Clues", Path: t.TempDir(), ScanMode: "none"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			series, err := store.CreateSeries(ctx, database.CreateSeriesParams{LibraryID: lib.ID, Name: "Clues", Path: filepath.Join(lib.Path, "Clues")})
+			if err != nil {
+				t.Fatal(err)
+			}
+			book := func(name string, pages int64) (int64, string) {
+				t.Helper()
+				data, err := os.ReadFile("../parser/testdata/" + name)
+				if err != nil {
+					t.Fatal(err)
+				}
+				path := filepath.Join(lib.Path, name)
+				if err = os.WriteFile(path, data, 0o600); err != nil {
+					t.Fatal(err)
+				}
+				created, err := store.CreateBook(ctx, database.CreateBookParams{LibraryID: lib.ID, SeriesID: series.ID, Name: name, Path: path, Size: int64(len(data)), FileModifiedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), PageCount: pages})
+				if err != nil {
+					t.Fatal(err)
+				}
+				return created.ID, path
+			}
+			rar, rarPath := book("vol.cbr", 4)
+			hostile, _ := book("solid-undersized.cbr", 1)
+			process, err := bootstrap.Open(ctx, store, cfg, bootstrap.Options{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer process.Close()
+			router := chi.NewRouter()
+			process.HTTP.SetupRoutes(router)
+			var server *httptest.Server
+			if stdio {
+				server = httptest.NewServer(router)
+			} else {
+				server = httptest.NewTLSServer(router)
+			}
+			defer server.Close()
+			snapshot := cfg.Snapshot()
+			snapshot.Library.IOPolicy.ArchiveOpenConcurrency = 1
+			snapshot.MCP.PublicURL = server.URL
+			snapshot.MCP.AllowLANHTTP = stdio
+			cfg.Replace(&snapshot)
+			var issued struct{ Token string }
+			if err = json.Unmarshal(sourceHTTP(t, process)("POST", "/mcp/credentials", fmt.Sprintf(`{"user_id":1,"name":"clues","library_ids":[%d],"capabilities":["read"]}`, lib.ID), http.StatusOK).Body.Bytes(), &issued); err != nil {
+				t.Fatal(err)
+			}
+			binary := ""
+			if stdio {
+				binary = filepath.Join(t.TempDir(), "mcp-proxy.exe")
+				if out, err := exec.CommandContext(ctx, "go", "build", "-o", binary, "../../cmd/mcp-proxy").CombinedOutput(); err != nil {
+					t.Fatalf("build: %v %s", err, out)
+				}
+			}
+			assertClueTransportDisconnect(t, cfg.Snapshot(), server, binary, issued.Token, process.Application.Engine, rarPath, lib.ID, rar, stdio)
+
+			session, err := mcp.NewClient(&mcp.Implementation{Name: "clues", Version: "1"}, nil).Connect(ctx, &mcp.StreamableClientTransport{Endpoint: server.URL + "/mcp", HTTPClient: &http.Client{Transport: &bearerTransport{base: server.Client().Transport, token: issued.Token}}}, &mcp.ClientSessionOptions{ProtocolVersion: "2025-11-25"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer session.Close()
+			clueStatus := func(id int64) any {
+				t.Helper()
+				result, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_book_clues", Arguments: map[string]any{"book_id": id}})
+				if err != nil || result.IsError {
+					t.Fatalf("clues %d: %+v %v", id, result, err)
+				}
+				var out struct {
+					ComicInfo map[string]any `json:"comic_info"`
+				}
+				raw, _ := json.Marshal(result.StructuredContent)
+				_ = json.Unmarshal(raw, &out)
+				return out.ComicInfo["status"]
+			}
+			if got := clueStatus(rar); got != "available" {
+				t.Fatalf("clues after the disconnects: %v", got)
+			}
+			if got := clueStatus(hostile); got != "unavailable" {
+				t.Fatalf("hostile solid clues: %v", got)
+			}
+			rejected, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_page_thumbnails", Arguments: map[string]any{"series_id": series.ID, "book_id": hostile, "pages": []int{1}}})
+			if err != nil || !rejected.IsError {
+				t.Fatalf("hostile solid image: %+v %v", rejected, err)
+			}
+			for _, content := range rejected.Content {
+				if _, ok := content.(*mcp.ImageContent); ok {
+					t.Fatal("hostile solid returned an image")
+				}
+			}
+		})
+	}
+}
 
 // Close the actual socket/stdin, rather than SDK Close (which may first wait
 // for in-flight RPCs). Keep IO saturated until server-owned admission is released.

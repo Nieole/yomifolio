@@ -36,7 +36,7 @@ func TestCurrentAuthorityIntersectsEveryIndependentCapability(t *testing.T) {
 		t.Fatal(err)
 	}
 	service := delegated.New(delegated.NewSQLStore(store.DB()))
-	caps := []string{delegated.Read, delegated.MetadataWrite, delegated.ScanControl, delegated.InternalLLM, delegated.Cleanup}
+	caps := []string{delegated.Read, delegated.MetadataWrite, delegated.ScanControl, delegated.Cleanup}
 	for _, user := range []database.User{owner, reader} {
 		for _, granted := range caps {
 			credential, err := service.Issue(ctx, owner.ID, delegated.Restrictions{UserID: user.ID, Name: "Independent", LibraryIDs: []int64{lib.ID}, Capabilities: []string{granted}})
@@ -66,6 +66,17 @@ func TestCurrentAuthorityIntersectsEveryIndependentCapability(t *testing.T) {
 	subject, err := service.Authenticate(ctx, credential.Token)
 	if err != nil {
 		t.Fatal(err)
+	}
+	// A retired flag a credential still stores, such as internal_llm, is no capability: it
+	// authorizes nothing, not even runs it once started.
+	if _, err = store.DB().Exec(`UPDATE mcp_credentials SET capabilities='["read","metadata_write","scan_control","internal_llm","cleanup"]' WHERE id=?`, credential.ID); err != nil {
+		t.Fatal(err)
+	}
+	if err := service.Authorize(ctx, subject, lib.ID, "internal_llm"); !errors.Is(err, delegated.ErrDenied) {
+		t.Fatalf("retired internal_llm authorized: %v", err)
+	}
+	if _, err := service.Issue(ctx, owner.ID, delegated.Restrictions{UserID: owner.ID, Name: "Model", LibraryIDs: []int64{lib.ID}, Capabilities: []string{"internal_llm"}}); !errors.Is(err, delegated.ErrInvalid) {
+		t.Fatalf("retired internal_llm issued: %v", err)
 	}
 	if err := store.UpdateUserProfile(ctx, owner.ID, "", database.RoleRegular); err != nil {
 		t.Fatal(err)

@@ -84,7 +84,6 @@ export const messages: MessageCatalog = {
     "mcp.read": "Read",
     "mcp.metadata_write": "Metadata write",
     "mcp.scan_control": "Scan control",
-    "mcp.internal_llm": "Internal LLM",
     "mcp.cleanup": "Cleanup",
     "mcp.bounds": "No libraries means no access. Regular users remain read-only and cannot gain paid-model access. Only series reading is implemented; other capabilities do not enable future tools yet. Restrictions can only be narrowed.",
     "mcp.secretHint": "Save this secret securely now. It is shown only once and is not stored in your browser.",

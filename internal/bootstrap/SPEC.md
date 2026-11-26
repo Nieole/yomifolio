@@ -31,13 +31,10 @@ references: [mm-adr-0014, mm-runtime]
 
 ## MCP 能力绑定
 
-`Open` 用同一数据库构建 `delegated.SQLStore` 与 `delegated.Service`，并注入共享内容服务及同一 Runtime 的 Engine（内容准入）、Scans 和资料库窄查询能力，并绑定 `MatchingAccess` 到同一 Runs、数据库及调用时配置的来源工厂；经 `AdministrationDependencies.Delegated` 显式注入管理员 HTTP 及 MCP 协议适配。协议适配器不获得数据库、运行时或独立资源关闭权；请求开放与排空沿原有 Host 生命周期，不启动第二个应用运行时。
+`Open` 用同一数据库构建 `delegated.SQLStore` 与 `delegated.Service`，并注入共享内容服务及同一 Runtime 的 Engine（内容准入）、Scans 和资料库窄查询能力；经 `AdministrationDependencies.Delegated` 显式注入管理员 HTTP 及 MCP 协议适配。协议适配器不获得数据库、运行时或独立资源关闭权；请求开放与排空沿原有 Host 生命周期，不启动第二个应用运行时。
 
 
-`Open` 同时从同一数据库与 delegated 实例装配 `enrichment.Service`，经 `AdministrationDependencies.Enrichment` 显式绑定网页和 MCP；提交后通过现有效果端口失效统计及发布刷新，不创建独立运行时或后台维护任务。
-
-内部模型额度操作另绑定 `ModelBudgetAccess` 到同一数据库、配置快照、`Runs.Start` 和 `ExternalSources.ConfiguredAI`（01 的生产 AI 工厂）；未注入替身时沿用既有 OpenAI Responses、Chat Completions 或 Ollama 来源，不新建付费客户端体系或运行时。AI 工厂替身属于可信外部边界，须遵守单次调用不隐藏重试的契约并响应 context 取消；生产 HTTP 来源额外执行每请求守卫。额度、不可变操作与故障语义归 `mm-application`。
-
+`Open` 同时从同一数据库装配 `enrichment.Service`，经 `AdministrationDependencies.Enrichment` 显式绑定网页和 MCP；提交后通过现有效果端口失效统计及发布刷新，不创建独立运行时或后台维护任务。
 
 `enrichment.WithCovers` 绑定同一 delegated 实例及配置快照，复用现有图片/内容资格，不注入第二份图片宿主、运行时或网络客户端。不可变材料先准备/事务引用切换没有启动期文件重发或发布队列，故障与重开策略归 mm-application。
 

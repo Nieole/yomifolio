@@ -55,7 +55,7 @@ references: [mm-adr-0003, mm-adr-0007, mm-database, mm-adr-0014, mm-catalogsearc
 
 ## MCP 与凭据管理
 
-生产 `Host.SetupRoutes` 在 Cookie 子树外挂载 `/mcp`，显式消费装配根注入的 `delegated.Service`；不把 POST 等同于管理员写入，不读取数据库或创建运行时。采用官方 Go SDK 的 stateless Streamable HTTP / JSON 响应，支持 initialize、tools/list、`library_get_series(series_id)`、`library_find_series`、`library_list_books`、`library_get_book_clues`、`library_get_series_cover`、`library_get_page_thumbnails` 及 `library_search_sources`、`library_get_source_search`、`library_propose_match`、`library_get_match_proposal`、`library_get_enrichment_state`、`library_enrich_metadata`、`library_enrich_metadata_batch`、`library_get_metadata_operation`、`library_list_metadata_operations`、`library_undo_metadata_operation`、`library_assess_match`、`library_get_model_operation`、`library_start_scan`、`library_get_run`、`library_list_runs`、`library_wait_run`、`library_cancel_run`；GET/DELETE 不建立持久会话，无事件恢复或服务器主动请求。工具 schema 与控制提示由 SDK 提供；权限裁决、运行归属、受限等待与断线语义仍由应用用例执行（`mm-application`）。静态 Bearer 凭据不是 OAuth，未提供 OAuth 发现、授权服务或交互登录。
+生产 `Host.SetupRoutes` 在 Cookie 子树外挂载 `/mcp`，显式消费装配根注入的 `delegated.Service`；不把 POST 等同于管理员写入，不读取数据库或创建运行时。采用官方 Go SDK 的 stateless Streamable HTTP / JSON 响应，支持 initialize、tools/list 与 `listingCapability`（`mcp_tools.go`）登记的工具；GET/DELETE 不建立持久会话，无事件恢复或服务器主动请求。工具 schema 与控制提示由 SDK 提供；权限裁决、运行归属、受限等待与断线语义仍由应用用例执行（`mm-application`）。静态 Bearer 凭据不是 OAuth，未提供 OAuth 发现、授权服务或交互登录。
 
 每个 HTTP 请求都重新认证 Bearer，工具调用还按实际对象重查能力；不接受 Cookie、查询参数、重复 Authorization 或客户端指定的 Subject。当前工具不暴露凭据管理。`/api/mcp/credentials` 的 GET/POST 与 `/{credentialId}` 的 PATCH/DELETE 属管理员网页管理树，保留 Cookie、CSRF、当前角色及强制改密守卫。列表和命令结果均 no-store，不回显摘要或历史密钥；签发结果的密钥不可记录在日志中。错误为通用信息，不带凭据或底层 SQL。
 
@@ -65,34 +65,29 @@ MCP 安全入口仅接受 `mcp.public_url` 配置的精确 authority；有 Origi
 
 - 每个成功结果在 structuredContent 之外都带一个文本块，内容是同一份 JSON，只读文本的客户端不读 structuredContent 也能拿到完整结果。
 - 拒绝只有一句：`errMCPDenied`。它附下一步提示（ID 取自本凭据自己的查询结果；已是如此则说明授权不再覆盖，应上报而非重试），但对象不存在、跨资料库与能力不足读来完全相同，不泄露存在性。
-- 工具描述不超过 400 字符，以一个可直接照抄的 `Example: {...}` 调用结尾，示例参数都在输入 schema 中声明；细粒度识别链工具（来源搜索、匹配提案、补充状态与补充、内部模型额度）不受此约束。
-- 工具清单按凭据当前能力过滤（`listOnlyGranted`），清单只披露授权，每个处理器仍自行鉴权。
+- 工具描述不超过 400 字符，以一个可直接照抄的 `Example: {...}` 调用结尾，示例参数都在输入 schema 中声明。
+- 工具清单按凭据当前能力过滤（`listOnlyGranted`），清单只披露授权，每个处理器仍自行鉴权。不在清单里的工具名（含已下线的）按 SDK 的未知工具统一拒绝。
+- initialize 的 instructions 由 `mcpInstructions` 按同一份授权生成：凭据能领取时先写主循环（领取 → 提交裁决 → 难判上报，有权限即直接写入、不请示人），再给清单里其余每个工具一句用途（`toolPurposes`）。新工具须在那里补一句，否则说明会漏掉它。
 
-核对入口：`bootstrap` 的 `TestMCPEveryToolResultCarriesItsJSONText`、`TestMCPListingFollowsGrantedCapabilities`、`TestMCPDelegatedSeriesLifecycle`、`TestMCPAccountPasswordAndManagementIsolation`、`TestMCPRejectsUnsafeTransport`；独立凭据与交集规则归 `mm-application`，配置合法性归 `mm-config`。
+核对入口：`bootstrap` 的 `TestMCPEveryToolResultCarriesItsJSONText`、`TestMCPListingFollowsGrantedCapabilities`、`TestInitializationExplainsTheMainLoopAndEveryListedTool`、`TestRetiredToolsAreNeitherListedNorAnswered`、`TestMCPDelegatedSeriesLifecycle`、`TestMCPAccountPasswordAndManagementIsolation`、`TestMCPRejectsUnsafeTransport`；独立凭据与交集规则归 `mm-application`，配置合法性归 `mm-config`。
 
 发现工具只映射应用用例与结构化结果，查询条件、分页、证据及响应上限归 `mm-application`；工具描述提供条件交集、默认页长、硬上限与后继用法。不提供路径参数、任意磁盘读取或整书下载。
 
-图片工具只调用应用完整用例，以 SDK v1.8.0 `ImageContent.Data` 的原始字节字段交付真实 `image/jpeg`，让 SDK 执行 base64 序列化，不能预先 base64 后二次编码。首个文本块是结构化元数据的 JSON 副本，其后 image content 与结构化 `images` 顺序一致；文本不重复图片字节。stateless SDK 的工具上下文不自行代表 HTTP 请求生命周期：ComicInfo 线索、图片工具和单项/批量同步补充工具显式合并请求取消上下文，HTTP 断线、stdio EOF 取消上游后，在封面准备的 IO 等待时也归还读资格及图片/准备槽；同步补充沿用同一合并上下文直至事务提交，不在准备后脱离取消；这不改变已接纳后台运行的断线后继续语义。
+图片工具只调用应用完整用例，以 SDK v1.8.0 `ImageContent.Data` 的原始字节字段交付真实 `image/jpeg`，让 SDK 执行 base64 序列化，不能预先 base64 后二次编码。首个文本块是结构化元数据的 JSON 副本，其后 image content 与结构化 `images` 顺序一致；文本不重复图片字节。stateless SDK 的工具上下文不自行代表 HTTP 请求生命周期：ComicInfo 线索、图片工具和封面改善显式合并请求取消上下文，HTTP 断线、stdio EOF 取消上游后，在封面准备的 IO 等待时也归还读资格及图片/准备槽；封面改善沿用同一合并上下文直至事务提交，不在准备后脱离取消；这不改变已接纳后台运行的断线后继续语义。
 
 所有 MCP JSON HTTP 响应在写入网络前受最终响应体硬上限约束，上限容纳两份应用结果（structuredContent 与其 JSON 文本副本）、64 KiB 请求体上限所界定的调用方 JSON-RPC ID 与 SDK framing；有界缓冲溢出后返回短 HTTP 413，不发出部分图片 JSON。应用预留不是任意长请求 ID 的豁免。该接口仍为 stateless JSON，不用此缓冲提供 SSE 会话恢复；stdio 代理沿同一 HTTP 契约转发。
-
-匹配工具只映射 `delegated.Service` 的完整用例；输入确认、来源白名单、分页/字节上限、临时证据寿命、持久提案证据及读/写能力映射归 `mm-application`。底层来源/SQL 错误统一脱敏。
-
-模型工具只映射应用的不可变额度操作；操作 status=history_unavailable 明确表示关联运行历史已缺失，并非运行终态，预算及逐项结果仍返回，运行工具不再保证可查/可取消。声明是 agent 转述而非受信任人工审批。具体记账、归属、返回状态和重启不重放契约归 `mm-application`。协议适配器不直接接触计数表或调用模型工厂。
 
 
 ## 受限补充和操作历史
 
-MCP 的 enrichment state、单项/批量补充、操作查询/按系列分页与撤销工具直接委托 `enrichment.Service`，身份来自认证凭据，不接受调用者自报。工具声明只读或幂等提示，但最终以事务授权和持久重放结果为准。管理员网页 `GET /api/mcp/operations`、`GET /api/mcp/operations/{operationId}`、`POST /api/mcp/operations/{operationId}/undo` 复用网页认证和 CSRF，命令携带 request_key；普通用户不可管理或撤销。审计、响应预算、预期值与回滚契约归 `mm-application`。
+MCP 的作者校正、封面改善、操作查询/按系列分页与撤销工具直接委托 `enrichment.Service`，身份来自认证凭据，不接受调用者自报。工具声明只读或幂等提示，但最终以事务授权和持久重放结果为准。管理员网页 `GET /api/mcp/operations`、`GET /api/mcp/operations/{operationId}`、`POST /api/mcp/operations/{operationId}/undo` 复用网页认证和 CSRF，命令携带 request_key；普通用户不可管理或撤销。审计、响应预算、预期值与回滚契约归 `mm-application`。
 
 
-补充工具的 cover 字段选择与故障一致性归 mm-application，仍复用同一 enrichment 工具/管理历史/Undo，不新增图片宿主或任意 URL 获取工具。原 cover 路由支持已提交的虚拟材料键；原 thumbnail 路由须检查当前书或持久保留引用后读取材料私有根。普通缩略图文件使用 os.Root 约束在普通缓存根，保留内容与条件请求语义；未提交虚拟键、Windows 大小写/尾点等实体目录别名均不能公开准备材料。
+封面改善的页选择与故障一致性归 mm-application，收据复用同一管理历史/Undo，不接受任意 URL 或路径。原 cover 路由支持已提交的虚拟材料键；原 thumbnail 路由须检查当前书或持久保留引用后读取材料私有根。普通缩略图文件使用 os.Root 约束在普通缓存根，保留内容与条件请求语义；未提交虚拟键、Windows 大小写/尾点等实体目录别名均不能公开准备材料。
 
-作者校正复用同一 enrichment 工具与操作查询/撤销路径；输入可选择 authors，`author_corrections` 使用精确 from/to name、role 与短 reason，不接受自由作者事实。state 与收据 before/after 返回作者组，协议层不执行共享身份重命名。系列内例外、当前事务保护和字段补空限制归 `mm-application`。
+作者校正复用同一操作查询/撤销路径；`corrections` 使用精确 from/to name、role 与短 reason，不接受自由作者事实。收据 before/after 返回作者组，协议层不执行共享身份重命名。系列内例外、当前事务保护和字段补空限制归 `mm-application`。
 
-补充命令的 expected schema 来自独立 `enrichment.ExpectedState`，authors 可省略（含批量嵌套输入）；不因响应 State 增加字段而要求旧客户端补送新字段。持久摘要版本与兼容规则归 `mm-application`。
-
-已有提案读取须当前 read + metadata_write，返回原确认依据、当前剩余字段、status 与 accepted；不把旧提案缺证据当已确认。`library_enrich_metadata{,_batch}` 可携带显式 adjudication 命令，模式和原子裁决规则归 mm-application。操作收据的 adjudication.status/accepted 区分全部拒绝、部分接受仍 pending、supplemented_closed；reject 命令在此前有接受时不能呈现为全部拒绝。新命令沿用相同同步 transport 取消上下文及脱敏错误路径，不增加数据库或模型入口。
+曾裁决过旧提案的收据仍带 adjudication.status/accepted，区分全部拒绝、部分接受仍 pending 与 supplemented_closed；没有命令再产生它。
 
 ## 撤销材料清理入口
 

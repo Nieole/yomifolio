@@ -41,11 +41,6 @@ func (s ExternalSources) MetadataProvider(cfg config.Config, name string) metada
 	return s.metadata(cfg, name)
 }
 
-// ConfiguredAI resolves the shared production AI factory at call time.
-func (s ExternalSources) ConfiguredAI(cfg config.Config) metadata.AIProvider {
-	return s.configuredAI(cfg)
-}
-
 // CoverTransport resolves the transport candidate cover downloads use.
 func (s ExternalSources) CoverTransport() http.RoundTripper {
 	if s.Covers != nil {

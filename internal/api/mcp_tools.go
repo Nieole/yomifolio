@@ -16,14 +16,10 @@ var listingCapability = map[string]string{
 	"library_find_series":              delegated.Read,
 	"library_list_books":               delegated.Read,
 	"library_get_book_clues":           delegated.Read,
-	"library_get_enrichment_state":     delegated.Read,
 	"library_get_metadata_operation":   delegated.Read,
 	"library_list_metadata_operations": delegated.Read,
 	"library_get_series_cover":         delegated.Read,
 	"library_get_page_thumbnails":      delegated.Read,
-	"library_search_sources":           delegated.Read,
-	"library_get_source_search":        delegated.Read,
-	"library_get_match_proposal":       delegated.Read,
 	"library_identification_progress":  delegated.Read,
 	"library_find_duplicate_series":    delegated.Read,
 	"library_count_tags":               delegated.Read,
@@ -32,9 +28,6 @@ var listingCapability = map[string]string{
 
 	"library_get_identification_images": delegated.Read,
 
-	"library_propose_match":           delegated.MetadataWrite,
-	"library_enrich_metadata":         delegated.MetadataWrite,
-	"library_enrich_metadata_batch":   delegated.MetadataWrite,
 	"library_undo_metadata_operation": delegated.MetadataWrite,
 	"library_add_series_relation":     delegated.MetadataWrite,
 	"library_correct_authors":         delegated.MetadataWrite,
@@ -44,9 +37,6 @@ var listingCapability = map[string]string{
 	"library_research_series":         delegated.MetadataWrite,
 
 	"library_start_scan": delegated.ScanControl,
-
-	"library_assess_match":        delegated.InternalLLM,
-	"library_get_model_operation": delegated.InternalLLM,
 
 	"library_start_metadata_cleanup":     delegated.Cleanup,
 	"library_get_metadata_cleanup":       delegated.Cleanup,

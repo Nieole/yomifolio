@@ -33,6 +33,14 @@ func (s *Service) WithCovers(access CoverAccess) *Service { s.covers = &access; 
 
 type preparedCover struct{ old, new string }
 
+// coverCommand selects a page to replace one series' cover with. expected is the cover the
+// selection was admitted against; before admission it is nil and only the source is checked.
+type coverCommand struct {
+	series   int64
+	cover    *CoverSelection
+	expected *seriesmeta.CoverState
+}
+
 var coverSlots = make(chan struct{}, 2)
 
 func eligibleCover(c *seriesmeta.CoverState) bool { return c != nil && c.Automatic && !c.Locked }
@@ -48,9 +56,9 @@ func readCover(ctx context.Context, q *database.Queries, series int64) (*seriesm
 	return &seriesmeta.CoverState{BookID: book.ID, Path: book.CoverPath.String, Locked: book.CoverLocked, Automatic: seriesmeta.ArchiveCover(book)}, nil
 }
 
-func (s *Service) prepareCover(ctx context.Context, actor delegated.Subject, in Input) (*preparedCover, error) {
-	c := in.Cover
-	if s.covers == nil || s.covers.Images == nil || c.BookID <= 0 || c.Page < 1 || !c.QualityCompared || strings.TrimSpace(c.Reason) == "" || len(c.Reason) > 1000 || !eligibleCover(in.Expected.Cover) {
+func (s *Service) prepareCover(ctx context.Context, actor delegated.Subject, in coverCommand) (*preparedCover, error) {
+	c := in.cover
+	if s.covers == nil || s.covers.Images == nil || c.BookID <= 0 || c.Page < 1 || !c.QualityCompared || strings.TrimSpace(c.Reason) == "" || len(c.Reason) > 1000 || !eligibleCover(in.expected) {
 		return nil, delegated.ErrInvalid
 	}
 	_, conflict, err := s.coverAdmission(ctx, actor, in)
@@ -65,7 +73,7 @@ func (s *Service) prepareCover(ctx context.Context, actor delegated.Subject, in 
 	}
 	// Authorize target and source through the existing content use case, then fence again
 	// in the write transaction. No path, arbitrary archive or remote URL is accepted.
-	thumb, err := s.covers.Images.PageThumbnails(ctx, actor, delegated.PageThumbnailsInput{SeriesID: in.SeriesID, BookID: c.BookID, Pages: []int64{c.Page}})
+	thumb, err := s.covers.Images.PageThumbnails(ctx, actor, delegated.PageThumbnailsInput{SeriesID: in.series, BookID: c.BookID, Pages: []int64{c.Page}})
 	if err != nil {
 		return nil, err
 	}
@@ -94,14 +102,14 @@ func (s *Service) prepareCover(ctx context.Context, actor delegated.Subject, in 
 
 // coverAdmission rejects invalid or unauthorized sources before classifying business
 // conflicts. The final write transaction remains authoritative and persists the result.
-func (s *Service) coverAdmission(ctx context.Context, actor delegated.Subject, in Input) (State, bool, error) {
+func (s *Service) coverAdmission(ctx context.Context, actor delegated.Subject, in coverCommand) (State, bool, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return State{}, false, err
 	}
 	defer tx.Rollback()
 	q := database.New(tx)
-	current, state, err := readState(ctx, q, in.SeriesID)
+	current, state, err := readState(ctx, q, in.series)
 	if err != nil {
 		return State{}, false, delegated.ErrDenied
 	}
@@ -111,16 +119,16 @@ func (s *Service) coverAdmission(ctx context.Context, actor delegated.Subject, i
 	if err = authorize(ctx, tx, actor, current.LibraryID, false); err != nil {
 		return State{}, false, err
 	}
-	source, err := q.GetBook(ctx, in.Cover.BookID)
+	source, err := q.GetBook(ctx, in.cover.BookID)
 	if err != nil || source.SeriesID != current.ID || source.LibraryID != current.LibraryID {
 		return State{}, false, delegated.ErrDenied
 	}
-	if in.Cover.Page > source.PageCount {
+	if in.cover.Page > source.PageCount {
 		return State{}, false, delegated.ErrInvalid
 	}
 	conflict := !eligibleCover(state.Cover)
-	for _, f := range in.Fields {
-		conflict = conflict || seriesmeta.EnrichmentLocked(current, f) || !same(state, in.Expected.state(), f)
+	if in.expected != nil {
+		conflict = conflict || seriesmeta.EnrichmentLocked(current, "cover") || !same(state, State{Cover: in.expected}, "cover")
 	}
 	if err = tx.Rollback(); err != nil {
 		return State{}, false, err

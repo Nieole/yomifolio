@@ -12,13 +12,7 @@ import (
 	"yomifolio/internal/application/enrichment"
 )
 
-func registerMCPEnrichment(server *mcp.Server, service *enrichment.Service, subject delegated.Subject, transportCtx context.Context) {
-	type target struct {
-		SeriesID int64 `json:"series_id"`
-	}
-	type batch struct {
-		Operations []enrichment.Input `json:"operations"`
-	}
+func registerMCPEnrichment(server *mcp.Server, service *enrichment.Service, subject delegated.Subject) {
 	type lookup struct {
 		OperationID string `json:"operation_id"`
 	}
@@ -29,22 +23,6 @@ func registerMCPEnrichment(server *mcp.Server, service *enrichment.Service, subj
 	}
 	read := &mcp.ToolAnnotations{ReadOnlyHint: true, IdempotentHint: true}
 	write := &mcp.ToolAnnotations{IdempotentHint: true}
-	mcp.AddTool(server, &mcp.Tool{Name: "library_get_enrichment_state", Description: "Read current field values for expected-value checks. Supply these relevant values when supplementing; unrelated fields do not block. This is not confirmed matching evidence.", Annotations: read}, func(ctx context.Context, _ *mcp.CallToolRequest, in target) (*mcp.CallToolResult, enrichment.State, error) {
-		out, err := service.State(ctx, subject, in.SeriesID)
-		return nil, out, publicMCPToolError(err, "invalid target", "metadata state unavailable")
-	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_enrich_metadata", Description: "Atomically supplement ONE series using persisted explicitly identity/edition-confirmed proposal_ids. Select title/summary/publisher/status/rating/tags/source_links/authors. Scalars only fill empty values; tags append conservative content genres; site scores use equal-weight ten-point normalization. Requires expected values for selected fields; current locks reject the whole series. request_key (1-80 printable ASCII) identifies this exact request forever for this credential: retry returns original outcome, replayed=true, applied=false; changed payload with same key rejected. Cover selection accepts only an authorized same-series archive book_id/page, quality_compared=true and a short comparison reason. Select cover with expected.cover to improve only the unlocked archive-generated catalogue cover. Cover and text commit together; manual/upload covers are protected. No arbitrary URL or path. Authors append confirmed source identities; optional author_corrections map exact from/to name+role with a short reason: from belongs to expected authors, to belongs to confirmed evidence. Series-local corrections never edit shared identities; whole-set expected checks apply. Optional adjudication={mode,reason} processes exactly ONE existing proposal: partial consumes only actual changed pending fields; supplement_and_close also closes remaining differences (fields may be empty after prior acceptance); reject requires empty fields and never reverses prior changes. Status distinguishes pending/accepted/applied, supplemented_closed and rejected. A short reason and current read+metadata_write authority are required. Only the seven existing proposal fields are adjudicable; no cover/source_links. Legacy proposals lacking identity/edition evidence may only be rejected; never invent confirmation. Terminal or already-consumed field races return persistent conflict; identical retries retain their original immutable result. Ordinary supplementation does not consume fields but also honors proposal terminal decisions.", Annotations: write}, func(ctx context.Context, _ *mcp.CallToolRequest, in enrichment.Input) (*mcp.CallToolResult, enrichment.Operation, error) {
-		ctx, cancel := imageRequestContext(ctx, transportCtx)
-		defer cancel()
-		out, err := service.Apply(ctx, subject, in)
-		return nil, out, publicMCPToolError(err, "invalid enrichment request or reused key", "metadata operation unavailable")
-	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_enrich_metadata_batch", Description: "Process 1-20 independent series operations in order; NOT batch atomic. Results distinguish changed/no-change/conflict/failed/unprocessed. Each input has its own unique request_key. Cancelled or response-budget-exhausted remainder is unprocessed; query uncertain receipts before retrying.", Annotations: write}, func(ctx context.Context, _ *mcp.CallToolRequest, in batch) (*mcp.CallToolResult, enrichment.BatchResult, error) {
-		ctx, cancel := imageRequestContext(ctx, transportCtx)
-		defer cancel()
-		out, err := service.Batch(ctx, subject, in.Operations)
-		return nil, out, publicMCPToolError(err, "invalid enrichment batch", "metadata operation unavailable")
-	})
 	mcp.AddTool(server, &mcp.Tool{Name: "library_get_metadata_operation", Description: `Read one metadata operation receipt: the fields it changed, before and after values, and whether undo is still possible (undo_unavailable=true once cleaned up). Example: {"operation_id": "0d4f6c2a9b1e47c3a5d8e2f1b6c9a370"}`, Annotations: read}, func(ctx context.Context, _ *mcp.CallToolRequest, in lookup) (*mcp.CallToolResult, enrichment.Operation, error) {
 		out, err := service.Get(ctx, subject, in.OperationID)
 		return nil, out, publicMCPToolError(err, "invalid operation", "metadata operation unavailable")

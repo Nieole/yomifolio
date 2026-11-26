@@ -27,19 +27,15 @@ func TestMCPListingFollowsGrantedCapabilities(t *testing.T) {
 	}{
 		{capability: delegated.Read, want: append(slices.Clone(runReads),
 			"library_get_series", "library_find_series", "library_list_books", "library_get_book_clues",
-			"library_get_enrichment_state", "library_get_metadata_operation", "library_list_metadata_operations",
+			"library_get_metadata_operation", "library_list_metadata_operations",
 			"library_get_series_cover", "library_get_page_thumbnails", "library_get_identification_images",
-			"library_search_sources", "library_get_source_search", "library_get_match_proposal",
 			"library_identification_progress", "library_get_series_authors",
 			"library_find_duplicate_series", "library_count_tags", "library_report_series")},
 		{capability: delegated.MetadataWrite, want: append(slices.Clone(runReads),
-			"library_enrich_metadata", "library_enrich_metadata_batch", "library_undo_metadata_operation",
-			"library_propose_match", "library_add_series_relation",
+			"library_undo_metadata_operation", "library_add_series_relation",
 			"library_claim_series", "library_submit_verdicts", "library_research_series",
 			"library_correct_authors", "library_improve_cover")},
 		{capability: delegated.ScanControl, want: append(slices.Clone(runReads), "library_start_scan")},
-		{capability: delegated.InternalLLM, want: append(slices.Clone(runReads),
-			"library_assess_match", "library_get_model_operation")},
 		{capability: delegated.Cleanup, want: append(slices.Clone(runReads),
 			"library_start_metadata_cleanup", "library_get_metadata_cleanup",
 			"library_cleanup_metadata_operation")},
@@ -104,7 +100,7 @@ func TestMCPListingFollowsGrantedCapabilities(t *testing.T) {
 			}
 		})
 	}
-	session := connect([]string{delegated.Read, delegated.MetadataWrite, delegated.ScanControl, delegated.InternalLLM, delegated.Cleanup}, "all")
+	session := connect([]string{delegated.Read, delegated.MetadataWrite, delegated.ScanControl, delegated.Cleanup}, "all")
 	defer session.Close()
 	listed, err := session.ListTools(ctx, nil)
 	assertMCPToolDiscovery(t, listed, err)
@@ -128,24 +124,12 @@ func TestMCPListingFollowsGrantedCapabilities(t *testing.T) {
 	}
 }
 
-// legacyIdentificationTools keep their long descriptions: they leave the surface together with
-// the fine-grained identification chain instead of being rewritten.
-var legacyIdentificationTools = map[string]bool{
-	"library_search_sources": true, "library_get_source_search": true,
-	"library_propose_match": true, "library_get_match_proposal": true,
-	"library_get_enrichment_state": true, "library_enrich_metadata": true, "library_enrich_metadata_batch": true,
-	"library_assess_match": true, "library_get_model_operation": true,
-}
-
-// assertToolDescriptionsShortWithExample holds every other tool to a description a small model can
-// keep in context: at most 400 characters, ending in a copyable call whose arguments the tool's
-// input schema declares.
+// assertToolDescriptionsShortWithExample holds every tool to a description a small model can keep
+// in context: at most 400 characters, ending in a copyable call whose arguments the tool's input
+// schema declares.
 func assertToolDescriptionsShortWithExample(t *testing.T, listed *mcp.ListToolsResult) {
 	t.Helper()
 	for _, tool := range listed.Tools {
-		if legacyIdentificationTools[tool.Name] {
-			continue
-		}
 		if n := utf8.RuneCountInString(tool.Description); n > 400 {
 			t.Errorf("%s: description has %d characters", tool.Name, n)
 		}

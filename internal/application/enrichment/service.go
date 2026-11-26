@@ -20,43 +20,9 @@ import (
 	"yomifolio/internal/seriesmeta"
 )
 
-// Evidence supplies persisted, explicitly confirmed matching decisions for the target.
-type Evidence interface {
-	GetMatchProposal(context.Context, delegated.Subject, int64, int64) (delegated.MatchProposal, error)
-}
-
 // State is the source-specific metadata snapshot used for expected-value checks.
 type State = seriesmeta.State
 
-// ExpectedState is the command snapshot, not the extensible response State.
-// Authors is optional so pre-author MCP requests still validate against the schema.
-// New command fields must also be represented explicitly in applyDigest.
-type ExpectedState struct {
-	Title     *string                `json:"title"`
-	Summary   *string                `json:"summary"`
-	Publisher *string                `json:"publisher"`
-	Status    *string                `json:"status"`
-	Rating    *float64               `json:"rating"`
-	Tags      []string               `json:"tags"`
-	Links     []seriesmeta.Link      `json:"links"`
-	Authors   []seriesmeta.Author    `json:"authors,omitempty"`
-	Cover     *seriesmeta.CoverState `json:"cover,omitempty"`
-}
-
-func (e ExpectedState) state() State {
-	return State{Title: e.Title, Summary: e.Summary, Publisher: e.Publisher, Status: e.Status, Rating: e.Rating, Tags: e.Tags, Links: e.Links, Authors: e.Authors, Cover: e.Cover}
-}
-
-type Input struct {
-	Adjudication      *Adjudication      `json:"adjudication,omitempty"`
-	RequestKey        string             `json:"request_key"`
-	SeriesID          int64              `json:"series_id"`
-	ProposalIDs       []int64            `json:"proposal_ids"`
-	Fields            []string           `json:"fields"`
-	Expected          ExpectedState      `json:"expected"`
-	Cover             *CoverSelection    `json:"cover,omitempty"`
-	AuthorCorrections []AuthorCorrection `json:"author_corrections,omitempty"`
-}
 type UndoInput struct {
 	RequestKey  string `json:"request_key"`
 	OperationID string `json:"operation_id"`
@@ -100,15 +66,11 @@ type Page struct {
 	Operations []Operation `json:"operations"`
 	NextBefore int64       `json:"next_before,omitempty"`
 }
-type BatchResult struct {
-	Operations []Operation `json:"operations"`
-}
 
 // Service is synchronous; one series and its receipt commit together. No batch transaction,
 // external calls, implicit retries, automatic expiry or process-local reversal state exists.
 type Service struct {
 	db               *sql.DB
-	evidence         Evidence
 	publish          func()
 	cleanup          *CleanupAccess
 	covers           *CoverAccess
@@ -116,8 +78,8 @@ type Service struct {
 	identified       IdentifiedSources
 }
 
-func New(db *sql.DB, evidence Evidence, publish func()) *Service {
-	return &Service{db: db, evidence: evidence, publish: publish}
+func New(db *sql.DB, publish func()) *Service {
+	return &Service{db: db, publish: publish}
 }
 func validKey(key string) bool {
 	if len(key) < 1 || len(key) > 80 {
@@ -311,80 +273,12 @@ func retry(ctx context.Context, j database.MetadataJournal, actor delegated.Subj
 	if err != nil {
 		return Operation{}, false, err
 	}
-	// Replay precedes proposal terminal checks, but is still a disclosure of the
-	// persisted operation. Use its policy, never the caller's optional command:
-	// omitting adjudication or racing another commit must not bypass current read.
-	if out.Adjudication != nil {
-		current, e := database.New(j.Tx).GetSeries(ctx, r.SeriesID)
-		if e != nil {
-			return Operation{}, false, delegated.ErrDenied
-		}
-		if e = authorize(ctx, j.Tx, actor, current.LibraryID, false); e != nil {
-			return Operation{}, false, e
-		}
-	}
 	out.Applied = false
 	out.Replayed = true
 	out.UndoneBy, _ = j.UndoneBy(ctx, out.ID)
 	return out, true, err
 }
 
-// State reads per-field expected values, not a global content version.
-func (s *Service) State(ctx context.Context, actor delegated.Subject, series int64) (State, error) {
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return State{}, err
-	}
-	defer tx.Rollback()
-	current, state, err := readState(ctx, database.New(tx), series)
-	if err != nil {
-		return State{}, delegated.ErrDenied
-	}
-	if err = authorize(ctx, tx, actor, current.LibraryID, false); err != nil {
-		return State{}, err
-	}
-	return state, nil
-}
-
-// Apply requires selected fields and explicitly confirmed evidence. Identical retries
-// return the original immutable outcome with replayed=true and applied=false.
-func (s *Service) Apply(ctx context.Context, actor delegated.Subject, in Input) (Operation, error) {
-	if !validKey(in.RequestKey) || in.SeriesID <= 0 || len(in.Fields) > 9 || len(in.ProposalIDs) > 10 {
-		return Operation{}, delegated.ErrInvalid
-	}
-	if !validAdjudication(in) {
-		return Operation{}, delegated.ErrInvalid
-	}
-	seen := map[string]bool{}
-	for _, f := range in.Fields {
-		if seen[f] || !slices.Contains([]string{"title", "summary", "publisher", "status", "rating", "tags", "source_links", "cover", "authors"}, f) {
-			return Operation{}, delegated.ErrInvalid
-		}
-		seen[f] = true
-	}
-	if (len(in.Fields) > 1 || !seen["cover"]) && len(in.ProposalIDs) == 0 {
-		return Operation{}, delegated.ErrInvalid
-	}
-	if seen["cover"] != (in.Cover != nil) || len(in.AuthorCorrections) > 50 || (len(in.AuthorCorrections) > 0 && !seen["authors"]) {
-		return Operation{}, delegated.ErrInvalid
-	}
-	digest := applyDigest(in)
-	if out, found, err := s.existing(ctx, actor, in.SeriesID, in.RequestKey, digest); err != nil || found {
-		return out, err
-	}
-	evidence, err := s.collectProposalEvidence(ctx, actor, in)
-	if err != nil {
-		return Operation{}, err
-	}
-	var prepared *preparedCover
-	if in.Cover != nil {
-		if prepared, err = s.prepareCover(ctx, actor, in); err != nil {
-			return Operation{}, err
-		}
-	}
-	c := supplement{key: in.RequestKey, digest: digest, series: in.SeriesID, fields: in.Fields, expected: in.Expected.state(), evidence: evidence, cover: in.Cover, prepared: prepared, corrections: in.AuthorCorrections}
-	return s.applyEvidence(ctx, actor, c, &proposalDecision{in: in, evidence: evidence})
-}
 func (s *Service) existing(ctx context.Context, actor delegated.Subject, series int64, key, digest string) (Operation, bool, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -399,35 +293,6 @@ func (s *Service) existing(ctx context.Context, actor delegated.Subject, series 
 		return Operation{}, false, err
 	}
 	return retry(ctx, database.MetadataJournal{Tx: tx}, actor, key, digest)
-}
-
-// Batch reports independent series results, never whole-batch atomicity.
-func (s *Service) Batch(ctx context.Context, actor delegated.Subject, inputs []Input) (BatchResult, error) {
-	if len(inputs) < 1 || len(inputs) > 20 {
-		return BatchResult{}, delegated.ErrInvalid
-	}
-	out := BatchResult{Operations: []Operation{}}
-	size := 0
-	for _, in := range inputs {
-		reportKey := in.RequestKey
-		if !validKey(reportKey) {
-			reportKey = ""
-		}
-		// Reserve one maximum 200 KiB receipt plus framing and all remaining
-		// unprocessed entries before starting another independently committed unit.
-		if ctx.Err() != nil || size > 24<<10 {
-			out.Operations = append(out.Operations, Operation{RequestKey: reportKey, SeriesID: in.SeriesID, Outcome: "unprocessed", Reason: "request cancelled or response budget exhausted"})
-			continue
-		}
-		op, err := s.Apply(ctx, actor, in)
-		if err != nil {
-			op = Operation{RequestKey: reportKey, SeriesID: in.SeriesID, Outcome: "failed", Reason: "operation rejected or unavailable; no metadata committed"}
-		}
-		out.Operations = append(out.Operations, op)
-		encoded, _ := json.Marshal(op)
-		size += len(encoded)
-	}
-	return out, nil
 }
 
 func changedFields(fields []FieldAudit) []string {
