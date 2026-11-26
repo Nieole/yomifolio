@@ -24,15 +24,23 @@
 - **所有者识别的理由**：结论的 reason 留空，识别区显示「在手动搜索中挑中」。
 - **上报**：所有者识别一个系列时，它开着的识别类和复核类上报以 `resolution='identified'` 结案，否则状态会一直停在待人工或待复核；备注类不动。
 - **识别状态筛选**：`GET /api/series/search?identification=<状态>` 直接读状态视图，和识别区、进度计数用同一个口径。按 03「识别信息只给管理员」的边界，只有管理员可以用：普通账号带这个参数返回 403，前端也不显示这一行。取值不在六个状态里时返回 400。URL 参数是 `ident`；和关键字一样不算智能视图的条件，应用视图时清空。
-- **挑中排除候选**：词汇表把排除候选定义为「不得再被识别为该系列」，所以暂时按这个定义拒绝（409），弹窗里标为「已排除」，按钮置灰。是否改为「所有者亲手挑中时解除排除」，已列为待用户决定。
+- **挑中排除候选**：见下方用户决定 1。
 - **07 留下的端到端用例**：「新来源的识别到达时重算公式评分」由 `TestOwnerReplacementKeepsWhatOtherSourcesBroughtAndRecomputesTheRating` 在 bootstrap 接缝上覆盖（所有者追加 AniList 后评分从 6 变为 7）。
 
 UI 截图（不进仓库）：
 
-- `/tmp/claude-1000/-home-alex-workboox-yomifolio/22a53a57-0164-4ff1-ab9d-d2ae36a5b907/scratchpad/screenshots/13-detail-identification-panel.png`：详情页识别区，每条结论带「撤换」
+- `/tmp/claude-1000/-home-alex-workboox-yomifolio/22a53a57-0164-4ff1-ab9d-d2ae36a5b907/scratchpad/screenshots/13-detail-identification-panel.png`：详情页识别区，每条结论带「撤换」和「撤回识别」
 - `/tmp/claude-1000/-home-alex-workboox-yomifolio/22a53a57-0164-4ff1-ab9d-d2ae36a5b907/scratchpad/screenshots/13-search-modal-replace.png`：从识别区撤换时的手动搜索：撤换提示、当前识别与已排除标记、按识别策略的预览
-- `/tmp/claude-1000/-home-alex-workboox-yomifolio/22a53a57-0164-4ff1-ab9d-d2ae36a5b907/scratchpad/screenshots/13-search-modal-excluded.png`：选中排除候选时按钮置灰并说明原因
+- `/tmp/claude-1000/-home-alex-workboox-yomifolio/22a53a57-0164-4ff1-ab9d-d2ae36a5b907/scratchpad/screenshots/13-search-modal-excluded.png`：选中排除候选时，提示挑中会解除排除
+- `/tmp/claude-1000/-home-alex-workboox-yomifolio/22a53a57-0164-4ff1-ab9d-d2ae36a5b907/scratchpad/screenshots/13-search-modal-lift-exclusion.png`：挑中排除候选前的确认
+- `/tmp/claude-1000/-home-alex-workboox-yomifolio/22a53a57-0164-4ff1-ab9d-d2ae36a5b907/scratchpad/screenshots/13-detail-withdraw-confirm.png`：撤回识别前的确认
 - `/tmp/claude-1000/-home-alex-workboox-yomifolio/22a53a57-0164-4ff1-ab9d-d2ae36a5b907/scratchpad/screenshots/13-library-identification-filter.png`：资料库筛选里的识别状态行和已选条件
 
 这台机器上的无头 Chrome 访问不了本地 HTTP 服务（连代理也不行，只能打开 file:// 和 data:）。所以截图是在 jsdom 里渲染真实组件、套上构建产物的样式、再经 file:// 截的，数据是模拟数据。
+
+**用户决定（2026-11-25）**：
+
+1. **所有者挑中排除候选**：在手动搜索里挑中一条排除候选时，弹窗先确认，说明这是之前排除过的条目；确认后解除这条排除，记为人工确认的识别，并按 07 补充。服务端对所有者路径不再返回 409，响应带 `lifted_exclusion`；agent 提交裁决时照旧拒绝排除候选。`GLOSSARY.md` 里排除候选的定义已同步改成「agent 不得再识别为该系列；所有者亲手挑中时解除」，规格的识别结论一节也已补上。解除写在 `identifyByOwner` 里，票 12 复用这个入口时行为一致（证据包本来就不含排除候选）。
+2. **撤回识别**：详情页每条结论旁加了「撤回识别」，接口是 `DELETE /api/identification/series/{id}/conclusions/{source}`，响应 `OwnerWithdrawal` 已纳入生成契约。撤回时旧条目记为排除候选，用 `RetractIdentified` 撤回它带来、之后没被改动的字段，删掉这条结论，再按系列剩下的识别重新补充；没有其它识别时系列回到未处理，agent 会重新领取，证据包里已经没有这个条目。同时结案该系列的识别类和复核类上报。已审定的系列只动结论，不动元数据。撤回结论和字段的部分抽成了 `identification.Service.withdraw`，`replace` 也改用它，签名没有变。
+3. **作者校正和封面原语的来源证据**：`identification.SourceEvidence` 依次看证据包、历史提案，最后看结论表里的 `facts`。所有者从手动搜索挑中、不在证据包里的条目，也能给票 10 的作者校正和封面原语当证据；用例是 `TestAuthorCorrectionUsesAnEntryTheOwnerPickedOutsideTheEvidence`。
 
