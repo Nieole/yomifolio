@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"yomifolio/internal/application/identification"
+	"yomifolio/internal/metadata"
 )
 
 // mountIdentification serves the owner's identification routes. The whole prefix is
@@ -19,6 +20,41 @@ func (c *administrationHTTP) mountIdentification(r chi.Router) {
 	r.Delete("/identification/series/{seriesId}/owner-review", c.withdrawSeriesOwnerReview)
 	r.Post("/identification/prefetch", c.startIdentificationPrefetch)
 	r.Post("/identification/series/{seriesId}/research", c.researchSeries)
+	r.Put("/identification/series/{seriesId}/conclusions/{source}", c.identifySeriesAsOwner)
+}
+
+// identifySeriesAsOwner records the owner's pick from a manual search of one source
+// ({"result": <search result>}) as the owner's identification of the series with that entry.
+func (c *administrationHTTP) identifySeriesAsOwner(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	seriesID, err := parseID(r, "seriesId")
+	if err != nil || seriesID <= 0 {
+		jsonError(w, http.StatusBadRequest, "Invalid series ID")
+		return
+	}
+	var body struct {
+		Result *metadata.SeriesMetadata `json:"result"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10)).Decode(&body); err != nil || body.Result == nil {
+		jsonError(w, http.StatusBadRequest, "Invalid identification: send the picked search result as result")
+		return
+	}
+	user, _ := userFromContext(r.Context())
+	out, err := c.identification.IdentifyAsOwner(r.Context(), user.ID, identification.OwnerIdentifyInput{SeriesID: seriesID, Source: chi.URLParam(r, "source"), Result: *body.Result})
+	switch {
+	case errors.Is(err, identification.ErrNotIdentifiable):
+		jsonError(w, http.StatusBadRequest, "Not an identification source entry: the source must be a catalogue source and the result must name its entry")
+	case errors.Is(err, identification.ErrExcludedEntry):
+		jsonError(w, http.StatusConflict, "This entry is an excluded candidate of the series")
+	case errors.Is(err, identification.ErrSeriesNotFound):
+		jsonError(w, http.StatusNotFound, "Series not found")
+	case errors.Is(err, identification.ErrDenied):
+		jsonError(w, http.StatusForbidden, apiText(requestLocale(r), "auth.admin_required"))
+	case err != nil:
+		jsonError(w, http.StatusInternalServerError, "Identification unavailable")
+	default:
+		jsonResponse(w, http.StatusOK, out)
+	}
 }
 
 // researchSeries searches one series again with the owner's term ({"query": "...", "wait_ms": n})

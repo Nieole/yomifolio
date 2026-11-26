@@ -44,6 +44,7 @@ export interface IdentificationBasis {
   entries: IdentifiedEntry[];
   placeholder_title?: boolean;
   superseded_proposals: number[];
+  retracted?: IdentifiedEntry;
 }
 
 export interface IdentifiedEntry {
@@ -637,5 +638,12 @@ export interface ResearchResult {
   added: string[];
   dropped?: number;
   packet?: EvidencePacket;
+}
+
+export interface OwnerIdentification {
+  identification: SeriesIdentification;
+  replaced?: Conclusion;
+  retraction_id?: string;
+  operation_id?: string;
 }
 

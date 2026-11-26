@@ -220,3 +220,15 @@ describe('parseFiltersFromSearch', () => {
     expect(VALID_SORT_DIRS.has('random')).toBe(false);
   });
 });
+
+describe('identification status in the URL', () => {
+  it('reads a known identification status and counts it as filter intent', () => {
+    expect(parseFiltersFromSearch(new URLSearchParams('ident=not_found'))?.activeIdentification).toBe('not_found');
+    expect(parseFiltersFromSearch(new URLSearchParams('ident=owner_reviewed&q=x'))?.activeIdentification).toBe('owner_reviewed');
+  });
+
+  it('drops an unknown status instead of sending it to the server', () => {
+    expect(parseFiltersFromSearch(new URLSearchParams('ident=matched'))?.activeIdentification).toBeNull();
+    expect(parseFiltersFromSearch(new URLSearchParams('q=x'))?.activeIdentification).toBeNull();
+  });
+});

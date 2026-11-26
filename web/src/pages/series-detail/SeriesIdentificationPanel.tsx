@@ -1,10 +1,10 @@
 /**
- * 系列详情侧栏的识别区：只读展示识别状态、各来源的识别结论与排除候选，并让管理员设为或撤回已审定。
- * 每次操作都以服务端返回的识别为准重绘，不按请求意图乐观改写。
+ * 系列详情侧栏的识别区：展示识别状态、各来源的识别结论与排除候选，让管理员设为或撤回已审定，
+ * 并从某个来源的手动搜索撤换它的识别。每次操作都以服务端返回的识别为准重绘，不按请求意图乐观改写。
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { BadgeCheck, ExternalLink, Loader2, ShieldCheck, Undo2 } from 'lucide-react';
+import { BadgeCheck, ExternalLink, Loader2, Replace, ShieldCheck, Undo2 } from 'lucide-react';
 import { apiClient, getApiErrorMessage } from '../../api/client';
 import type { Conclusion, SeriesIdentification } from '../../api/generated';
 import { useI18n } from '../../i18n/LocaleProvider';
@@ -22,7 +22,17 @@ function sourceLabel(source: string) {
   return SOURCE_LABELS[source] ?? source;
 }
 
-export function SeriesIdentificationPanel({ seriesId }: { seriesId: number }) {
+interface SeriesIdentificationPanelProps {
+  seriesId: number;
+  /** 撤换某个来源的识别：打开该来源的手动搜索，挑中的条目取代现有识别。不给就不提供撤换。 */
+  onReplace?: (source: string) => void;
+  /** 当前能手动搜索的来源；不在其中的来源没有可撤换的入口。 */
+  replaceableSources?: string[];
+  /** 页面别处记下人工识别后递增，识别区随之重读。 */
+  revision?: number;
+}
+
+export function SeriesIdentificationPanel({ seriesId, onReplace, replaceableSources = [], revision = 0 }: SeriesIdentificationPanelProps) {
   const { t, formatDateTime } = useI18n();
   const { showToast } = useToast();
   const [identification, setIdentification] = useState<SeriesIdentification | null>(null);
@@ -50,7 +60,7 @@ export function SeriesIdentificationPanel({ seriesId }: { seriesId: number }) {
     return () => {
       cancelled = true;
     };
-  }, [seriesId, t, showToast]);
+  }, [seriesId, revision, t, showToast]);
 
   const decide = async (reviewed: boolean) => {
     const target = seriesId;
@@ -171,12 +181,26 @@ export function SeriesIdentificationPanel({ seriesId }: { seriesId: number }) {
               </p>
               {c.reason ? (
                 <p className="mt-1 text-xs text-gray-300">{c.reason}</p>
+              ) : c.proposal_id > 0 ? (
+                <p className="mt-1 text-xs text-gray-500">
+                  {t('series.identification.fromAppliedProposal', { id: c.proposal_id })}
+                </p>
               ) : (
-                c.proposal_id > 0 && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    {t('series.identification.fromAppliedProposal', { id: c.proposal_id })}
-                  </p>
-                )
+                c.confirmer.kind === 'owner' && <p className="mt-1 text-xs text-gray-500">{t('series.identification.ownerPicked')}</p>
+              )}
+              {onReplace && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onReplace(c.source)}
+                    disabled={!replaceableSources.includes(c.source)}
+                    title={replaceableSources.includes(c.source) ? t('series.identification.replaceHint') : t('series.identification.replaceUnavailable')}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-gray-200 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Replace className="h-3.5 w-3.5" />
+                    {t('series.identification.replace')}
+                  </button>
+                </div>
               )}
             </div>
           ))
