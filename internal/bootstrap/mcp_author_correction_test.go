@@ -96,8 +96,8 @@ func (w *authorWorld) authors(series int64) []credit {
 	return page.Authors
 }
 
-// receipt mirrors the operation receipt fields these tests read.
-type receipt struct {
+// primitiveReceipt mirrors the operation receipt fields these tests read.
+type primitiveReceipt struct {
 	ID       string `json:"id"`
 	Kind     string `json:"kind"`
 	Outcome  string `json:"outcome"`
@@ -135,9 +135,9 @@ func correction(from, to credit, reason string) map[string]any {
 }
 
 // correct calls the primitive and fails the test when it is refused.
-func (w *authorWorld) correct(key string, series int64, expected []credit, corrections ...map[string]any) receipt {
+func (w *authorWorld) correct(key string, series int64, expected []credit, corrections ...map[string]any) primitiveReceipt {
 	w.t.Helper()
-	var out receipt
+	var out primitiveReceipt
 	if result := w.agent.call("library_correct_authors", map[string]any{"request_key": key, "series_id": series, "expected_authors": expected, "corrections": corrections}, &out); result.IsError {
 		w.t.Fatalf("correction %s refused: %s", key, resultText(result))
 	}
@@ -147,7 +147,7 @@ func (w *authorWorld) correct(key string, series int64, expected []credit, corre
 // refused calls the primitive and fails the test unless it is refused.
 func (w *authorWorld) refused(key string, series int64, expected []credit, corrections ...map[string]any) {
 	w.t.Helper()
-	var out receipt
+	var out primitiveReceipt
 	if result := w.agent.call("library_correct_authors", map[string]any{"request_key": key, "series_id": series, "expected_authors": expected, "corrections": corrections}, &out); !result.IsError {
 		w.t.Fatalf("correction %s accepted: %+v", key, out)
 	}
@@ -176,7 +176,7 @@ func TestAgentCorrectsAnAuthorWithAnIdentifiedSourceCredit(t *testing.T) {
 
 	applied := w.correct("authors-1", first, current, correction(alias, canonical, "Bangumi credits the canonical pen name"))
 	if applied.Kind != "enrich" || applied.Outcome != "changed" || !applied.Applied {
-		t.Fatalf("correction receipt %+v", applied)
+		t.Fatalf("correction primitiveReceipt %+v", applied)
 	}
 	want := append(without(current, alias), canonical)
 	got := w.authors(first)
@@ -202,14 +202,14 @@ func TestAgentCorrectsAnAuthorWithAnIdentifiedSourceCredit(t *testing.T) {
 	}
 	// The owner reads the same receipt in the operation history.
 	if rec := w.web.raw("GET", "/api/mcp/operations/"+applied.ID, ""); rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Canonical") || !strings.Contains(rec.Body.String(), "Alias") {
-		t.Fatalf("owner receipt %d %s", rec.Code, rec.Body)
+		t.Fatalf("owner primitiveReceipt %d %s", rec.Code, rec.Body)
 	}
 
-	var read receipt
+	var read primitiveReceipt
 	if result := w.agent.call("library_get_metadata_operation", map[string]any{"operation_id": applied.ID}, &read); result.IsError || read.ID != applied.ID || read.Outcome != "changed" {
-		t.Fatalf("receipt read %+v %s", read, resultText(result))
+		t.Fatalf("primitiveReceipt read %+v %s", read, resultText(result))
 	}
-	var undone receipt
+	var undone primitiveReceipt
 	if result := w.agent.call("library_undo_metadata_operation", map[string]any{"request_key": "authors-1-undo", "operation_id": applied.ID}, &undone); result.IsError || undone.Outcome != "changed" {
 		t.Fatalf("undo %+v %s", undone, resultText(result))
 	}
@@ -355,7 +355,7 @@ func TestAuthorCorrectionCommitsWholeOrNothingAndUndoesUnderCurrentAuthority(t *
 		INSERT INTO series_authors SELECT ?, id FROM authors WHERE name = 'Later'`, first); err != nil {
 		t.Fatal(err)
 	}
-	var blocked receipt
+	var blocked primitiveReceipt
 	if result := w.agent.call("library_undo_metadata_operation", map[string]any{"request_key": "undo-blocked", "operation_id": applied.ID}, &blocked); result.IsError || blocked.Outcome != "conflict" {
 		t.Fatalf("undo over a changed list %+v %s", blocked, resultText(result))
 	}
@@ -364,14 +364,14 @@ func TestAuthorCorrectionCommitsWholeOrNothingAndUndoesUnderCurrentAuthority(t *
 	}
 	// A lock blocks undo as well; an edit of another field does not.
 	w.exec(`UPDATE series SET locked_fields = 'authors' WHERE id = ?`, first)
-	var locked receipt
+	var locked primitiveReceipt
 	if result := w.agent.call("library_undo_metadata_operation", map[string]any{"request_key": "undo-locked", "operation_id": applied.ID}, &locked); result.IsError || locked.Outcome != "conflict" {
 		t.Fatalf("undo over a lock %+v %s", locked, resultText(result))
 	}
 	w.exec(`UPDATE series SET locked_fields = '', publisher = 'Unrelated human edit' WHERE id = ?`, first)
 	// A failing undo write keeps the corrected list and its failed receipt.
 	w.exec(fmt.Sprintf(`CREATE TRIGGER authors_undo_fail BEFORE DELETE ON series_authors WHEN OLD.series_id = %d BEGIN SELECT RAISE(ABORT, 'private diagnosis'); END`, first))
-	var failing receipt
+	var failing primitiveReceipt
 	if result := w.agent.call("library_undo_metadata_operation", map[string]any{"request_key": "undo-failing", "operation_id": applied.ID}, &failing); result.IsError || failing.Outcome != "failed" || failing.ParentID != applied.ID {
 		t.Fatalf("failing undo %+v %s", failing, resultText(result))
 	}
@@ -386,14 +386,14 @@ func TestAuthorCorrectionCommitsWholeOrNothingAndUndoesUnderCurrentAuthority(t *
 		t.Fatalf("narrow credential %d %s", rec.Code, rec.Body)
 	}
 	w.refused("narrowed", first, w.authors(first), correction(credit{"Artist", "Artist"}, canonical, "merge"))
-	var denied receipt
+	var denied primitiveReceipt
 	if result := w.agent.call("library_undo_metadata_operation", map[string]any{"request_key": "undo-narrowed", "operation_id": applied.ID}, &denied); !result.IsError {
 		t.Fatalf("undo without metadata_write %+v", denied)
 	}
 
 	// The owner undoes the agent's receipt over the administration API.
 	rec := w.web.raw("POST", "/api/mcp/operations/"+applied.ID+"/undo", `{"request_key":"owner-undo"}`)
-	var undone receipt
+	var undone primitiveReceipt
 	if rec.Code != http.StatusOK || json.Unmarshal(rec.Body.Bytes(), &undone) != nil || undone.Outcome != "changed" {
 		t.Fatalf("owner undo %d %s", rec.Code, rec.Body)
 	}
@@ -464,7 +464,7 @@ func TestAuthorReadNeedsOnlyReadAndStaysInsideTheCredential(t *testing.T) {
 	}
 	// Reading does not let it correct.
 	if result := reader.call("library_correct_authors", map[string]any{"request_key": "reader", "series_id": w.series[0], "expected_authors": read.Authors,
-		"corrections": []any{correction(alias, canonical, "pen name")}}, &receipt{}); !result.IsError {
+		"corrections": []any{correction(alias, canonical, "pen name")}}, &primitiveReceipt{}); !result.IsError {
 		t.Fatal("read-only credential corrected authors")
 	}
 

@@ -109,13 +109,13 @@ func (w *coverWorld) blue() bool {
 	return b > r
 }
 
-func (w *coverWorld) improve(key string, args map[string]any) receipt {
+func (w *coverWorld) improve(key string, args map[string]any) primitiveReceipt {
 	w.t.Helper()
 	input := map[string]any{"request_key": key, "series_id": w.series, "book_id": w.book, "page": 2, "reason": "page 2 is the full cover art; page 1 is an advertisement"}
 	for k, v := range args {
 		input[k] = v
 	}
-	var out receipt
+	var out primitiveReceipt
 	if result := w.agent.call("library_improve_cover", input, &out); result.IsError {
 		w.t.Fatalf("cover %s refused: %s", key, resultText(result))
 	}
@@ -128,7 +128,7 @@ func (w *coverWorld) refused(key string, args map[string]any) {
 	for k, v := range args {
 		input[k] = v
 	}
-	var out receipt
+	var out primitiveReceipt
 	if result := w.agent.call("library_improve_cover", input, &out); !result.IsError {
 		w.t.Fatalf("cover %s accepted: %+v", key, out)
 	}
@@ -142,7 +142,7 @@ func TestAgentImprovesAnAutomaticCoverWithAnArchivePage(t *testing.T) {
 	applied := w.improve("cover-1", nil)
 	if applied.Kind != "enrich" || applied.Outcome != "changed" || !applied.Applied || applied.CoverSelection == nil ||
 		applied.CoverSelection.BookID != w.book || applied.CoverSelection.Page != 2 || applied.NewCoverMaterial == "" || applied.OldCoverMaterial == "" {
-		t.Fatalf("cover receipt %+v", applied)
+		t.Fatalf("cover primitiveReceipt %+v", applied)
 	}
 	if len(applied.Fields) != 1 || applied.Fields[0].Field != "cover" || applied.Fields[0].Reason != "page 2 is the full cover art; page 1 is an advertisement" {
 		t.Fatalf("cover audit %+v", applied.Fields)
@@ -171,7 +171,7 @@ func TestAgentImprovesAnAutomaticCoverWithAnArchivePage(t *testing.T) {
 		t.Fatalf("agent cover read does not show the blue page: %s", resultText(result))
 	}
 
-	var undone receipt
+	var undone primitiveReceipt
 	if result := w.agent.call("library_undo_metadata_operation", map[string]any{"request_key": "cover-1-undo", "operation_id": applied.ID}, &undone); result.IsError || undone.Outcome != "changed" {
 		t.Fatalf("undo %+v %s", undone, resultText(result))
 	}
@@ -220,7 +220,7 @@ func TestCoverImprovementLeavesManualAndLockedCoversAlone(t *testing.T) {
 	w.refused("url", map[string]any{"url": "http://127.0.0.1/private"})
 	// The page's content is read, so a credential without read may not pick one.
 	blind := w.web.mainLoopAgent(w.cfg, 1, []int64{w.library.ID}, []string{delegated.MetadataWrite})
-	if result := blind.call("library_improve_cover", map[string]any{"request_key": "blind", "series_id": w.series, "book_id": w.book, "page": 2, "reason": "page 2 is the full cover art"}, &receipt{}); !result.IsError {
+	if result := blind.call("library_improve_cover", map[string]any{"request_key": "blind", "series_id": w.series, "book_id": w.book, "page": 2, "reason": "page 2 is the full cover art"}, &primitiveReceipt{}); !result.IsError {
 		t.Fatal("cover chosen without read authority")
 	}
 	if after := w.operations(); after != before || w.blue() {
@@ -320,12 +320,12 @@ func TestCoverImprovementCommitsWithItsReceiptOrNotAtAll(t *testing.T) {
 	if rec := w.web.raw("POST", fmt.Sprintf("/api/books/%d/cover", w.book), `{"page":1}`); rec.Code != http.StatusOK {
 		t.Fatalf("owner page cover %d %s", rec.Code, rec.Body)
 	}
-	var undo receipt
+	var undo primitiveReceipt
 	if result := w.agent.call("library_undo_metadata_operation", map[string]any{"request_key": "undo-owner-cover", "operation_id": applied.ID}, &undo); result.IsError || undo.Outcome != "conflict" {
 		t.Fatalf("undo over the owner's cover %+v %s", undo, resultText(result))
 	}
 	w.exec(`UPDATE books SET cover_path = ?, cover_locked = 1 WHERE id = ?`, applied.NewCoverMaterial, w.book)
-	var locked receipt
+	var locked primitiveReceipt
 	if result := w.agent.call("library_undo_metadata_operation", map[string]any{"request_key": "undo-locked-cover", "operation_id": applied.ID}, &locked); result.IsError || locked.Outcome != "conflict" {
 		t.Fatalf("undo over a locked cover %+v %s", locked, resultText(result))
 	}
@@ -336,7 +336,7 @@ func TestCoverImprovementCommitsWithItsReceiptOrNotAtAll(t *testing.T) {
 	if result := w.agent.call("library_cleanup_metadata_operation", map[string]any{"request_key": "clean-cover", "operation_id": applied.ID}, &cleaned); result.IsError || cleaned["undo_unavailable"] != true {
 		t.Fatalf("cleanup %+v %s", cleaned, resultText(result))
 	}
-	var unavailable receipt
+	var unavailable primitiveReceipt
 	if result := w.agent.call("library_undo_metadata_operation", map[string]any{"request_key": "undo-cleaned", "operation_id": applied.ID}, &unavailable); result.IsError || unavailable.Outcome != "unavailable" {
 		t.Fatalf("undo after cleanup %+v %s", unavailable, resultText(result))
 	}
