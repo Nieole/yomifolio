@@ -77,6 +77,7 @@ const contradicted: SeriesIdentification = {
     category: 'new_book_contradiction',
     class: 'recheck',
     reason: 'new book "Other 01.cbz" has ComicInfo series "Other", which matches no identified title, original title or alias',
+    clue: 'Other',
     raised_by: { kind: 'system', user_id: 0, user_name: '', credential_id: '', credential_name: '' },
     raised_at: '2026-03-01T09:03:00Z',
   }],
@@ -179,7 +180,7 @@ describe('IdentificationPending', () => {
     expect(within(card(8)).getByText(zhCN['identification.pending.closeNoteHint'])).toBeTruthy();
     expect(within(card(8)).queryByRole('button', { name: '确认是这部' })).toBeNull();
     // A system recheck is explained in the page's language, with the raw fact kept beside it.
-    expect(within(card(9)).getByText(zhCN['identification.pending.contradictionExplained'])).toBeTruthy();
+    expect(within(card(9)).getByText('新加入的书带的 ComicInfo 系列名「Other」，与这个系列所有来源的识别标题、原名和别名都对不上。')).toBeTruthy();
     expect(within(card(9)).getByText(/Other 01\.cbz/)).toBeTruthy();
     // The identification a recheck questions is shown beside it.
     expect(within(screen.getByTestId('pending-conclusion-bangumi')).getByRole('link', { name: /MONSTER/ }).getAttribute('href')).toBe('https://bgm.tv/subject/1234');
@@ -303,5 +304,25 @@ describe('IdentificationPending', () => {
     expect(await screen.findByText('Identification unavailable')).toBeTruthy();
     expect(within(card(7)).getByRole('button', { name: '判为查无此作' })).toBeTruthy();
     expect(within(card(7)).queryByText(/已处理/)).toBeNull();
+  });
+
+  it('keeps a questioned identification, saying the name will not question it again', async () => {
+    serve((call) => listOr(call, () => ({ data: { ...contradicted, status: 'identified', escalations: undefined } })));
+    renderPage();
+
+    const series = await screen.findByTestId('pending-series-9');
+    // A recheck is answered by keeping the identification or replacing it on the series page, not by
+    // picking or concluding here.
+    expect(within(series).queryByRole('button', { name: '确认是这部' })).toBeNull();
+    expect(within(series).queryByRole('button', { name: '判为查无此作' })).toBeNull();
+    expect(within(series).getByRole('button', { name: '设为已审定' })).toBeTruthy();
+    expect(within(series).getByRole('button', { name: '重搜' })).toBeTruthy();
+    expect(within(series).getByText(/以后这个系列的新书带「Other」不再报/)).toBeTruthy();
+    expect(within(series).getByRole('link', { name: '去系列详情页撤换识别' }).getAttribute('href')).toBe('/series/9');
+
+    fireEvent.click(within(series).getByRole('button', { name: '识别无误' }));
+    expect(await within(card(9)).findByText('已处理，当前识别状态：已识别')).toBeTruthy();
+    expect(lastDecision()).toEqual({ method: 'post', url: '/api/identification/series/9/keep-identification', body: undefined });
+    expect(screen.getByText(zhCN['identification.pending.kept'])).toBeTruthy();
   });
 });
