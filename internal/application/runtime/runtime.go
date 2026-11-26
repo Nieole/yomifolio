@@ -179,7 +179,7 @@ func New(store database.Store, cfg *config.Manager, options Options) (*Runtime, 
 	if catalogue == nil {
 		catalogue = metadata.NewConfiguredProvider
 	}
-	r.Prefetch = identification.NewPrefetcher(store.DB(), r.Runs.Start, cfg.Snapshot, catalogue)
+	r.Prefetch = identification.NewPrefetcher(store.DB(), r.Runs.Start, r.Engine.Await, cfg.Snapshot, catalogue)
 	r.Watcher, r.WatcherError = scanner.NewFileWatcher(scanner.WatcherHooks{ScanLibrary: r.Scans.WatchIngestion, CleanupLibrary: r.Scans.WatchCleanupWhen, LibraryScanRunning: r.Scanner.LibraryScanActive})
 	var libraryWatcher libraries.Watcher
 	if r.Watcher != nil {

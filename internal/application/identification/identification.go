@@ -2,8 +2,8 @@
 // entries a person excluded, escalations, not-found verdicts and the owner-reviewed decision, and
 // the identification status derived from them. The status is never stored or edited on its own;
 // the series_identification_status view is its single definition. It also owns the evidence
-// packets that prefetch runs prepare for unprocessed series, the agents' main loop of claim leases
-// and verdicts over them, and the read-only inspection behind the notes agents leave the owner.
+// packets that prefetch and research runs prepare, the agents' main loop of claim leases and
+// verdicts over them, and the read-only inspection behind the notes agents leave the owner.
 //
 // Agent-facing use cases re-check delegated authority through Access on every call; owner-facing
 // ones take the acting account and re-check it is an administrator in the change's transaction.
@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"yomifolio/internal/application/delegated"
+	"yomifolio/internal/task"
 )
 
 var (
@@ -56,13 +57,17 @@ const (
 // Access is the delegated authority the agent-facing use cases rely on.
 type Access interface {
 	Libraries(context.Context, delegated.Subject, []int64, string) ([]int64, error)
+	Authorize(ctx context.Context, subject delegated.Subject, library int64, capability string) error
+	PrepareRun(ctx context.Context, subject delegated.Subject, library int64, capability string, spec task.RunSpec, body task.Body) (task.RunSpec, task.Body, error)
 }
 
-// Service is synchronous: each call is one transaction or one read, and holds no process state.
+// Service holds no process state. Each call is one transaction or one read, except a research,
+// which launches a run and waits for it a bounded time.
 type Service struct {
 	db       *sql.DB
 	access   Access
 	prefetch *Prefetcher
+	images   *imageSources
 	now      func() time.Time
 }
 
@@ -71,7 +76,8 @@ func New(db *sql.DB, access Access) *Service {
 	return &Service{db: db, access: access, now: time.Now}
 }
 
-// WithPrefetch lets the owner launch the evidence prefetch through this service.
+// WithPrefetch lets the owner launch the evidence prefetch, and the owner and agents research one
+// series, through this service.
 func (s *Service) WithPrefetch(p *Prefetcher) *Service { s.prefetch = p; return s }
 
 // WithClock replaces the current time every identification record and lease is stamped and

@@ -29,6 +29,8 @@ var listingCapability = map[string]string{
 	"library_count_tags":               delegated.Read,
 	"library_report_series":            delegated.Read,
 
+	"library_get_identification_images": delegated.Read,
+
 	"library_propose_match":           delegated.MetadataWrite,
 	"library_enrich_metadata":         delegated.MetadataWrite,
 	"library_enrich_metadata_batch":   delegated.MetadataWrite,
@@ -36,6 +38,7 @@ var listingCapability = map[string]string{
 	"library_add_series_relation":     delegated.MetadataWrite,
 	"library_claim_series":            delegated.MetadataWrite,
 	"library_submit_verdicts":         delegated.MetadataWrite,
+	"library_research_series":         delegated.MetadataWrite,
 
 	"library_start_scan": delegated.ScanControl,
 

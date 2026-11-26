@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"yomifolio/internal/application/delegated"
-	"yomifolio/internal/metadata"
 )
 
 // Verdict kinds an agent answers a claimed series with.
@@ -282,7 +281,7 @@ func (s *Service) judge(ctx context.Context, tx *sql.Tx, subject delegated.Subje
 		result.Problem = ProblemClaimedByOther
 		return result, nil
 	}
-	packet, facts, err := storedEvidence(ctx, tx, v.SeriesID)
+	packet, facts, _, err := storedEvidence(ctx, tx, v.SeriesID)
 	if err != nil {
 		return VerdictResult{}, err
 	}
@@ -352,23 +351,4 @@ func seriesStatus(ctx context.Context, q queryer, seriesID int64) (string, error
 	var status string
 	err := q.QueryRowContext(ctx, `SELECT status FROM series_identification_status WHERE series_id = ?`, seriesID).Scan(&status)
 	return status, err
-}
-
-// storedEvidence reads the series' packet as stored and the source snapshot of each candidate.
-// A series without a packet reads as an empty one.
-func storedEvidence(ctx context.Context, q queryer, seriesID int64) (EvidencePacket, map[string]metadata.SeriesMetadata, error) {
-	var packet EvidencePacket
-	facts := map[string]metadata.SeriesMetadata{}
-	var rawPacket, rawFacts string
-	err := q.QueryRowContext(ctx, `SELECT packet, source_facts FROM identification_evidence WHERE series_id = ?`, seriesID).Scan(&rawPacket, &rawFacts)
-	if errors.Is(err, sql.ErrNoRows) {
-		return packet, facts, nil
-	}
-	if err != nil {
-		return packet, nil, err
-	}
-	if err := json.Unmarshal([]byte(rawPacket), &packet); err != nil {
-		return packet, nil, err
-	}
-	return packet, facts, json.Unmarshal([]byte(rawFacts), &facts)
 }

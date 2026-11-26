@@ -191,6 +191,8 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 			registerMCPModelBudgets(server, service, subject)
 			if identificationService != nil {
 				registerMCPIdentification(server, identificationService, subject)
+				registerMCPResearch(server, identificationService, subject)
+				registerMCPIdentificationImages(server, identificationService, subject, r.Context())
 				registerMCPInspection(server, identificationService, subject)
 			}
 			return server

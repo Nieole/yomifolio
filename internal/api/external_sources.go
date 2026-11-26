@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http"
+
 	"yomifolio/internal/config"
 	"yomifolio/internal/metadata"
 )
@@ -12,6 +14,9 @@ type ExternalSources struct {
 	Metadata func(config.Config, string) metadata.Provider
 	// AI serves grouping, recommendations and connection tests with their resolved inputs.
 	AI func(provider, apiMode, baseURL, requestPath, model, apiKey string, timeout int) metadata.AIProvider
+	// Covers carries candidate cover downloads. It only moves bytes: the server still decides
+	// which hosts and redirects are allowed and checks size and content around it.
+	Covers http.RoundTripper
 }
 
 func (s ExternalSources) metadata(cfg config.Config, name string) metadata.Provider {
@@ -39,4 +44,12 @@ func (s ExternalSources) MetadataProvider(cfg config.Config, name string) metada
 // ConfiguredAI resolves the shared production AI factory at call time.
 func (s ExternalSources) ConfiguredAI(cfg config.Config) metadata.AIProvider {
 	return s.configuredAI(cfg)
+}
+
+// CoverTransport resolves the transport candidate cover downloads use.
+func (s ExternalSources) CoverTransport() http.RoundTripper {
+	if s.Covers != nil {
+		return s.Covers
+	}
+	return http.DefaultTransport
 }
