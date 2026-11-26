@@ -26,6 +26,8 @@ var listingCapability = map[string]string{
 	"library_get_match_proposal":       delegated.Read,
 	"library_identification_progress":  delegated.Read,
 
+	"library_get_identification_images": delegated.Read,
+
 	"library_propose_match":           delegated.MetadataWrite,
 	"library_enrich_metadata":         delegated.MetadataWrite,
 	"library_enrich_metadata_batch":   delegated.MetadataWrite,

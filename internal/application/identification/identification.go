@@ -63,6 +63,7 @@ type Service struct {
 	db       *sql.DB
 	access   Access
 	prefetch *Prefetcher
+	images   *imageSources
 	now      func() time.Time
 }
 
