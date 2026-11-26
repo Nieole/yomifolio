@@ -163,20 +163,8 @@ func submitRestoration(t *testing.T, c *apiFixture, libraryID, planID int64, mod
 		t.Fatal(err)
 	}
 	op = awaitRelocationOperation(t, c, op.ID)
-	// The operation result is saved before its commit run releases the library.
-	deadline := time.After(10 * time.Second)
-	for {
-		run, err := c.taskEngine.runStore.LoadRun(context.Background(), op.RunID)
-		if err == nil && run.Status.IsTerminal() {
-			return op
-		}
-		select {
-		case <-deadline:
-			t.Fatalf("commit run did not finish: %+v %v", run, err)
-		default:
-			time.Sleep(time.Millisecond)
-		}
-	}
+	awaitRunTerminal(t, c, op.RunID)
+	return op
 }
 
 func TestRestorationWatcherFailureKeepsProtectionThroughFreshStartup(t *testing.T) {

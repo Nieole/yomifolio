@@ -179,6 +179,7 @@ func TestRelocationAcceptsMissingBookAndProtectsEveryRecord(t *testing.T) {
 	if op.Status != "completed" {
 		t.Fatalf("operation: %+v", op)
 	}
+	awaitRunTerminal(t, c, op.RunID)
 	libraries := httptest.NewRecorder()
 	c.families.library.getLibraries(libraries, httptest.NewRequest(http.MethodGet, "/api/libraries", nil))
 	var libraryStatus []struct {
@@ -232,20 +233,8 @@ func acceptRelocationAnomalies(t *testing.T, c *apiFixture, planID int64) Reloca
 		t.Fatal(err)
 	}
 	op = awaitRelocationOperation(t, c, op.ID)
-	// The operation result is saved before its commit run releases the library.
-	deadline := time.After(10 * time.Second)
-	for {
-		run, err := c.taskEngine.runStore.LoadRun(context.Background(), op.RunID)
-		if err == nil && run.Status.IsTerminal() {
-			return op
-		}
-		select {
-		case <-deadline:
-			t.Fatalf("commit run did not finish: %+v %v", run, err)
-		default:
-			time.Sleep(time.Millisecond)
-		}
-	}
+	awaitRunTerminal(t, c, op.RunID)
+	return op
 }
 
 func TestRelocationProtectionSurvivesFreshStartupAndAllCleanupEntrypoints(t *testing.T) {
