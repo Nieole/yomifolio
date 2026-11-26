@@ -22,14 +22,17 @@ type ingestionWriter struct {
 	libraryID   int64
 	seriesCache map[string]database.Series
 	// preexisting holds the series that existed when the scan began; only their new books are
-	// reported as added.
+	// reported as added. When they could not be listed no series is reported as created, since
+	// every series would then look new.
 	preexisting     map[int64]bool
+	listedExisting  bool
 	metrics         *scanMetrics
 	progress        *scanProgressReporter
 	renames         *renameIndex
 	refreshInterval time.Duration
 	onBatch         func(string)
 	onAdded         func(context.Context, []AddedBook)
+	onCreated       func(context.Context, []int64)
 	enqueueCovers   func(context.Context, []coverJob)
 }
 
@@ -44,6 +47,7 @@ type ingestedBatch struct {
 	covers    []coverJob
 	rehomes   []claimedArchive
 	added     []AddedBook
+	created   []int64
 }
 
 // persist publishes cache changes only after the batch transaction commits.
@@ -53,6 +57,7 @@ func (w *ingestionWriter) persist(ctx context.Context, batch []claimedArchive) (
 	var coverJobs []coverJob
 	var committedRehomes []claimedArchive
 	var added []AddedBook
+	var created []int64
 	updatedSeriesIDs := make(map[int64]bool)
 	pendingSeries := make(map[string]database.Series)
 	// The batch's view of series it updates from ComicInfo: the row as last written in this
@@ -95,6 +100,9 @@ func (w *ingestionWriter) persist(ctx context.Context, batch []claimedArchive) (
 					continue
 				}
 				seriesID = createdSeries.ID
+				if w.listedExisting && !w.preexisting[seriesID] {
+					created = append(created, seriesID)
+				}
 				// 同一次扫描里该系列的后续卷凭它走增补分支；增补时的当前值在批事务里重读。
 				pendingSeries[res.seriesPath] = createdSeries
 			} else if res.comicInfo != nil {
@@ -204,7 +212,7 @@ func (w *ingestionWriter) persist(ctx context.Context, batch []claimedArchive) (
 	for path, series := range pendingSeries {
 		seriesCache[path] = series
 	}
-	return ingestedBatch{seriesIDs: updatedSeriesIDs, covers: coverJobs, rehomes: committedRehomes, added: added}, nil
+	return ingestedBatch{seriesIDs: updatedSeriesIDs, covers: coverJobs, rehomes: committedRehomes, added: added, created: created}, nil
 }
 
 // seriesForUpdate returns the series row and source records a ComicInfo update starts from,
@@ -234,6 +242,7 @@ func (w *ingestionWriter) consume(ctx context.Context, results <-chan interprete
 	if err != nil {
 		w.metrics.uncertainEntries.Add(1)
 	}
+	w.listedExisting = err == nil
 	for _, series := range existing {
 		w.seriesCache[series.Path] = series
 		w.preexisting[series.ID] = true
@@ -262,6 +271,9 @@ func (w *ingestionWriter) consume(ctx context.Context, results <-chan interprete
 			slog.InfoContext(ctx, "Successfully ingested batch", "book_count", len(batch))
 			if w.onAdded != nil && len(committed.added) > 0 {
 				w.onAdded(context.WithoutCancel(ctx), committed.added)
+			}
+			if w.onCreated != nil && len(committed.created) > 0 {
+				w.onCreated(context.WithoutCancel(ctx), committed.created)
 			}
 			dirty.touch(committed.seriesIDs)
 			if w.onBatch != nil {

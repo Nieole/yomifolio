@@ -6,6 +6,7 @@ package metadata
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strings"
 
 	"yomifolio/internal/config"
@@ -68,11 +69,13 @@ type SourceQuery struct {
 
 // SourceFanout searches the catalogue sources one configuration snapshot enables.
 // Open resolves a source adapter; nil uses NewConfiguredProvider. Pace, when set, runs before
-// every source access to space requests per source.
+// every source access to space requests per source. Only, when not empty, narrows the fan-out to
+// those of the enabled sources it names.
 type SourceFanout struct {
 	Config config.Config
 	Open   func(config.Config, string) Provider
 	Pace   func(ctx context.Context, source string) error
+	Only   []string
 }
 
 // Search asks each source in CatalogueSources order for one page of q and hands every page
@@ -89,6 +92,9 @@ func (f SourceFanout) Search(ctx context.Context, q SourceQuery, checkpoint func
 		open = NewConfiguredProvider
 	}
 	for _, name := range CatalogueSources(f.Config) {
+		if len(f.Only) > 0 && !slices.Contains(f.Only, name) {
+			continue
+		}
 		if f.Pace != nil {
 			if err := f.Pace(ctx, name); err != nil {
 				return err
