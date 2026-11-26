@@ -558,6 +558,11 @@ body {
     radial-gradient(circle at 20% 80%, rgb(var(--rgb-komga-primary) / 0.08), transparent 30%);
 }
 
+/* React Flow 深色模式的画布底色不透明，会盖住上面按主题着色的渐变与光晕。 */
+.franchise-graph-flow {
+  --xy-background-color: transparent;
+}
+
 .franchise-graph-controls,
 .franchise-graph-minimap {
   color: rgb(var(--rgb-gray-400));

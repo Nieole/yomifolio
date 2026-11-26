@@ -1,6 +1,6 @@
 # Collected dependency manifest
 
-Generated 2026-11-16; inventory revised 2026-11-24 with upstream texts retrieved 2026-11-23. Labels come from lock metadata, not legal conclusions. Missing entries are explicit; a link is not a replacement for required license text.
+Generated 2026-11-16; inventory revised 2026-11-26 with upstream texts retrieved 2026-11-23 and 2026-11-26. Labels come from lock metadata, not legal conclusions. Missing entries are explicit; a link is not a replacement for required license text.
 
 Current inventory: 384 package entries (54 Go modules, 329 NPM dependency locations, one Go 1.27.4 runtime); 402 legal files including root LICENSE/NOTICE and four upstream codec texts. Superseded Go 1.26.10 runtime texts are not included. NPM `installed` records directory presence, not a complete installation; absent optional/platform locations carry no local verification.
 
@@ -178,8 +178,8 @@ Current inventory: 384 package entries (54 Go modules, 329 NPM dependency locati
 | NPM | @vitejs/plugin-react 6.3.0 | dev/build-only possible | https://registry.npmjs.org/@vitejs/plugin-react/-/plugin-react-6.3.0.tgz | [LICENSE](LICENSES/npm/node_modules/@vitejs/plugin-react/6.3.0/LICENSE) |
 | NPM | @vitest/mocker 5.1.0 | dev/build-only possible | https://registry.npmjs.org/@vitest/mocker/-/mocker-5.1.0.tgz | [LICENSE](LICENSES/npm/node_modules/@vitest/mocker/5.1.0/LICENSE) |
 | NPM | @vitest/spy 5.1.0 | dev/build-only possible | https://registry.npmjs.org/@vitest/spy/-/spy-5.1.0.tgz | [LICENSE](LICENSES/npm/node_modules/@vitest/spy/5.1.0/LICENSE) |
-| NPM | @xyflow/react 12.12.1 | production or optional transitive | https://registry.npmjs.org/@xyflow/react/-/react-12.12.1.tgz | [LICENSE](LICENSES/npm/node_modules/@xyflow/react/12.12.1/LICENSE) |
-| NPM | @xyflow/system 0.0.84 | production or optional transitive | https://registry.npmjs.org/@xyflow/system/-/system-0.0.84.tgz | [LICENSE](LICENSES/npm/node_modules/@xyflow/system/0.0.84/LICENSE) |
+| NPM | @xyflow/react 13.0.3 | production or optional transitive | https://registry.npmjs.org/@xyflow/react/-/react-13.0.3.tgz | [LICENSE](LICENSES/npm/node_modules/@xyflow/react/13.0.3/LICENSE) |
+| NPM | @xyflow/system 1.0.1 | production or optional transitive | https://registry.npmjs.org/@xyflow/system/-/system-1.0.1.tgz | [LICENSE](LICENSES/npm/node_modules/@xyflow/system/1.0.1/LICENSE) |
 | NPM | @yui540/comimi 0.26.0 | production or optional transitive | https://registry.npmjs.org/@yui540/comimi/-/comimi-0.26.0.tgz | [LICENSE](LICENSES/npm/node_modules/@yui540/comimi/0.26.0/LICENSE) |
 | NPM | @yui540/comimi-react 0.3.0 | production or optional transitive | https://registry.npmjs.org/@yui540/comimi-react/-/comimi-react-0.3.0.tgz | [LICENSE](LICENSES/npm/node_modules/@yui540/comimi-react/0.3.0/LICENSE) |
 | NPM | acorn 8.19.0 | dev/build-only possible | https://registry.npmjs.org/acorn/-/acorn-8.19.0.tgz | [LICENSE](LICENSES/npm/node_modules/acorn/8.19.0/LICENSE) |
@@ -340,6 +340,7 @@ Current inventory: 384 package entries (54 Go modules, 329 NPM dependency locati
 | NPM | qified 0.10.1 | dev/build-only possible | https://registry.npmjs.org/qified/-/qified-0.10.1.tgz | [LICENSE](LICENSES/npm/node_modules/qified/0.10.1/LICENSE) |
 | NPM | hookified 2.2.0 | dev/build-only possible | https://registry.npmjs.org/hookified/-/hookified-2.2.0.tgz | [LICENSE](LICENSES/npm/node_modules/qified/node_modules/hookified/2.2.0/LICENSE) |
 | NPM | react 19.3.1 | production or optional transitive | https://registry.npmjs.org/react/-/react-19.3.1.tgz | [LICENSE](LICENSES/npm/node_modules/react/19.3.1/LICENSE) |
+| NPM | react-compiler-runtime 1.0.0 | production or optional transitive | https://registry.npmjs.org/react-compiler-runtime/-/react-compiler-runtime-1.0.0.tgz | [LICENSE](LICENSES/npm/node_modules/react-compiler-runtime/1.0.0/LICENSE) |
 | NPM | react-dom 19.3.1 | production or optional transitive | https://registry.npmjs.org/react-dom/-/react-dom-19.3.1.tgz | [LICENSE](LICENSES/npm/node_modules/react-dom/19.3.1/LICENSE) |
 | NPM | react-is 17.0.2 | dev/build-only possible | https://registry.npmjs.org/react-is/-/react-is-17.0.2.tgz | [LICENSE](LICENSES/npm/node_modules/react-is/17.0.2/LICENSE) |
 | NPM | react-router 7.18.5 | production or optional transitive | https://registry.npmjs.org/react-router/-/react-router-7.18.5.tgz | [LICENSE.md](LICENSES/npm/node_modules/react-router/7.18.5/LICENSE.md) |
@@ -372,7 +373,6 @@ Current inventory: 384 package entries (54 Go modules, 329 NPM dependency locati
 | NPM | undici-types 8.9.0 | dev/build-only possible | https://registry.npmjs.org/undici-types/-/undici-types-8.9.0.tgz | [LICENSE](LICENSES/npm/node_modules/undici-types/8.9.0/LICENSE) |
 | NPM | update-browserslist-db 1.3.4 | dev/build-only possible | https://registry.npmjs.org/update-browserslist-db/-/update-browserslist-db-1.3.4.tgz | [LICENSE](LICENSES/npm/node_modules/update-browserslist-db/1.3.4/LICENSE) |
 | NPM | uri-js 4.4.1 | dev/build-only possible | https://registry.npmjs.org/uri-js/-/uri-js-4.4.1.tgz | [LICENSE](LICENSES/npm/node_modules/uri-js/4.4.1/LICENSE) |
-| NPM | use-sync-external-store 1.7.0 | production or optional transitive | https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.7.0.tgz | [LICENSE](LICENSES/npm/node_modules/use-sync-external-store/1.7.0/LICENSE) |
 | NPM | vite 8.3.8 | dev/build-only possible | https://registry.npmjs.org/vite/-/vite-8.3.8.tgz | [LICENSE.md](LICENSES/npm/node_modules/vite/8.3.8/LICENSE.md) |
 | NPM | vitest 5.1.0 | dev/build-only possible | https://registry.npmjs.org/vitest/-/vitest-5.1.0.tgz | [LICENSE.md](LICENSES/npm/node_modules/vitest/5.1.0/LICENSE.md) |
 | NPM | w3c-xmlserializer 6.0.0 | dev/build-only possible | https://registry.npmjs.org/w3c-xmlserializer/-/w3c-xmlserializer-6.0.0.tgz | [LICENSE.md](LICENSES/npm/node_modules/w3c-xmlserializer/6.0.0/LICENSE.md) |
@@ -388,7 +388,7 @@ Current inventory: 384 package entries (54 Go modules, 329 NPM dependency locati
 | NPM | yocto-queue 0.1.0 | dev/build-only possible | https://registry.npmjs.org/yocto-queue/-/yocto-queue-0.1.0.tgz | [license](LICENSES/npm/node_modules/yocto-queue/0.1.0/license) |
 | NPM | zod 4.6.7 | dev/build-only possible | https://registry.npmjs.org/zod/-/zod-4.6.7.tgz | [LICENSE](LICENSES/npm/node_modules/zod/4.6.7/LICENSE) |
 | NPM | zod-validation-error 4.0.2 | dev/build-only possible | https://registry.npmjs.org/zod-validation-error/-/zod-validation-error-4.0.2.tgz | [LICENSE](LICENSES/npm/node_modules/zod-validation-error/4.0.2/LICENSE) |
-| NPM | zustand 4.5.7 | production or optional transitive | https://registry.npmjs.org/zustand/-/zustand-4.5.7.tgz | [LICENSE](LICENSES/npm/node_modules/zustand/4.5.7/LICENSE) |
+| NPM | zustand 5.1.0 | production or optional transitive | https://registry.npmjs.org/zustand/-/zustand-5.1.0.tgz | [LICENSE](LICENSES/npm/node_modules/zustand/5.1.0/LICENSE) |
 | Go runtime | Go go1.27.4 | use actual release toolchain; platform runtime/C toolchain review separate | official Go tag | [LICENSE](LICENSES/go-runtime/go1.27.4/LICENSE), [PATENTS](LICENSES/go-runtime/go1.27.4/PATENTS) |
 
 ## Texts adopted from version refs
@@ -397,6 +397,7 @@ Most entries' texts are legal files found inside the published package. The loca
 
 - `@napi-rs/wasm-runtime` 1.2.6: the full repository root `LICENSE` for published gitHead `4fff029f67693d08be0ff16818eb9ead2637a99e` (GitHub blob `7fe7e35e…`, 2138 bytes), containing two MIT notices (LongYinan 2020-present and GitHub 2018). The registry tarball has no LICENSE; this is the repository file at that commit, not a tarball member. Retained whole: reducing it to the first notice drops the second.
 - nested `@napi-rs/wasm-runtime` 1.2.2: root `LICENSE` at gitHead `5b344c367eeed81d1917f7c4d8e65b1adc16de12` (same blob content as 1.2.6). The lock entry is `inBundle` with no independent integrity: all eight files of the exact registry 1.2.2 archive were re-compared byte-for-byte against the copies inside the SRI-verified `@tailwindcss/oxide-wasm32-wasi` 4.3.5 tarball and are identical. `LICENSE-EXTRACT-microsoft.txt` and `LICENSE-EXTRACT-joyent.txt` are the unmodified comment ranges found in that package's shipped `dist/fs.js` (bytes 1532:2337 and 277379:278518); they are accompanying third-party notices, kept as separate files and never merged into the root license.
+- `react-compiler-runtime` 1.0.0: the full facebook/react repository root `LICENSE` (MIT, Meta Platforms, Inc. and affiliates) for published gitHead `5c15c1cd3442f28044217703b5625f98c40042ee` (GitHub blob `b93be905…`, 1088 bytes). The registry tarball has no LICENSE; the header of its shipped `dist/index.js` names the MIT license in the repository root `LICENSE`, and this is that file at the published commit, not a tarball member. Its bytes equal the `LICENSE` inside the react 19.3.1 tarball.
 - `saxes` 6.0.0: the full root `LICENSE` at gitHead `211fa0ebec9b628affc09219199639887174bfc3` (GitHub blob `187f3ba3…`, 3011 bytes), containing both ISC texts (Contributors, and the fork origin sax with Isaac Z. Schlueter) and the retired Mathias Bynens MIT notice. Retained whole; one ISC paragraph is not the complete text.
 - `natural-compare` 1.4.0: the published tarball has no LICENSE file. `README.md` is the exact tarball member carrying the 2012-2015 Lauri Rooden copyright line and a link to the author's MIT text; `author-mit-license.txt` is that linked text as retrieved from `http://lauri.rooden.ee/mit-license.txt` on 2026-11-23. This is **linked author text, not a LICENSE inside the version tarball**, and the author page is not commit-pinned, so both its association with 1.4.0 and its durability still need review.
 - `@rolldown/binding-win32-x64-msvc` 1.2.19: the tarball has no legal file and the registry metadata records no gitHead. `LICENSE` (MIT, VoidZero Inc. and contributors) and `THIRD-PARTY-LICENSE` (Rollup and esbuild MIT texts) are the files at public tag `v1.2.19`, commit `b9c75ddc8bd50f2c1a4c7be0b548bdab5cba85ab`. **Tag-corresponding, not native-build proof**: the tag does not establish that the published `.node` payload was built from that commit, and the root MIT text does not replace the third-party list.
