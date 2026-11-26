@@ -7,12 +7,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -113,7 +115,7 @@ func TestMCPStdioProductionProxy(t *testing.T) {
 		}
 		assertImageEvidence(t, session, store, lib.ID, series.ID, lib.Path, config.ThumbnailDir(cfg.Snapshot()))
 		server.CloseClientConnections()
-		// A broken in-flight transport may fail once; never replay arbitrary tools.
+		// Upstream socket loss fails at most one request, which is never replayed.
 		_, _ = session.ListTools(ctx, nil)
 		if _, err := session.ListTools(ctx, nil); err != nil {
 			t.Fatalf("reconnect after upstream socket loss: %v", err)
@@ -351,5 +353,128 @@ func TestMCPStdioSaturatedEOF(t *testing.T) {
 	}
 	if strings.Contains(stderr.String(), "saturation-secret") {
 		t.Fatal("secret in diagnostics")
+	}
+}
+
+type upstreamGeneration struct{}
+
+// The upstream drops every connection it accepted before the loss, but each pooled
+// connection only reveals that when the proxy next writes a request on it, so the
+// outcome does not depend on when the proxy notices a closed socket.
+func TestMCPStdioUpstreamSocketLossFailsAtMostOneRequest(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	binary := filepath.Join(t.TempDir(), "mcp-proxy.exe")
+	if out, err := exec.CommandContext(ctx, "go", "build", "-o", binary, "../../cmd/mcp-proxy").CombinedOutput(); err != nil {
+		t.Fatalf("build: %v %s", err, out)
+	}
+	var generation, dropped atomic.Int64
+	var mu sync.Mutex
+	received := map[string]int{}
+	warm, hold := make(chan struct{}, 2), make(chan struct{})
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request struct{ ID json.RawMessage }
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Error(err)
+			return
+		}
+		mu.Lock()
+		received[string(request.ID)]++
+		mu.Unlock()
+		if r.Context().Value(upstreamGeneration{}).(int64) < generation.Load() {
+			dropped.Add(1)
+			conn, _, err := http.NewResponseController(w).Hijack()
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			_ = conn.Close()
+			return
+		}
+		if generation.Load() == 0 {
+			// Hold the warm-up pair together so the proxy pools two connections.
+			warm <- struct{}{}
+			<-hold
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":{"tools":[]}}`, request.ID)
+	}))
+	server.Config.ConnContext = func(ctx context.Context, _ net.Conn) context.Context {
+		return context.WithValue(ctx, upstreamGeneration{}, generation.Load())
+	}
+	server.Start()
+	defer server.Close()
+	cmd := exec.CommandContext(ctx, binary, "--url", server.URL, "--allow-lan-http")
+	cmd.Env = append(os.Environ(), "YOMIFOLIO_MCP_TOKEN=socket-loss-secret")
+	input, err := cmd.StdinPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	output, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = cmd.Process.Kill(); _ = cmd.Wait() }()
+	send := func(id int) {
+		t.Helper()
+		if _, err := fmt.Fprintf(input, "{\"jsonrpc\":\"2.0\",\"id\":%d,\"method\":\"tools/list\"}\n", id); err != nil {
+			t.Fatal(err)
+		}
+	}
+	lines := bufio.NewScanner(output)
+	reply := func() (id int, failed bool) {
+		t.Helper()
+		if !lines.Scan() {
+			t.Fatalf("proxy stopped replying: %v %s", lines.Err(), &stderr)
+		}
+		var response struct {
+			ID     int
+			Result json.RawMessage
+			Error  *struct{ Code int }
+		}
+		if err := json.Unmarshal(lines.Bytes(), &response); err != nil {
+			t.Fatalf("non-protocol stdout %q", lines.Text())
+		}
+		return response.ID, response.Error != nil
+	}
+	send(1)
+	send(2)
+	for range 2 {
+		select {
+		case <-warm:
+		case <-ctx.Done():
+			t.Fatal("warm-up requests did not arrive concurrently")
+		}
+	}
+	close(hold)
+	for range 2 {
+		if id, failed := reply(); failed {
+			t.Fatalf("warm-up request %d failed", id)
+		}
+	}
+
+	generation.Add(1)
+	send(3)
+	if id, failed := reply(); id != 3 || !failed || dropped.Load() != 1 {
+		t.Fatalf("request on a dropped connection: id=%d failed=%t dropped=%d", id, failed, dropped.Load())
+	}
+	send(4)
+	if id, failed := reply(); id != 4 || failed {
+		t.Fatalf("second request after socket loss failed: id=%d dropped=%d", id, dropped.Load())
+	}
+	mu.Lock()
+	replays := received["3"]
+	mu.Unlock()
+	if dropped.Load() != 1 || replays != 1 {
+		t.Fatalf("dropped=%d request 3 sent %d times", dropped.Load(), replays)
+	}
+	_ = input.Close()
+	if err := cmd.Wait(); err != nil {
+		t.Fatalf("EOF exit: %v %s", err, &stderr)
 	}
 }

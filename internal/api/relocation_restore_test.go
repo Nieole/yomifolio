@@ -162,7 +162,9 @@ func submitRestoration(t *testing.T, c *apiFixture, libraryID, planID int64, mod
 	if err := json.Unmarshal(rec.Body.Bytes(), &op); err != nil {
 		t.Fatal(err)
 	}
-	return awaitRelocationOperation(t, c, op.ID)
+	op = awaitRelocationOperation(t, c, op.ID)
+	awaitRunTerminal(t, c, op.RunID)
+	return op
 }
 
 func TestRestorationWatcherFailureKeepsProtectionThroughFreshStartup(t *testing.T) {
