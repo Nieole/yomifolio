@@ -21,6 +21,8 @@
 
 ## Comments
 
+**用户决定（2026-11-25）**：作者校正要有一个读取入口，新增只读原语，不扩展既有工具，也不放宽整组期望值。落成 `library_get_series_authors {series_id}`（`read`），返回 `authors`（当前作者组，原样可当 `expected_authors`）和 `sources`（每个已识别来源的 `source`、`entry_id` 与快照里的署名 name+role）。证据规则与 `library_correct_authors` 同一份（`identification.SourceEvidence`，经同一个注入函数读取），没有任何已识别来源时 `sources` 为空。普通用户和只读凭据可读；越出凭据授权的系列与不存在的系列读来同一句拒绝。作者校正的描述指向它。
+
 本票按规格「留给实施决定的工程细节」（工具命名与参数形状）自己定下的取值：
 
 - **工具**：`library_correct_authors {request_key, series_id, expected_authors, corrections:[{from, to, reason}]}` 与 `library_improve_cover {request_key, series_id, book_id, page, reason}`，都挂 `metadata_write`。封面还要当前的 `read`：选页要读归档内容，与旧路径的准入一致。两者的结果都是普通的 `enrich` 收据，现有的查询、撤销、清理工具直接可用；请求键与其它补充共用一个重放空间，命令摘要各带一个判别字段，同一键换了命令即拒绝。

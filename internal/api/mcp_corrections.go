@@ -27,8 +27,16 @@ type mcpCoverInput struct {
 // registerMCPCorrections adds the two judgment primitives an agent applies on its own: correcting
 // author credits and improving an automatic cover. Both return ordinary operation receipts.
 func registerMCPCorrections(server *mcp.Server, service *enrichment.Service, subject delegated.Subject, transportCtx context.Context) {
+	type target struct {
+		SeriesID int64 `json:"series_id"`
+	}
+	read := &mcp.ToolAnnotations{ReadOnlyHint: true, IdempotentHint: true, OpenWorldHint: new(bool)}
 	write := &mcp.ToolAnnotations{IdempotentHint: true, DestructiveHint: new(bool), OpenWorldHint: new(bool)}
-	mcp.AddTool(server, &mcp.Tool{Name: "library_correct_authors", Description: `Fix one series' authors: from is a current author, to a credit of an identified source; other authors stay. A changed list or lock is a conflict; undo with library_undo_metadata_operation. Example: {"request_key":"au-12","series_id":12,"expected_authors":[{"name":"A","role":"Artist"}],"corrections":[{"from":{"name":"A","role":"Artist"},"to":{"name":"B","role":"Writer"},"reason":"source"}]}`, Annotations: write}, func(ctx context.Context, _ *mcp.CallToolRequest, in mcpAuthorsInput) (*mcp.CallToolResult, enrichment.Operation, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_get_series_authors", Description: `Read what library_correct_authors needs: authors is the series' current author list, to pass whole as expected_authors; sources lists each source the series is identified to with its credits, the only names allowed as to. No sources means no correction is possible. Example: {"series_id":12}`, Annotations: read}, func(ctx context.Context, _ *mcp.CallToolRequest, in target) (*mcp.CallToolResult, enrichment.SeriesAuthors, error) {
+		out, err := service.Authors(ctx, subject, in.SeriesID)
+		return nil, out, publicMCPToolError(err, "invalid series_id; pass a positive series ID from your results", "author read unavailable; retry later")
+	})
+	mcp.AddTool(server, &mcp.Tool{Name: "library_correct_authors", Description: `Fix a series' authors as library_get_series_authors lists them: from a current author, to a listed source credit; others stay. Changed list or lock: conflict. Undo: library_undo_metadata_operation. Example: {"request_key":"a12","series_id":12,"expected_authors":[{"name":"A","role":"Artist"}],"corrections":[{"from":{"name":"A","role":"Artist"},"to":{"name":"B","role":"Writer"},"reason":"source"}]}`, Annotations: write}, func(ctx context.Context, _ *mcp.CallToolRequest, in mcpAuthorsInput) (*mcp.CallToolResult, enrichment.Operation, error) {
 		out, err := service.CorrectAuthors(ctx, subject, enrichment.AuthorsInput(in))
 		return nil, out, publicMCPToolError(err, "invalid correction: from must be in expected_authors, to must be credited by an identified source of the series, each with a reason; use a new request_key", "author correction unavailable; retry with the same request_key")
 	})

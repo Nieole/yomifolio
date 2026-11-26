@@ -41,6 +41,55 @@ type CoverInput struct {
 
 const identifiedReason = "series-local author correction backed by identified sources"
 
+// SeriesAuthors is what an author correction is prepared from: the series' current author group,
+// which a correction expects whole, and the credits of each source the series is identified to,
+// which are the only ones a correction may name as its To.
+type SeriesAuthors struct {
+	SeriesID int64               `json:"series_id"`
+	Authors  []seriesmeta.Author `json:"authors"`
+	Sources  []SourceCredits     `json:"sources"`
+}
+
+// SourceCredits are the author credits of one identified source entry, as its stored snapshot lists them.
+type SourceCredits struct {
+	Source  string              `json:"source"`
+	EntryID string              `json:"entry_id"`
+	Authors []seriesmeta.Author `json:"authors"`
+}
+
+// Authors reads the series' current author group and the identified source credits under current
+// read authority, from the same evidence CorrectAuthors checks against.
+func (s *Service) Authors(ctx context.Context, actor delegated.Subject, series int64) (SeriesAuthors, error) {
+	if series <= 0 || s.identified == nil {
+		return SeriesAuthors{}, delegated.ErrInvalid
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return SeriesAuthors{}, err
+	}
+	defer tx.Rollback()
+	current, state, err := readState(ctx, database.New(tx), series)
+	if err != nil {
+		return SeriesAuthors{}, delegated.ErrDenied
+	}
+	if err = authorize(ctx, tx, actor, current.LibraryID, false); err != nil {
+		return SeriesAuthors{}, err
+	}
+	evidence, err := s.identified(ctx, tx, series)
+	if err != nil {
+		return SeriesAuthors{}, err
+	}
+	out := SeriesAuthors{SeriesID: series, Authors: state.Authors, Sources: []SourceCredits{}}
+	for _, e := range evidence {
+		credits := []seriesmeta.Author{}
+		for _, a := range e.Metadata.Authors {
+			credits = append(credits, seriesmeta.Author{Name: a.Name, Role: a.Role})
+		}
+		out.Sources = append(out.Sources, SourceCredits{Source: e.Source, EntryID: strings.TrimPrefix(e.CandidateID, e.Source+":"), Authors: seriesmeta.AuthorSet(credits)})
+	}
+	return out, nil
+}
+
 // CorrectAuthors applies only the explicit corrections: each From leaves the series and its To,
 // which an identified source of the series credits, joins it. The other members stay, no shared
 // author record changes, and the receipt is an ordinary enrichment one that Undo reverses.

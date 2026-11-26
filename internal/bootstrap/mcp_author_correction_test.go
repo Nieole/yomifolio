@@ -408,3 +408,78 @@ func TestAuthorCorrectionCommitsWholeOrNothingAndUndoesUnderCurrentAuthority(t *
 		t.Fatalf("operation history %d leaks a storage diagnostic", rec.Code)
 	}
 }
+
+// seriesAuthors mirrors the author read an agent prepares a correction from.
+type seriesAuthors struct {
+	SeriesID int64    `json:"series_id"`
+	Authors  []credit `json:"authors"`
+	Sources  []struct {
+		Source  string   `json:"source"`
+		EntryID string   `json:"entry_id"`
+		Authors []credit `json:"authors"`
+	} `json:"sources"`
+}
+
+func TestAgentReadsAuthorsThenCorrectsWithWhatItRead(t *testing.T) {
+	w := openAuthorWorld(t)
+	first := w.series[0]
+
+	var read seriesAuthors
+	if result := w.agent.call("library_get_series_authors", map[string]any{"series_id": first}, &read); result.IsError {
+		t.Fatalf("author read refused: %s", resultText(result))
+	}
+	if read.SeriesID != first || !slices.Contains(read.Authors, alias) {
+		t.Fatalf("current authors %+v", read)
+	}
+	// Only the source the series is identified to is listed, with its credits as stored; the AniList
+	// candidate of the same evidence packet is not.
+	if len(read.Sources) != 1 || read.Sources[0].Source != "bangumi" || read.Sources[0].EntryID != "1" ||
+		!slices.Equal(read.Sources[0].Authors, []credit{{"Artist", "Artist"}, canonical}) {
+		t.Fatalf("identified source credits %+v", read.Sources)
+	}
+
+	// What the read returned is exactly what a correction takes.
+	applied := w.correct("from-read", first, read.Authors, correction(alias, read.Sources[0].Authors[1], "Bangumi credits the canonical pen name"))
+	if applied.Outcome != "changed" {
+		t.Fatalf("correction from the read %+v", applied)
+	}
+	var after seriesAuthors
+	w.agent.call("library_get_series_authors", map[string]any{"series_id": first}, &after)
+	if slices.Contains(after.Authors, alias) || !slices.Contains(after.Authors, canonical) {
+		t.Fatalf("authors after the correction %+v", after.Authors)
+	}
+	// A series nobody identified lists its authors and no source.
+	var bare seriesAuthors
+	if result := w.agent.call("library_get_series_authors", map[string]any{"series_id": w.series[1]}, &bare); result.IsError || len(bare.Sources) != 0 || !slices.Equal(bare.Authors, []credit{alias}) {
+		t.Fatalf("unidentified series read %+v %s", bare, resultText(result))
+	}
+}
+
+func TestAuthorReadNeedsOnlyReadAndStaysInsideTheCredential(t *testing.T) {
+	w := openAuthorWorld(t)
+	reader := w.web.mainLoopAgent(nil, 1, []int64{w.library.lib.ID}, []string{delegated.Read})
+	var read seriesAuthors
+	if result := reader.call("library_get_series_authors", map[string]any{"series_id": w.series[0]}, &read); result.IsError || len(read.Sources) != 1 {
+		t.Fatalf("read-only credential %+v %s", read, resultText(result))
+	}
+	// Reading does not let it correct.
+	if result := reader.call("library_correct_authors", map[string]any{"request_key": "reader", "series_id": w.series[0], "expected_authors": read.Authors,
+		"corrections": []any{correction(alias, canonical, "pen name")}}, &receipt{}); !result.IsError {
+		t.Fatal("read-only credential corrected authors")
+	}
+
+	// A series of another library and an unknown series are refused alike.
+	outside := newPrefetchLibrary(t, w.store, "Outside")
+	foreign := outside.series("Title 9", "", "01.cbz")
+	denied := []string{}
+	for _, series := range []int64{foreign, 999999} {
+		result := reader.call("library_get_series_authors", map[string]any{"series_id": series}, &seriesAuthors{})
+		if !result.IsError {
+			t.Fatalf("series %d read outside the credential", series)
+		}
+		denied = append(denied, resultText(result))
+	}
+	if denied[0] != denied[1] || !strings.HasPrefix(denied[0], "delegated access denied") {
+		t.Fatalf("refusals differ or leak: %q", denied)
+	}
+}
