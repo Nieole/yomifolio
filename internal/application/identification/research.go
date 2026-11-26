@@ -52,8 +52,6 @@ var (
 	// ErrInvalidResearch means the term or the wait is out of bounds. It is a delegated.ErrInvalid,
 	// so agent adapters report it as invalid input.
 	ErrInvalidResearch = fmt.Errorf("%w: research term or wait out of bounds", delegated.ErrInvalid)
-	// ErrOwnerReviewed means an agent asked to work on a series the owner keeps.
-	ErrOwnerReviewed = errors.New("series is owner-reviewed")
 
 	errResearchUnavailable = errors.New("research is not assembled")
 	errNoSourceAnswered    = errors.New("no source answered")
@@ -104,7 +102,8 @@ type researcher struct {
 }
 
 // Research searches one series again with the agent's own term. It needs current metadata_write
-// authority over the series' library and refuses a series the owner keeps.
+// authority over the series' library. A research only adds evidence, so an owner-reviewed series
+// may be researched too; it stays owner-reviewed.
 func (s *Service) Research(ctx context.Context, subject delegated.Subject, in ResearchInput) (ResearchResult, error) {
 	return s.research(ctx, researcher{agent: &subject}, in)
 }
@@ -117,7 +116,6 @@ func (s *Service) ResearchAsOwner(ctx context.Context, actor int64, in ResearchI
 type researchTarget struct {
 	id, library       int64
 	name, libraryName string
-	status            string
 }
 
 // research launches the search and waits for it. A term the packet already covers returns the
@@ -203,9 +201,8 @@ func (s *Service) researchTarget(ctx context.Context, who researcher, seriesID i
 		}
 	}
 	target := researchTarget{id: seriesID}
-	err := s.db.QueryRowContext(ctx, `SELECT s.library_id, s.name, l.name, st.status FROM series s
-		JOIN libraries l ON l.id = s.library_id JOIN series_identification_status st ON st.series_id = s.id WHERE s.id = ?`, seriesID).
-		Scan(&target.library, &target.name, &target.libraryName, &target.status)
+	err := s.db.QueryRowContext(ctx, `SELECT s.library_id, s.name, l.name FROM series s JOIN libraries l ON l.id = s.library_id WHERE s.id = ?`, seriesID).
+		Scan(&target.library, &target.name, &target.libraryName)
 	switch {
 	case errors.Is(err, sql.ErrNoRows) && who.agent != nil:
 		return researchTarget{}, delegated.ErrDenied
@@ -219,9 +216,6 @@ func (s *Service) researchTarget(ctx context.Context, who researcher, seriesID i
 	}
 	if err := s.access.Authorize(ctx, *who.agent, target.library, delegated.MetadataWrite); err != nil {
 		return researchTarget{}, err
-	}
-	if target.status == StatusOwnerReviewed {
-		return researchTarget{}, ErrOwnerReviewed
 	}
 	return target, nil
 }
@@ -248,17 +242,7 @@ func (s *Service) launchResearch(ctx context.Context, who researcher, target res
 	if who.agent != nil {
 		subject := *who.agent
 		fence = func(ctx context.Context, tx *sql.Tx) error {
-			if err := delegated.AuthorizeTx(ctx, tx, subject, target.library, delegated.MetadataWrite); err != nil {
-				return err
-			}
-			var status string
-			if err := tx.QueryRowContext(ctx, `SELECT status FROM series_identification_status WHERE series_id = ?`, target.id).Scan(&status); err != nil {
-				return err
-			}
-			if status == StatusOwnerReviewed {
-				return ErrOwnerReviewed
-			}
-			return nil
+			return delegated.AuthorizeTx(ctx, tx, subject, target.library, delegated.MetadataWrite)
 		}
 	}
 	body := func(ctx context.Context, h *runhandle.Handle) (task.Result, error) {
