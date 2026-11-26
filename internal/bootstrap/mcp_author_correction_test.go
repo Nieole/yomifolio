@@ -483,3 +483,26 @@ func TestAuthorReadNeedsOnlyReadAndStaysInsideTheCredential(t *testing.T) {
 		t.Fatalf("refusals differ or leak: %q", denied)
 	}
 }
+
+func TestAuthorCorrectionUsesAnEntryTheOwnerPickedOutsideTheEvidence(t *testing.T) {
+	w := openAuthorWorld(t)
+	second := w.series[1]
+	// The owner finds the entry with a search of their own: it never entered the series' evidence.
+	results := w.web.manualSearch(second, "bangumi", "Title 99")
+	if len(results) != 1 {
+		t.Fatalf("manual search %s", results)
+	}
+	w.web.pickEntry(second, "bangumi", results[0], http.StatusOK)
+	current := w.authors(second)
+	if !slices.Contains(current, alias) {
+		t.Fatalf("owner-identified series lost its alias credit: %v", current)
+	}
+
+	applied := w.correct("authors-picked", second, current, correction(alias, credit{"Artist", "Artist"}, "Bangumi credits the artist by name"))
+	if applied.Outcome != "changed" || len(applied.Fields) != 1 || len(applied.Fields[0].Sources) != 1 || applied.Fields[0].Sources[0].CandidateID != "bangumi:99" {
+		t.Fatalf("correction from the owner's pick %+v", applied)
+	}
+	if got := w.authors(second); slices.Contains(got, alias) || !slices.Contains(got, credit{"Artist", "Artist"}) {
+		t.Fatalf("corrected credits %v", got)
+	}
+}

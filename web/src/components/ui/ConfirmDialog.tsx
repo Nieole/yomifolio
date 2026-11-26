@@ -17,6 +17,8 @@ interface ConfirmDialogProps {
   onClose: () => void;
   onConfirm: () => void;
   children?: ReactNode;
+  /** 叠在别的弹窗之上时抬高层级。 */
+  zIndexClassName?: string;
 }
 
 const toneMap: Record<ConfirmTone, { icon: ReactNode; buttonClass: string }> = {
@@ -47,6 +49,7 @@ export function ConfirmDialog({
   onClose,
   onConfirm,
   children,
+  zIndexClassName,
 }: ConfirmDialogProps) {
   const { t } = useI18n();
   const toneConfig = toneMap[tone];
@@ -59,6 +62,7 @@ export function ConfirmDialog({
       description={description}
       icon={toneConfig.icon}
       size="compact"
+      zIndexClassName={zIndexClassName}
       closeOnBackdrop={!loading}
       footer={
         <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">

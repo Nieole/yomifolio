@@ -4,7 +4,7 @@
  * 详情页与资料库网格各有一份弹窗状态，这里是两边唯一的口径。
  */
 
-import { apiClient, isAxiosError } from '../../api/client';
+import { apiClient } from '../../api/client';
 import type { Conclusion, ExcludedCandidate, OwnerIdentification, SeriesIdentification } from '../../api/generated';
 
 /** 能记为系列识别的来源。LLM 的回答不指向任何来源条目，挑中它仍只生成提案。 */
@@ -30,16 +30,12 @@ export async function identifyAsOwner(seriesId: number | string, source: string,
   return res.data;
 }
 
-/** 按服务端结果选提示：撤换、仅记下识别（已审定的系列不补充），或记下并补充。 */
+/** 按服务端结果选提示：撤换、仅记下识别（已审定的系列不补充）、解除了排除，或记下并补充。 */
 export function ownerPickMessage(out: OwnerIdentification): { key: string; params?: Record<string, unknown> } {
   if (out.replaced) return { key: 'identification.pick.replaced', params: { title: out.replaced.title || out.replaced.entry_id } };
   if (!out.operation_id) return { key: 'identification.pick.recordedOnly' };
+  if (out.lifted_exclusion) return { key: 'identification.pick.liftedExclusion' };
   return { key: 'identification.pick.identified' };
-}
-
-/** 挑中失败的提示：被排除的条目单独说明，其余一律按失败报告。 */
-export function ownerPickErrorKey(err: unknown): string {
-  return isAxiosError(err) && err.response?.status === 409 ? 'identification.pick.excluded' : 'identification.pick.failed';
 }
 
 interface PickedEntry {

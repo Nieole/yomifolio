@@ -3,7 +3,7 @@ import { useLibraryInvalidation } from '../../../session/ApplicationSessionProvi
 import { apiClient } from '../../../api/client';
 import { getApiErrorMessage } from '../../../api/client';
 import type { SeriesIdentification } from '../../../api/generated';
-import { identifyAsOwner, isIdentificationSource, loadIdentification, ownerPickErrorKey, ownerPickMessage } from '../../../features/identification/ownerPick';
+import { identifyAsOwner, isIdentificationSource, loadIdentification, ownerPickMessage } from '../../../features/identification/ownerPick';
 import type { SearchResult, Series } from '../types';
 
 
@@ -109,8 +109,7 @@ export function useSeriesScrape({ seriesId, series, reload, showToast, t }: UseS
   const handleApplyMetadata = useCallback(
     async (metadata: SearchResult) => {
       if (!seriesId) return;
-      // 目录来源的条目挑中即记为人工确认的识别，按识别策略补充；被排除的条目挑不进去时弹窗留着，
-      // 让人改挑别的条目。
+      // 目录来源的条目挑中即记为人工确认的识别，按识别策略补充；记不下来时弹窗留着，让人重试或改挑。
       if (isIdentificationSource(searchProvider)) {
         setIsScraping(true);
         try {
@@ -122,7 +121,7 @@ export function useSeriesScrape({ seriesId, series, reload, showToast, t }: UseS
           showToast(t(message.key, message.params), 'success');
           await reload();
         } catch (err) {
-          showToast(t(ownerPickErrorKey(err)), 'error');
+          showToast(getApiErrorMessage(err, t('identification.pick.failed')), 'error');
         } finally {
           setIsScraping(false);
         }
