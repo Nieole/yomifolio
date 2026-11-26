@@ -86,6 +86,7 @@ func TestRelocationCommitPreservesIdentityAndReadsNewLocation(t *testing.T) {
 	if gotBook.Title != book.Title || gotSeries.Name != series.Name || result.PlanID != plan.ID || result.RunID == 0 {
 		t.Fatalf("preserved identity/result: %+v %+v", gotBook, result)
 	}
+	awaitRunTerminal(t, c, result.RunID)
 	read()
 	if err = c.launchExternalLibraryTransferTask(lib.ID, session.SessionID, transfer); !errors.Is(err, external.ErrSessionNotFound) {
 		t.Fatalf("migration retained old transfer plan: %v", err)
@@ -537,6 +538,28 @@ func TestRelocationCommitRejectsChangedConfirmationFacts(t *testing.T) {
 				t.Fatal("stale plan changed paths")
 			}
 		})
+	}
+}
+
+// awaitRunTerminal waits until the engine records runID's terminal status. Relocation
+// saves plan and operation results inside the run that still occupies the library, and
+// that occupancy ends only with the terminal status, so a test must wait here before
+// its next step touches the library. Do not call it after a restart: a run left by
+// the previous controller need never become terminal.
+func awaitRunTerminal(t *testing.T, c *apiFixture, runID int64) {
+	t.Helper()
+	deadline := time.After(10 * time.Second)
+	for {
+		run, err := c.taskEngine.runStore.LoadRun(context.Background(), runID)
+		if err == nil && run.Status.IsTerminal() {
+			return
+		}
+		select {
+		case <-deadline:
+			t.Fatalf("run %d did not finish: %+v %v", runID, run, err)
+		default:
+			time.Sleep(time.Millisecond)
+		}
 	}
 }
 

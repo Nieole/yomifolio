@@ -184,6 +184,7 @@ func TestRelocationPolicySQLFailureCompensatesAndAllowsNewConfirmation(t *testin
 	if op.Status != "failed" || op.Code != "relocation_not_committed" {
 		t.Fatalf("SQL failure: %+v", op)
 	}
+	awaitRunTerminal(t, c, op.RunID)
 	disk, err := config.LoadConfigFile(c.configPath)
 	if err != nil {
 		t.Fatal(err)
