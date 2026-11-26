@@ -126,7 +126,7 @@ agent 的任务是回答每个系列对应哪个来源的哪个条目。服务�
 主循环之外：
 
 - **纠正**（`metadata_write`）：`library_replace_identification` 撤换 agent 自己做错的识别，并撤回它带来、之后没被改过的字段；`library_correct_series_field` 改正来源给错、之后没人改过的标题、简介、出版社、状态或评分；`library_correct_authors`（先用 `library_get_series_authors` 读证据）和 `library_improve_cover` 校正作者和自动封面。每次纠正都留可撤销的收据。
-- **受保护的值**：人工编辑过的值、ComicInfo 导入的值、锁定字段、人工封面和人确认的识别，agent 永远改不了，`library_undo_metadata_operation` 也拒绝撤销所有者自己操作留下的收据。只能上报：`protected_value_doubt` 挂备注。
+- **受保护的值**：人工编辑过的值、ComicInfo 导入的值、锁定字段、人工封面和人确认的识别，agent 永远改不了，`library_undo_metadata_operation` 也拒绝撤销所有者自己操作留下的收据，以及所有者已确认的识别（包括所有者确认识别无误、或再次挑中同一条目）带来的补充收据。只能上报：`protected_value_doubt` 挂备注。
 - **质疑**（`metadata_write`）：觉得某个识别有误时，不论是人确认的还是 agent 自己做的，经 `library_report_series` 报 `disputed_identification`，系列进入待复核，识别和字段都不动。所有者随后在系列详情页撤回该识别（旧条目记为排除候选），或在「待人工」确认识别无误。agent 自己不能撤回识别。
 - **巡检**（`read`）：`library_find_duplicate_series`、`library_count_tags`、`library_report_series` 让只读凭据也能巡检资料库、留下备注，但改不了任何内容；只读凭据看不到质疑这个分类。
 - **关系**：`library_add_series_relation` 在两个系列之间添加续作等作品群关系，留可撤销的收据；已有关系不会被改动。

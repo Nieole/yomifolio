@@ -78,6 +78,7 @@ type Service struct {
 	covers           *CoverAccess
 	relationsChanged func()
 	identified       IdentifiedSources
+	ownerConfirmed   OwnerConfirmedEntries
 }
 
 func New(db *sql.DB, publish func()) *Service {

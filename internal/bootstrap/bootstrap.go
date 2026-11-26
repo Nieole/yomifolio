@@ -63,7 +63,7 @@ func Open(ctx context.Context, store database.Store, cfg *config.Manager, option
 	stats := dashboard.New()
 	reader := api.NewReaderCapabilities(store, app.Relations, app.Proposals, app.Engine, func() { stats.InvalidateVolatile("reading") })
 	delegatedService := delegated.NewWithDiscoveryAndRuns(delegated.NewSQLStore(store.DB()), content, app.Engine, delegated.RunAccess{Engine: app.Engine, Scans: app.Scans, Libraries: store})
-	enrichmentService := enrichment.New(store.DB(), func() { effects.InvalidateStats("metadata_enrichment"); effects.Publish("refresh") }).WithCovers(enrichment.CoverAccess{Images: delegatedService, Config: cfg.Snapshot}).WithCleanup(enrichment.CleanupAccess{Delegated: delegatedService, Start: app.Runs.Start}).WithRelations(app.Relations.Changed).WithIdentifiedSources(identification.SourceEvidence)
+	enrichmentService := enrichment.New(store.DB(), func() { effects.InvalidateStats("metadata_enrichment"); effects.Publish("refresh") }).WithCovers(enrichment.CoverAccess{Images: delegatedService, Config: cfg.Snapshot}).WithCleanup(enrichment.CleanupAccess{Delegated: delegatedService, Start: app.Runs.Start}).WithRelations(app.Relations.Changed).WithIdentifiedSources(identification.SourceEvidence).WithOwnerConfirmed(identification.OwnerConfirmed)
 	clock := options.Clock
 	if clock == nil {
 		clock = time.Now

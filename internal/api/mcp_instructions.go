@@ -44,7 +44,7 @@ var toolPurposes = []struct{ name, purpose, withWrite string }{
 		"tell the owner about a series: a directory grouping, duplicate, tag or protected-value problem, or an identification you doubt, a person's or yours, which goes to recheck."},
 	{"library_get_metadata_operation", "read one write receipt.", ""},
 	{"library_list_metadata_operations", "list the write receipts of one series.", ""},
-	{"library_undo_metadata_operation", "undo one write receipt of an agent; the owner's own are refused.", ""},
+	{"library_undo_metadata_operation", "undo one write receipt of an agent, unless the owner made it or confirmed the identification it followed.", ""},
 	{"library_start_scan", "scan a library for new and changed files.", ""},
 	{"library_start_metadata_cleanup", "discard the undo material of several receipts in one run.", ""},
 	{"library_get_metadata_cleanup", "read the result of a cleanup.", ""},

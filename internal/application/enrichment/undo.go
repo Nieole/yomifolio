@@ -2,6 +2,7 @@ package enrichment
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
 	"yomifolio/internal/application/delegated"
@@ -102,15 +103,39 @@ func (s *Service) List(ctx context.Context, actor delegated.Subject, series, bef
 	return out, nil
 }
 
-// ErrOwnerOperation means an agent asked to undo a receipt of the owner's own change. An agent never
-// undoes what a person decided; it reports the doubt to the owner instead.
+// ErrOwnerOperation means an agent asked to undo what the owner decided: a receipt of the owner's
+// own change, or the supplement of an identification the owner now confirms. An agent never undoes
+// either; it reports the doubt to the owner instead.
 var ErrOwnerOperation = errors.New("an agent may not undo the owner's operation")
 
-// undoableBy refuses an agent the undo of a receipt the owner's web session made. It runs after the
-// target's authorization, so it never tells a missing receipt from one outside the credential.
-// Receipts of agents stay undoable by any credential the target library authorizes.
-func undoableBy(actor delegated.Subject, original Operation) error {
-	if actor.CredentialID != "" && original.Actor.CredentialID == "" {
+// undoableBy refuses an agent the undo of a receipt the owner's web session made, and of a
+// supplement that follows an identification the owner currently confirms, whoever confirmed it
+// first. It runs in the undo's transaction after the target's authorization, so it never tells a
+// missing receipt from one outside the credential. Any other receipt of an agent stays undoable by
+// every credential the target library authorizes.
+func (s *Service) undoableBy(ctx context.Context, tx *sql.Tx, actor delegated.Subject, original Operation) error {
+	if actor.CredentialID == "" {
+		return nil
+	}
+	if original.Actor.CredentialID == "" {
+		return ErrOwnerOperation
+	}
+	if original.Identification == nil || len(original.Identification.Entries) == 0 {
+		return nil
+	}
+	// Without the identification module nothing can tell whose the identification is now.
+	if s.ownerConfirmed == nil {
+		return ErrOwnerOperation
+	}
+	entries := make([]string, 0, len(original.Identification.Entries))
+	for _, entry := range original.Identification.Entries {
+		entries = append(entries, entry.CandidateID)
+	}
+	owned, err := s.ownerConfirmed(ctx, tx, original.SeriesID, entries)
+	if err != nil {
+		return err
+	}
+	if owned {
 		return ErrOwnerOperation
 	}
 	return nil
@@ -148,7 +173,7 @@ func (s *Service) Undo(ctx context.Context, actor delegated.Subject, in UndoInpu
 	if err = authorize(ctx, tx, actor, current.LibraryID, true); err != nil {
 		return Operation{}, err
 	}
-	if err = undoableBy(actor, original); err != nil {
+	if err = s.undoableBy(ctx, tx, actor, original); err != nil {
 		return Operation{}, err
 	}
 	digest := undoDigest(in)

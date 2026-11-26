@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"slices"
 
 	"yomifolio/internal/metadata"
 )
@@ -87,4 +88,21 @@ func conclusionFacts(ctx context.Context, q queryer, seriesID int64, source stri
 		return metadata.SeriesMetadata{}, false, nil
 	}
 	return facts, true, nil
+}
+
+// OwnerConfirmed reports, in the caller's transaction, whether the owner currently confirms the
+// series' identification with any of the entries candidateIDs name: the owner identified it so, or
+// found an agent's identification right. The supplements that follow such an identification are the
+// owner's to undo.
+func OwnerConfirmed(ctx context.Context, tx *sql.Tx, seriesID int64, candidateIDs []string) (bool, error) {
+	list, err := conclusions(ctx, tx, seriesID)
+	if err != nil {
+		return false, err
+	}
+	for _, c := range list {
+		if c.Confirmer.Kind == ConfirmedByOwner && slices.Contains(candidateIDs, candidateID(c.Source, c.EntryID)) {
+			return true, nil
+		}
+	}
+	return false, nil
 }

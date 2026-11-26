@@ -84,7 +84,7 @@ MCP 的识别工具只映射 `identification.Service` 与 `enrichment.Service` �
 
 - 主循环是 `library_claim_series`、`library_submit_verdicts`、`library_research_series`（`metadata_write`）与 `library_identification_progress`（`read`）。凭据能领取时，initialize 的说明先写主循环。
 - 原语中 `library_replace_identification`、`library_correct_series_field`、`library_correct_authors`、`library_improve_cover`、`library_add_series_relation` 与撤销挂 `metadata_write`；`library_get_series_authors`、`library_get_identification_images`、`library_find_duplicate_series`、`library_count_tags`、`library_report_series` 挂 `read`。所以只读凭据与普通用户的凭据能巡检与挂备注，不能领取或写入。`library_report_series` 的 `disputed_identification` 会改识别状态，另要 `metadata_write`（用户决定）：输入 schema 的分类 enum 与工具描述按有效能力生成，没有 `metadata_write` 的凭据看不到这个分类；授权在用例里另查，事务内被收回时拒绝并提示只能挂备注。
-- `library_undo_metadata_operation` 拒绝撤销所有者网页操作留下的收据（`enrichment.ErrOwnerOperation`），提示改为上报；其它凭据的收据照撤销规则处理。
+- `library_undo_metadata_operation` 拒绝撤销所有者网页操作留下的收据，以及跟随当前由所有者确认的识别的补充收据（`enrichment.ErrOwnerOperation`），提示改为上报；其它凭据的收据照撤销规则处理。
 - 能逐系列判定的业务拒绝（裁决、撤换、改正）不是工具错误：结果逐项给 `problem` 代码与一句 `message` 下一步，成功项照常返回。格式错误与授权拒绝仍是工具错误，授权拒绝统一为 `errMCPDenied`。领取结果带 `next` 提示，空批带 `empty_reason`；`library_improve_cover` 得到冲突收据时附一句 `message`，指向 `protected_value_doubt` 上报。
 - 提交、撤换、改正与补充类原语带 `request_key`；领取每次都是新的领取，重搜按搜索词去重、上报按分类去重，都不需要请求键。
 - 取值有限的参数（裁决种类、上报分类、可改正字段、关系类型、标签排序）以 enum 写进输入 schema，弱模型直接从 schema 挑值，描述不必列一长串。
