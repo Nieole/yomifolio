@@ -346,9 +346,10 @@ type ReportInput struct {
 	Reason   string `json:"reason" jsonschema:"one checkable sentence, at most 1000 bytes"`
 }
 
-// Report says what a report left. Recorded is false when a report of the category was already open
-// on the series, which then keeps that report's reason. Status is the series' identification
-// status: a note never changes it, a dispute makes it needs_recheck unless the owner reviewed it.
+// Report says what a report left. Recorded is false when the series already has a report of the
+// category that keeps it from being raised again, which then keeps its reason: an open one, or for
+// a note one the owner closed. Status is the series' identification status: a note never changes
+// it, a dispute makes it needs_recheck unless the owner reviewed it.
 type Report struct {
 	SeriesID int64  `json:"series_id"`
 	Category string `json:"category"`
@@ -362,8 +363,8 @@ type Report struct {
 // questions an identification a person confirmed, which no agent may replace: it raises a recheck
 // escalation, so the series waits for the owner's recheck with its identification and metadata as
 // they are; a series no person identified is refused with ErrNoOwnerIdentification. A report needs
-// no claim, stays open until the owner closes it and, like a note given to Submit, is not repeated
-// while one of the same category is open.
+// no claim and stays open until the owner closes it. Like a note given to Submit, it is not repeated
+// while one of the same category is open, nor, for a note, after the owner closed one.
 func (s *Service) Report(ctx context.Context, subject delegated.Subject, in ReportInput) (Report, error) {
 	in.Reason = strings.TrimSpace(in.Reason)
 	if !slices.Contains(ReportCategories, in.Category) || in.SeriesID <= 0 || in.Reason == "" || len(in.Reason) > maxReasonBytes {
@@ -409,11 +410,13 @@ func (s *Service) Report(ctx context.Context, subject delegated.Subject, in Repo
 }
 
 // raiseOnce records an agent's escalation on the series unless one of the same category is still
-// open, and reports whether it recorded one.
+// open, and reports whether it recorded one. A note is not raised again either once the owner has
+// closed one of its category on the series: closing settles that category for the series. Other
+// escalations may be raised again after their resolution returns the series to the agents.
 func raiseOnce(ctx context.Context, tx *sql.Tx, subject delegated.Subject, series int64, category, class, reason string, at int64) (bool, error) {
-	var open bool
-	if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM identification_escalations WHERE series_id = ? AND category = ? AND resolved_at_ms IS NULL)`,
-		series, category).Scan(&open); err != nil || open {
+	var raised bool
+	if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM identification_escalations WHERE series_id = ? AND category = ?
+		AND (resolved_at_ms IS NULL OR ? = ?))`, series, category, class, EscalationNote).Scan(&raised); err != nil || raised {
 		return false, err
 	}
 	_, err := tx.ExecContext(ctx, `INSERT INTO identification_escalations (series_id, category, class, reason, raised_by, user_id, credential_id, raised_at_ms)

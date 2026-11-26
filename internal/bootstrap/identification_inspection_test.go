@@ -460,3 +460,55 @@ func TestInspectionNeedsOnlyReadAndGrantsNoWrite(t *testing.T) {
 		t.Fatalf("notes %+v", notes)
 	}
 }
+
+// closeNotes stands in for the owner closing a series' notes of one category: the owner's pending
+// page owns that action, so the test writes the outcome it records.
+func closeNotes(t *testing.T, store database.Store, series int64, category string) {
+	t.Helper()
+	if _, err := store.DB().Exec(`UPDATE identification_escalations SET resolved_at_ms = 1, resolved_by = 1, resolution = 'closed'
+		WHERE series_id = ? AND category = ? AND resolved_at_ms IS NULL`, series, category); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNoteTheOwnerClosedIsNotRaisedAgain(t *testing.T) {
+	store, cfg := fixture(t)
+	unpaced(t, cfg)
+	library, ids := claimLibrary(t, store, "Closed", "Title 1", "Title 2")
+	sources := &recordingSources{answer: candidatesBySeries}
+	clock := &handClock{now: time.Date(2026, 3, 1, 9, 0, 0, 0, time.UTC)}
+	web := openClaimWeb(t, store, cfg, sources, clock)
+	if _, run := web.prefetch("{}"); run.Status != task.StatusCompleted {
+		t.Fatalf("prefetch run %+v", run)
+	}
+	agent := web.mainLoopAgent(cfg, 1, []int64{library.lib.ID}, []string{delegated.Read, delegated.MetadataWrite})
+	if first, _ := agent.report(ids[0], "suspected_duplicate", "same work as series 40"); !first.Recorded {
+		t.Fatalf("first report %+v", first)
+	}
+	closeNotes(t, store, ids[0], "suspected_duplicate")
+
+	// Closed by the owner, the category stays closed for the series on both ways of noting it.
+	if again, _ := agent.report(ids[0], "suspected_duplicate", "same work as series 40 still"); again.Recorded || again.Status != "unprocessed" {
+		t.Fatalf("report after the owner closed the note %+v", again)
+	}
+	batch := agent.claim(map[string]any{})
+	wantResult(t, agent.submit("closed", batch.LeaseID, escalateVerdict(ids[0], "suspected_duplicate", "the same work as series 40"))[0], ids[0], true, "unprocessed")
+	if open := web.ownerVerdicts(ids[0]).Escalations; len(open) != 0 {
+		t.Fatalf("a closed note was raised again %+v", open)
+	}
+	// Another category, or the same one on another series, is a note of its own.
+	if other, _ := agent.report(ids[0], "tag_problem", "tags name the shop"); !other.Recorded {
+		t.Fatalf("another category %+v", other)
+	}
+	if elsewhere, _ := agent.report(ids[1], "suspected_duplicate", "same work as series 41"); !elsewhere.Recorded {
+		t.Fatalf("the category on another series %+v", elsewhere)
+	}
+	if open := web.ownerVerdicts(ids[0]).Escalations; len(open) != 1 || open[0].Category != "tag_problem" {
+		t.Fatalf("open notes %+v", open)
+	}
+	for _, id := range ids {
+		if got := web.identification(id); got.Status != "unprocessed" {
+			t.Fatalf("notes changed series %d: %+v", id, got)
+		}
+	}
+}
