@@ -334,9 +334,9 @@ type ReportInput struct {
 	Reason   string `json:"reason" jsonschema:"one checkable sentence, at most 1000 bytes"`
 }
 
-// Report says what a note left. Recorded is false when a note of the category was already open on
-// the series, which then keeps that note's reason. Status is the series' identification status,
-// which a note never changes.
+// Report says what a note left. Recorded is false when the series already has a note of the
+// category, open or closed by the owner, which then keeps its reason. Status is the series'
+// identification status, which a note never changes.
 type Report struct {
 	SeriesID int64  `json:"series_id"`
 	Category string `json:"category"`
@@ -348,7 +348,7 @@ type Report struct {
 // authority re-checked in the recording transaction; a series that does not exist reads as one
 // outside it. The note stays open until the owner closes it. It changes neither the series'
 // identification status nor its metadata and needs no claim; like a note given to Submit, it is
-// not repeated while a note of the same category is open.
+// not repeated while a note of the same category is open, nor after the owner closed one.
 func (s *Service) Report(ctx context.Context, subject delegated.Subject, in ReportInput) (Report, error) {
 	in.Reason = strings.TrimSpace(in.Reason)
 	if class, ok := agentClass(in.Category); !ok || class != EscalationNote || in.SeriesID <= 0 || in.Reason == "" || len(in.Reason) > maxReasonBytes {
@@ -381,11 +381,13 @@ func (s *Service) Report(ctx context.Context, subject delegated.Subject, in Repo
 }
 
 // raiseOnce records an agent's escalation on the series unless one of the same category is still
-// open, and reports whether it recorded one.
+// open, and reports whether it recorded one. A note is not raised again either once the owner has
+// closed one of its category on the series: closing settles that category for the series. Other
+// escalations may be raised again after their resolution returns the series to the agents.
 func raiseOnce(ctx context.Context, tx *sql.Tx, subject delegated.Subject, series int64, category, class, reason string, at int64) (bool, error) {
-	var open bool
-	if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM identification_escalations WHERE series_id = ? AND category = ? AND resolved_at_ms IS NULL)`,
-		series, category).Scan(&open); err != nil || open {
+	var raised bool
+	if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM identification_escalations WHERE series_id = ? AND category = ?
+		AND (resolved_at_ms IS NULL OR ? = ?))`, series, category, class, EscalationNote).Scan(&raised); err != nil || raised {
 		return false, err
 	}
 	_, err := tx.ExecContext(ctx, `INSERT INTO identification_escalations (series_id, category, class, reason, raised_by, user_id, credential_id, raised_at_ms)
