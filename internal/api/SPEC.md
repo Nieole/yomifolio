@@ -4,7 +4,7 @@ type: module-design
 status: active
 title: HTTP 与客户端协议适配
 parent: mm-architecture
-references: [mm-adr-0003, mm-adr-0007, mm-database, mm-adr-0014, mm-catalogsearch]
+references: [mm-adr-0003, mm-adr-0007, mm-database, mm-adr-0014, mm-catalogsearch, mm-identification]
 ---
 
 ## 责任与入口
@@ -78,9 +78,33 @@ MCP 安全入口仅接受 `mcp.public_url` 配置的精确 authority；有 Origi
 所有 MCP JSON HTTP 响应在写入网络前受最终响应体硬上限约束，上限容纳两份应用结果（structuredContent 与其 JSON 文本副本）、64 KiB 请求体上限所界定的调用方 JSON-RPC ID 与 SDK framing；有界缓冲溢出后返回短 HTTP 413，不发出部分图片 JSON。应用预留不是任意长请求 ID 的豁免。该接口仍为 stateless JSON，不用此缓冲提供 SSE 会话恢复；stdio 代理沿同一 HTTP 契约转发。
 
 
+## 系列识别工具与管理员接口
+
+MCP 的识别工具只映射 `identification.Service` 与 `enrichment.Service` 的完整用例，身份来自认证凭据；工具名、所需能力与清单过滤以 `listingCapability` 为准，用途句以 `toolPurposes` 为准，用例契约归 `mm-identification`。
+
+- 主循环是 `library_claim_series`、`library_submit_verdicts`、`library_research_series`（`metadata_write`）与 `library_identification_progress`（`read`）。凭据能领取时，initialize 的说明先写主循环。
+- 原语中 `library_replace_identification`、`library_correct_series_field`、`library_correct_authors`、`library_improve_cover`、`library_add_series_relation` 与撤销挂 `metadata_write`；`library_get_series_authors`、`library_get_identification_images`、`library_find_duplicate_series`、`library_count_tags`、`library_report_series` 挂 `read`。所以只读凭据与普通用户的凭据能巡检与上报，不能领取或写入。
+- 能逐系列判定的业务拒绝（裁决、撤换、改正）不是工具错误：结果逐项给 `problem` 代码与一句 `message` 下一步，成功项照常返回。格式错误与授权拒绝仍是工具错误，授权拒绝统一为 `errMCPDenied`。领取结果带 `next` 提示，空批带 `empty_reason`；`library_improve_cover` 得到冲突收据时附一句 `message`，指向 `protected_value_doubt` 上报。
+- 提交、撤换、改正与补充类原语带 `request_key`；领取每次都是新的领取，重搜按搜索词去重、上报按分类去重，都不需要请求键。
+- 取值有限的参数（裁决种类、上报分类、可改正字段、关系类型、标签排序）以 enum 写进输入 schema，弱模型直接从 schema 挑值，描述不必列一长串。
+- `library_research_series` 的 `wait_ms` 上限 30000，与 `library_wait_run` 一致；等不到时返回 `running` 与 `run_id`，断线不取消运行。
+- `library_get_identification_images` 的首个文本块是结构化结果的 JSON，其后按 `images` 顺序跟每张 `included` 的 JPEG；结果构造后在 API 层再量一次总大小，超出则整体报错，不发出截断的图片。
+
+管理员网页的 `/api/identification/` 整个前缀只对当前管理员开放，读取也一样，因为结论带着凭据与账户归属；写命令沿用管理树的 Cookie、CSRF、当前角色与强制改密守卫。每个决定返回操作后的权威识别（挑候选另带补充收据 `operation_ids`），响应 no-store，新结构纳入生成契约。
+
+- 读取与已审定：`GET series/{id}`；`PUT`、`DELETE series/{id}/owner-review`。
+- 预取：`POST prefetch` 接受 `{"library_id": n}`，空体表示全库，回 `{run_id, series}`，`series` 为 0 时不建运行。网页的全库与资料库批量入口调它；不提供按首条结果批量生成提案的路由，库里留着的 `scrape` 运行照常显示但不能重试。
+- 重搜：`POST series/{id}/research`，请求体 `{query, wait_ms?}`，与 MCP 共用用例。
+- 待人工：`GET pending?category=&offset=&limit=`（默认 20、上限 50，`limit=0` 只回计数）；决定为 `POST series/{id}/identify {candidate_ids}`、`exclusions {candidate_id}`、`not-found`、`keep-identification`、`notes/{noteId}/close`。
+- 手动搜索与详情：`PUT series/{id}/conclusions/{source}` 的请求体是 `{"result": <搜索结果>}`，按来源快照规则校验，LLM 等非目录来源回 400，挑中排除候选时响应带 `lifted_exclusion`；`DELETE series/{id}/conclusions/{source}` 撤回识别。
+- 决定落到已经变了的系列时回 409 与 `code`：`not_pending`、`candidate_unavailable`、`not_a_note`，前端据此重读这个系列；重复否决同一候选、关闭已关闭的备注回 200 且不改动。
+- 资料库浏览 `GET /api/series/search?identification=<状态>` 读同一状态视图，可与其它条件组合；普通账号带这个参数回 403，取值不在六个状态里回 400。
+
+核对入口：`bootstrap` 的 `TestPendingListAndDecisionsNeedAnAdministrator`、`TestLibraryBrowsingFiltersByIdentificationStatus`、`TestInspectionNeedsOnlyReadAndGrantsNoWrite`、`TestAgentSubmitsVerdictsSeriesBySeries`、`TestIdentificationImagesLeaveOutWholeImagesBeyondTheResultBudget`。
+
 ## 受限补充和操作历史
 
-MCP 的作者校正、封面改善、操作查询/按系列分页与撤销工具直接委托 `enrichment.Service`，身份来自认证凭据，不接受调用者自报。工具声明只读或幂等提示，但最终以事务授权和持久重放结果为准。管理员网页 `GET /api/mcp/operations`、`GET /api/mcp/operations/{operationId}`、`POST /api/mcp/operations/{operationId}/undo` 复用网页认证和 CSRF，命令携带 request_key；普通用户不可管理或撤销。审计、响应预算、预期值与回滚契约归 `mm-application`。
+MCP 的作者校正、封面改善、作品群关系写入、操作查询/按系列分页与撤销工具直接委托 `enrichment.Service`（撤换与改正经识别模块在同一事务里调用它），身份来自认证凭据，不接受调用者自报。工具声明只读或幂等提示，但最终以事务授权和持久重放结果为准。管理员网页 `GET /api/mcp/operations`、`GET /api/mcp/operations/{operationId}`、`POST /api/mcp/operations/{operationId}/undo` 复用网页认证和 CSRF，命令携带 request_key；普通用户不可管理或撤销。审计、响应预算、预期值与回滚契约归 `mm-application`。
 
 
 封面改善的页选择与故障一致性归 mm-application，收据复用同一管理历史/Undo，不接受任意 URL 或路径。原 cover 路由支持已提交的虚拟材料键；原 thumbnail 路由须检查当前书或持久保留引用后读取材料私有根。普通缩略图文件使用 os.Root 约束在普通缓存根，保留内容与条件请求语义；未提交虚拟键、Windows 大小写/尾点等实体目录别名均不能公开准备材料。

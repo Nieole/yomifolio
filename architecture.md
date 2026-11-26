@@ -4,7 +4,7 @@ type: architecture-design
 status: active
 title: 系统架构与依赖边界
 parent: manga-manager
-references: [mm-domain-language, mm-adr-0001, mm-adr-0003, mm-adr-0004, mm-adr-0005, mm-adr-0006, mm-adr-0007, mm-adr-0008, mm-adr-0009, mm-adr-0010, mm-adr-0011, mm-adr-0012, mm-adr-0013, mm-adr-0014, mm-adr-0015]
+references: [mm-domain-language, mm-adr-0001, mm-adr-0003, mm-adr-0004, mm-adr-0005, mm-adr-0006, mm-adr-0007, mm-adr-0008, mm-adr-0009, mm-adr-0010, mm-adr-0011, mm-adr-0012, mm-adr-0013, mm-adr-0014, mm-adr-0015, mm-adr-0016, mm-adr-0017]
 ---
 
 ## 系统形状
@@ -56,22 +56,24 @@ Yomifolio 的 Go 模块为 `yomifolio`。单进程 Go 服务使用 chi 接收 HT
 
 领域概念只在 `mm-domain-language` 定义；跨功能的身份、准入、恢复、事务裁决、宿主装配及内容发布理由归本节点引用的 ADR，不另复制论证。
 
-`mm-adr-0008` 已实施，重启入参与声明标签的边界及逐次有损合并事件保证归该决定。`mm-adr-0002` 已被 `mm-adr-0005` 取代，以 deprecated 节点保留历史且不作为当前约束。`.scratch/` 中的实施规划和验收记录作为输入，不提升为长期节点。
+`mm-adr-0008` 已实施，重启入参与声明标签的边界及逐次有损合并事件保证归该决定。`mm-adr-0002` 已被 `mm-adr-0005` 取代，以 deprecated 节点保留历史且不作为当前约束。`mm-adr-0016` 与 `mm-adr-0017` 均为 draft；`mm-adr-0016` 中内部模型额度委托的部分已随 `internal_llm` 下线失效（deprecated，后继为 `mm-adr-0017`），清理自主权部分仍有效。`.scratch/` 中的实施规划和验收记录作为输入，不提升为长期节点。
 
 ## MCP 委托访问边界
 
-`bootstrap → application/delegated → database/sql` 组装独立凭据与当前授权用例，`application/delegated → bookcontent` 组合按稳定书 ID 的受限本地证据读取；`api → application/delegated` 适配管理员网页和 Streamable HTTP；协议层不获得数据库入口，也不复制应用运行时。统一迁移安装凭据 DDL，账号密码事务共同撤销浏览器会话与委托凭据。现有网页、OPDS、Mihon 与 KOReader 的认证入口不复用 MCP Bearer，也不因委托资料库限制改变网页目录读取。主语、能力交集及扩展约束归 `mm-application`，协议与安全代理约束归 `mm-api`；ADR 0016 仍为 draft，不将静态凭据或额度声明解释为已实现的 OAuth/人工审批。
+`bootstrap → application/delegated → database/sql` 组装独立凭据与当前授权用例，`application/delegated → bookcontent` 组合按稳定书 ID 的受限本地证据读取；`api → application/delegated` 适配管理员网页和 Streamable HTTP；协议层不获得数据库入口，也不复制应用运行时。统一迁移安装凭据 DDL，账号密码事务共同撤销浏览器会话与委托凭据。现有网页、OPDS、Mihon 与 KOReader 的认证入口不复用 MCP Bearer，也不因委托资料库限制改变网页目录读取。主语、能力交集及扩展约束归 `mm-application`，协议与安全代理约束归 `mm-api`；静态凭据不是已实现的 OAuth 或逐次人工审批（ADR 0016，draft）。
 
 
 `cmd/mcp-proxy → 已运行服务的 /mcp` 只代理 stdio JSON-RPC，不加载服务器配置、不访问数据库或藏书、不组装第二个 Runtime；HTTP 与 stdio 的授权及完整用例均归同一生产应用。传输断连不等于取消已接纳运行，服务重开也不等于自动恢复外部请求。代理的上游及兼容限制归 `mm-mcp-stdio`。
 
-`bootstrap → application/enrichment → delegated、seriesmeta、database` 组合确认提案证据、来源补充策略、实际事务授权和持久收据；`api → application/enrichment` 为网页及 MCP 提供相同补充/查询/撤销用例。撤销材料与最新来源沿革分离；不启动第二个 Runtime，不改普通手工、扫描或提案写入规则，具体契约归 `mm-application`。
+`bootstrap → application/enrichment → delegated、seriesmeta、proposal、organize、database` 组合按识别补充的策略、作者与封面原语、作品群关系写入、实际事务授权和持久收据；`api → application/enrichment` 为网页及 MCP 提供相同的查询/撤销用例。撤销材料与最新来源沿革分离；不启动第二个 Runtime，不改普通手工或提案写入规则，具体契约归 `mm-application`。
+
+`bootstrap → application/identification → delegated、enrichment、metadata、database` 组合系列识别：识别结论与状态、证据包、领取租约与裁决、纠正、巡检上报与所有者决定，契约归 `mm-identification`。识别确认后的补充、撤回与改正由识别模块在同一写事务里调用 enrichment，enrichment 不反向依赖识别模块：作者校正读取的识别证据由装配经 `WithIdentifiedSources` 注入。`api → application/identification` 适配 MCP 主循环与原语工具及管理员网页的 `/api/identification/` 接口，协议层不获得数据库入口。预取运行器 `identification.Prefetcher` 由 `mm-runtime` 装配进同一任务引擎与重启注册表；候选封面只经装配注入的 `ExternalSources.Covers` 传输从已知来源域名拉取，域名与大小的检查在应用内执行。
 
 `bootstrap` 把 `scanner` 每个已提交批次的新增书经 `SetAddedBooksHook` 交给 `application/identification` 做待复核检查：只读本地识别结论，不访问外部来源，失败只记日志、不让扫描失败；矛盾判据归识别模块。
 
 同样，`bootstrap` 把每个已提交批次新建的系列经 `SetCreatedSeriesHook` 交给识别模块记为增量预取请求；`application/scanning` 在资料库扫描收尾（未取消，委托扫描也一样）经 `Effects.Prefetch` 串联该资料库的增量预取运行，由它访问外部来源。记录请求或发起运行失败只记日志、不让扫描失败；扫描不把系列推给 agent。
 
-`application/delegated → metadata` 的多来源搜索经 `metadata.SourceFanout` 扇出，来源范围、单源状态与候选快照校验归 `mm-metadata`，权限检查点、结果预算与分页归调用方用例。模型辅助复用生产 AI 工厂与同一 Runs；统一数据库迁移安装独立次数额度表，不与 enrichment 收据共用操作命名空间。当前授权、原子预留和不恢复付费请求的用例契约归 `mm-application`，实际 HTTP 单请求守卫归 `mm-metadata`。
+`application/identification → metadata` 的预取与重搜经 `metadata.SourceFanout` 扇出、经共享的 `metadata.SourcePacer` 控制各来源节拍；来源范围、单源状态与候选快照校验归 `mm-metadata`，权限检查点、证据包预算与候选取舍归识别模块。MCP 不提供内部模型辅助；统一迁移保留的模型额度表只存历史记录，没有读写入口。
 
 
 委托归档封面改善由 enrichment 编排：复用 delegated 的有界本地归档图片资格、seriesmeta 的受限封面写入和 MetadataJournal；covermaterial 准备/读取不可变私有资源，并只在应用已持久隔离后有限回收。API 原图片路由依据数据库当前/保留引用解析虚拟键，普通文件限制在普通缓存根；SQLite 引用是公开切换点，非单库事务对任意文件写入的原子承诺。持久材料引用及显式清理互斥边界归 mm-application/mm-database，不由扫描缓存清理接管。

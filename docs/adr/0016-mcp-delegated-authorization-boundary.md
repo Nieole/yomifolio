@@ -4,10 +4,12 @@ type: architecture-design
 status: draft
 title: MCP 委托授权不等于逐次人工确认
 parent: mm-architecture
-references: [mm-domain-language]
+references: [mm-domain-language, mm-adr-0017]
 ---
 
 # MCP 委托授权不等于逐次人工确认
+
+状态：**内部 LLM 调用额度委托的部分 deprecated**（2026-11-26）。`internal_llm` 能力与模型额度工具已从 MCP 下线，这部分决定不再约束任何现行模块，后继见 [ADR 0017](0017-series-identification-is-a-durable-conclusion.md)；已有的额度记录只作历史留存。**清理自主权的部分仍然有效**，本节点因此整体保持 draft。下面保留原文。
 
 MCP 将本次内部 LLM 调用额度的用户指令转述委托给 agent：服务端累计并限制已声明额度，但不将该声明视为独立核验过的用户批准；持有独立清理权限的 agent 也可自主清理授权范围内的撤销数据，不要求每批人工确认。选择这种委托以减少按需整理的交互负担，代价是无法以服务端额度计数证明用户真实授权，也不能保证清理后的变更仍可撤销；未采用逐次受信任审批流程。
 
