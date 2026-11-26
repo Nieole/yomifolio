@@ -263,7 +263,10 @@ func assertMCPWireBudget(t *testing.T, client *http.Client, endpoint string, ser
 	}
 }
 
-func assertImageRequestRelease(t *testing.T, session *mcp.ClientSession, engine *task.Engine, cfg config.Config, path string, library, series, book int64, disconnect func()) {
+// assertImageRequestRelease proves that call, a local image read of the archive at path, holds the
+// library's read admission while it waits on saturated storage and returns it, with every archive
+// borrow, when the caller cancels or disconnects.
+func assertImageRequestRelease(t *testing.T, session *mcp.ClientSession, engine *task.Engine, cfg config.Config, path string, library int64, call *mcp.CallToolParams, disconnect func()) {
 	t.Helper()
 	policy := config.ResolveStoragePolicy(cfg, path)
 	limit := policy.IOPolicy.ArchiveOpenConcurrency
@@ -292,7 +295,7 @@ func assertImageRequestRelease(t *testing.T, session *mcp.ClientSession, engine 
 			returned := make(chan struct{})
 			go func() {
 				defer close(returned)
-				_, _ = session.CallTool(ctx, &mcp.CallToolParams{Name: "library_get_page_thumbnails", Arguments: map[string]any{"series_id": series, "book_id": book, "pages": []int{1}}})
+				_, _ = session.CallTool(ctx, call)
 			}()
 			waitReads := func(want bool) {
 				t.Helper()
