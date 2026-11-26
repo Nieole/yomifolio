@@ -15,8 +15,9 @@ import (
 
 // Claim bounds. A batch holds at most MaxClaim series and, packets included, at most claimBudget
 // bytes of JSON, so a model with a small context can take a whole batch in. One packet is bounded
-// by packetBudget, so a batch always fits at least seven full packets; past the budget the batch
-// is cut short rather than any packet being trimmed further.
+// by packetBudget, or by researchedBudget once a research added to it, so a batch always fits at
+// least seven prefetched or three researched packets; past the budget the batch is cut short rather
+// than any packet being trimmed further.
 const (
 	MaxClaim      = 20
 	LeaseDuration = 30 * time.Minute

@@ -162,6 +162,7 @@ func TestMCPEveryToolResultCarriesItsJSONText(t *testing.T) {
 	call("library_get_book_clues", map[string]any{"book_id": book.ID})
 	call("library_get_series_cover", map[string]any{"series_id": series.ID})
 	call("library_get_page_thumbnails", map[string]any{"series_id": series.ID, "book_id": book.ID, "pages": []int{1}})
+	call("library_get_identification_images", map[string]any{"series_id": series.ID, "cover": true})
 
 	started := call("library_search_sources", map[string]any{"series_id": series.ID, "query": "Copy", "limit": 1})
 	wait(started["run"].(map[string]any)["run_id"])
@@ -200,6 +201,8 @@ func TestMCPEveryToolResultCarriesItsJSONText(t *testing.T) {
 	call("library_get_metadata_cleanup", map[string]any{"request_key": "text-cleanup-batch"})
 
 	call("library_identification_progress", map[string]any{"library_ids": []int64{lib.ID}})
+	unpaced(t, cfg)
+	call("library_research_series", map[string]any{"series_id": series.ID, "query": "Copy press"})
 	sequel, err := store.CreateSeries(ctx, database.CreateSeriesParams{Name: "Copy sequel", LibraryID: lib.ID, Path: filepath.Join(lib.Path, "Copy sequel")})
 	if err != nil {
 		t.Fatal(err)

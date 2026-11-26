@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/png"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -39,21 +38,6 @@ type coverWorld struct {
 	cover   string
 }
 
-func solidPNG(t *testing.T, c color.Color) []byte {
-	t.Helper()
-	m := image.NewRGBA(image.Rect(0, 0, 64, 96))
-	for y := 0; y < 96; y++ {
-		for x := 0; x < 64; x++ {
-			m.Set(x, y, c)
-		}
-	}
-	var b bytes.Buffer
-	if err := png.Encode(&b, m); err != nil {
-		t.Fatal(err)
-	}
-	return b.Bytes()
-}
-
 func openCoverWorld(t *testing.T, capabilities ...string) *coverWorld {
 	t.Helper()
 	ctx := t.Context()
@@ -66,7 +50,7 @@ func openCoverWorld(t *testing.T, capabilities ...string) *coverWorld {
 	if err != nil {
 		t.Fatal(err)
 	}
-	red, blue := solidPNG(t, color.RGBA{R: 220, A: 255}), solidPNG(t, color.RGBA{B: 220, A: 255})
+	red, blue := solidPNG(t, 64, 96, color.RGBA{R: 220, A: 255}), solidPNG(t, 64, 96, color.RGBA{B: 220, A: 255})
 	var archive bytes.Buffer
 	z := zip.NewWriter(&archive)
 	for i, page := range [][]byte{red, blue} {

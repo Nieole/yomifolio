@@ -19,7 +19,7 @@ func SourceEvidence(ctx context.Context, tx *sql.Tx, seriesID int64) ([]metadata
 	if err != nil {
 		return nil, err
 	}
-	_, facts, err := storedEvidence(ctx, tx, seriesID)
+	_, facts, _, err := storedEvidence(ctx, tx, seriesID)
 	if err != nil {
 		return nil, err
 	}

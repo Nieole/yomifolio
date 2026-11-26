@@ -18,6 +18,38 @@ func (c *administrationHTTP) mountIdentification(r chi.Router) {
 	r.Put("/identification/series/{seriesId}/owner-review", c.setSeriesOwnerReview)
 	r.Delete("/identification/series/{seriesId}/owner-review", c.withdrawSeriesOwnerReview)
 	r.Post("/identification/prefetch", c.startIdentificationPrefetch)
+	r.Post("/identification/series/{seriesId}/research", c.researchSeries)
+}
+
+// researchSeries searches one series again with the owner's term ({"query": "...", "wait_ms": n})
+// and answers with the outcome; a search still running after the wait goes on as its run.
+func (c *administrationHTTP) researchSeries(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	seriesID, err := parseID(r, "seriesId")
+	if err != nil || seriesID <= 0 {
+		jsonError(w, http.StatusBadRequest, "Invalid series ID")
+		return
+	}
+	var in identification.ResearchInput
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		jsonError(w, http.StatusBadRequest, "Invalid research request")
+		return
+	}
+	in.SeriesID = seriesID
+	user, _ := userFromContext(r.Context())
+	out, err := c.identification.ResearchAsOwner(r.Context(), user.ID, in)
+	switch {
+	case errors.Is(err, identification.ErrInvalidResearch):
+		jsonError(w, http.StatusBadRequest, "Invalid research: the term needs 1-100 characters with a letter or digit and no control characters; wait_ms is 0-30000")
+	case errors.Is(err, identification.ErrSeriesNotFound):
+		jsonError(w, http.StatusNotFound, "Series not found")
+	case errors.Is(err, identification.ErrDenied):
+		jsonError(w, http.StatusForbidden, apiText(requestLocale(r), "auth.admin_required"))
+	case err != nil:
+		writeTaskLaunchError(w, err, "A research of this series is already running", "Research unavailable")
+	default:
+		jsonResponse(w, http.StatusOK, out)
+	}
 }
 
 // startIdentificationPrefetch launches the evidence prefetch over one library ({"library_id": n})

@@ -128,7 +128,8 @@ func testMCPDelegatedSeriesLifecycle(t *testing.T, tls bool) {
 	assertLocalClues(t, session, store, lib.ID, series.ID, other.ID, hidden.ID, lib.Path)
 	assertImageEvidence(t, session, store, lib.ID, series.ID, lib.Path, config.ThumbnailDir(cfg.Snapshot()), func(book int64) {
 		assertMCPWireBudget(t, httpClient, server.URL+"/mcp", series.ID, book)
-		assertImageRequestRelease(t, session, process.Application.Engine, cfg.Snapshot(), lib.Path+"/evidence.cbz", lib.ID, series.ID, book, server.CloseClientConnections)
+		pages := &mcp.CallToolParams{Name: "library_get_page_thumbnails", Arguments: map[string]any{"series_id": series.ID, "book_id": book, "pages": []int{1}}}
+		assertImageRequestRelease(t, session, process.Application.Engine, cfg.Snapshot(), lib.Path+"/evidence.cbz", lib.ID, pages, server.CloseClientConnections)
 	})
 	allowed, err := session.CallTool(context.Background(), &mcp.CallToolParams{Name: "library_get_series", Arguments: map[string]any{"series_id": series.ID}})
 	if err != nil || allowed.IsError {
@@ -262,7 +263,7 @@ func assertMCPToolDiscovery(t *testing.T, result *mcp.ListToolsResult, err error
 		t.Fatalf("tools %+v %v", result, err)
 	}
 	expected := map[string]bool{
-		"library_get_series_cover": true, "library_get_page_thumbnails": true,
+		"library_get_series_cover": true, "library_get_page_thumbnails": true, "library_get_identification_images": true,
 		"library_get_series": true, "library_find_series": true,
 		"library_list_books": true, "library_get_book_clues": true,
 		"library_search_sources": false, "library_get_source_search": true,
@@ -280,6 +281,7 @@ func assertMCPToolDiscovery(t *testing.T, result *mcp.ListToolsResult, err error
 		"library_list_runs": true, "library_wait_run": true, "library_cancel_run": false,
 		"library_identification_progress": true,
 		"library_claim_series":            false, "library_submit_verdicts": false,
+		"library_research_series": false,
 		"library_correct_authors": false, "library_improve_cover": false,
 	}
 	seen := map[string]bool{}

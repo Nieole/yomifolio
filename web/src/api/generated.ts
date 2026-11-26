@@ -557,8 +557,16 @@ export interface EvidencePacket {
   fetched_at: string;
   local: EvidenceLocalClues;
   queries: string[];
+  searches?: EvidenceSearch[];
   sources: EvidenceSource[];
   candidates: EvidenceCandidate[];
+}
+
+export interface EvidenceSearch {
+  query: string;
+  searched_at: string;
+  added: string[];
+  dropped?: number;
 }
 
 export interface EvidenceLocalClues {
@@ -601,5 +609,15 @@ export interface EvidenceSignals {
 export interface PrefetchLaunch {
   run_id?: number;
   series: number;
+}
+
+export interface ResearchResult {
+  series_id: number;
+  query: string;
+  status: string;
+  run_id?: number;
+  added: string[];
+  dropped?: number;
+  packet?: EvidencePacket;
 }
 
