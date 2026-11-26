@@ -17,9 +17,12 @@ import (
 	"yomifolio/internal/taskstore"
 )
 
+// testRuns 照生产的日志与同步参数开任务库：默认的回滚日志下每次提交都要 fsync，而引擎是持着锁
+// 落盘的，磁盘一忙就会把 join 拖过这些用例给的截止时间。
 func testRuns(t *testing.T, background func(func()), publish func(task.Snapshot)) (*application.Runs, *task.Engine) {
 	t.Helper()
-	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "tasks.db")+"?_pragma=foreign_keys(1)&_pragma=busy_timeout=15000")
+	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "tasks.db")+
+		"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=busy_timeout=15000")
 	if err != nil {
 		t.Fatal(err)
 	}
