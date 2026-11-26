@@ -5,6 +5,7 @@ import {
   EMPTY_ADVANCED_FILTERS,
   VALID_SORT_DIRS,
   parseFiltersFromSearch,
+  parseIdentificationParam,
   setOrDelete,
   type AdvancedFilters,
 } from './libraryFilterParams';
@@ -22,6 +23,8 @@ export interface SavedLibrarySettings {
   activeTag?: string | null;
   activeAuthor?: string | null;
   activeStatus?: string | null;
+  // 识别状态和关键字一样不属于视图条件：保存视图不收它，应用视图时清空。
+  activeIdentification?: string | null;
   activeLetter?: string | null;
   sortByField?: string;
   sortDir?: string;
@@ -35,6 +38,7 @@ export interface UseLibraryFiltersResult {
   activeTag: string | null;
   activeAuthor: string | null;
   activeStatus: string | null;
+  activeIdentification: string | null;
   activeLetter: string | null;
   sortByField: string;
   sortDir: string;
@@ -47,6 +51,7 @@ export interface UseLibraryFiltersResult {
   setActiveTag: (value: string | null) => void;
   setActiveAuthor: (value: string | null) => void;
   setActiveStatus: (value: string | null) => void;
+  setActiveIdentification: (value: string | null) => void;
   setActiveLetter: (value: string | null) => void;
   setSortByField: (value: string) => void;
   setSortDir: (value: string) => void;
@@ -93,6 +98,7 @@ export function useLibraryFilters({ libId }: { libId: string | undefined }): Use
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [activeAuthor, setActiveAuthor] = useState<string | null>(null);
   const [activeStatus, setActiveStatus] = useState<string | null>(null);
+  const [activeIdentification, setActiveIdentification] = useState<string | null>(null);
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
   const [sortByField, setSortByField] = useState<string>('name');
   const [sortDir, setSortDir] = useState<string>('asc');
@@ -116,6 +122,7 @@ export function useLibraryFilters({ libId }: { libId: string | undefined }): Use
       setActiveTag: markUserChange(setActiveTag),
       setActiveAuthor: markUserChange(setActiveAuthor),
       setActiveStatus: markUserChange(setActiveStatus),
+      setActiveIdentification: markUserChange(setActiveIdentification),
       setActiveLetter: markUserChange(setActiveLetter),
       setSortByField: markUserChange(setSortByField),
       setSortDir: markUserChange(setSortDir),
@@ -139,6 +146,7 @@ export function useLibraryFilters({ libId }: { libId: string | undefined }): Use
       setActiveTag(fromUrl.activeTag);
       setActiveAuthor(fromUrl.activeAuthor);
       setActiveStatus(fromUrl.activeStatus);
+      setActiveIdentification(fromUrl.activeIdentification);
       setActiveLetter(fromUrl.activeLetter);
       setSortByField(fromUrl.sortByField);
       setSortDir(fromUrl.sortDir);
@@ -155,6 +163,7 @@ export function useLibraryFilters({ libId }: { libId: string | undefined }): Use
       setActiveTag(stored.activeTag ?? null);
       setActiveAuthor(stored.activeAuthor ?? null);
       setActiveStatus(stored.activeStatus ?? null);
+      setActiveIdentification(parseIdentificationParam(stored.activeIdentification ?? null));
       setActiveLetter(stored.activeLetter ?? null);
       setSortByField(stored.sortByField || 'name');
       setSortDir(stored.sortDir || 'asc');
@@ -175,6 +184,7 @@ export function useLibraryFilters({ libId }: { libId: string | undefined }): Use
     setOrDelete(next, 'tag', activeTag);
     setOrDelete(next, 'author', activeAuthor);
     setOrDelete(next, 'status', activeStatus);
+    setOrDelete(next, 'ident', activeIdentification);
     setOrDelete(next, 'letter', activeLetter);
     setOrDelete(next, 'q', keyword.trim());
     setOrDelete(next, 'sort', sortByField === 'name' ? null : sortByField);
@@ -195,6 +205,7 @@ export function useLibraryFilters({ libId }: { libId: string | undefined }): Use
       activeTag,
       activeAuthor,
       activeStatus,
+      activeIdentification,
       activeLetter,
       sortByField,
       sortDir,
@@ -217,6 +228,7 @@ export function useLibraryFilters({ libId }: { libId: string | undefined }): Use
     activeTag,
     activeAuthor,
     activeStatus,
+    activeIdentification,
     activeLetter,
     keyword,
     advanced,
@@ -237,6 +249,7 @@ export function useLibraryFilters({ libId }: { libId: string | undefined }): Use
     setActiveTag(null);
     setActiveAuthor(null);
     setActiveStatus(null);
+    setActiveIdentification(null);
     setActiveLetter(null);
     setKeyword('');
     setAdvanced(EMPTY_ADVANCED_FILTERS);
@@ -251,6 +264,7 @@ export function useLibraryFilters({ libId }: { libId: string | undefined }): Use
     if ('activeTag' in snapshot) setActiveTag(snapshot.activeTag ?? null);
     if ('activeAuthor' in snapshot) setActiveAuthor(snapshot.activeAuthor ?? null);
     if ('activeStatus' in snapshot) setActiveStatus(snapshot.activeStatus ?? null);
+    setActiveIdentification(snapshot.activeIdentification ?? null);
     if ('activeLetter' in snapshot) setActiveLetter(snapshot.activeLetter ?? null);
     if ('keyword' in snapshot) setKeyword(snapshot.keyword ?? '');
     // 应用视图是一次完整重置：高级筛选(评分/进度/阅读状态/加入天数)也要按快照重置，
@@ -267,6 +281,7 @@ export function useLibraryFilters({ libId }: { libId: string | undefined }): Use
       activeTag,
       activeAuthor,
       activeStatus,
+      activeIdentification,
       activeLetter,
       sortByField,
       sortDir,
@@ -286,6 +301,7 @@ export function useLibraryFilters({ libId }: { libId: string | undefined }): Use
       activeTag,
       activeAuthor,
       activeStatus,
+      activeIdentification,
       activeLetter,
       keyword,
       advanced,

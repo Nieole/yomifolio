@@ -36,6 +36,7 @@ import { useSeriesVolumes } from './hooks/useSeriesVolumes';
 import { useSeriesOpenVolumes } from './hooks/useSeriesOpenVolumes';
 import { buildContinueCta } from './hooks/useSeriesContinue';
 import { SeriesFranchiseView } from './SeriesFranchiseView';
+import { isIdentificationSource } from '../../features/identification/ownerPick';
 
 /**
  * 业务注释：SeriesDetailPage 是前端系列详情链路，负责卷册聚合、元数据审核、关系维护和阅读入口的页面、组件或工具入口，负责把领域状态转换为用户可操作的界面行为。
@@ -47,6 +48,8 @@ export default function SeriesDetailPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const scrapeProviders = useScrapeProviders();
+  // 识别区的撤换走该来源的手动搜索，只有当前启用的目录来源有这个入口。
+  const replaceableSources = useMemo(() => scrapeProviders.map((p) => p.id).filter(isIdentificationSource), [scrapeProviders]);
 
   // 系列详情页把多个后端端点折叠为一个上下文：系列主体、书籍、标签、作者、关系、待审核元数据和继续阅读信息。
   // 页面组件只消费 ctx，避免各个子面板各自请求导致刷新顺序不一致或保存后局部状态过期。
@@ -485,6 +488,9 @@ export default function SeriesDetailPage() {
         retryingTaskId={failedTasks.retryingTaskId}
         onRetryFailedTask={failedTasks.retry}
         taskTypeLabel={taskTypeLabel}
+        onReplaceIdentification={scrape.handleScrape}
+        replaceableSources={replaceableSources}
+        identificationRevision={scrape.identificationRevision}
       />
 
       <SeriesMetadataEditorModal
@@ -508,7 +514,9 @@ export default function SeriesDetailPage() {
         currentOffset={scrape.currentOffset}
         searchTotal={scrape.searchTotal}
         onClose={scrape.closeSearchModal}
-        providerLabel={scrape.searchProvider === 'bangumi' ? 'Bangumi' : 'AI/LLM'}
+        providerLabel={scrapeProviders.find((p) => p.id === scrape.searchProvider)?.name ?? scrape.searchProvider}
+        provider={scrape.searchProvider}
+        identification={scrape.searchIdentification}
         currentSeries={ctx.series}
         currentTags={ctx.tags}
         lockedFields={edit.lockedFields}

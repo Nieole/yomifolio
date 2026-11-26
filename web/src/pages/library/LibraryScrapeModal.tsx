@@ -1,3 +1,4 @@
+import type { ScrapeProvider } from '../../hooks/useScrapeProviders';
 import { SeriesSearchModal } from '../series-detail/SeriesSearchModal';
 import type { Series as DetailSeries } from '../series-detail/types';
 
@@ -8,16 +9,19 @@ type ScrapingState = ReturnType<typeof useSeriesScraping>;
 
 interface LibraryScrapeModalProps {
   scraping: ScrapingState;
+  providers: ScrapeProvider[];
 }
 
-export function LibraryScrapeModal({ scraping }: LibraryScrapeModalProps) {
+export function LibraryScrapeModal({ scraping, providers }: LibraryScrapeModalProps) {
   if (!scraping.scrapingSeries) return null;
 
   return (
     <SeriesSearchModal
       open={scraping.showScrapeModal}
       onClose={scraping.closeScrapeModal}
-      providerLabel={scraping.scrapeProvider === 'bangumi' ? 'Bangumi' : 'AI/LLM'}
+      providerLabel={providers.find((p) => p.id === scraping.scrapeProvider)?.name ?? scraping.scrapeProvider}
+      provider={scraping.scrapeProvider}
+      identification={scraping.scrapeIdentification}
       modalSearchQuery={scraping.scrapeModalSearchQuery}
       isScraping={scraping.isScraping}
       searchResults={scraping.scrapeSearchResults}

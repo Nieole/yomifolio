@@ -4,6 +4,7 @@ import { useI18n } from '../../i18n/LocaleProvider';
 import { normalizeSeriesStatus } from '../../i18n/status';
 import type { NamedOption } from './types';
 import type { AdvancedFilters } from './hooks/useLibraryFilters';
+import { IDENTIFICATION_STATUSES } from './hooks/libraryFilterParams';
 
 const READ_STATES = ['unread', 'reading', 'completed'] as const;
 const ADDED_WITHIN_PRESETS = [7, 30, 90] as const;
@@ -29,6 +30,10 @@ interface LibraryFilterBarProps {
   onFiltersOpen?: () => void;
   onTagSearch?: (query: string) => void;
   onAuthorSearch?: (query: string) => void;
+  /** 识别状态筛选只给管理员：识别是所有者的整理视图。 */
+  showIdentification?: boolean;
+  activeIdentification?: string | null;
+  onIdentificationChange?: (value: string | null) => void;
 }
 
 const COLLAPSED_VISIBLE_COUNT = 15;
@@ -55,6 +60,9 @@ export function LibraryFilterBar({
   onFiltersOpen,
   onTagSearch,
   onAuthorSearch,
+  showIdentification = false,
+  activeIdentification = null,
+  onIdentificationChange = () => undefined,
 }: LibraryFilterBarProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -105,6 +113,13 @@ export function LibraryFilterBar({
         onClear: () => onStatusChange(null),
       });
     }
+    if (showIdentification && activeIdentification) {
+      chips.push({
+        key: `identification-${activeIdentification}`,
+        label: t('library.filters.identificationChip', { status: t(`series.identification.status.${activeIdentification}`) }),
+        onClear: () => onIdentificationChange(null),
+      });
+    }
     if (activeTag) chips.push({ key: `tag-${activeTag}`, label: t('home.smartFilters.chipTag', { value: activeTag }), onClear: () => onTagChange(null) });
     if (activeAuthor)
       chips.push({
@@ -149,7 +164,7 @@ export function LibraryFilterBar({
         onClear: () => onAdvancedChange({ addedWithinDays: null }),
       });
     return chips;
-  }, [activeStatus, activeTag, activeAuthor, activeLetter, advanced, onAdvancedChange, onAuthorChange, onLetterChange, onStatusChange, onTagChange, t]);
+  }, [activeStatus, activeIdentification, showIdentification, activeTag, activeAuthor, activeLetter, advanced, onAdvancedChange, onAuthorChange, onIdentificationChange, onLetterChange, onStatusChange, onTagChange, t]);
 
   const renderRow = (
     label: string,
@@ -290,6 +305,20 @@ export function LibraryFilterBar({
             false,
             (value) => t(`status.${normalizeSeriesStatus(value)}`),
           )}
+          {showIdentification &&
+            renderRow(
+              t('library.filters.identificationLabel'),
+              [...IDENTIFICATION_STATUSES],
+              activeIdentification,
+              onIdentificationChange,
+              false,
+              () => undefined,
+              '',
+              () => undefined,
+              false,
+              false,
+              (value) => t(`series.identification.status.${value}`),
+            )}
           {renderRow(
             t('home.filters.tags'),
             filteredTags,

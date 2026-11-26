@@ -38,6 +38,13 @@ export function hasAdvancedFilters(a: AdvancedFilters): boolean {
   );
 }
 
+// 资料库可以按识别状态筛选（只对管理员开放），取值与服务端的识别状态一一对应。
+export const IDENTIFICATION_STATUSES = ['unprocessed', 'identified', 'awaiting_owner', 'needs_recheck', 'not_found', 'owner_reviewed'] as const;
+
+export function parseIdentificationParam(v: string | null): string | null {
+  return v && (IDENTIFICATION_STATUSES as readonly string[]).includes(v) ? v : null;
+}
+
 export const VALID_SORT_DIRS = new Set(['asc', 'desc']);
 // 需与后端 seriesSearchSort.supportsCursor() 保持一致。books/volumes/pages 为 NOT NULL 整数列，
 // 方向匹配的 *_desc 索引 + (name,id) tie-break 使 keyset 前滚稳定；rating 可空、read 为每用户派生值，故不纳入。
@@ -59,6 +66,7 @@ export function parseFiltersFromSearch(params: URLSearchParams): {
   activeTag: string | null;
   activeAuthor: string | null;
   activeStatus: string | null;
+  activeIdentification: string | null;
   activeLetter: string | null;
   sortByField: string;
   sortDir: string;
@@ -68,7 +76,7 @@ export function parseFiltersFromSearch(params: URLSearchParams): {
   pageSize: number;
 } | null {
   // 至少有一个 query 参数才认为 URL 携带了完整意图（避免覆盖服务端 settings）
-  const hasAny = ['tag', 'author', 'status', 'letter', 'q', 'sort', 'dir', 'size', 'page', 'read', 'rmin', 'rmax', 'pmin', 'pmax', 'days'].some((k) =>
+  const hasAny = ['tag', 'author', 'status', 'ident', 'letter', 'q', 'sort', 'dir', 'size', 'page', 'read', 'rmin', 'rmax', 'pmin', 'pmax', 'days'].some((k) =>
     params.has(k),
   );
   if (!hasAny) return null;
@@ -78,6 +86,7 @@ export function parseFiltersFromSearch(params: URLSearchParams): {
     activeTag: params.get('tag') || null,
     activeAuthor: params.get('author') || null,
     activeStatus: params.get('status') || null,
+    activeIdentification: parseIdentificationParam(params.get('ident')),
     activeLetter: params.get('letter') || null,
     keyword: params.get('q') || '',
     advanced: {

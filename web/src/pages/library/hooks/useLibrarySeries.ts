@@ -15,6 +15,8 @@ interface UseLibrarySeriesParams {
   activeTag: string | null;
   activeAuthor: string | null;
   activeStatus: string | null;
+  /** 识别状态；只有管理员能按它筛选，其余账号传 null。 */
+  activeIdentification?: string | null;
   activeLetter: string | null;
   advanced: AdvancedFilters;
   sortByField: string;
@@ -74,6 +76,7 @@ export function useLibrarySeries({
   activeTag,
   activeAuthor,
   activeStatus,
+  activeIdentification = null,
   activeLetter,
   advanced,
   sortByField,
@@ -107,6 +110,7 @@ export function useLibrarySeries({
       if (activeTag) params.append('tags', activeTag);
       if (activeAuthor) params.append('authors', activeAuthor);
       if (activeStatus) params.append('status', activeStatus);
+      if (activeIdentification) params.append('identification', activeIdentification);
       if (activeLetter) params.append('letter', activeLetter);
       if (advanced.readState) params.append('readState', advanced.readState);
       if (advanced.minRating !== null) params.append('minRating', String(advanced.minRating));
@@ -124,6 +128,7 @@ export function useLibrarySeries({
       activeTag,
       activeAuthor,
       activeStatus,
+      activeIdentification,
       activeLetter,
       advanced,
       sortByField,
