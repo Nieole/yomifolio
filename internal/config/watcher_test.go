@@ -88,15 +88,16 @@ func TestWatcherDebouncesEventBurst(t *testing.T) {
 		t.Fatalf("去抖窗口内就已经 apply 了 %d 次 —— 突发事件没有被合并", got)
 	}
 
+	// 等的是重载收尾——新值已生效；apply 在换上新快照之前调用，单看它的计数会读得太早。
 	deadline := time.Now().Add(5 * time.Second)
-	for applyCalls.Load() == 0 && time.Now().Before(deadline) {
+	for mgr.Snapshot().Scanner.ArchivePoolSize != 9 && time.Now().Before(deadline) {
 		time.Sleep(testDebounce / 6)
-	}
-	if got := applyCalls.Load(); got != 1 {
-		t.Fatalf("apply 被调用了 %d 次, want 1", got)
 	}
 	if got := mgr.Snapshot().Scanner.ArchivePoolSize; got != 9 {
 		t.Fatalf("ArchivePoolSize = %d, want 9", got)
+	}
+	if got := applyCalls.Load(); got != 1 {
+		t.Fatalf("apply 被调用了 %d 次, want 1", got)
 	}
 }
 
