@@ -21,6 +21,32 @@ func (c *administrationHTTP) mountIdentification(r chi.Router) {
 	r.Post("/identification/prefetch", c.startIdentificationPrefetch)
 	r.Post("/identification/series/{seriesId}/research", c.researchSeries)
 	r.Put("/identification/series/{seriesId}/conclusions/{source}", c.identifySeriesAsOwner)
+	r.Delete("/identification/series/{seriesId}/conclusions/{source}", c.withdrawSeriesIdentification)
+}
+
+// withdrawSeriesIdentification withdraws the owner's or an agent's identification of the series
+// with one source and answers with the series' identification after it.
+func (c *administrationHTTP) withdrawSeriesIdentification(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	seriesID, err := parseID(r, "seriesId")
+	if err != nil || seriesID <= 0 {
+		jsonError(w, http.StatusBadRequest, "Invalid series ID")
+		return
+	}
+	user, _ := userFromContext(r.Context())
+	out, err := c.identification.WithdrawAsOwner(r.Context(), user.ID, seriesID, chi.URLParam(r, "source"))
+	switch {
+	case errors.Is(err, identification.ErrSeriesNotFound):
+		jsonError(w, http.StatusNotFound, "Series not found")
+	case errors.Is(err, identification.ErrNoConclusion):
+		jsonError(w, http.StatusNotFound, "The series is not identified with this source")
+	case errors.Is(err, identification.ErrDenied):
+		jsonError(w, http.StatusForbidden, apiText(requestLocale(r), "auth.admin_required"))
+	case err != nil:
+		jsonError(w, http.StatusInternalServerError, "Identification unavailable")
+	default:
+		jsonResponse(w, http.StatusOK, out)
+	}
 }
 
 // identifySeriesAsOwner records the owner's pick from a manual search of one source
@@ -44,8 +70,6 @@ func (c *administrationHTTP) identifySeriesAsOwner(w http.ResponseWriter, r *htt
 	switch {
 	case errors.Is(err, identification.ErrNotIdentifiable):
 		jsonError(w, http.StatusBadRequest, "Not an identification source entry: the source must be a catalogue source and the result must name its entry")
-	case errors.Is(err, identification.ErrExcludedEntry):
-		jsonError(w, http.StatusConflict, "This entry is an excluded candidate of the series")
 	case errors.Is(err, identification.ErrSeriesNotFound):
 		jsonError(w, http.StatusNotFound, "Series not found")
 	case errors.Is(err, identification.ErrDenied):

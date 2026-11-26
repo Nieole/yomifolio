@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { ArrowLeft, Ban, BadgeCheck, BookImage, Building2, CheckCircle2, Download, Edit, FolderOpen, Globe, Info, Lock, Replace, Sparkles, Star } from 'lucide-react';
 import type { SeriesIdentification } from '../../api/generated';
 import { isIdentificationSource, isSameEntry } from '../../features/identification/ownerPick';
 import type { MetaTag, SearchResult, Series } from './types';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { ModalShell } from '../../components/ui/ModalShell';
 import { modalInputClass, modalPrimaryButtonClass, modalSecondaryButtonClass, modalSectionClass } from '../../components/ui/modalStyles';
 import { useI18n } from '../../i18n/LocaleProvider';
@@ -67,6 +69,8 @@ export function SeriesSearchModal({
   onApplyMetadata,
 }: SeriesSearchModalProps) {
   const { t } = useI18n();
+  // 挑中排除候选要先确认：这是之前否决过的条目，挑中会解除排除。
+  const [confirmingExcluded, setConfirmingExcluded] = useState<SearchResult | null>(null);
   if (!open) return null;
 
   const identifying = isIdentificationSource(provider);
@@ -228,8 +232,8 @@ export function SeriesSearchModal({
                 <p className="text-xs text-gray-500">{t('series.searchModal.compareHint')}</p>
               </div>
               <button
-                onClick={() => onApplyMetadata(selectedResult)}
-                disabled={isScraping || selectedExcluded}
+                onClick={() => (selectedExcluded ? setConfirmingExcluded(selectedResult) : onApplyMetadata(selectedResult))}
+                disabled={isScraping}
                 className={`${modalPrimaryButtonClass} w-full sm:w-auto shrink-0 shadow-lg shadow-komgaPrimary/20 hover:shadow-xl hover:shadow-komgaPrimary/30 px-6 py-2.5 justify-center`}
               >
                 {isScraping ? <div className="w-4 h-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : replacesCurrent ? <Replace className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
@@ -455,6 +459,20 @@ export function SeriesSearchModal({
             )}
           </div>
         </div>
+      <ConfirmDialog
+        open={confirmingExcluded !== null}
+        tone="warning"
+        zIndexClassName="z-70"
+        title={t('series.searchModal.liftExclusionTitle')}
+        description={t('series.searchModal.liftExclusionDescription', { title: confirmingExcluded?.Title ?? '' })}
+        confirmLabel={t('series.searchModal.liftExclusionConfirm')}
+        onClose={() => setConfirmingExcluded(null)}
+        onConfirm={() => {
+          const picked = confirmingExcluded;
+          setConfirmingExcluded(null);
+          if (picked) onApplyMetadata(picked);
+        }}
+      />
     </ModalShell>
   );
 }

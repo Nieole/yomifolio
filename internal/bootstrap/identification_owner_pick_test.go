@@ -27,8 +27,9 @@ type ownerPick struct {
 		Source  string `json:"source"`
 		EntryID string `json:"entry_id"`
 	} `json:"replaced"`
-	RetractionID string `json:"retraction_id"`
-	OperationID  string `json:"operation_id"`
+	LiftedExclusion bool   `json:"lifted_exclusion"`
+	RetractionID    string `json:"retraction_id"`
+	OperationID     string `json:"operation_id"`
 }
 
 // manualSearch runs the series' manual search on one source, as the search dialog does, and
@@ -193,7 +194,7 @@ func TestOwnerReplacingAnIdentificationExcludesTheOldEntryAndTakesBackWhatItBrou
 		!retraction.changed("rating") || !retraction.changed("authors") || !retraction.changed("source_links") || retraction.changed("summary") {
 		t.Fatalf("retraction receipt %+v", retraction)
 	}
-	// The excluded entry no longer reaches an agent, nor the owner's own pick.
+	// The excluded entry no longer reaches an agent.
 	if evidence := web.evidence(id); evidence != nil {
 		for _, c := range evidence.Candidates {
 			if c.ID == "bangumi:1" {
@@ -201,7 +202,33 @@ func TestOwnerReplacingAnIdentificationExcludesTheOldEntryAndTakesBackWhatItBrou
 			}
 		}
 	}
-	web.pickEntry(id, "bangumi", web.manualSearch(id, "bangumi", "Title 1")[0], http.StatusConflict)
+}
+
+func TestOwnerPickOfAnExcludedEntryLiftsTheExclusion(t *testing.T) {
+	store, cfg := fixture(t)
+	unpaced(t, cfg)
+	library := newPrefetchLibrary(t, store, "Lifted")
+	id := library.series("Title 1", "", "01.cbz")
+	historicalProposal(t, store, id, "Bangumi", 9, "https://bgm.tv/subject/9", `{"Title":"否决过的作品"}`, "rejected")
+	sources := &recordingSources{answer: catalogue(map[string]map[string]*metadata.SeriesMetadata{
+		"bangumi": {"Title 1": {Title: "否决过的作品", Summary: "Source summary", SourceID: 9, SourceURL: "https://bgm.tv/subject/9"}},
+	})}
+	web := openClaimWeb(t, store, cfg, sources, &handClock{now: time.Date(2026, 3, 1, 9, 0, 0, 0, time.UTC)})
+	if got := web.identification(id); len(got.Excluded) != 1 || got.Excluded[0].EntryID != "9" {
+		t.Fatalf("history left no exclusion %+v", got)
+	}
+
+	// The owner's own pick is the latest human decision on the entry: the exclusion goes and the
+	// entry identifies the series.
+	pick := web.pickEntry(id, "bangumi", web.manualSearch(id, "bangumi", "Title 1")[0], http.StatusOK)
+
+	got := pick.Identification
+	if !pick.LiftedExclusion || got.Status != "identified" || len(got.Conclusions) != 1 || got.Conclusions[0].EntryID != "9" || got.Conclusions[0].Confirmer.Kind != "owner" || len(got.Excluded) != 0 {
+		t.Fatalf("identification after picking the excluded entry %+v", got)
+	}
+	if series := web.series(id); series.Summary.String != "Source summary" {
+		t.Fatalf("series after picking the excluded entry %+v", series)
+	}
 }
 
 func TestOwnerReplacementKeepsWhatOtherSourcesBroughtAndRecomputesTheRating(t *testing.T) {
@@ -456,5 +483,130 @@ func TestLibraryBrowsingFiltersByIdentificationStatus(t *testing.T) {
 	web.browse(lib, "identification=identified", http.StatusForbidden)
 	if got := web.browse(lib, "", http.StatusOK); len(got) != 3 {
 		t.Fatalf("regular account's library %v", got)
+	}
+}
+
+// ownerWithdrawal mirrors the response of withdrawing one source's identification.
+type ownerWithdrawal struct {
+	Identification seriesIdentification `json:"identification"`
+	Withdrawn      struct {
+		Source  string `json:"source"`
+		EntryID string `json:"entry_id"`
+	} `json:"withdrawn"`
+	RetractionID string `json:"retraction_id"`
+	OperationID  string `json:"operation_id"`
+}
+
+// withdrawIdentification withdraws the series' identification with one source, as the series
+// page does.
+func (w *identificationWeb) withdrawIdentification(series int64, source string, want int) ownerWithdrawal {
+	w.t.Helper()
+	var out ownerWithdrawal
+	if want != http.StatusOK {
+		w.call("DELETE", fmt.Sprintf("/api/identification/series/%d/conclusions/%s", series, source), want, nil)
+		return out
+	}
+	w.call("DELETE", fmt.Sprintf("/api/identification/series/%d/conclusions/%s", series, source), want, &out)
+	return out
+}
+
+func TestOwnerWithdrawingTheOnlyIdentificationHandsTheSeriesBackToTheAgents(t *testing.T) {
+	store, cfg := fixture(t)
+	unpaced(t, cfg)
+	library := newPrefetchLibrary(t, store, "Withdraw")
+	id := library.series("Title 1", "", "01.cbz")
+	setSeries(t, store, id, func(p *database.UpdateSeriesMetadataParams) {
+		p.Title, p.LockedFields = sqlText("Title 1"), sqlText("title")
+	})
+	wrong := &metadata.SeriesMetadata{Title: "错的作品", Summary: "Wrong summary", SiteRating: &metadata.SiteRating{Value: 6, Scale: 10}, SourceID: 1, SourceURL: "https://bgm.tv/subject/1"}
+	right := &metadata.SeriesMetadata{Title: "怪物", Summary: "Right summary", SourceID: 7, SourceURL: "https://bgm.tv/subject/7"}
+	sources := &recordingSources{answer: func(source, query string) ([]*metadata.SeriesMetadata, error) {
+		if source != "bangumi" {
+			return nil, nil
+		}
+		w, r := *wrong, *right
+		return []*metadata.SeriesMetadata{&w, &r}, nil
+	}}
+	web := openClaimWeb(t, store, cfg, sources, &handClock{now: time.Date(2026, 3, 1, 9, 0, 0, 0, time.UTC)})
+	if _, run := web.prefetch("{}"); run.Status != task.StatusCompleted {
+		t.Fatalf("prefetch run %+v", run)
+	}
+	agent := web.mainLoopAgent(cfg, 1, []int64{library.lib.ID}, []string{delegated.Read, delegated.MetadataWrite})
+	agent.identifyAll("identify", map[int64][]string{id: {"bangumi:1"}})
+
+	out := web.withdrawIdentification(id, "bangumi", http.StatusOK)
+
+	got := out.Identification
+	if out.Withdrawn.Source != "bangumi" || out.Withdrawn.EntryID != "1" || out.RetractionID == "" || out.OperationID != "" {
+		t.Fatalf("withdrawal %+v", out)
+	}
+	if got.Status != "unprocessed" || len(got.Conclusions) != 0 || len(got.Excluded) != 1 || got.Excluded[0].EntryID != "1" {
+		t.Fatalf("identification after the withdrawal %+v", got)
+	}
+	// What the withdrawn entry brought and nobody touched goes back to before it: the placeholder
+	// title under its lock, and no summary, rating or link.
+	series := web.series(id)
+	if series.Title.String != "Title 1" || series.LockedFields.String != "title" || series.Summary.Valid || series.Rating.Valid {
+		t.Fatalf("series after the withdrawal %+v", series)
+	}
+	if links := web.seriesLinks(id); len(links) != 0 {
+		t.Fatalf("links after the withdrawal %v", links)
+	}
+	if r := web.ownerReceipt(out.RetractionID); r.Outcome != "changed" || !r.changed("title") || !r.changed("summary") || !r.changed("source_links") {
+		t.Fatalf("retraction receipt %+v", r)
+	}
+
+	// The agents take the series up again, without the withdrawn entry.
+	batch := agent.claim(map[string]any{})
+	if !reflect.DeepEqual(batch.ids(), []int64{id}) {
+		t.Fatalf("claim after the withdrawal %v", batch.ids())
+	}
+	again := agent.submit("again", batch.LeaseID, identifyVerdict(id, "the titles match", "bangumi:1"))
+	wantResult(t, again[0], id, false, "excluded_candidate")
+	again = agent.submit("again-2", batch.LeaseID, identifyVerdict(id, "the titles match", "bangumi:7"))
+	wantResult(t, again[0], id, true, "identified")
+	if series := web.series(id); series.Title.String != "怪物" || series.Summary.String != "Right summary" {
+		t.Fatalf("series identified again %+v", series)
+	}
+
+	web.withdrawIdentification(id, "anilist", http.StatusNotFound)
+	web.withdrawIdentification(999999, "bangumi", http.StatusNotFound)
+}
+
+func TestOwnerWithdrawingOneSourceSupplementsFromTheOthersAgain(t *testing.T) {
+	store, cfg := fixture(t)
+	unpaced(t, cfg)
+	library := newPrefetchLibrary(t, store, "Withdraw one")
+	id := library.series("Title 1", "", "01.cbz")
+	setSeries(t, store, id, func(p *database.UpdateSeriesMetadataParams) {
+		p.Title, p.LockedFields = sqlText("Title 1"), sqlText("title")
+	})
+	sources := &recordingSources{answer: catalogue(map[string]map[string]*metadata.SeriesMetadata{
+		"bangumi": {"Title 1": {Title: "错的作品", Summary: "Wrong summary", SiteRating: &metadata.SiteRating{Value: 6, Scale: 10}, SourceID: 1, SourceURL: "https://bgm.tv/subject/1"}},
+		"anilist": {"Title 1": {Title: "Monster", Summary: "AniList summary", SiteRating: &metadata.SiteRating{Value: 80, Scale: 100}, SourceID: 5, SourceURL: "https://anilist.co/manga/5"}},
+	})}
+	web := openClaimWeb(t, store, cfg, sources, &handClock{now: time.Date(2026, 3, 1, 9, 0, 0, 0, time.UTC)})
+	if _, run := web.prefetch("{}"); run.Status != task.StatusCompleted {
+		t.Fatalf("prefetch run %+v", run)
+	}
+	agent := web.mainLoopAgent(cfg, 1, []int64{library.lib.ID}, []string{delegated.Read, delegated.MetadataWrite})
+	agent.identifyAll("identify", map[int64][]string{id: {"bangumi:1", "anilist:5"}})
+	if series := web.series(id); series.Title.String != "错的作品" || series.Rating.Float64 != 7 {
+		t.Fatalf("series identified with both sources %+v", series)
+	}
+
+	out := web.withdrawIdentification(id, "bangumi", http.StatusOK)
+
+	got := out.Identification
+	if got.Status != "identified" || len(got.Conclusions) != 1 || got.Conclusions[0].Source != "anilist" || out.RetractionID == "" || out.OperationID == "" {
+		t.Fatalf("withdrawing one of two sources %+v", out)
+	}
+	// The fields the withdrawn entry took part in come back from the source that remains.
+	series := web.series(id)
+	if series.Title.String != "Monster" || series.LockedFields.String != "title" || series.Summary.String != "AniList summary" || series.Rating.Float64 != 8 {
+		t.Fatalf("series after withdrawing Bangumi %+v", series)
+	}
+	if links := web.seriesLinks(id); !reflect.DeepEqual(links, map[string]string{"AniList": "https://anilist.co/manga/5"}) {
+		t.Fatalf("links after withdrawing Bangumi %v", links)
 	}
 }

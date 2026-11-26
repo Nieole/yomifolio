@@ -4,9 +4,10 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { BadgeCheck, ExternalLink, Loader2, Replace, ShieldCheck, Undo2 } from 'lucide-react';
+import { BadgeCheck, ExternalLink, Loader2, Replace, ShieldCheck, Undo2, Unlink } from 'lucide-react';
 import { apiClient, getApiErrorMessage } from '../../api/client';
-import type { Conclusion, SeriesIdentification } from '../../api/generated';
+import type { Conclusion, OwnerWithdrawal, SeriesIdentification } from '../../api/generated';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useI18n } from '../../i18n/LocaleProvider';
 import { useToast } from '../../components/ToastProvider';
 
@@ -30,14 +31,17 @@ interface SeriesIdentificationPanelProps {
   replaceableSources?: string[];
   /** 页面别处记下人工识别后递增，识别区随之重读。 */
   revision?: number;
+  /** 撤回识别改了系列元数据之后调用，让页面重读系列。 */
+  onChanged?: () => void;
 }
 
-export function SeriesIdentificationPanel({ seriesId, onReplace, replaceableSources = [], revision = 0 }: SeriesIdentificationPanelProps) {
+export function SeriesIdentificationPanel({ seriesId, onReplace, replaceableSources = [], revision = 0, onChanged }: SeriesIdentificationPanelProps) {
   const { t, formatDateTime } = useI18n();
   const { showToast } = useToast();
   const [identification, setIdentification] = useState<SeriesIdentification | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [withdrawing, setWithdrawing] = useState<Conclusion | null>(null);
   // 切换系列后，上一个系列迟到的响应不得画到新系列上。
   const current = useRef(seriesId);
   current.current = seriesId;
@@ -77,6 +81,24 @@ export function SeriesIdentificationPanel({ seriesId, onReplace, replaceableSour
       showToast(getApiErrorMessage(err, t('series.identification.decisionFailed')), 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // 撤回一个来源的识别：旧条目记为排除候选，撤回它带来、之后没被改动的字段；没有其它识别时系列回到未处理。
+  const withdraw = async (c: Conclusion) => {
+    const target = seriesId;
+    setSaving(true);
+    try {
+      const r = await apiClient.delete<OwnerWithdrawal>(`/api/identification/series/${target}/conclusions/${c.source}`);
+      if (current.current !== target) return;
+      setIdentification(r.data.identification);
+      showToast(t('series.identification.withdrawn'), 'success');
+      onChanged?.();
+    } catch (err) {
+      showToast(getApiErrorMessage(err, t('series.identification.decisionFailed')), 'error');
+    } finally {
+      setSaving(false);
+      setWithdrawing(null);
     }
   };
 
@@ -188,8 +210,8 @@ export function SeriesIdentificationPanel({ seriesId, onReplace, replaceableSour
               ) : (
                 c.confirmer.kind === 'owner' && <p className="mt-1 text-xs text-gray-500">{t('series.identification.ownerPicked')}</p>
               )}
-              {onReplace && (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {onReplace && (
                   <button
                     type="button"
                     onClick={() => onReplace(c.source)}
@@ -200,8 +222,18 @@ export function SeriesIdentificationPanel({ seriesId, onReplace, replaceableSour
                     <Replace className="h-3.5 w-3.5" />
                     {t('series.identification.replace')}
                   </button>
-                </div>
-              )}
+                )}
+                <button
+                  type="button"
+                  onClick={() => setWithdrawing(c)}
+                  disabled={saving}
+                  title={t('series.identification.withdrawHint')}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/20 bg-red-500/5 px-2.5 py-1 text-xs font-medium text-red-200 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <Unlink className="h-3.5 w-3.5" />
+                  {t('series.identification.withdraw')}
+                </button>
+              </div>
             </div>
           ))
         )}
@@ -225,6 +257,19 @@ export function SeriesIdentificationPanel({ seriesId, onReplace, replaceableSour
           ))}
         </section>
       )}
+      <ConfirmDialog
+        open={withdrawing !== null}
+        tone="danger"
+        loading={saving}
+        title={t('series.identification.withdrawTitle')}
+        description={t('series.identification.withdrawDescription', {
+          title: withdrawing ? withdrawing.title || withdrawing.entry_id : '',
+          source: withdrawing ? sourceLabel(withdrawing.source) : '',
+        })}
+        confirmLabel={t('series.identification.withdrawConfirm')}
+        onClose={() => setWithdrawing(null)}
+        onConfirm={() => withdrawing && void withdraw(withdrawing)}
+      />
     </div>
   );
 }

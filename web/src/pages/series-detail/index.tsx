@@ -491,6 +491,7 @@ export default function SeriesDetailPage() {
         onReplaceIdentification={scrape.handleScrape}
         replaceableSources={replaceableSources}
         identificationRevision={scrape.identificationRevision}
+        onIdentificationChanged={() => void ctx.reload()}
       />
 
       <SeriesMetadataEditorModal

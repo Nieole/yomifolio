@@ -48,26 +48,39 @@ func (s *Service) replace(ctx context.Context, tx *sql.Tx, actor delegated.Subje
 			if old.Source != c.Source {
 				continue
 			}
-			if _, err := tx.ExecContext(ctx, `DELETE FROM identification_conclusions WHERE series_id = ? AND source = ?`, seriesID, c.Source); err != nil {
-				return out, err
-			}
 			if old.EntryID == entry {
+				if _, err := tx.ExecContext(ctx, `DELETE FROM identification_conclusions WHERE series_id = ? AND source = ?`, seriesID, c.Source); err != nil {
+					return out, err
+				}
 				continue
 			}
-			out.Withdrawn = append(out.Withdrawn, old)
-			if s.enricher == nil || status == StatusOwnerReviewed {
-				continue
-			}
-			op, err := s.enricher.RetractIdentified(ctx, tx, actor, enrichment.RetractInput{RequestKey: retractionKey(receiptKey, old.Source), SeriesID: seriesID,
-				Entry: enrichment.IdentifiedEntry{CandidateID: candidateID(old.Source, old.EntryID), EntryURL: old.EntryURL}, Reason: reason})
+			op, err := s.withdraw(ctx, tx, actor, retractionKey(receiptKey, old.Source), seriesID, status, old, reason)
 			if err != nil {
 				return out, err
 			}
-			out.Retractions = append(out.Retractions, op)
+			out.Withdrawn = append(out.Withdrawn, old)
+			if op.ID != "" {
+				out.Retractions = append(out.Retractions, op)
+			}
 		}
 	}
 	out.Supplement, err = s.confirm(ctx, tx, actor, confirmer, receiptKey, seriesID, cited, reason)
 	return out, err
+}
+
+// withdraw removes the series' conclusion old and takes back, under the receipt receiptKey, what
+// its entry supplemented and nobody changed since, in the caller's transaction. Values other
+// identified sources supply come back only from a supplementation the caller runs next. On an
+// owner-reviewed series, or without an enricher, only the conclusion goes and the receipt is zero.
+func (s *Service) withdraw(ctx context.Context, tx *sql.Tx, actor delegated.Subject, receiptKey string, seriesID int64, status string, old Conclusion, reason string) (enrichment.Operation, error) {
+	if _, err := tx.ExecContext(ctx, `DELETE FROM identification_conclusions WHERE series_id = ? AND source = ?`, seriesID, old.Source); err != nil {
+		return enrichment.Operation{}, err
+	}
+	if s.enricher == nil || status == StatusOwnerReviewed {
+		return enrichment.Operation{}, nil
+	}
+	return s.enricher.RetractIdentified(ctx, tx, actor, enrichment.RetractInput{RequestKey: receiptKey, SeriesID: seriesID,
+		Entry: enrichment.IdentifiedEntry{CandidateID: candidateID(old.Source, old.EntryID), EntryURL: old.EntryURL}, Reason: reason})
 }
 
 // retractionKey names the retraction receipt of one withdrawn source inside the replacement whose

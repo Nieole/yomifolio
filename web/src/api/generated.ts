@@ -643,6 +643,14 @@ export interface ResearchResult {
 export interface OwnerIdentification {
   identification: SeriesIdentification;
   replaced?: Conclusion;
+  lifted_exclusion?: boolean;
+  retraction_id?: string;
+  operation_id?: string;
+}
+
+export interface OwnerWithdrawal {
+  identification: SeriesIdentification;
+  withdrawn: Conclusion;
   retraction_id?: string;
   operation_id?: string;
 }

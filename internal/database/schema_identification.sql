@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS identification_conclusions (
     PRIMARY KEY (series_id, source)
 );
 
--- Source entries a person ruled out for the series. Only human decisions write here.
+-- Source entries a person ruled out for the series. Only human decisions write here, and the
+-- owner's own pick of an excluded entry deletes its row.
 CREATE TABLE IF NOT EXISTS identification_exclusions (
     series_id INTEGER NOT NULL REFERENCES series(id) ON DELETE CASCADE,
     source TEXT NOT NULL,
