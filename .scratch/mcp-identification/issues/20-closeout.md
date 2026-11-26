@@ -4,7 +4,7 @@
 
 **Blocked by:** 01–19
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 把本 effort 的长期契约写入架构规格的 MCP 节、application 模块规格和 api 模块规格。新增的规格节点用 draft 状态。
 - [x] ADR 0016 中额度委托的部分标为 deprecated，并链接 ADR 0017；清理自主权部分保留。ADR 0017 的状态由用户审阅后决定。
@@ -27,3 +27,5 @@
 - **CHANGELOG**：在「未发布」最前面加本 effort 的 11 条，保留原有三条修复；下线工具、`internal_llm` 与批量刮削路由合成一条，标「不兼容」。
 - **签发凭据页的能力说明**（locale 键 `mcp.bounds`，中英两份）还写着「目前仅实现系列读取」「不能获得付费模型权限」，与现状不符，顺手改成当前的权限规则；`docs/features*.md` 里「单系列手动搜索生成提案」的说法同样改为记录人工确认的识别。
 - **真机参考验收**：材料在 `.scratch/mcp-identification/acceptance.md`（前置准备、操作步骤、判定条件、留空的结果记录区）。要所有者本人用 qwen3.8-flash-next q2 + pi 执行，本项未勾。
+
+**用户决定（2026-11-26）**：票 20 记为 done。真机参考验收（qwen3.8-flash-next q2 + pi）由用户本人执行，本票交付了验收材料 `.scratch/mcp-identification/acceptance.md`；执行结果记入该文件的结果记录区，因此上面那一项保持未勾。规格写明它不作硬性门禁。

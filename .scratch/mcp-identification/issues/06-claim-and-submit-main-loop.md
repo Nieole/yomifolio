@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 识别结论与识别状态；05 证据包预取（手动回填）
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 领取（`metadata_write`）：
   - 可按资料库过滤，每批最多 20 个；

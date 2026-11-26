@@ -4,7 +4,7 @@
 
 **Blocked by:** 07 识别后的元数据补充
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 撤换识别（`metadata_write`）：
   - 只能撤换 agent 确认的识别；

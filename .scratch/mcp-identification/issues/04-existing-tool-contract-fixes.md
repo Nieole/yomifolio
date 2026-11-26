@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] `library_find_series` 的 `missing_fields` 改为：所列字段中任一缺失即命中。工具描述同步说明。
 - [x] 每个工具的结果都带 JSON 文本副本。回归测试逐一覆盖所有已注册的工具；以后新增的工具缺少文本副本时，测试失败。

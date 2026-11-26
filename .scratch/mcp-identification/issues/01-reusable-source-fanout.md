@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 以下规则只在一处定义：来源范围（Bangumi、AniList、MangaDex，以及配置了凭据的 MyAnimeList、Comic Vine；不含 LLM）、每个来源的状态（可用、失败、无效响应、过大）、结果快照的校验规则。
 - [x] 扇出过程中，每访问一个来源前后仍调用当前授权检查点；取消与授权撤销的行为不变。

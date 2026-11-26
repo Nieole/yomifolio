@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 原语（`metadata_write`）在两个系列之间添加关系：关系类型沿用现有的作品群关系类型，两个系列都必须在凭据的授权范围内。
 - [x] 每次添加都要写原因、留收据，可以查询和撤销。撤销只移除本次添加、之后没被改动过的关系。

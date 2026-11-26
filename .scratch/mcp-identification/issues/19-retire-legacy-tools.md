@@ -4,7 +4,7 @@
 
 **Blocked by:** 06 主循环：领取与提交裁决；07 识别后的元数据补充；10 作者校正与封面改善成为独立原语
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 下线旧的识别链：`library_search_sources`、`library_get_source_search`、`library_propose_match`、`library_get_match_proposal`、`library_get_enrichment_state`、`library_enrich_metadata`、`library_enrich_metadata_batch`。它们不再出现在工具清单中，调用时被统一拒绝。
 - [x] 下线内部模型：`library_assess_match`、`library_get_model_operation` 和 `internal_llm` 能力。

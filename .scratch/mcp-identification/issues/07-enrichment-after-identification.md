@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 元数据补充与证据来源解耦；06 主循环：领取与提交裁决
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] 识别确认后，在同一项系列操作里完成补充，并留下与现有补充相同的收据，可以用现有工具查询、撤销和清理。本票覆盖 agent 提交的路径，同时提供一个可供人工确认复用的同一用例。
 - [x] 文本字段（标题、简介、出版社、状态）按可配置的来源优先级取第一个有值的，默认顺序为 Bangumi > AniList > MangaDex > MyAnimeList > Comic Vine。Bangumi 的标题取中文名，没有中文名时取原名。

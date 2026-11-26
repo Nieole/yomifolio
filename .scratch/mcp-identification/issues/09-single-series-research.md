@@ -4,7 +4,7 @@
 
 **Blocked by:** 05 证据包预取（手动回填）
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] MCP 原语（`metadata_write`）和管理员网页接口共用同一个用例。
 - [x] 复用 01 的扇出和来源限速。
