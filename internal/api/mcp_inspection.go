@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -19,21 +20,22 @@ func tagUsageInputSchema() any {
 	return schema
 }
 
-// reportInputSchema lists the note categories as an enum.
+// reportInputSchema lists the report categories as an enum.
 func reportInputSchema() any {
 	schema, err := jsonschema.For[identification.ReportInput](nil)
 	if err != nil {
 		return nil
 	}
 	categories := []any{}
-	for _, c := range identification.AgentCategories {
-		if c.Class == identification.EscalationNote {
-			categories = append(categories, c.Category)
-		}
+	for _, c := range identification.ReportCategories {
+		categories = append(categories, c)
 	}
 	schema.Properties["category"].Enum = categories
 	return schema
 }
+
+// errNoOwnerIdentification tells an agent a dispute names a series no person identified.
+var errNoOwnerIdentification = errors.New("no person identified this series, so there is nothing to dispute; an agent's identification is replaced with library_replace_identification, which needs metadata_write")
 
 // registerMCPInspection binds the read-only inspection primitives. They need only read, so a
 // regular account's credential can use them too.
@@ -47,8 +49,11 @@ func registerMCPInspection(server *mcp.Server, service *identification.Service, 
 		out, err := service.TagUsage(ctx, subject, in)
 		return nil, out, publicMCPToolError(err, "invalid tag count; sort is count or name, limit 1-100, offset at least 0 and library_ids at most 256 positive library IDs", "tag count unavailable; retry later")
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_report_series", InputSchema: reportInputSchema(), Description: `Leave the owner a note on one series: directory_grouping (mixes or splits works), suspected_duplicate (reason names the other series_id) or tag_problem. Changes no status or metadata; a category the series already has, even closed by the owner, is not noted again (recorded false). Needs only read. Example: {"series_id":12,"category":"suspected_duplicate","reason":"same entry as series 40"}`, Annotations: &mcp.ToolAnnotations{IdempotentHint: true, DestructiveHint: new(bool), OpenWorldHint: new(bool)}}, func(ctx context.Context, _ *mcp.CallToolRequest, in identification.ReportInput) (*mcp.CallToolResult, identification.Report, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_report_series", InputSchema: reportInputSchema(), Description: `Report a series to the owner. Notes change nothing: directory_grouping (mixes or splits works), suspected_duplicate (name the other series_id), tag_problem, protected_value_doubt (a value you may not change is wrong); each once per series, even if closed. disputed_owner_identification sends a person's identification to recheck. Example: {"series_id":12,"category":"tag_problem","reason":"bad tags"}`, Annotations: &mcp.ToolAnnotations{IdempotentHint: true, DestructiveHint: new(bool), OpenWorldHint: new(bool)}}, func(ctx context.Context, _ *mcp.CallToolRequest, in identification.ReportInput) (*mcp.CallToolResult, identification.Report, error) {
 		out, err := service.Report(ctx, subject, in)
-		return nil, out, publicMCPToolError(err, "invalid report; category is directory_grouping, suspected_duplicate or tag_problem and reason one sentence of at most 1000 bytes; escalating for identification is a verdict of library_submit_verdicts, which needs metadata_write", "report unavailable; retry later")
+		if errors.Is(err, identification.ErrNoOwnerIdentification) {
+			return nil, out, errNoOwnerIdentification
+		}
+		return nil, out, publicMCPToolError(err, "invalid report; category is directory_grouping, suspected_duplicate, tag_problem, protected_value_doubt or disputed_owner_identification and reason one sentence of at most 1000 bytes; escalating for identification is a verdict of library_submit_verdicts, which needs metadata_write", "report unavailable; retry later")
 	})
 }

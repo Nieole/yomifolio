@@ -29,6 +29,8 @@ var targets = []reflect.Type{
 	reflect.TypeOf(enrichment.AdjudicationResult{}),
 	reflect.TypeOf(enrichment.IdentificationBasis{}),
 	reflect.TypeOf(enrichment.IdentifiedEntry{}),
+	reflect.TypeOf(enrichment.CorrectionBasis{}),
+	reflect.TypeOf(enrichment.FieldSourceRecord{}),
 	reflect.TypeOf(enrichment.CleanupResult{}),
 	reflect.TypeOf(enrichment.MaterialResult{}),
 	reflect.TypeOf(enrichment.CoverSelection{}),

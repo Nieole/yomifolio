@@ -9,6 +9,7 @@ export interface Operation {
   cleaned_by?: string;
   adjudication?: AdjudicationResult;
   identification?: IdentificationBasis;
+  correction?: CorrectionBasis;
   cover_selection?: CoverSelection;
   relation?: RelationChange;
   old_cover_material?: string;
@@ -50,6 +51,20 @@ export interface IdentificationBasis {
 export interface IdentifiedEntry {
   candidate_id: string;
   entry_url: string;
+}
+
+export interface CorrectionBasis {
+  field: string;
+  replaced: FieldSourceRecord;
+}
+
+export interface FieldSourceRecord {
+  value: string;
+  source: string;
+  source_url: string;
+  confidence: number;
+  proposal_id?: number;
+  operation_id?: string;
 }
 
 export interface CleanupResult {

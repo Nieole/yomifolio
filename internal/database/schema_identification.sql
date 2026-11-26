@@ -100,8 +100,9 @@ CREATE TABLE IF NOT EXISTS identification_leases (
     expires_at_ms INTEGER NOT NULL
 );
 
--- The decided result of each verdict, by the credential's request key, so a retried request gets
--- the original result back. digest fingerprints the verdict the key was first used with.
+-- The decided result of each verdict, replacement or field correction, by the credential's request
+-- key, so a retried request gets the original result back. digest fingerprints the decision the key
+-- was first used with.
 CREATE TABLE IF NOT EXISTS identification_verdicts (
     credential_id TEXT NOT NULL,
     request_key TEXT NOT NULL,

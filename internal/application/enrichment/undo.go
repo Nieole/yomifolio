@@ -202,7 +202,16 @@ func (s *Service) Undo(ctx context.Context, actor delegated.Subject, in UndoInpu
 			if original.Adjudication != nil {
 				origin.Proposal = original.Adjudication.ProposalID
 			}
-			return seriesmeta.ForgetEnrichmentProvenance(ctx, tx, current.ID, origin, changedFields(out.Fields))
+			if err := seriesmeta.ForgetEnrichmentProvenance(ctx, tx, current.ID, origin, changedFields(out.Fields)); err != nil {
+				return err
+			}
+			if c := original.Correction; c != nil {
+				// The corrected value replaced a source value, so the restored value is one again.
+				r := c.Replaced
+				return seriesmeta.RestoreFieldProvenance(ctx, tx, current.ID, c.Field, seriesmeta.FieldRecord{Value: r.Value, Source: r.Source, SourceURL: r.SourceURL,
+					Confidence: r.Confidence, Origin: seriesmeta.FieldOrigin{Operation: r.OperationID, Proposal: r.ProposalID}})
+			}
+			return nil
 		})
 		if e != nil {
 			return Operation{}, e
