@@ -144,6 +144,7 @@ export interface FieldEvidence {
 export interface SourceFacts {
   Title: string;
   OriginalTitle: string;
+  Aliases?: string[];
   Summary: string;
   Publisher: string;
   Status: string;

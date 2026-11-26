@@ -40,6 +40,7 @@ type comicvineSearchResponse struct {
 type comicvineVolume struct {
 	ID            int                 `json:"id"`
 	Name          string              `json:"name"`
+	Aliases       string              `json:"aliases"` // 换行分隔的其它名称，可能为空
 	Deck          string              `json:"deck"`
 	Description   string              `json:"description"`
 	Image         *comicvineImage     `json:"image"`
@@ -121,7 +122,7 @@ func (c *ComicVineProvider) SearchMetadata(ctx context.Context, title string, li
 	query.Set("query", title)
 	query.Set("limit", fmt.Sprintf("%d", limit))
 	query.Set("offset", fmt.Sprintf("%d", offset))
-	query.Set("field_list", "id,name,deck,description,image,count_of_issues,start_year,site_detail_url,publisher")
+	query.Set("field_list", "id,name,aliases,deck,description,image,count_of_issues,start_year,site_detail_url,publisher")
 
 	// safeURL 刻意**不含** api_key，是本函数里唯一可以进日志或错误串的地址；
 	// 凭据在 NewRequest 之后单独注入 req.URL.RawQuery。也就是说 req.URL 与 req.URL.String()
@@ -245,6 +246,7 @@ func (c *ComicVineProvider) convertToSeriesMetadata(item comicvineVolume, rank i
 
 	return &SeriesMetadata{
 		Title:       item.Name,
+		Aliases:     aliasesOf(item.Name, "", strings.Split(item.Aliases, "\n")...),
 		Summary:     summary,
 		Publisher:   publisher,
 		CoverURL:    coverURL,

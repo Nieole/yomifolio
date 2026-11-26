@@ -107,7 +107,8 @@ type SeriesAuthor struct {
 type SeriesMetadata struct {
 	MatchEvidence *MatchEvidence `json:",omitempty"`
 	Title         string
-	OriginalTitle string // 原名/别名
+	OriginalTitle string   // 原名
+	Aliases       []string `json:",omitempty"` // 来源给出的其它名称，不含 Title 与 OriginalTitle；拿不到别名的来源留空
 	Summary       string
 	Publisher     string
 	Status        string
@@ -145,7 +146,8 @@ type FieldEvidence struct {
 // SourceFacts retains source values without recursively embedding decision records.
 type SourceFacts struct {
 	Title         string
-	OriginalTitle string // 原名/别名
+	OriginalTitle string   // 原名
+	Aliases       []string `json:",omitempty"` // 来源给出的其它名称，不含 Title 与 OriginalTitle；拿不到别名的来源留空
 	Summary       string
 	Publisher     string
 	Status        string
@@ -161,6 +163,29 @@ type SourceFacts struct {
 	Confidence    float64
 	ReleaseDate   string // 发行日期
 	VolumeCount   int    // 册数/卷数
+}
+
+// maxAliases bounds the names a source result keeps besides its title and original title.
+const maxAliases = 20
+
+// aliasesOf keeps the distinct non-empty names other than the title and the original title, in
+// the order given, at most maxAliases of them. Names compare after trimming, ignoring case.
+func aliasesOf(title, original string, names ...string) []string {
+	seen := map[string]bool{strings.ToLower(strings.TrimSpace(title)): true, strings.ToLower(strings.TrimSpace(original)): true}
+	var out []string
+	for _, name := range names {
+		name = strings.TrimSpace(name)
+		key := strings.ToLower(name)
+		if name == "" || seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, name)
+		if len(out) == maxAliases {
+			break
+		}
+	}
+	return out
 }
 
 // TagVote is one source tag with the number of users who applied it.

@@ -24,6 +24,7 @@ const anilistQuery = `query ($search: String, $page: Int, $perPage: Int) {
     media(search: $search, type: MANGA) {
       id
       title { romaji english native }
+      synonyms
       description(asHtml: false)
       coverImage { extraLarge large }
       averageScore
@@ -81,7 +82,8 @@ type anilistMedia struct {
 		English string `json:"english"`
 		Native  string `json:"native"`
 	} `json:"title"`
-	Description string `json:"description"`
+	Synonyms    []string `json:"synonyms"`
+	Description string   `json:"description"`
 	CoverImage  struct {
 		ExtraLarge string `json:"extraLarge"`
 		Large      string `json:"large"`
@@ -293,6 +295,7 @@ func (a *AniListProvider) convertToSeriesMetadata(m anilistMedia, rank int) *Ser
 	return &SeriesMetadata{
 		Title:         displayTitle,
 		OriginalTitle: originalTitle,
+		Aliases:       aliasesOf(displayTitle, originalTitle, append([]string{m.Title.English, m.Title.Romaji, m.Title.Native}, m.Synonyms...)...),
 		Summary:       summary,
 		CoverURL:      coverURL,
 		Status:        anilistMapStatus(m.Status),

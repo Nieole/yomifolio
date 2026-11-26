@@ -40,16 +40,24 @@ type malNodeWrapper struct {
 }
 
 type malMangaNode struct {
-	ID          int         `json:"id"`
-	Title       string      `json:"title"`
-	MainPicture *malPicture `json:"main_picture"`
-	Synopsis    string      `json:"synopsis"`
-	Mean        float64     `json:"mean"`
-	Genres      []malGenre  `json:"genres"`
-	Authors     []malAuthor `json:"authors"`
-	NumVolumes  int         `json:"num_volumes"`
-	Status      string      `json:"status"`
-	StartDate   string      `json:"start_date"`
+	ID                int                  `json:"id"`
+	Title             string               `json:"title"`
+	AlternativeTitles malAlternativeTitles `json:"alternative_titles"`
+	MainPicture       *malPicture          `json:"main_picture"`
+	Synopsis          string               `json:"synopsis"`
+	Mean              float64              `json:"mean"`
+	Genres            []malGenre           `json:"genres"`
+	Authors           []malAuthor          `json:"authors"`
+	NumVolumes        int                  `json:"num_volumes"`
+	Status            string               `json:"status"`
+	StartDate         string               `json:"start_date"`
+}
+
+// malAlternativeTitles 是 MAL 条目的其它名称：日文原名、英文名与同义名。
+type malAlternativeTitles struct {
+	Synonyms []string `json:"synonyms"`
+	En       string   `json:"en"`
+	Ja       string   `json:"ja"`
 }
 
 type malPicture struct {
@@ -127,7 +135,7 @@ func (m *MyAnimeListProvider) SearchMetadata(ctx context.Context, title string, 
 	query.Set("q", title)
 	query.Set("limit", fmt.Sprintf("%d", limit))
 	query.Set("offset", fmt.Sprintf("%d", offset))
-	query.Set("fields", "id,title,main_picture,synopsis,mean,genres,authors{first_name,last_name},num_volumes,status,start_date")
+	query.Set("fields", "id,title,alternative_titles,main_picture,synopsis,mean,genres,authors{first_name,last_name},num_volumes,status,start_date")
 	apiURL := malAPIEndpoint + "?" + query.Encode()
 
 	slog.InfoContext(ctx, "MyAnimeList search request", "keyword", title, "limit", limit, "offset", offset)
@@ -237,21 +245,24 @@ func (m *MyAnimeListProvider) convertToSeriesMetadata(node malMangaNode, rank in
 		confidence = 0.4
 	}
 
+	original := strings.TrimSpace(node.AlternativeTitles.Ja)
 	return &SeriesMetadata{
-		Title:       node.Title,
-		Summary:     node.Synopsis,
-		Status:      mapMALStatus(node.Status),
-		CoverURL:    coverURL,
-		SiteRating:  siteScore(node.Mean, 10),
-		Rating:      node.Mean,
-		Tags:        tags,
-		Authors:     authors,
-		SourceID:    node.ID,
-		SourceURL:   fmt.Sprintf("https://myanimelist.net/manga/%d", node.ID),
-		Provider:    m.Name(),
-		Confidence:  confidence,
-		ReleaseDate: node.StartDate,
-		VolumeCount: node.NumVolumes,
+		Title:         node.Title,
+		OriginalTitle: original,
+		Aliases:       aliasesOf(node.Title, original, append([]string{node.AlternativeTitles.En}, node.AlternativeTitles.Synonyms...)...),
+		Summary:       node.Synopsis,
+		Status:        mapMALStatus(node.Status),
+		CoverURL:      coverURL,
+		SiteRating:    siteScore(node.Mean, 10),
+		Rating:        node.Mean,
+		Tags:          tags,
+		Authors:       authors,
+		SourceID:      node.ID,
+		SourceURL:     fmt.Sprintf("https://myanimelist.net/manga/%d", node.ID),
+		Provider:      m.Name(),
+		Confidence:    confidence,
+		ReleaseDate:   node.StartDate,
+		VolumeCount:   node.NumVolumes,
 	}
 }
 

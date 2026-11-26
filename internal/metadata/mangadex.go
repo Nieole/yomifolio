@@ -254,6 +254,7 @@ func (m *MangaDexProvider) convertToSeriesMetadata(item mangadexManga, rank int)
 	return &SeriesMetadata{
 		Title:         displayTitle,
 		OriginalTitle: originalTitle,
+		Aliases:       aliasesOf(displayTitle, originalTitle, append(localizedValues(attr.Title), altTitleValues(attr.AltTitles)...)...),
 		Summary:       summary,
 		Status:        attr.Status,
 		CoverURL:      coverURL,
@@ -306,6 +307,29 @@ func altTitleByLang(altTitles []map[string]string, langs ...string) string {
 		}
 	}
 	return ""
+}
+
+// localizedValues 按语言键排序列出多语言 map 的全部取值，顺序在多次搜索间稳定。
+func localizedValues(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	out := make([]string, 0, len(keys))
+	for _, k := range keys {
+		out = append(out, m[k])
+	}
+	return out
+}
+
+// altTitleValues 按出现顺序列出别名列表的全部取值，同一项内按语言键排序。
+func altTitleValues(altTitles []map[string]string) []string {
+	var out []string
+	for _, alt := range altTitles {
+		out = append(out, localizedValues(alt)...)
+	}
+	return out
 }
 
 // firstAltTitle 返回别名列表中首个非空标题，用作主标题的兜底。

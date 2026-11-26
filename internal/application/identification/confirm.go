@@ -58,8 +58,8 @@ func (s *Service) confirm(ctx context.Context, tx *sql.Tx, actor delegated.Subje
 		}
 		_, entry, _ := strings.Cut(c.ID, ":")
 		if _, err := tx.ExecContext(ctx, `INSERT INTO identification_conclusions (series_id, source, entry_id, entry_url, title, original_title, aliases,
-				confirmer, user_id, credential_id, confirmed_at_ms, reason, facts) VALUES (?, ?, ?, ?, ?, ?, '[]', ?, ?, ?, ?, ?, ?)`,
-			seriesID, c.Source, entry, c.EntryURL, cmp.Or(c.facts.Title, c.Title), cmp.Or(c.facts.OriginalTitle, c.OriginalTitle),
+				confirmer, user_id, credential_id, confirmed_at_ms, reason, facts) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			seriesID, c.Source, entry, c.EntryURL, cmp.Or(c.facts.Title, c.Title), cmp.Or(c.facts.OriginalTitle, c.OriginalTitle), encodeAliases(c.facts.Aliases),
 			confirmer, actor.UserID, actor.CredentialID, now, reason, string(raw)); err != nil {
 			return enrichment.Operation{}, err
 		}
@@ -80,6 +80,15 @@ func (s *Service) confirm(ctx context.Context, tx *sql.Tx, actor delegated.Subje
 		tags = s.config().Identification.Tags
 	}
 	return s.enricher.EnrichIdentified(ctx, tx, actor, enrichment.IdentifiedInput{RequestKey: receiptKey, SeriesID: seriesID, Reason: reason, Sources: sources, Tags: tags})
+}
+
+// encodeAliases is the stored form of an entry's aliases, "[]" when the source names none.
+func encodeAliases(aliases []string) string {
+	if len(aliases) == 0 {
+		return "[]"
+	}
+	raw, _ := json.Marshal(aliases)
+	return string(raw)
 }
 
 // identifiedSources lists every source the series is identified with, in the configured priority.
