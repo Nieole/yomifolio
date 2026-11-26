@@ -70,7 +70,7 @@ func (s *Service) WithdrawAsOwner(ctx context.Context, actor, seriesID int64, so
 		VALUES (?, ?, ?, ?, ?, ?, ?)`, seriesID, out.Withdrawn.Source, out.Withdrawn.EntryID, out.Withdrawn.EntryURL, out.Withdrawn.Title, actor, now); err != nil {
 		return OwnerWithdrawal{}, err
 	}
-	if s.enricher != nil && status != StatusOwnerReviewed {
+	if status != StatusOwnerReviewed {
 		remaining, err := s.identifiedSources(ctx, tx, seriesID)
 		if err != nil {
 			return OwnerWithdrawal{}, err
@@ -92,7 +92,7 @@ func (s *Service) WithdrawAsOwner(ctx context.Context, actor, seriesID int64, so
 	if err := tx.Commit(); err != nil {
 		return OwnerWithdrawal{}, err
 	}
-	if s.enricher != nil && (out.RetractionID != "" || out.OperationID != "") {
+	if out.RetractionID != "" || out.OperationID != "" {
 		s.enricher.Publish()
 	}
 	return out, nil

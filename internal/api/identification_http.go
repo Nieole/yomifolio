@@ -20,7 +20,7 @@ func (c *administrationHTTP) mountIdentification(r chi.Router) {
 	r.Delete("/identification/series/{seriesId}/owner-review", c.withdrawSeriesOwnerReview)
 	r.Post("/identification/prefetch", c.startIdentificationPrefetch)
 	r.Post("/identification/series/{seriesId}/research", c.researchSeries)
-	r.Get("/identification/pending", c.listPendingIdentification)
+	r.Get("/identification/pending", c.listAwaitingIdentification)
 	r.Post("/identification/series/{seriesId}/identify", c.pickSeriesCandidates)
 	r.Post("/identification/series/{seriesId}/exclusions", c.excludeSeriesCandidate)
 	r.Post("/identification/series/{seriesId}/not-found", c.concludeSeriesNotFound)
@@ -30,38 +30,88 @@ func (c *administrationHTTP) mountIdentification(r chi.Router) {
 	r.Delete("/identification/series/{seriesId}/conclusions/{source}", c.withdrawSeriesIdentification)
 }
 
-// withdrawSeriesIdentification withdraws the owner's or an agent's identification of the series
-// with one source and answers with the series' identification after it.
-func (c *administrationHTTP) withdrawSeriesIdentification(w http.ResponseWriter, r *http.Request) {
+// identificationRefusals maps each identification refusal to its answer, in the order they are
+// tried. A conflict carries a code the page reads to say what changed under it; the denial reads
+// in the request's language.
+var identificationRefusals = []struct {
+	err     error
+	status  int
+	code    string
+	message string
+}{
+	{identification.ErrDenied, http.StatusForbidden, "", ""},
+	{identification.ErrSeriesNotFound, http.StatusNotFound, "", "Series not found"},
+	{identification.ErrLibraryNotFound, http.StatusNotFound, "", "Library not found"},
+	{identification.ErrNoteNotFound, http.StatusNotFound, "", "Note not found"},
+	{identification.ErrNoConclusion, http.StatusNotFound, "", "The series is not identified with this source"},
+	{identification.ErrInvalidAwaiting, http.StatusBadRequest, "", "Invalid request: a decision cites 1-5 evidence candidates of known sources, at most one per source; the list takes offset at least 0 and limit 0-50"},
+	{identification.ErrInvalidResearch, http.StatusBadRequest, "", "Invalid research: the term needs 1-100 characters with a letter or digit and no control characters; wait_ms is 0-30000"},
+	{identification.ErrNotIdentifiable, http.StatusBadRequest, "", "Not an identification source entry: the source must be a catalogue source and the result must name its entry"},
+	{identification.ErrNotANote, http.StatusConflict, "not_a_note", "Only a note closes; an escalation ends with a decision about the series"},
+	{identification.ErrNoLongerAwaiting, http.StatusConflict, "not_pending", "The series no longer waits for this decision"},
+	{identification.ErrCandidateUnavailable, http.StatusConflict, "candidate_unavailable", "The candidate is no longer offered for this series"},
+}
+
+// writeIdentificationRefusal answers err when it is an identification refusal and reports whether
+// it did; any other error is the caller's to answer.
+func writeIdentificationRefusal(w http.ResponseWriter, r *http.Request, err error) bool {
+	for _, refusal := range identificationRefusals {
+		if !errors.Is(err, refusal.err) {
+			continue
+		}
+		switch {
+		case refusal.err == identification.ErrDenied:
+			jsonError(w, refusal.status, apiText(requestLocale(r), "auth.admin_required"))
+		case refusal.code != "":
+			jsonResponse(w, refusal.status, map[string]string{"code": refusal.code, "error": refusal.message})
+		default:
+			jsonError(w, refusal.status, refusal.message)
+		}
+		return true
+	}
+	return false
+}
+
+// answerIdentification answers an identification route with its result, which is the
+// authoritative state after the call so the page renders what the server holds, or with the
+// refusal its error maps to.
+func answerIdentification(w http.ResponseWriter, r *http.Request, out any, err error) {
+	switch {
+	case err == nil:
+		jsonResponse(w, http.StatusOK, out)
+	case !writeIdentificationRefusal(w, r, err):
+		jsonError(w, http.StatusInternalServerError, "Identification unavailable")
+	}
+}
+
+// identificationSeries reads the route's series ID, answering a malformed one itself.
+func identificationSeries(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	w.Header().Set("Cache-Control", "no-store")
 	seriesID, err := parseID(r, "seriesId")
 	if err != nil || seriesID <= 0 {
 		jsonError(w, http.StatusBadRequest, "Invalid series ID")
+		return 0, false
+	}
+	return seriesID, true
+}
+
+// withdrawSeriesIdentification withdraws the owner's or an agent's identification of the series
+// with one source and answers with the series' identification after it.
+func (c *administrationHTTP) withdrawSeriesIdentification(w http.ResponseWriter, r *http.Request) {
+	seriesID, ok := identificationSeries(w, r)
+	if !ok {
 		return
 	}
 	user, _ := userFromContext(r.Context())
 	out, err := c.identification.WithdrawAsOwner(r.Context(), user.ID, seriesID, chi.URLParam(r, "source"))
-	switch {
-	case errors.Is(err, identification.ErrSeriesNotFound):
-		jsonError(w, http.StatusNotFound, "Series not found")
-	case errors.Is(err, identification.ErrNoConclusion):
-		jsonError(w, http.StatusNotFound, "The series is not identified with this source")
-	case errors.Is(err, identification.ErrDenied):
-		jsonError(w, http.StatusForbidden, apiText(requestLocale(r), "auth.admin_required"))
-	case err != nil:
-		jsonError(w, http.StatusInternalServerError, "Identification unavailable")
-	default:
-		jsonResponse(w, http.StatusOK, out)
-	}
+	answerIdentification(w, r, out, err)
 }
 
 // identifySeriesAsOwner records the owner's pick from a manual search of one source
 // ({"result": <search result>}) as the owner's identification of the series with that entry.
 func (c *administrationHTTP) identifySeriesAsOwner(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "no-store")
-	seriesID, err := parseID(r, "seriesId")
-	if err != nil || seriesID <= 0 {
-		jsonError(w, http.StatusBadRequest, "Invalid series ID")
+	seriesID, ok := identificationSeries(w, r)
+	if !ok {
 		return
 	}
 	var body struct {
@@ -73,82 +123,43 @@ func (c *administrationHTTP) identifySeriesAsOwner(w http.ResponseWriter, r *htt
 	}
 	user, _ := userFromContext(r.Context())
 	out, err := c.identification.IdentifyAsOwner(r.Context(), user.ID, identification.OwnerIdentifyInput{SeriesID: seriesID, Source: chi.URLParam(r, "source"), Result: *body.Result})
-	switch {
-	case errors.Is(err, identification.ErrNotIdentifiable):
-		jsonError(w, http.StatusBadRequest, "Not an identification source entry: the source must be a catalogue source and the result must name its entry")
-	case errors.Is(err, identification.ErrSeriesNotFound):
-		jsonError(w, http.StatusNotFound, "Series not found")
-	case errors.Is(err, identification.ErrDenied):
-		jsonError(w, http.StatusForbidden, apiText(requestLocale(r), "auth.admin_required"))
-	case err != nil:
-		jsonError(w, http.StatusInternalServerError, "Identification unavailable")
-	default:
-		jsonResponse(w, http.StatusOK, out)
-	}
+	answerIdentification(w, r, out, err)
 }
 
 // keepSeriesIdentification records the owner's answer that a questioned identification is right
 // and answers with the series' identification after it.
 func (c *administrationHTTP) keepSeriesIdentification(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "no-store")
-	seriesID, err := parseID(r, "seriesId")
-	if err != nil || seriesID <= 0 {
-		jsonError(w, http.StatusBadRequest, "Invalid series ID")
-		return
-	}
-	user, _ := userFromContext(r.Context())
-	out, err := c.identification.KeepIdentification(r.Context(), user.ID, seriesID)
-	if err != nil {
-		writePendingDecisionError(w, r, err)
-		return
-	}
-	jsonResponse(w, http.StatusOK, out)
+	c.serveIdentification(w, r, c.identification.KeepIdentification)
 }
 
 // closeSeriesNote records that the owner has seen one note of the series and answers with its
 // identification after it.
 func (c *administrationHTTP) closeSeriesNote(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "no-store")
-	seriesID, err := parseID(r, "seriesId")
-	noteID, noteErr := parseID(r, "noteId")
-	if err != nil || noteErr != nil || seriesID <= 0 || noteID <= 0 {
+	seriesID, ok := identificationSeries(w, r)
+	if !ok {
+		return
+	}
+	noteID, err := parseID(r, "noteId")
+	if err != nil || noteID <= 0 {
 		jsonError(w, http.StatusBadRequest, "Invalid series or note ID")
 		return
 	}
 	user, _ := userFromContext(r.Context())
 	out, err := c.identification.CloseNote(r.Context(), user.ID, seriesID, noteID)
-	if err != nil {
-		writePendingDecisionError(w, r, err)
-		return
-	}
-	jsonResponse(w, http.StatusOK, out)
+	answerIdentification(w, r, out, err)
 }
 
 // concludeSeriesNotFound records the owner's verdict that the sources have no entry for a waiting
 // series and answers with its identification after it.
 func (c *administrationHTTP) concludeSeriesNotFound(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "no-store")
-	seriesID, err := parseID(r, "seriesId")
-	if err != nil || seriesID <= 0 {
-		jsonError(w, http.StatusBadRequest, "Invalid series ID")
-		return
-	}
-	user, _ := userFromContext(r.Context())
-	out, err := c.identification.ConcludeNotFound(r.Context(), user.ID, seriesID)
-	if err != nil {
-		writePendingDecisionError(w, r, err)
-		return
-	}
-	jsonResponse(w, http.StatusOK, out)
+	c.serveIdentification(w, r, c.identification.ConcludeNotFound)
 }
 
 // excludeSeriesCandidate records the owner ruling out one candidate of a waiting series'
 // evidence ({"candidate_id": "bangumi:2"}) and answers with the series' identification after it.
 func (c *administrationHTTP) excludeSeriesCandidate(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "no-store")
-	seriesID, err := parseID(r, "seriesId")
-	if err != nil || seriesID <= 0 {
-		jsonError(w, http.StatusBadRequest, "Invalid series ID")
+	seriesID, ok := identificationSeries(w, r)
+	if !ok {
 		return
 	}
 	var in struct {
@@ -160,20 +171,14 @@ func (c *administrationHTTP) excludeSeriesCandidate(w http.ResponseWriter, r *ht
 	}
 	user, _ := userFromContext(r.Context())
 	out, err := c.identification.ExcludeCandidate(r.Context(), user.ID, seriesID, in.CandidateID)
-	if err != nil {
-		writePendingDecisionError(w, r, err)
-		return
-	}
-	jsonResponse(w, http.StatusOK, out)
+	answerIdentification(w, r, out, err)
 }
 
 // pickSeriesCandidates records the owner's identification of a waiting series with candidates of
 // its evidence ({"candidate_ids": ["bangumi:1"]}) and answers with the result and its receipt.
 func (c *administrationHTTP) pickSeriesCandidates(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "no-store")
-	seriesID, err := parseID(r, "seriesId")
-	if err != nil || seriesID <= 0 {
-		jsonError(w, http.StatusBadRequest, "Invalid series ID")
+	seriesID, ok := identificationSeries(w, r)
+	if !ok {
 		return
 	}
 	var in struct {
@@ -185,68 +190,30 @@ func (c *administrationHTTP) pickSeriesCandidates(w http.ResponseWriter, r *http
 	}
 	user, _ := userFromContext(r.Context())
 	out, err := c.identification.PickCandidates(r.Context(), user.ID, seriesID, in.CandidateIDs)
-	if err != nil {
-		writePendingDecisionError(w, r, err)
-		return
-	}
-	jsonResponse(w, http.StatusOK, out)
+	answerIdentification(w, r, out, err)
 }
 
-// writePendingDecisionError answers a refused owner decision on the pending list. A conflict names
-// what changed under the page, so it can read the series again.
-func writePendingDecisionError(w http.ResponseWriter, r *http.Request, err error) {
-	switch {
-	case errors.Is(err, identification.ErrInvalidPending):
-		jsonError(w, http.StatusBadRequest, "Invalid decision: cite 1-5 evidence candidates of known sources, at most one per source")
-	case errors.Is(err, identification.ErrSeriesNotFound):
-		jsonError(w, http.StatusNotFound, "Series not found")
-	case errors.Is(err, identification.ErrNoteNotFound):
-		jsonError(w, http.StatusNotFound, "Note not found")
-	case errors.Is(err, identification.ErrDenied):
-		jsonError(w, http.StatusForbidden, apiText(requestLocale(r), "auth.admin_required"))
-	case errors.Is(err, identification.ErrNotANote):
-		jsonResponse(w, http.StatusConflict, map[string]string{"code": "not_a_note", "error": "Only a note closes; an escalation ends with a decision about the series"})
-	case errors.Is(err, identification.ErrNotPending):
-		jsonResponse(w, http.StatusConflict, map[string]string{"code": "not_pending", "error": "The series no longer waits for this decision"})
-	case errors.Is(err, identification.ErrCandidateUnavailable):
-		jsonResponse(w, http.StatusConflict, map[string]string{"code": "candidate_unavailable", "error": "The candidate is no longer offered for this series"})
-	default:
-		jsonError(w, http.StatusInternalServerError, "Identification unavailable")
-	}
-}
-
-// listPendingIdentification pages the owner's pending list (?category=&offset=&limit=); limit=0
+// listAwaitingIdentification pages the owner's awaiting list (?category=&offset=&limit=); limit=0
 // answers the counts only.
-func (c *administrationHTTP) listPendingIdentification(w http.ResponseWriter, r *http.Request) {
+func (c *administrationHTTP) listAwaitingIdentification(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	query := r.URL.Query()
 	offset, offsetErr := parseOptionalInt(query.Get("offset"), 0)
-	limit, limitErr := parseOptionalInt(query.Get("limit"), identification.DefaultPendingPage)
+	limit, limitErr := parseOptionalInt(query.Get("limit"), identification.DefaultAwaitingPage)
 	if offsetErr != nil || limitErr != nil {
-		jsonError(w, http.StatusBadRequest, "Invalid pending query")
+		jsonError(w, http.StatusBadRequest, "Invalid awaiting-list query")
 		return
 	}
 	user, _ := userFromContext(r.Context())
-	out, err := c.identification.Pending(r.Context(), user.ID, identification.PendingQuery{Category: query.Get("category"), Offset: offset, Limit: limit})
-	switch {
-	case errors.Is(err, identification.ErrInvalidPending):
-		jsonError(w, http.StatusBadRequest, "Invalid pending query: offset is at least 0 and limit 0-50")
-	case errors.Is(err, identification.ErrDenied):
-		jsonError(w, http.StatusForbidden, apiText(requestLocale(r), "auth.admin_required"))
-	case err != nil:
-		jsonError(w, http.StatusInternalServerError, "Pending list unavailable")
-	default:
-		jsonResponse(w, http.StatusOK, out)
-	}
+	out, err := c.identification.Awaiting(r.Context(), user.ID, identification.AwaitingQuery{Category: query.Get("category"), Offset: offset, Limit: limit})
+	answerIdentification(w, r, out, err)
 }
 
 // researchSeries searches one series again with the owner's term ({"query": "...", "wait_ms": n})
 // and answers with the outcome; a search still running after the wait goes on as its run.
 func (c *administrationHTTP) researchSeries(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "no-store")
-	seriesID, err := parseID(r, "seriesId")
-	if err != nil || seriesID <= 0 {
-		jsonError(w, http.StatusBadRequest, "Invalid series ID")
+	seriesID, ok := identificationSeries(w, r)
+	if !ok {
 		return
 	}
 	var in identification.ResearchInput
@@ -257,16 +224,11 @@ func (c *administrationHTTP) researchSeries(w http.ResponseWriter, r *http.Reque
 	in.SeriesID = seriesID
 	user, _ := userFromContext(r.Context())
 	out, err := c.identification.ResearchAsOwner(r.Context(), user.ID, in)
-	switch {
-	case errors.Is(err, identification.ErrInvalidResearch):
-		jsonError(w, http.StatusBadRequest, "Invalid research: the term needs 1-100 characters with a letter or digit and no control characters; wait_ms is 0-30000")
-	case errors.Is(err, identification.ErrSeriesNotFound):
-		jsonError(w, http.StatusNotFound, "Series not found")
-	case errors.Is(err, identification.ErrDenied):
-		jsonError(w, http.StatusForbidden, apiText(requestLocale(r), "auth.admin_required"))
-	case err != nil:
+	if err != nil && !writeIdentificationRefusal(w, r, err) {
 		writeTaskLaunchError(w, err, "A research of this series is already running", "Research unavailable")
-	default:
+		return
+	}
+	if err == nil {
 		jsonResponse(w, http.StatusOK, out)
 	}
 }
@@ -283,14 +245,11 @@ func (c *administrationHTTP) startIdentificationPrefetch(w http.ResponseWriter, 
 	}
 	user, _ := userFromContext(r.Context())
 	out, err := c.identification.StartPrefetch(r.Context(), user.ID, in.LibraryID)
-	switch {
-	case errors.Is(err, identification.ErrLibraryNotFound):
-		jsonError(w, http.StatusNotFound, "Library not found")
-	case errors.Is(err, identification.ErrDenied):
-		jsonError(w, http.StatusForbidden, apiText(requestLocale(r), "auth.admin_required"))
-	case err != nil:
+	if err != nil && !writeIdentificationRefusal(w, r, err) {
 		writeTaskLaunchError(w, err, "An evidence prefetch is already running", "Failed to start evidence prefetch")
-	default:
+		return
+	}
+	if err == nil {
 		jsonResponse(w, http.StatusOK, out)
 	}
 }
@@ -305,25 +264,13 @@ func (c *administrationHTTP) withdrawSeriesOwnerReview(w http.ResponseWriter, r 
 	c.serveIdentification(w, r, c.identification.WithdrawOwnerReviewed)
 }
 
-// serveIdentification answers every identification route with the authoritative state after the
-// call, so the page renders what the server holds rather than what it asked for.
+// serveIdentification answers a route whose use case takes only the acting account and the series.
 func (c *administrationHTTP) serveIdentification(w http.ResponseWriter, r *http.Request, call func(context.Context, int64, int64) (identification.SeriesIdentification, error)) {
-	w.Header().Set("Cache-Control", "no-store")
-	seriesID, err := parseID(r, "seriesId")
-	if err != nil || seriesID <= 0 {
-		jsonError(w, http.StatusBadRequest, "Invalid series ID")
+	seriesID, ok := identificationSeries(w, r)
+	if !ok {
 		return
 	}
 	user, _ := userFromContext(r.Context())
 	out, err := call(r.Context(), user.ID, seriesID)
-	switch {
-	case errors.Is(err, identification.ErrSeriesNotFound):
-		jsonError(w, http.StatusNotFound, "Series not found")
-	case errors.Is(err, identification.ErrDenied):
-		jsonError(w, http.StatusForbidden, apiText(requestLocale(r), "auth.admin_required"))
-	case err != nil:
-		jsonError(w, http.StatusInternalServerError, "Identification unavailable")
-	default:
-		jsonResponse(w, http.StatusOK, out)
-	}
+	answerIdentification(w, r, out, err)
 }

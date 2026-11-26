@@ -657,20 +657,20 @@ export interface ResearchResult {
   packet?: EvidencePacket;
 }
 
-export interface PendingPage {
-  items: PendingSeries[];
+export interface AwaitingPage {
+  items: AwaitingSeries[];
   total: number;
   next_offset?: number;
-  categories: PendingCategory[];
+  categories: AwaitingCategory[];
 }
 
-export interface PendingCategory {
+export interface AwaitingCategory {
   category: string;
   class: string;
   series: number;
 }
 
-export interface PendingSeries {
+export interface AwaitingSeries {
   series_id: number;
   library_name: string;
   directory_name: string;

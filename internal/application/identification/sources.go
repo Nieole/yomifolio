@@ -2,6 +2,7 @@ package identification
 
 import (
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -59,4 +60,27 @@ func EntryOf(source string, sourceID int64, sourceURL string) (Entry, bool) {
 		entry.URL = catalogue.EntryURL + entry.ID
 	}
 	return entry, true
+}
+
+// parseCandidate splits a candidate ID ("<source>:<entry>") into its source key and entry ID. ok is
+// false unless the source is an identification source and the entry is not empty.
+func parseCandidate(id string) (source, entry string, ok bool) {
+	source, entry, found := strings.Cut(id, ":")
+	return source, entry, found && entry != "" && slices.Contains(Sources, source)
+}
+
+// citable reports whether ids cite 1 to one-per-source candidates of identification sources.
+func citable(ids []string) bool {
+	if len(ids) == 0 || len(ids) > len(Sources) {
+		return false
+	}
+	var sources []string
+	for _, id := range ids {
+		source, _, ok := parseCandidate(id)
+		if !ok || slices.Contains(sources, source) {
+			return false
+		}
+		sources = append(sources, source)
+	}
+	return true
 }

@@ -68,8 +68,8 @@ func Open(ctx context.Context, store database.Store, cfg *config.Manager, option
 	if clock == nil {
 		clock = time.Now
 	}
-	identificationService := identification.New(store.DB(), delegatedService).WithPrefetch(app.Prefetch.WithClock(clock)).WithClock(clock).WithEnrichment(enrichmentService, cfg.Snapshot)
-	identificationService.WithImages(delegatedService, options.Sources.CoverTransport())
+	identificationService := identification.New(identification.Dependencies{DB: store.DB(), Access: delegatedService, Prefetch: app.Prefetch.WithClock(clock),
+		Enricher: enrichmentService, Config: cfg.Snapshot, Images: delegatedService, CoverTransport: options.Sources.CoverTransport(), Clock: clock})
 	if err := identificationService.DeriveFromHistory(ctx); err != nil {
 		app.Close()
 		return nil, err

@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
-	"strings"
 
 	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/metadata"
@@ -85,7 +84,7 @@ func (s *Service) IdentifyAsOwner(ctx context.Context, actor int64, in OwnerIden
 	if err := tx.Commit(); err != nil {
 		return OwnerIdentification{}, err
 	}
-	if out.OperationID != "" && s.enricher != nil {
+	if out.OperationID != "" {
 		s.enricher.Publish()
 	}
 	return out, nil
@@ -100,7 +99,7 @@ func (s *Service) identifyByOwner(ctx context.Context, tx *sql.Tx, actor, series
 	subject := delegated.Subject{UserID: actor}
 	now := s.now().UnixMilli()
 	var out OwnerIdentification
-	_, entry, _ := strings.Cut(cited.ID, ":")
+	_, entry, _ := parseCandidate(cited.ID)
 	lifted, err := tx.ExecContext(ctx, `DELETE FROM identification_exclusions WHERE series_id = ? AND source = ? AND entry_id = ?`, seriesID, cited.Source, entry)
 	if err != nil {
 		return OwnerIdentification{}, err

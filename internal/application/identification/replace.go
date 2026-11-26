@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
-	"strings"
 
 	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/application/enrichment"
@@ -43,7 +42,7 @@ func (s *Service) replace(ctx context.Context, tx *sql.Tx, actor delegated.Subje
 		return out, err
 	}
 	for _, c := range cited {
-		_, entry, _ := strings.Cut(c.ID, ":")
+		_, entry, _ := parseCandidate(c.ID)
 		for _, old := range current {
 			if old.Source != c.Source {
 				continue
@@ -71,12 +70,12 @@ func (s *Service) replace(ctx context.Context, tx *sql.Tx, actor delegated.Subje
 // withdraw removes the series' conclusion old and takes back, under the receipt receiptKey, what
 // its entry supplemented and nobody changed since, in the caller's transaction. Values other
 // identified sources supply come back only from a supplementation the caller runs next. On an
-// owner-reviewed series, or without an enricher, only the conclusion goes and the receipt is zero.
+// owner-reviewed series only the conclusion goes and the receipt is zero.
 func (s *Service) withdraw(ctx context.Context, tx *sql.Tx, actor delegated.Subject, receiptKey string, seriesID int64, status string, old Conclusion, reason string) (enrichment.Operation, error) {
 	if _, err := tx.ExecContext(ctx, `DELETE FROM identification_conclusions WHERE series_id = ? AND source = ?`, seriesID, old.Source); err != nil {
 		return enrichment.Operation{}, err
 	}
-	if s.enricher == nil || status == StatusOwnerReviewed {
+	if status == StatusOwnerReviewed {
 		return enrichment.Operation{}, nil
 	}
 	return s.enricher.RetractIdentified(ctx, tx, actor, enrichment.RetractInput{RequestKey: receiptKey, SeriesID: seriesID,

@@ -98,7 +98,7 @@ MCP 的识别工具只映射 `identification.Service` 与 `enrichment.Service` �
 - 重搜：`POST series/{id}/research`，请求体 `{query, wait_ms?}`，与 MCP 共用用例。
 - 待人工：`GET pending?category=&offset=&limit=`（默认 20、上限 50，`limit=0` 只回计数）；决定为 `POST series/{id}/identify {candidate_ids}`、`exclusions {candidate_id}`、`not-found`、`keep-identification`、`notes/{noteId}/close`。
 - 手动搜索与详情：`PUT series/{id}/conclusions/{source}` 的请求体是 `{"result": <搜索结果>}`，按来源快照规则校验，LLM 等非目录来源回 400，挑中排除候选时响应带 `lifted_exclusion`；`DELETE series/{id}/conclusions/{source}` 撤回识别。
-- 决定落到已经变了的系列时回 409 与 `code`：`not_pending`、`candidate_unavailable`、`not_a_note`，前端据此重读这个系列；重复否决同一候选、关闭已关闭的备注回 200 且不改动。
+- 决定落到已经变了的系列时回 409 与 `code`：`not_pending`、`candidate_unavailable`、`not_a_note`，前端据此重读这个系列；重复否决同一候选、关闭已关闭的备注回 200 且不改动。识别用例的拒绝到状态码、`code` 与文案的映射只在 `identificationRefusals` 一张表里，各路由不另写 switch。
 - 资料库浏览 `GET /api/series/search?identification=<状态>` 读同一状态视图，可与其它条件组合；普通账号带这个参数回 403，取值不在六个状态里回 400。
 
 核对入口：`bootstrap` 的 `TestPendingListAndDecisionsNeedAnAdministrator`、`TestLibraryBrowsingFiltersByIdentificationStatus`、`TestInspectionNeedsOnlyReadAndGrantsNoWrite`、`TestAgentSubmitsVerdictsSeriesBySeries`、`TestIdentificationImagesLeaveOutWholeImagesBeyondTheResultBudget`。

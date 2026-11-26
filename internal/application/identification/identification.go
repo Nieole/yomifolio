@@ -15,6 +15,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"slices"
 	"time"
 
@@ -74,18 +75,37 @@ type Service struct {
 	now      func() time.Time
 }
 
-// New binds the service to the process database and delegated authority.
-func New(db *sql.DB, access Access) *Service {
-	return &Service{db: db, access: access, now: time.Now}
+// Dependencies are what the service is built from. Production assembly provides every one; the
+// service does not stand in for a missing one, so a use case that needs it fails loudly.
+type Dependencies struct {
+	DB *sql.DB
+	// Access is the delegated authority the agent use cases re-check.
+	Access Access
+	// Prefetch launches the owner's evidence prefetch, the incremental refreshes claims ask for and
+	// every research.
+	Prefetch *Prefetcher
+	// Enricher supplements a confirmed identification, takes back what a withdrawn one brought and
+	// corrects a source value, each inside the identification's transaction.
+	Enricher Enricher
+	// Config reads the current configuration, for the source priority and the tag policy.
+	Config func() config.Config
+	// Images reads a series' own cover and page thumbnails for the identification images.
+	Images ImageAccess
+	// CoverTransport carries candidate cover downloads; nil uses the default transport.
+	CoverTransport http.RoundTripper
+	// Clock stamps and compares every identification record and lease; nil uses time.Now.
+	Clock func() time.Time
 }
 
-// WithPrefetch lets the owner launch the evidence prefetch, and the owner and agents research one
-// series, through this service.
-func (s *Service) WithPrefetch(p *Prefetcher) *Service { s.prefetch = p; return s }
-
-// WithClock replaces the current time every identification record and lease is stamped and
-// compared with. It must be set before the service is used.
-func (s *Service) WithClock(now func() time.Time) *Service { s.now = now; return s }
+// New builds the service from its dependencies.
+func New(d Dependencies) *Service {
+	now := d.Clock
+	if now == nil {
+		now = time.Now
+	}
+	return &Service{db: d.DB, access: d.Access, prefetch: d.Prefetch, enricher: d.Enricher, config: d.Config,
+		images: &imageSources{local: d.Images, covers: newCoverFetcher(d.CoverTransport)}, now: now}
+}
 
 // Confirmer says who made an identification decision: the owner, an agent and its credential,
 // or, for an escalation only, the system. An owner row from history has no user.
@@ -256,7 +276,7 @@ func conclusions(ctx context.Context, q queryer, seriesID int64) ([]Conclusion, 
 		c.ConfirmedAt = stamp(confirmedAt)
 		out = append(out, c)
 	}
-	slices.SortFunc(out, func(a, b Conclusion) int { return cmp.Compare(sourceRank(a.Source), sourceRank(b.Source)) })
+	slices.SortFunc(out, func(a, b Conclusion) int { return cmp.Compare(defaultRank(a.Source), defaultRank(b.Source)) })
 	return out, rows.Err()
 }
 
@@ -329,10 +349,20 @@ func exclusions(ctx context.Context, q queryer, seriesID int64) ([]ExcludedCandi
 	return out, rows.Err()
 }
 
-// sourceRank orders sources by the default priority; unknown keys sort last.
-func sourceRank(source string) int {
-	if i := slices.Index(Sources, source); i >= 0 {
-		return i
+// rankBy orders sources by order; sources it does not name come last.
+func rankBy(order []string) func(string) int {
+	return func(source string) int {
+		if i := slices.Index(order, source); i >= 0 {
+			return i
+		}
+		return len(order)
 	}
-	return len(Sources)
+}
+
+// defaultRank orders sources by the default priority.
+var defaultRank = rankBy(Sources)
+
+// sourceRank orders sources by the configured priority.
+func (s *Service) sourceRank() func(string) int {
+	return rankBy(s.config().Identification.SourcePriority.Order())
 }

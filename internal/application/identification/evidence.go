@@ -264,26 +264,44 @@ func excerpt(summary string) string {
 // fit sheds the least useful text until the packet's JSON is within packetBudget: summary excerpts
 // from the last candidate back, then candidates from the lowest rank of the last source back.
 func fit(packet EvidencePacket) EvidencePacket {
+	shed(&packet, packetBudget, func(EvidenceCandidate) bool { return true }, func(string) {})
+	return packet
+}
+
+// shed keeps the packet's JSON within budget by shedding only what may go: the summaries of the
+// candidates that may go, last first, then those candidates, the lowest rank within their source
+// first and the last of a rank first. removed hears of each candidate shed, in time to shrink the
+// packet itself before the next measure.
+func shed(packet *EvidencePacket, budget int, mayGo func(EvidenceCandidate) bool, removed func(id string)) {
 	over := func() bool {
 		raw, _ := json.Marshal(packet)
-		return len(raw) > packetBudget
+		return len(raw) > budget
 	}
 	for i := len(packet.Candidates) - 1; i >= 0 && over(); i-- {
-		packet.Candidates[i].Summary = ""
+		if mayGo(packet.Candidates[i]) {
+			packet.Candidates[i].Summary = ""
+		}
 	}
-	for len(packet.Candidates) > 0 && over() {
+	for over() {
 		rank := map[string]int{}
-		worst, worstRank := 0, -1
+		worst, worstRank := -1, -1
 		for i, c := range packet.Candidates {
+			if !mayGo(c) {
+				continue
+			}
 			r := rank[c.Source]
 			rank[c.Source]++
 			if r >= worstRank {
 				worst, worstRank = i, r
 			}
 		}
+		if worst < 0 {
+			return
+		}
+		id := packet.Candidates[worst].ID
 		packet.Candidates = slices.Delete(packet.Candidates, worst, worst+1)
+		removed(id)
 	}
-	return packet
 }
 
 // readEvidence loads the series' packet without the candidates excluded since it was fetched.

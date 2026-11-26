@@ -61,7 +61,7 @@ func TestStatusPrecedence(t *testing.T) {
 		{[]string{"owner reviewed"}, identification.StatusOwnerReviewed},
 		{[]string{"conclusion", "recheck", "identification", "not found", "owner reviewed"}, identification.StatusOwnerReviewed},
 	}
-	service := identification.New(db, nil)
+	service := identification.New(identification.Dependencies{DB: db})
 	for i, tc := range cases {
 		series, err := store.CreateSeries(ctx, database.CreateSeriesParams{LibraryID: lib.ID, Name: "series", Path: filepath.Join(lib.Path, string(rune('a'+i)))})
 		if err != nil {

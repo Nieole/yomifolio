@@ -53,8 +53,7 @@ var (
 	// so agent adapters report it as invalid input.
 	ErrInvalidResearch = fmt.Errorf("%w: research term or wait out of bounds", delegated.ErrInvalid)
 
-	errResearchUnavailable = errors.New("research is not assembled")
-	errNoSourceAnswered    = errors.New("no source answered")
+	errNoSourceAnswered = errors.New("no source answered")
 )
 
 // ResearchInput names the series and the term to search it with.
@@ -131,9 +130,6 @@ func (s *Service) research(ctx context.Context, who researcher, in ResearchInput
 	}
 	if wait < 0 || wait > maxResearchWaitMS {
 		return ResearchResult{}, ErrInvalidResearch
-	}
-	if s.prefetch == nil {
-		return ResearchResult{}, errResearchUnavailable
 	}
 	target, err := s.researchTarget(ctx, who, in.SeriesID)
 	if err != nil {
@@ -479,37 +475,17 @@ func merge(packet EvidencePacket, facts map[string]metadata.SeriesMetadata, quer
 // search: it sheds the summaries of the candidates that search added, last first, then those
 // candidates, lowest rank of the last source first, and finally the oldest recorded searches.
 func fitResearch(packet EvidencePacket) EvidencePacket {
-	over := func() bool {
+	last := &packet.Searches[len(packet.Searches)-1]
+	added := func(c EvidenceCandidate) bool { return slices.Contains(last.Added, c.ID) }
+	shed(&packet, researchedBudget, added, func(id string) {
+		last.Added = slices.DeleteFunc(slices.Clone(last.Added), func(a string) bool { return a == id })
+		last.Dropped++
+	})
+	for len(packet.Searches) > 1 {
 		raw, _ := json.Marshal(packet)
-		return len(raw) > researchedBudget
-	}
-	last := func() *EvidenceSearch { return &packet.Searches[len(packet.Searches)-1] }
-	added := func(id string) bool { return slices.Contains(last().Added, id) }
-	for i := len(packet.Candidates) - 1; i >= 0 && over(); i-- {
-		if added(packet.Candidates[i].ID) {
-			packet.Candidates[i].Summary = ""
+		if len(raw) <= researchedBudget {
+			break
 		}
-	}
-	for len(last().Added) > 0 && over() {
-		rank := map[string]int{}
-		worst, worstRank := -1, -1
-		for i, c := range packet.Candidates {
-			if !added(c.ID) {
-				continue
-			}
-			r := rank[c.Source]
-			rank[c.Source]++
-			if r >= worstRank {
-				worst, worstRank = i, r
-			}
-		}
-		id := packet.Candidates[worst].ID
-		packet.Candidates = slices.Delete(packet.Candidates, worst, worst+1)
-		search := last()
-		search.Added = slices.DeleteFunc(slices.Clone(search.Added), func(a string) bool { return a == id })
-		search.Dropped++
-	}
-	for len(packet.Searches) > 1 && over() {
 		packet.Searches = slices.Delete(packet.Searches, 0, 1)
 	}
 	return packet

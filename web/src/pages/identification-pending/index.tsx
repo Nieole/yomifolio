@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { apiClient, getApiErrorMessage } from '../../api/client';
-import type { PendingPage } from '../../api/generated';
+import type { AwaitingPage } from '../../api/generated';
 import { useLatestRequest } from '../../hooks/useLatestRequest';
 import { useRequestLifetime } from '../../session/useRequestLifetime';
 import { useI18n } from '../../i18n/LocaleProvider';
@@ -25,18 +25,18 @@ export default function IdentificationPending({ onChange }: IdentificationPendin
   const latest = useLatestRequest();
   const [category, setCategory] = useState('');
   const [offset, setOffset] = useState(0);
-  const [page, setPage] = useState<PendingPage | null>(null);
+  const [page, setPage] = useState<AwaitingPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // 筛选条上的计数取整张列表，不随所选分类变；每次决定落下之后重取。
-  const [counts, setCounts] = useState<PendingPage | null>(null);
+  const [counts, setCounts] = useState<AwaitingPage | null>(null);
   const beginRequest = useRequestLifetime();
 
   const load = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams({ offset: String(offset), limit: String(PAGE_SIZE) });
     if (category) params.set('category', category);
-    void latest.run(async () => (await apiClient.get<PendingPage>(`/api/identification/pending?${params}`)).data, {
+    void latest.run(async () => (await apiClient.get<AwaitingPage>(`/api/identification/pending?${params}`)).data, {
       onSuccess: (data) => {
         setPage(data);
         setError(null);
@@ -53,7 +53,7 @@ export default function IdentificationPending({ onChange }: IdentificationPendin
   const refreshCounts = useCallback(() => {
     const alive = beginRequest();
     apiClient
-      .get<PendingPage>('/api/identification/pending?limit=0')
+      .get<AwaitingPage>('/api/identification/pending?limit=0')
       .then(({ data }) => {
         if (alive()) setCounts(data);
       })

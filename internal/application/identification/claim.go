@@ -190,9 +190,6 @@ func requestRefresh(ctx context.Context, tx *sql.Tx, libraries []int64, now time
 // refresh launches the incremental prefetch of each library a claim asked to refresh packets in.
 // A failed launch is logged and leaves the claim as it was; the next claim asks again.
 func (s *Service) refresh(ctx context.Context, libraries []int64) {
-	if s.prefetch == nil {
-		return
-	}
 	for _, library := range libraries {
 		if _, err := s.prefetch.StartIncremental(context.Background(), library, task.TriggerChained); err != nil && !errors.Is(err, task.ErrRunAlreadyActive) {
 			slog.WarnContext(ctx, "Evidence packet refresh not started", "library_id", library, "error", err)
