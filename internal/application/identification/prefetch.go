@@ -3,7 +3,6 @@ package identification
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -48,22 +47,24 @@ func Restarts() []RestartDefinition {
 	return []RestartDefinition{{Type: PrefetchTask, Variant: prefetchAllLibraries}, {Type: PrefetchTask, Variant: prefetchOneLibrary}}
 }
 
-// Prefetcher prepares evidence packets in background runs. Every run picks the unprocessed series
+// Prefetcher prepares evidence packets in background runs: the prefetch of the unprocessed series
+// and the research of one series with a custom term. Every prefetch run picks the unprocessed series
 // that have no packet yet, so launching again after a pause, cancel or failure continues where the
-// last run stopped. Requests to each source are spaced by one pacer shared by all its runs.
+// last run stopped. Requests to each source are spaced by one pacer shared by all these runs.
 type Prefetcher struct {
 	db     *sql.DB
 	start  func(context.Context, task.RunSpec, task.Body) (task.Launched, error)
+	await  func(context.Context, int64) (task.Run, error)
 	config func() config.Config
 	open   func(config.Config, string) metadata.Provider
 	pacer  *metadata.SourcePacer
 	now    func() time.Time
 }
 
-// NewPrefetcher binds the prefetch to the process database, run launcher, configuration and
-// catalogue source factory.
-func NewPrefetcher(db *sql.DB, start func(context.Context, task.RunSpec, task.Body) (task.Launched, error), cfg func() config.Config, open func(config.Config, string) metadata.Provider) *Prefetcher {
-	return &Prefetcher{db: db, start: start, config: cfg, open: open, pacer: metadata.NewSourcePacer(), now: time.Now}
+// NewPrefetcher binds the prefetch to the process database, run launcher and waiter, configuration
+// and catalogue source factory.
+func NewPrefetcher(db *sql.DB, start func(context.Context, task.RunSpec, task.Body) (task.Launched, error), await func(context.Context, int64) (task.Run, error), cfg func() config.Config, open func(config.Config, string) metadata.Provider) *Prefetcher {
+	return &Prefetcher{db: db, start: start, await: await, config: cfg, open: open, pacer: metadata.NewSourcePacer(), now: time.Now}
 }
 
 // PrefetchLaunch reports a launched prefetch. Series is how many series it will search; when it
@@ -202,29 +203,23 @@ func (p *Prefetcher) run(ctx context.Context, h *runhandle.Handle, series []pend
 // prefetch searches one series and stores its packet. Errors are returned only when the run must
 // stop: cancellation, or a database that cannot be read or written.
 func (p *Prefetcher) prefetch(ctx context.Context, h *runhandle.Handle, seriesID int64) (prefetchOutcome, error) {
-	local, books, pending, err := p.localClues(ctx, seriesID)
-	if err != nil || !pending {
+	var status string
+	var packed bool
+	err := p.db.QueryRowContext(ctx, `SELECT st.status, EXISTS(SELECT 1 FROM identification_evidence e WHERE e.series_id = st.series_id)
+		FROM series_identification_status st WHERE st.series_id = ?`, seriesID).Scan(&status, &packed)
+	if errors.Is(err, sql.ErrNoRows) || (err == nil && (status != StatusUnprocessed || packed)) {
+		return prefetchSkipped, nil
+	}
+	if err != nil {
 		return prefetchSkipped, err
 	}
-	for _, path := range books {
-		var info *parser.ComicInfo
-		if err := h.Disk(ctx, diskwork.Work{Kind: storageio.WorkKindMetadataScan, Path: path}, func() error {
-			info, _ = bookcontent.ArchiveComicInfo(ctx, path)
-			return nil
-		}); err != nil {
-			return prefetchSkipped, err
-		}
-		if info != nil {
-			local.ComicInfo = comicInfoClues(info)
-			break
-		}
+	local, found, err := p.localClues(ctx, h, seriesID)
+	if err != nil || !found {
+		return prefetchSkipped, err
 	}
-	cfg := p.config()
-	fanout := metadata.SourceFanout{Config: cfg, Open: p.open, Pace: func(ctx context.Context, source string) error {
-		return p.pacer.Wait(ctx, source, p.config().Identification.SourceIntervalsMS.For(source))
-	}}
 	queries := searchTerms(local.DirectoryName, local.ComicInfo)
 	var pages []metadata.SourcePage
+	fanout := p.fanout()
 	for _, query := range queries {
 		if err := fanout.Search(ctx, metadata.SourceQuery{Text: query, Limit: searchLimit}, h.Checkpoint, func(page metadata.SourcePage) {
 			pages = append(pages, page)
@@ -235,16 +230,43 @@ func (p *Prefetcher) prefetch(ctx context.Context, h *runhandle.Handle, seriesID
 	return p.save(ctx, seriesID, local, queries, pages)
 }
 
-// localClues reads what the library says about the series, the paths of its first books, and
-// whether it still needs a packet.
-func (p *Prefetcher) localClues(ctx context.Context, seriesID int64) (EvidenceLocalClues, []string, bool, error) {
+// fanout searches the catalogue sources of the current configuration, spacing the requests to
+// each source by its configured interval.
+func (p *Prefetcher) fanout() metadata.SourceFanout {
+	return metadata.SourceFanout{Config: p.config(), Open: p.open, Pace: func(ctx context.Context, source string) error {
+		return p.pacer.Wait(ctx, source, p.config().Identification.SourceIntervalsMS.For(source))
+	}}
+}
+
+// localClues reads what the library says about the series, including the first readable ComicInfo
+// document of its first books, read as the run's disk work. found is false when the series is gone.
+func (p *Prefetcher) localClues(ctx context.Context, h *runhandle.Handle, seriesID int64) (EvidenceLocalClues, bool, error) {
+	local, books, found, err := p.libraryClues(ctx, seriesID)
+	if err != nil || !found {
+		return EvidenceLocalClues{}, false, err
+	}
+	for _, path := range books {
+		var info *parser.ComicInfo
+		if err := h.Disk(ctx, diskwork.Work{Kind: storageio.WorkKindMetadataScan, Path: path}, func() error {
+			info, _ = bookcontent.ArchiveComicInfo(ctx, path)
+			return nil
+		}); err != nil {
+			return EvidenceLocalClues{}, false, err
+		}
+		if info != nil {
+			local.ComicInfo = comicInfoClues(info)
+			break
+		}
+	}
+	return local, true, nil
+}
+
+// libraryClues reads the series' directory name and book count, and the names and paths of its
+// first books.
+func (p *Prefetcher) libraryClues(ctx context.Context, seriesID int64) (EvidenceLocalClues, []string, bool, error) {
 	var local EvidenceLocalClues
-	var status string
-	var packed bool
-	err := p.db.QueryRowContext(ctx, `SELECT s.name, st.status, EXISTS(SELECT 1 FROM identification_evidence e WHERE e.series_id = s.id),
-			(SELECT COUNT(*) FROM books b WHERE b.series_id = s.id)
-		FROM series s JOIN series_identification_status st ON st.series_id = s.id WHERE s.id = ?`, seriesID).Scan(&local.DirectoryName, &status, &packed, &local.BookCount)
-	if errors.Is(err, sql.ErrNoRows) || (err == nil && (status != StatusUnprocessed || packed)) {
+	err := p.db.QueryRowContext(ctx, `SELECT s.name, (SELECT COUNT(*) FROM books b WHERE b.series_id = s.id) FROM series s WHERE s.id = ?`, seriesID).Scan(&local.DirectoryName, &local.BookCount)
+	if errors.Is(err, sql.ErrNoRows) {
 		return EvidenceLocalClues{}, nil, false, nil
 	}
 	if err != nil {
@@ -289,15 +311,17 @@ func comicInfoClues(info *parser.ComicInfo) *EvidenceComicInfo {
 }
 
 // save writes the packet of a series that still exists, dropping the entries a person excluded,
-// including any excluded while its sources were being searched.
+// including any excluded while its sources were being searched. A packet a research stored in the
+// meantime already covers the derived terms and is kept.
 func (p *Prefetcher) save(ctx context.Context, seriesID int64, local EvidenceLocalClues, queries []string, pages []metadata.SourcePage) (prefetchOutcome, error) {
 	tx, err := p.db.BeginTx(ctx, nil)
 	if err != nil {
 		return prefetchSkipped, err
 	}
 	defer tx.Rollback()
-	var exists bool
-	if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM series WHERE id = ?)`, seriesID).Scan(&exists); err != nil || !exists {
+	var open bool
+	if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM series WHERE id = ?) AND NOT EXISTS(SELECT 1 FROM identification_evidence WHERE series_id = ?)`,
+		seriesID, seriesID).Scan(&open); err != nil || !open {
 		return prefetchSkipped, err
 	}
 	excluded, err := excludedIDs(ctx, tx, seriesID)
@@ -309,17 +333,7 @@ func (p *Prefetcher) save(ctx context.Context, seriesID int64, local EvidenceLoc
 	if !answered {
 		return prefetchUnanswered, nil
 	}
-	rawPacket, err := json.Marshal(packet)
-	if err != nil {
-		return prefetchSkipped, err
-	}
-	rawFacts, err := json.Marshal(facts)
-	if err != nil {
-		return prefetchSkipped, err
-	}
-	if _, err := tx.ExecContext(ctx, `INSERT INTO identification_evidence (series_id, fetched_at_ms, packet, source_facts) VALUES (?, ?, ?, ?)
-		ON CONFLICT(series_id) DO UPDATE SET fetched_at_ms = excluded.fetched_at_ms, packet = excluded.packet, source_facts = excluded.source_facts`,
-		seriesID, fetchedAt.UnixMilli(), string(rawPacket), string(rawFacts)); err != nil {
+	if err := writeEvidence(ctx, tx, seriesID, &fetchedAt, packet, facts); err != nil {
 		return prefetchSkipped, err
 	}
 	return prefetchReady, tx.Commit()

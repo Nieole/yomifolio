@@ -33,7 +33,7 @@ func TestMCPListingFollowsGrantedCapabilities(t *testing.T) {
 			"library_identification_progress")},
 		{capability: delegated.MetadataWrite, want: append(slices.Clone(runReads),
 			"library_enrich_metadata", "library_enrich_metadata_batch", "library_undo_metadata_operation",
-			"library_propose_match", "library_add_series_relation")},
+			"library_propose_match", "library_add_series_relation", "library_research_series")},
 		{capability: delegated.ScanControl, want: append(slices.Clone(runReads), "library_start_scan")},
 		{capability: delegated.InternalLLM, want: append(slices.Clone(runReads),
 			"library_assess_match", "library_get_model_operation")},

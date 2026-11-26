@@ -62,6 +62,7 @@ export function getTaskActionHint(task: TaskWithParams, t: Translator) {
     case 'rebuild_file_identities':
     case 'scrape':
     case 'evidence_prefetch':
+    case 'evidence_research':
     case 'ai_grouping':
     case 'transfer_external_library':
       return t(`task.hint.${task.type}`);

@@ -18,7 +18,8 @@ import (
 )
 
 // Bounds of one evidence packet. Each field is cut to its bound; a packet still over packetBudget
-// drops summary excerpts, then its lowest-ranked candidates, until it fits.
+// drops summary excerpts, then its lowest-ranked candidates, until it fits. A packet that custom
+// searches added to may grow to researchedBudget and records its last listedSearches searches.
 const (
 	candidatesPerSource = 3
 	searchLimit         = 5
@@ -28,6 +29,8 @@ const (
 	listedAuthors       = 3
 	listedFiles         = 3
 	packetBudget        = 4 << 10
+	researchedBudget    = 8 << 10
+	listedSearches      = 5
 )
 
 // Source availability in a packet.
@@ -39,11 +42,23 @@ const (
 // EvidencePacket gathers the local clues of one series and the candidates its sources returned,
 // as text an agent or the owner compares when identifying it. It is evidence, not a conclusion.
 type EvidencePacket struct {
-	FetchedAt  string              `json:"fetched_at"`
-	Local      EvidenceLocalClues  `json:"local"`
-	Queries    []string            `json:"queries"`
+	FetchedAt string             `json:"fetched_at"`
+	Local     EvidenceLocalClues `json:"local"`
+	// Queries are the terms the server derived for the series.
+	Queries []string `json:"queries"`
+	// Searches are the custom-term searches merged into the packet since, oldest first.
+	Searches   []EvidenceSearch    `json:"searches,omitempty"`
 	Sources    []EvidenceSource    `json:"sources"`
 	Candidates []EvidenceCandidate `json:"candidates"`
+}
+
+// EvidenceSearch records one search with a custom term: when it ran and which candidates it added.
+type EvidenceSearch struct {
+	Query      string   `json:"query"`
+	SearchedAt string   `json:"searched_at"`
+	Added      []string `json:"added"`
+	// Dropped counts the new candidates left out because the packet had no room for them.
+	Dropped int `json:"dropped,omitempty"`
 }
 
 // EvidenceLocalClues is what the library itself says about the series.
@@ -94,9 +109,12 @@ type EvidenceSignals struct {
 func candidateID(source, entryID string) string { return source + ":" + entryID }
 
 // assemble builds the packet from the local clues and every query's fan-out pages. Excluded
-// entries are left out. It reports false when no source answered, since such a packet would read
-// as "no candidates" while nothing was searched.
+// entries are left out. It reports false when no source answered: such a packet would read as
+// "no candidates" while nothing was searched, so it is never stored on its own.
 func assemble(local EvidenceLocalClues, queries []string, pages []metadata.SourcePage, excluded map[string]bool, fetchedAt time.Time) (EvidencePacket, map[string]metadata.SeriesMetadata, bool) {
+	if queries == nil {
+		queries = []string{}
+	}
 	packet := EvidencePacket{FetchedAt: stamp(fetchedAt.UnixMilli()), Local: local, Queries: queries, Sources: []EvidenceSource{}, Candidates: []EvidenceCandidate{}}
 	facts := map[string]metadata.SeriesMetadata{}
 	titles, authors := localTitleKeys(local), localAuthorKeys(local)
@@ -125,9 +143,6 @@ func assemble(local EvidenceLocalClues, queries []string, pages []metadata.Sourc
 			bySource[page.Source] = append(bySource[page.Source], candidate(id, entry, result, titles, authors, local.BookCount))
 		}
 	}
-	if !answered {
-		return EvidencePacket{}, nil, false
-	}
 	for _, source := range order {
 		status := SourceUnavailable
 		for _, page := range pages {
@@ -136,19 +151,23 @@ func assemble(local EvidenceLocalClues, queries []string, pages []metadata.Sourc
 			}
 		}
 		packet.Sources = append(packet.Sources, EvidenceSource{Source: source, Status: status})
-		hits := bySource[source]
-		// A title that matches a local name ranks first; otherwise the sources' own order holds.
-		slices.SortStableFunc(hits, func(a, b EvidenceCandidate) int {
-			return cmp.Compare(boolRank(a.Signals.TitleMatches), boolRank(b.Signals.TitleMatches))
-		})
-		packet.Candidates = append(packet.Candidates, hits[:min(len(hits), candidatesPerSource)]...)
+		packet.Candidates = append(packet.Candidates, rankHits(bySource[source])...)
 	}
 	packet = fit(packet)
 	kept := map[string]metadata.SeriesMetadata{}
 	for _, c := range packet.Candidates {
 		kept[c.ID] = facts[c.ID]
 	}
-	return packet, kept, true
+	return packet, kept, answered
+}
+
+// rankHits puts the candidates whose title matches a local name first, keeping the sources' own
+// order otherwise, and keeps at most candidatesPerSource of them.
+func rankHits(hits []EvidenceCandidate) []EvidenceCandidate {
+	slices.SortStableFunc(hits, func(a, b EvidenceCandidate) int {
+		return cmp.Compare(boolRank(a.Signals.TitleMatches), boolRank(b.Signals.TitleMatches))
+	})
+	return hits[:min(len(hits), candidatesPerSource)]
 }
 
 func boolRank(b bool) int {
@@ -285,6 +304,49 @@ func readEvidence(ctx context.Context, q queryer, seriesID int64, excluded []Exc
 		return slices.ContainsFunc(excluded, func(x ExcludedCandidate) bool { return candidateID(x.Source, x.EntryID) == c.ID })
 	})
 	return &packet, nil
+}
+
+// storedEvidence loads the series' packet as stored, excluded candidates included, with the source
+// facts of its candidates; the packet is nil when the series has none.
+func storedEvidence(ctx context.Context, q queryer, seriesID int64) (*EvidencePacket, map[string]metadata.SeriesMetadata, error) {
+	var rawPacket, rawFacts string
+	err := q.QueryRowContext(ctx, `SELECT packet, source_facts FROM identification_evidence WHERE series_id = ?`, seriesID).Scan(&rawPacket, &rawFacts)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil, nil
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	var packet EvidencePacket
+	facts := map[string]metadata.SeriesMetadata{}
+	if err := json.Unmarshal([]byte(rawPacket), &packet); err != nil {
+		return nil, nil, err
+	}
+	if err := json.Unmarshal([]byte(rawFacts), &facts); err != nil {
+		return nil, nil, err
+	}
+	return &packet, facts, nil
+}
+
+// writeEvidence stores the series' packet with its source facts. A fetch time replaces the whole row;
+// without one the packet keeps the fetch time it has.
+func writeEvidence(ctx context.Context, tx *sql.Tx, seriesID int64, fetchedAt *time.Time, packet EvidencePacket, facts map[string]metadata.SeriesMetadata) error {
+	rawPacket, err := json.Marshal(packet)
+	if err != nil {
+		return err
+	}
+	rawFacts, err := json.Marshal(facts)
+	if err != nil {
+		return err
+	}
+	if fetchedAt == nil {
+		_, err = tx.ExecContext(ctx, `UPDATE identification_evidence SET packet = ?, source_facts = ? WHERE series_id = ?`, string(rawPacket), string(rawFacts), seriesID)
+		return err
+	}
+	_, err = tx.ExecContext(ctx, `INSERT INTO identification_evidence (series_id, fetched_at_ms, packet, source_facts) VALUES (?, ?, ?, ?)
+		ON CONFLICT(series_id) DO UPDATE SET fetched_at_ms = excluded.fetched_at_ms, packet = excluded.packet, source_facts = excluded.source_facts`,
+		seriesID, fetchedAt.UnixMilli(), string(rawPacket), string(rawFacts))
+	return err
 }
 
 // excludedIDs lists the candidate ids a person ruled out for the series.
