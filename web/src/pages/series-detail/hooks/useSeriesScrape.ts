@@ -3,7 +3,8 @@ import { useLibraryInvalidation } from '../../../session/ApplicationSessionProvi
 import { apiClient } from '../../../api/client';
 import { getApiErrorMessage } from '../../../api/client';
 import type { SeriesIdentification } from '../../../api/generated';
-import { identifyAsOwner, isIdentificationSource, loadIdentification, ownerPickMessage } from '../../../features/identification/ownerPick';
+import { identifyAsOwner, loadIdentification, ownerPickMessage } from '../../../features/identification/ownerPick';
+import { isIdentificationSource } from '../../../features/identification/sources';
 import type { SearchResult, Series } from '../types';
 
 

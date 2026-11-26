@@ -62,9 +62,6 @@ type IdentifiedEntry struct {
 	EntryURL    string `json:"entry_url"`
 }
 
-// sourceLinkNames are the link names of the catalogue sources, as proposals have always named them.
-var sourceLinkNames = map[string]string{"bangumi": "Bangumi", "anilist": "AniList", "mangadex": "MangaDex", "myanimelist": "MyAnimeList", "comicvine": "Comic Vine"}
-
 // EnrichIdentified supplements one series from the sources it is identified with, inside the
 // caller's transaction that confirmed the identification, so the two commit or roll back together.
 // It rereads the series' values and locks there and rechecks current metadata_write authority.
@@ -274,7 +271,8 @@ func planIdentified(current database.Series, sources []IdentifiedSource, tags co
 			if err != nil || u.Host == "" || (u.Scheme != "https" && u.Scheme != "http") {
 				continue
 			}
-			name := firstText(sourceLinkNames[source.Source], source.Source)
+			catalogue, _ := metadata.LookupCatalogueSource(source.Source)
+			name := firstText(catalogue.Name, source.Source)
 			if slices.ContainsFunc(out.After.Links, func(l seriesmeta.Link) bool { return l.Url == u.String() || strings.EqualFold(l.Name, name) }) {
 				continue
 			}

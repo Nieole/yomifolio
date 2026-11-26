@@ -12,7 +12,8 @@ import { useI18n } from '../../i18n/LocaleProvider';
 import { useToast } from '../../components/ToastProvider';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useRequestLifetime } from '../../session/useRequestLifetime';
-import { categoryLabel, sourceLabel, waitingEscalations } from './labels';
+import { sourceLabel } from '../../features/identification/sources';
+import { categoryLabel, waitingEscalations } from './labels';
 
 const CONFLICT_CODES = new Set(['not_pending', 'candidate_unavailable', 'not_a_note']);
 

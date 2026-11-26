@@ -10,18 +10,7 @@ import type { Conclusion, OwnerWithdrawal, SeriesIdentification } from '../../ap
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useI18n } from '../../i18n/LocaleProvider';
 import { useToast } from '../../components/ToastProvider';
-
-const SOURCE_LABELS: Record<string, string> = {
-  bangumi: 'Bangumi',
-  anilist: 'AniList',
-  mangadex: 'MangaDex',
-  myanimelist: 'MyAnimeList',
-  comicvine: 'Comic Vine',
-};
-
-function sourceLabel(source: string) {
-  return SOURCE_LABELS[source] ?? source;
-}
+import { sourceLabel } from '../../features/identification/sources';
 
 interface SeriesIdentificationPanelProps {
   seriesId: number;

@@ -36,7 +36,7 @@ import { useSeriesVolumes } from './hooks/useSeriesVolumes';
 import { useSeriesOpenVolumes } from './hooks/useSeriesOpenVolumes';
 import { buildContinueCta } from './hooks/useSeriesContinue';
 import { SeriesFranchiseView } from './SeriesFranchiseView';
-import { isIdentificationSource } from '../../features/identification/ownerPick';
+import { isIdentificationSource } from '../../features/identification/sources';
 
 /**
  * 业务注释：SeriesDetailPage 是前端系列详情链路，负责卷册聚合、元数据审核、关系维护和阅读入口的页面、组件或工具入口，负责把领域状态转换为用户可操作的界面行为。

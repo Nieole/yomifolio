@@ -2,7 +2,8 @@ import { useCallback, useRef, useState } from 'react';
 import { useLibraryInvalidation } from '../../../session/ApplicationSessionProvider';
 import { apiClient } from '../../../api/client';
 import type { OwnerIdentification, SeriesIdentification } from '../../../api/generated';
-import { identifyAsOwner, isIdentificationSource, loadIdentification } from '../../../features/identification/ownerPick';
+import { identifyAsOwner, loadIdentification } from '../../../features/identification/ownerPick';
+import { isIdentificationSource } from '../../../features/identification/sources';
 import type { MetaTag, SearchResult, Series as DetailSeries } from '../../series-detail/types';
 import type { Series } from '../types';
 

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"yomifolio/internal/images"
+	"yomifolio/internal/metadata"
 )
 
 // Bounds of one candidate cover download.
@@ -21,16 +22,6 @@ const (
 	// coverDownloads caps the downloads, and so the decodes they feed, across the process.
 	coverDownloads = 2
 )
-
-// coverHosts are the image hosts each source serves its covers from. A host matches itself and
-// its subdomains; a candidate's cover is fetched only from its own source's hosts.
-var coverHosts = map[string][]string{
-	Bangumi:     {"bgm.tv", "bangumi.tv", "chii.in"},
-	AniList:     {"anilist.co"},
-	MangaDex:    {"mangadex.org"},
-	MyAnimeList: {"myanimelist.net"},
-	ComicVine:   {"comicvine.gamespot.com"},
-}
 
 // coverURL is the HTTPS address of a source's cover when it lies on one of the source's hosts; a
 // plain-HTTP address on such a host is upgraded. It reports false for every other address.
@@ -57,7 +48,8 @@ func coverHost(source string, u *url.URL) bool {
 		return false
 	}
 	host := strings.TrimSuffix(strings.ToLower(u.Hostname()), ".")
-	for _, known := range coverHosts[source] {
+	catalogue, _ := metadata.LookupCatalogueSource(source)
+	for _, known := range catalogue.CoverHosts {
 		if host == known || strings.HasSuffix(host, "."+known) {
 			return true
 		}

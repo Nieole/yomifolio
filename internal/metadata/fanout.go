@@ -7,24 +7,9 @@ import (
 	"context"
 	"encoding/json"
 	"slices"
-	"strings"
 
 	"yomifolio/internal/config"
 )
-
-// CatalogueSources lists the catalogue sources the configuration enables, in fan-out order:
-// Bangumi, AniList and MangaDex always, MyAnimeList and Comic Vine only with their credentials.
-// Model aliases are never catalogue sources.
-func CatalogueSources(cfg config.Config) []string {
-	names := []string{"bangumi", "anilist", "mangadex"}
-	if strings.TrimSpace(cfg.Scrapers.MALClientID) != "" {
-		names = append(names, "myanimelist")
-	}
-	if strings.TrimSpace(cfg.Scrapers.ComicVineAPIKey) != "" {
-		names = append(names, "comicvine")
-	}
-	return names
-}
 
 // SourceStatus is how one catalogue source answered one fan-out query.
 type SourceStatus string
