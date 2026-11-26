@@ -386,3 +386,110 @@ func TestIdentificationFollowsTheConfiguredSourcePriority(t *testing.T) {
 		t.Fatalf("series under AniList-first priority %+v", got)
 	}
 }
+
+// setAuthors gives a series the authors a scan or an owner left on it.
+func setAuthors(t *testing.T, store database.Store, id int64, authors ...metadata.SeriesAuthor) {
+	t.Helper()
+	ctx := context.Background()
+	err := store.ExecTx(ctx, func(q *database.Queries) error {
+		for _, a := range authors {
+			author, err := q.EnsureAuthor(ctx, a.Name, a.Role)
+			if err != nil {
+				return err
+			}
+			if err := q.LinkSeriesAuthor(ctx, database.LinkSeriesAuthorParams{SeriesID: id, AuthorID: author}); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// seriesAuthors reads the series page's authors as name/role pairs.
+func (w *identificationWeb) seriesAuthors(id int64) map[string]bool {
+	w.t.Helper()
+	var view struct {
+		Authors []struct {
+			Name string `json:"name"`
+			Role string `json:"role"`
+		} `json:"authors"`
+	}
+	w.call("GET", fmt.Sprintf("/api/series/%d/context", id), 200, &view)
+	out := map[string]bool{}
+	for _, a := range view.Authors {
+		out[a.Name+"/"+a.Role] = true
+	}
+	return out
+}
+
+func TestIdentificationFillsOnlyTheAuthorRolesASeriesLacks(t *testing.T) {
+	store, cfg := fixture(t)
+	unpaced(t, cfg)
+	library := newPrefetchLibrary(t, store, "Authors")
+	credited := library.series("Title 1", "", "01.cbz")
+	setAuthors(t, store, credited, metadata.SeriesAuthor{Name: "Oda", Role: "Writer"})
+	bare := library.series("Title 2", "", "01.cbz")
+	locked := library.series("Title 3", "", "01.cbz")
+	setSeries(t, store, locked, func(p *database.UpdateSeriesMetadataParams) { p.LockedFields = sqlText("authors") })
+	sources := &recordingSources{answer: func(source, query string) ([]*metadata.SeriesMetadata, error) {
+		var n int
+		if _, err := fmt.Sscanf(query, "Title %d", &n); err != nil {
+			return nil, nil
+		}
+		switch source {
+		case "bangumi":
+			return []*metadata.SeriesMetadata{{Title: query, SourceID: n, SourceURL: fmt.Sprintf("https://bgm.tv/subject/%d", n),
+				Authors: []metadata.SeriesAuthor{{Name: "尾田荣一郎", Role: "Writer"}, {Name: "尾田荣一郎", Role: "Penciller"}}}}, nil
+		case "anilist":
+			return []*metadata.SeriesMetadata{{Title: query, SourceID: n, SourceURL: fmt.Sprintf("https://anilist.co/manga/%d", n),
+				Authors: []metadata.SeriesAuthor{{Name: "Eiichiro Oda", Role: "Writer"}, {Name: "Editor X", Role: "Editor"}}}}, nil
+		}
+		return nil, nil
+	}}
+	web := openClaimWeb(t, store, cfg, sources, &handClock{now: time.Date(2026, 3, 1, 9, 0, 0, 0, time.UTC)})
+	if _, run := web.prefetch("{}"); run.Status != task.StatusCompleted {
+		t.Fatalf("prefetch run %+v", run)
+	}
+	agent := web.mainLoopAgent(cfg, 1, []int64{library.lib.ID}, []string{delegated.Read, delegated.MetadataWrite})
+	verdicts := agent.identifyAll("identify", map[int64][]string{
+		credited: {"bangumi:1", "anilist:1"}, bare: {"bangumi:2", "anilist:2"}, locked: {"bangumi:3", "anilist:3"}})
+
+	// A role the series already has stays as it is; each missing role comes from the first source
+	// in priority order that names it.
+	want := map[string]bool{"Oda/Writer": true, "尾田荣一郎/Penciller": true, "Editor X/Editor": true}
+	if got := web.seriesAuthors(credited); !reflect.DeepEqual(got, want) {
+		t.Fatalf("credited series authors %v want %v", got, want)
+	}
+	want = map[string]bool{"尾田荣一郎/Writer": true, "尾田荣一郎/Penciller": true, "Editor X/Editor": true}
+	if got := web.seriesAuthors(bare); !reflect.DeepEqual(got, want) {
+		t.Fatalf("bare series authors %v want %v", got, want)
+	}
+	if got := web.seriesAuthors(locked); len(got) != 0 {
+		t.Fatalf("locked authors changed to %v", got)
+	}
+	// The added authors carry their source record and undo with the receipt.
+	var review struct {
+		Provenance []struct {
+			FieldName string `json:"field_name"`
+			Source    string `json:"source"`
+		} `json:"provenance"`
+	}
+	web.call("GET", fmt.Sprintf("/api/series/%d/metadata-review", credited), 200, &review)
+	recorded := false
+	for _, p := range review.Provenance {
+		recorded = recorded || (p.FieldName == "authors" && p.Source == "bangumi")
+	}
+	if !recorded {
+		t.Fatalf("authors carry no source record: %+v", review.Provenance)
+	}
+	var undone receipt
+	if result := agent.call("library_undo_metadata_operation", map[string]any{"request_key": "undo-authors", "operation_id": verdicts[credited].OperationID}, &undone); result.IsError || undone.Outcome != "changed" {
+		t.Fatalf("undo %+v %s", undone, resultText(result))
+	}
+	if got := web.seriesAuthors(credited); !reflect.DeepEqual(got, map[string]bool{"Oda/Writer": true}) {
+		t.Fatalf("authors after undo %v", got)
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"maps"
 	"net/url"
 	"slices"
 	"strconv"
@@ -65,9 +66,11 @@ var sourceLinkNames = map[string]string{"bangumi": "Bangumi", "anilist": "AniLis
 // Text fields take the first value in source priority and fill only empty, unlocked fields; a title
 // still equal to the directory name is a placeholder that is replaced under its lock. The rating is
 // computed by formula when missing, and recomputed while it is still an untouched formula result.
-// Source links append every identified entry. Every written field records its source, and the
-// series' pending proposals close as superseded in the same transaction. The receipt is an ordinary
-// enrichment receipt that the operation tools read, undo and clean up.
+// Source links append every identified entry. Authors fill only the roles the series lacks: each
+// missing role takes the authors of the first source in priority that names it. Every written
+// field records its source, and the series' pending proposals close as superseded in the same
+// transaction. The receipt is an ordinary enrichment receipt that the operation tools read, undo
+// and clean up.
 //
 // An error means the caller must roll back; after its commit the caller calls Publish.
 func (s *Service) EnrichIdentified(ctx context.Context, tx *sql.Tx, actor delegated.Subject, in IdentifiedInput) (Operation, error) {
@@ -163,6 +166,7 @@ const (
 	reasonPlaceholder = "replaced the directory-name placeholder title; the lock stays"
 	reasonRated       = "equal-weight ten-point mean of the identified sources' ratings"
 	reasonLinked      = "appended identified source entries"
+	reasonRoles       = "added the author roles the series lacked, each from the first identified source in priority order naming it"
 	reasonLocked      = "field is locked"
 	reasonKept        = "kept existing value"
 	reasonNoValue     = "no identified source has a value"
@@ -264,6 +268,44 @@ func planIdentified(current database.Series, sources []IdentifiedSource, formula
 		record("source_links", reasonLinked, linked)
 	}
 
+	if seriesmeta.EnrichmentLocked(current, "authors") {
+		record("authors", reasonLocked, nil)
+	} else {
+		out.After.Authors = slices.Clone(before.Authors)
+		covered := map[string]bool{}
+		for _, a := range before.Authors {
+			covered[roleKey(a.Role)] = roleKey(a.Role) != ""
+		}
+		var used []metadata.FieldEvidence
+		for _, source := range sources {
+			if source.Facts == nil {
+				continue
+			}
+			added := map[string]bool{}
+			for _, a := range source.Facts.Authors {
+				name, role := strings.TrimSpace(a.Name), strings.TrimSpace(a.Role)
+				if name == "" || role == "" || len(name) > 500 || len(role) > 100 || covered[roleKey(role)] {
+					continue
+				}
+				out.After.Authors = append(out.After.Authors, seriesmeta.Author{Name: name, Role: role})
+				added[roleKey(role)] = true
+			}
+			if len(added) > 0 {
+				maps.Copy(covered, added)
+				used = append(used, evidenceOf(source, "authors"))
+			}
+		}
+		out.After.Authors = seriesmeta.AuthorSet(out.After.Authors)
+		switch {
+		case len(used) > 0:
+			record("authors", reasonRoles, used)
+		case len(before.Authors) > 0:
+			record("authors", reasonKept, nil)
+		default:
+			record("authors", reasonNoValue, nil)
+		}
+	}
+
 	for _, f := range out.Fields {
 		if f.Changed {
 			out.Outcome = "changed"
@@ -288,9 +330,14 @@ func evidenceOf(source IdentifiedSource, field string) metadata.FieldEvidence {
 		kept.Status = f.Status
 	case "rating":
 		kept.SiteRating, kept.Rating = f.SiteRating, f.Rating
+	case "authors":
+		kept.Authors = f.Authors
 	}
 	return metadata.FieldEvidence{CandidateID: source.CandidateID, Source: source.Source, Metadata: kept}
 }
+
+// roleKey compares author roles the way sources and ComicInfo spell the same role.
+func roleKey(role string) string { return strings.ToLower(strings.TrimSpace(role)) }
 
 // firstText is the first value that is not blank.
 func firstText(values ...string) string {

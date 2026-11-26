@@ -12,16 +12,9 @@ import (
 // accepted from the proposal before stay accepted.
 const StatusSuperseded = "superseded"
 
-// Supersede closes one pending proposal as superseded, in the caller's write transaction. It is the
-// pending CAS, so a proposal another decision ended first keeps that decision (ADR 0011); it reports
-// whether this call closed it.
-func Supersede(ctx context.Context, q *database.Queries, id int64) (bool, error) {
-	n, err := q.ResolvePendingMetadataReview(ctx, database.ResolvePendingMetadataReviewParams{ID: id, Status: StatusSuperseded})
-	return n == 1, err
-}
-
-// SupersedePending supersedes every pending proposal of the series and returns those it closed, in
-// id order.
+// SupersedePending closes every pending proposal of the series as superseded, in the caller's write
+// transaction, and returns those it closed in id order. Each closure is the pending CAS, so a
+// proposal another decision ended first keeps that decision (ADR 0011).
 func SupersedePending(ctx context.Context, q *database.Queries, series int64) ([]int64, error) {
 	rows, err := q.ListMetadataReviewsBySeries(ctx, series)
 	if err != nil {
@@ -32,11 +25,11 @@ func SupersedePending(ctx context.Context, q *database.Queries, series int64) ([
 		if !isPending(row.Status) {
 			continue
 		}
-		ok, err := Supersede(ctx, q, row.ID)
+		n, err := q.ResolvePendingMetadataReview(ctx, database.ResolvePendingMetadataReviewParams{ID: row.ID, Status: StatusSuperseded})
 		if err != nil {
 			return nil, err
 		}
-		if ok {
+		if n == 1 {
 			closed = append(closed, row.ID)
 		}
 	}
