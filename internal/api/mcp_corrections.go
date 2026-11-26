@@ -24,6 +24,12 @@ type mcpCoverInput struct {
 	Reason     string `json:"reason" jsonschema:"how the page compares with the current cover, at most 1000 bytes"`
 }
 
+// mcpCoverReceipt is a cover receipt with the next step a conflict calls for.
+type mcpCoverReceipt struct {
+	enrichment.Operation
+	Message string `json:"message,omitempty"`
+}
+
 // registerMCPCorrections adds the two judgment primitives an agent applies on its own: correcting
 // author credits and improving an automatic cover. Both return ordinary operation receipts.
 func registerMCPCorrections(server *mcp.Server, service *enrichment.Service, subject delegated.Subject, transportCtx context.Context) {
@@ -40,10 +46,17 @@ func registerMCPCorrections(server *mcp.Server, service *enrichment.Service, sub
 		out, err := service.CorrectAuthors(ctx, subject, enrichment.AuthorsInput(in))
 		return nil, out, publicMCPToolError(err, "invalid correction: from must be in expected_authors, to must be credited by an identified source of the series, each with a reason; use a new request_key", "author correction unavailable; retry with the same request_key")
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_improve_cover", Description: `Replace a series' automatic cover with a page of one of its books, after comparing them (library_get_series_cover, library_get_page_thumbnails). Manual or locked covers are kept: conflict. Undo with library_undo_metadata_operation. Example: {"request_key":"cover-12","series_id":12,"book_id":345,"page":2,"reason":"page 2 is the full cover art; page 1 is an ad"}`, Annotations: write}, func(ctx context.Context, _ *mcp.CallToolRequest, in mcpCoverInput) (*mcp.CallToolResult, enrichment.Operation, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_improve_cover", Description: `Replace a series' automatic cover with a page of one of its books, after comparing them (library_get_series_cover, library_get_page_thumbnails). Manual or locked covers are kept: conflict. Undo with library_undo_metadata_operation. Example: {"request_key":"cover-12","series_id":12,"book_id":345,"page":2,"reason":"page 2 is the full cover art; page 1 is an ad"}`, Annotations: write}, func(ctx context.Context, _ *mcp.CallToolRequest, in mcpCoverInput) (*mcp.CallToolResult, mcpCoverReceipt, error) {
 		ctx, cancel := imageRequestContext(ctx, transportCtx)
 		defer cancel()
 		out, err := service.ImproveCover(ctx, subject, enrichment.CoverInput(in))
-		return nil, out, publicMCPToolError(err, "invalid cover: book_id must be a book of this series, page within it, and a reason; use a new request_key", "cover operation unavailable; retry with the same request_key")
+		if err != nil {
+			return nil, mcpCoverReceipt{}, publicMCPToolError(err, "invalid cover: book_id must be a book of this series, page within it, and a reason; use a new request_key", "cover operation unavailable; retry with the same request_key")
+		}
+		receipt := mcpCoverReceipt{Operation: out}
+		if out.Outcome == "conflict" {
+			receipt.Message = "the cover is protected (a manual or locked cover, or a page the owner chose) or changed since you compared, so it was kept; " + protectedValueNext
+		}
+		return nil, receipt, nil
 	})
 }

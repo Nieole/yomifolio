@@ -72,9 +72,9 @@ describe('useSeriesScrape', () => {
     expect(result.current.identificationRevision).toBe(before + 1);
   });
 
-  it('reports an excluded entry and leaves the identification as it was', async () => {
+  it('reports a refused pick and leaves the identification as it was', async () => {
     mockGet(null);
-    vi.spyOn(apiClient, 'put').mockRejectedValue(Object.assign(new Error('conflict'), { isAxiosError: true, response: { status: 409 } }));
+    vi.spyOn(apiClient, 'put').mockRejectedValue(new Error('Identification unavailable'));
     const { result, reload, showToast } = setup();
 
     await act(async () => {
@@ -86,7 +86,7 @@ describe('useSeriesScrape', () => {
       await result.current.handleApplyMetadata(RESULT);
     });
 
-    expect(showToast).toHaveBeenCalledWith('identification.pick.excluded', 'error');
+    expect(showToast).toHaveBeenCalledWith('Identification unavailable', 'error');
     expect(reload).not.toHaveBeenCalled();
     expect(result.current.identificationRevision).toBe(before);
   });

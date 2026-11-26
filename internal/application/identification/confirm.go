@@ -17,11 +17,13 @@ import (
 	"yomifolio/internal/metadata"
 )
 
-// Enricher supplements an identified series inside the transaction that confirmed it, and takes
-// back what a withdrawn entry supplemented inside the transaction that withdrew it.
+// Enricher supplements an identified series inside the transaction that confirmed it, takes back
+// what a withdrawn entry supplemented inside the transaction that withdrew it, and corrects one
+// source value inside the transaction that records the correction.
 type Enricher interface {
 	EnrichIdentified(context.Context, *sql.Tx, delegated.Subject, enrichment.IdentifiedInput) (enrichment.Operation, error)
 	RetractIdentified(context.Context, *sql.Tx, delegated.Subject, enrichment.RetractInput) (enrichment.Operation, error)
+	CorrectField(context.Context, *sql.Tx, delegated.Subject, enrichment.CorrectionInput) (enrichment.Operation, error)
 	Publish()
 }
 

@@ -216,6 +216,8 @@ func TestMCPEveryToolResultCarriesItsJSONText(t *testing.T) {
 	call("library_get_series_authors", map[string]any{"series_id": first})
 	call("library_correct_authors", map[string]any{"request_key": "text-authors", "series_id": first, "expected_authors": []any{map[string]string{"name": "Copy Alias", "role": "Writer"}},
 		"corrections": []any{map[string]any{"from": map[string]string{"name": "Copy Alias", "role": "Writer"}, "to": map[string]string{"name": "Copy Writer", "role": "Writer"}, "reason": "source credit"}}})
+	call("library_replace_identification", map[string]any{"request_key": "text-replace", "series_id": first, "candidate_ids": []string{"anilist:1"}, "reason": "the AniList entry fits"})
+	call("library_correct_series_field", map[string]any{"request_key": "text-correct", "series_id": first, "field": "summary", "value": "A corrected summary", "reason": "the source summary is another work's"})
 
 	listed, err := session.ListTools(ctx, nil)
 	if err != nil {

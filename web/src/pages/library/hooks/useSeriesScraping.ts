@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useLibraryInvalidation } from '../../../session/ApplicationSessionProvider';
 import { apiClient } from '../../../api/client';
 import type { OwnerIdentification, SeriesIdentification } from '../../../api/generated';
-import { identifyAsOwner, isIdentificationSource, loadIdentification, ownerPickErrorKey } from '../../../features/identification/ownerPick';
+import { identifyAsOwner, isIdentificationSource, loadIdentification } from '../../../features/identification/ownerPick';
 import type { MetaTag, SearchResult, Series as DetailSeries } from '../../series-detail/types';
 import type { Series } from '../types';
 
@@ -140,8 +140,7 @@ export function useSeriesScraping({ onSuccess, onError, onIdentified }: UseSerie
     async (metadata: Record<string, unknown>) => {
       if (!scrapingSeries) return;
       setIsScraping(true);
-      // 目录来源的条目挑中即记为人工确认的识别，按识别策略补充；被排除的条目挑不进去时弹窗留着，
-      // 让人改挑别的条目。
+      // 目录来源的条目挑中即记为人工确认的识别，按识别策略补充；记不下来时弹窗留着，让人重试或改挑。
       if (isIdentificationSource(scrapeProvider)) {
         try {
           const out = await identifyAsOwner(scrapingSeries.id, scrapeProvider, metadata);
@@ -149,7 +148,7 @@ export function useSeriesScraping({ onSuccess, onError, onIdentified }: UseSerie
           closeScrapeModal();
         } catch (err) {
           console.error('Owner identification failed', err);
-          onError(ownerPickErrorKey(err));
+          onError('identification.pick.failed');
         } finally {
           setIsScraping(false);
         }

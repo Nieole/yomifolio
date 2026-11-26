@@ -198,9 +198,9 @@ describe('useSeriesScraping 挑中即识别', () => {
     expect(result.current.showScrapeModal).toBe(false);
   });
 
-  it('被排除的条目挑不进去时报告排除，弹窗保持打开', async () => {
+  it('记不下识别时报告失败，弹窗保持打开', async () => {
     mockResolvedGet(null);
-    vi.spyOn(apiClient, 'put').mockRejectedValue(Object.assign(new Error('conflict'), { isAxiosError: true, response: { status: 409 } }));
+    vi.spyOn(apiClient, 'put').mockRejectedValue(new Error('unavailable'));
     const onError = vi.fn();
     const onIdentified = vi.fn();
     const { result } = renderHook(() => useSeriesScraping({ onSuccess: vi.fn(), onError, onIdentified }));
@@ -212,7 +212,7 @@ describe('useSeriesScraping 挑中即识别', () => {
       await result.current.applyScrape(result.current.scrapeSearchResults[0] as unknown as Record<string, unknown>);
     });
 
-    expect(onError).toHaveBeenCalledWith('identification.pick.excluded');
+    expect(onError).toHaveBeenCalledWith('identification.pick.failed');
     expect(onIdentified).not.toHaveBeenCalled();
     expect(result.current.showScrapeModal).toBe(true);
   });

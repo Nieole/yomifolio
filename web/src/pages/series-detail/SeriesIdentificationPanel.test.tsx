@@ -155,4 +155,44 @@ describe('SeriesIdentificationPanel', () => {
     expect(get).toHaveBeenCalledTimes(2);
     expect(screen.getByText('在手动搜索中挑中')).toBeTruthy();
   });
+
+  it('withdraws a source identification after a confirmation and draws the server answer', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue({ data: IDENTIFIED } as never);
+    const withdrawn: SeriesIdentification = {
+      ...IDENTIFIED,
+      conclusions: [IDENTIFIED.conclusions[1]],
+      excluded_candidates: [
+        ...IDENTIFIED.excluded_candidates,
+        { source: 'bangumi', entry_id: '42', entry_url: 'https://bgm.tv/subject/42', title: '中文名', user_id: 1, excluded_at: '2026-03-01T00:00:00Z', proposal_id: 0 },
+      ],
+    };
+    const del = vi.spyOn(apiClient, 'delete').mockResolvedValue({ data: { identification: withdrawn, withdrawn: IDENTIFIED.conclusions[0], retraction_id: 'r' } } as never);
+    const onChanged = vi.fn();
+    renderPanel({ onChanged });
+
+    const [bangumi] = await screen.findAllByRole('button', { name: '撤回识别' });
+    fireEvent.click(bangumi);
+    expect(del).not.toHaveBeenCalled();
+    expect(screen.getByText(/「中文名」会记为排除候选/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '确认撤回' }));
+
+    expect(await screen.findByText('已撤回识别，原条目已记为排除候选')).toBeTruthy();
+    expect(del).toHaveBeenCalledWith('/api/identification/series/7/conclusions/bangumi');
+    expect(screen.getAllByRole('button', { name: '撤回识别' })).toHaveLength(1);
+    expect(onChanged).toHaveBeenCalled();
+  });
+
+  it('keeps the identification when the withdrawal is refused', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue({ data: IDENTIFIED } as never);
+    vi.spyOn(apiClient, 'delete').mockRejectedValue(new Error('需要管理员权限'));
+    const onChanged = vi.fn();
+    renderPanel({ onChanged });
+
+    fireEvent.click((await screen.findAllByRole('button', { name: '撤回识别' }))[0]);
+    fireEvent.click(screen.getByRole('button', { name: '确认撤回' }));
+
+    expect(await screen.findByText('需要管理员权限')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: '撤回识别' })).toHaveLength(2);
+    expect(onChanged).not.toHaveBeenCalled();
+  });
 });

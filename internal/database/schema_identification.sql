@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS identification_conclusions (
     PRIMARY KEY (series_id, source)
 );
 
--- Source entries a person ruled out for the series. Only human decisions write here.
+-- Source entries a person ruled out for the series. Only human decisions write here, and the
+-- owner's own pick of an excluded entry deletes its row.
 CREATE TABLE IF NOT EXISTS identification_exclusions (
     series_id INTEGER NOT NULL REFERENCES series(id) ON DELETE CASCADE,
     source TEXT NOT NULL,
@@ -41,7 +42,8 @@ CREATE TABLE IF NOT EXISTS identification_exclusions (
 
 -- Escalations and their outcome. class decides what an open row means for the status:
 -- 'identification' waits for the owner, 'recheck' questions an identification, 'note' never
--- changes the status. resolved_at_ms NULL means open.
+-- changes the status. resolved_at_ms NULL means open. clue is the local name a system recheck
+-- found contradicting the identification (a new book's ComicInfo series), '' otherwise.
 CREATE TABLE IF NOT EXISTS identification_escalations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     series_id INTEGER NOT NULL REFERENCES series(id) ON DELETE CASCADE,
@@ -54,10 +56,23 @@ CREATE TABLE IF NOT EXISTS identification_escalations (
     raised_at_ms INTEGER NOT NULL,
     resolved_at_ms INTEGER,
     resolved_by INTEGER NOT NULL DEFAULT 0,
-    resolution TEXT NOT NULL DEFAULT ''
+    resolution TEXT NOT NULL DEFAULT '',
+    clue TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_identification_escalations_open
     ON identification_escalations(series_id, class) WHERE resolved_at_ms IS NULL;
+
+-- ComicInfo series names the owner kept a questioned identification with, by name_key, their
+-- database.NormalizeSearchText form. A new book of the series carrying one of them does not
+-- question its identification again.
+CREATE TABLE IF NOT EXISTS identification_accepted_names (
+    series_id INTEGER NOT NULL REFERENCES series(id) ON DELETE CASCADE,
+    name_key TEXT NOT NULL,
+    name TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    accepted_at_ms INTEGER NOT NULL,
+    PRIMARY KEY (series_id, name_key)
+);
 
 -- Not-found conclusion. searched_sources is the JSON array of source keys the verdict covered.
 CREATE TABLE IF NOT EXISTS identification_not_found (
@@ -99,8 +114,9 @@ CREATE TABLE IF NOT EXISTS identification_leases (
     expires_at_ms INTEGER NOT NULL
 );
 
--- The decided result of each verdict, by the credential's request key, so a retried request gets
--- the original result back. digest fingerprints the verdict the key was first used with.
+-- The decided result of each verdict, replacement or field correction, by the credential's request
+-- key, so a retried request gets the original result back. digest fingerprints the decision the key
+-- was first used with.
 CREATE TABLE IF NOT EXISTS identification_verdicts (
     credential_id TEXT NOT NULL,
     request_key TEXT NOT NULL,

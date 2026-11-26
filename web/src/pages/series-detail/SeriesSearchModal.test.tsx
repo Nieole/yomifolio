@@ -92,15 +92,18 @@ describe('SeriesSearchModal 识别口径', () => {
     expect(screen.getByText(/撤换会先撤回原条目带来/)).toBeTruthy();
   });
 
-  it('marks an excluded entry and keeps it from being picked', () => {
-    const onApply = renderModal('bangumi', result(9, '否决过的作品'));
+  it('picks an excluded entry only after confirming the exclusion is lifted', () => {
+    const picked = result(9, '否决过的作品');
+    const onApply = renderModal('bangumi', picked);
 
     expect(screen.getAllByText('已排除')).toHaveLength(1);
-    expect(screen.getByText('这个条目是该系列的排除候选，不能识别为该系列')).toBeTruthy();
-    const apply = screen.getByRole('button', { name: '撤换为此条目' });
-    expect(apply).toHaveProperty('disabled', true);
-    fireEvent.click(apply);
+    expect(screen.getByText('这个条目之前被排除过；挑中它会解除排除，再记为人工确认的识别')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '撤换为此条目' }));
     expect(onApply).not.toHaveBeenCalled();
+    expect(screen.getByText(/「否决过的作品」之前被排除过/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: '解除排除并记为识别' }));
+    expect(onApply).toHaveBeenCalledWith(picked);
   });
 
   it('keeps the proposal wording for a model answer', () => {

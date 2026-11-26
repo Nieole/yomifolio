@@ -107,6 +107,7 @@ func Migrate(dbPath string) error {
 		// 存量行留 NULL：写入它的操作没有记下，撤销按原提案认领，见 seriesmeta.ForgetEnrichmentProvenance。
 		{table: "series_metadata_provenance", name: "operation_id", definition: "TEXT"},
 		{table: "identification_conclusions", name: "facts", definition: "TEXT NOT NULL DEFAULT '{}'"},
+		{table: "identification_escalations", name: "clue", definition: "TEXT NOT NULL DEFAULT ''"},
 	} {
 		if err := ensureColumn(db, column.table, column.name, column.definition); err != nil {
 			return err

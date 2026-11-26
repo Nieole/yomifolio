@@ -29,6 +29,8 @@ var targets = []reflect.Type{
 	reflect.TypeOf(enrichment.AdjudicationResult{}),
 	reflect.TypeOf(enrichment.IdentificationBasis{}),
 	reflect.TypeOf(enrichment.IdentifiedEntry{}),
+	reflect.TypeOf(enrichment.CorrectionBasis{}),
+	reflect.TypeOf(enrichment.FieldSourceRecord{}),
 	reflect.TypeOf(enrichment.CleanupResult{}),
 	reflect.TypeOf(enrichment.MaterialResult{}),
 	reflect.TypeOf(enrichment.CoverSelection{}),
@@ -93,7 +95,12 @@ var targets = []reflect.Type{
 	reflect.TypeOf(identification.EvidenceSignals{}),
 	reflect.TypeOf(identification.PrefetchLaunch{}),
 	reflect.TypeOf(identification.ResearchResult{}),
+	reflect.TypeOf(identification.PendingPage{}),
+	reflect.TypeOf(identification.PendingCategory{}),
+	reflect.TypeOf(identification.PendingSeries{}),
+	reflect.TypeOf(identification.OwnerIdentified{}),
 	reflect.TypeOf(identification.OwnerIdentification{}),
+	reflect.TypeOf(identification.OwnerWithdrawal{}),
 }
 
 // nullTypes 记录 sql.Null* 到 contracts.ts 导出名的映射；用到哪些就 import 哪些。

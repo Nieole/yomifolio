@@ -9,6 +9,7 @@ export interface Operation {
   cleaned_by?: string;
   adjudication?: AdjudicationResult;
   identification?: IdentificationBasis;
+  correction?: CorrectionBasis;
   cover_selection?: CoverSelection;
   relation?: RelationChange;
   old_cover_material?: string;
@@ -50,6 +51,20 @@ export interface IdentificationBasis {
 export interface IdentifiedEntry {
   candidate_id: string;
   entry_url: string;
+}
+
+export interface CorrectionBasis {
+  field: string;
+  replaced: FieldSourceRecord;
+}
+
+export interface FieldSourceRecord {
+  value: string;
+  source: string;
+  source_url: string;
+  confidence: number;
+  proposal_id?: number;
+  operation_id?: string;
 }
 
 export interface CleanupResult {
@@ -568,6 +583,7 @@ export interface Escalation {
   category: string;
   class: string;
   reason: string;
+  clue?: string;
   raised_by: Confirmer;
   raised_at: string;
 }
@@ -640,9 +656,45 @@ export interface ResearchResult {
   packet?: EvidencePacket;
 }
 
+export interface PendingPage {
+  items: PendingSeries[];
+  total: number;
+  next_offset?: number;
+  categories: PendingCategory[];
+}
+
+export interface PendingCategory {
+  category: string;
+  class: string;
+  series: number;
+}
+
+export interface PendingSeries {
+  series_id: number;
+  library_name: string;
+  directory_name: string;
+  title: string;
+  book_count: number;
+  cover_book_id: number;
+  identification: SeriesIdentification;
+}
+
+export interface OwnerIdentified {
+  identification: SeriesIdentification;
+  operation_ids: string[];
+}
+
 export interface OwnerIdentification {
   identification: SeriesIdentification;
   replaced?: Conclusion;
+  lifted_exclusion?: boolean;
+  retraction_id?: string;
+  operation_id?: string;
+}
+
+export interface OwnerWithdrawal {
+  identification: SeriesIdentification;
+  withdrawn: Conclusion;
   retraction_id?: string;
   operation_id?: string;
 }

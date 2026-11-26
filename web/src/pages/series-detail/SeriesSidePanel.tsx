@@ -49,6 +49,8 @@ interface SeriesSidePanelProps {
   replaceableSources: string[];
   /** 页面别处记下人工识别后递增，识别区随之重读。 */
   identificationRevision: number;
+  /** 识别区撤回识别改了系列元数据之后调用。 */
+  onIdentificationChanged: () => void;
 }
 
 export function SeriesSidePanel(props: SeriesSidePanelProps) {
@@ -217,6 +219,7 @@ export function SeriesSidePanel(props: SeriesSidePanelProps) {
                 onReplace={props.onReplaceIdentification}
                 replaceableSources={props.replaceableSources}
                 revision={props.identificationRevision}
+                onChanged={props.onIdentificationChanged}
               />
             )}
             {props.activeTab === 'review' && (
