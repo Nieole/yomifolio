@@ -13,7 +13,7 @@ references: [mm-adr-0014, mm-runtime]
 
 ## 外部来源接缝
 
-`Options.Sources` 仅替换外部客户端工厂，在恢复与开放输入之前固定到生产图。`Metadata` 覆盖按来源键获取和分页搜索（含 LLM 元数据别名），HTTP 与应用用例（含证据包预取与单系列重搜）使用同一工厂；`AI` 覆盖分组、推荐和连接测试。工厂接收调用时的当前配置或已解析连接参数，须支持并发调用；返回的来源可通过 context 协作取消。未提供的工厂保留现有生产来源选择，不替换应用用例、数据库、任务引擎或生命周期，也不提供运行期间更换工厂的入口。
+`Options.Sources` 仅替换外部客户端工厂，在恢复与开放输入之前固定到生产图。`Metadata` 覆盖按来源键获取和分页搜索（含 LLM 元数据别名），HTTP 与应用用例（含证据包预取与单系列重搜）使用同一工厂；`AI` 覆盖分组、推荐和连接测试；`Covers` 是证据包候选封面下载的 HTTP 传输，只搬运字节，域名、重定向、大小与内容检查仍由识别模块在传输之外执行，所以替身能验证请求从未发往界外。工厂接收调用时的当前配置或已解析连接参数，须支持并发调用；返回的来源可通过 context 协作取消。未提供的工厂保留现有生产来源选择，不替换应用用例、数据库、任务引擎或生命周期，也不提供运行期间更换工厂的入口。
 
 ## 识别时钟接缝
 
@@ -35,6 +35,8 @@ references: [mm-adr-0014, mm-runtime]
 
 
 `Open` 同时从同一数据库装配 `enrichment.Service`，经 `AdministrationDependencies.Enrichment` 显式绑定网页和 MCP；提交后通过现有效果端口失效统计及发布刷新，不创建独立运行时或后台维护任务。
+
+`Open` 再从同一数据库装配 `identification.Service`：绑定同一 delegated 实例（当前授权）、enrichment 实例（识别后的补充、撤回与改正）、Runtime 的 `identification.Prefetcher` 与识别时钟，并以 `WithIdentifiedSources(identification.SourceEvidence)` 把识别证据注入 enrichment 的作者校正。存量推导（`DeriveFromHistory`）与已启用来源的同步（`SyncSources`）在 `Start` 开放输入之前完成，失败则关闭已创建的应用、不返回宿主。扫描器的新增书与新建系列钩子在此绑定到待复核检查与增量预取请求。服务经 `AdministrationDependencies.Identification` 显式交给管理员 HTTP 与 MCP 协议适配。
 
 `enrichment.WithCovers` 绑定同一 delegated 实例及配置快照，复用现有图片/内容资格，不注入第二份图片宿主、运行时或网络客户端。不可变材料先准备/事务引用切换没有启动期文件重发或发布队列，故障与重开策略归 mm-application。
 

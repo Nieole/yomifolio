@@ -17,7 +17,9 @@ parent: mm-architecture
 - 五个公共数据源的真实 HTTP 请求共享进程级并发闸门；重试识别 `Retry-After`，退避和等令牌可取消，POST 重试重建请求体。上游错误处理脱敏密钥、截断响应体，不能将完整错误页直接写日志。
 
 - `SourceFanout.Search` 按 `CatalogueSources` 的顺序逐个搜索当前配置启用的目录型来源：Bangumi、AniList、MangaDex 恒在，MyAnimeList、Comic Vine 仅在配置了对应凭据时加入；LLM 别名不是目录型来源。网页刮削来源列表也由 `CatalogueSources` 派生，再附加 LLM。每次访问来源前后都调用调用方给的检查点，检查点出错即停止扇出、丢弃在途页并原样返回该错误。每个来源独立报告 available、failed（不可达、结果多于请求数或总数为负）、invalid_response（任一结果未通过快照校验，整页丢弃）或 too_large（结果有效但调用方预算已满，由调用方经 `SourcePage.TooLarge` 判定）；一个来源不可用不隐藏其他来源。快照校验要求：结果非空、不携带 `MatchEvidence`、来源 ID 与册数非负、十分制评分在 0–10 内（0 表示未提供）、可 JSON 编码（非有限数值拒绝）、单条编码不超过 32 KiB、标签、标签票数与作者各不超过 100 项、票数非负；任一不满足即整页 invalid_response，不截断字段。通过的结果经 JSON 深拷贝脱离来源对象，`Provider` 盖为来源名。结果预算、候选编号、分页与运行结局归调用方。
-- `MatchEvidence` 是由应用在显式确认后附加的短摘要和字段来源快照，便于提案持久化与后续审计取证；`SourceFacts` 不递归嵌入决策记录。外部来源不生成这个记录。确认响应的 accepted 是应用从持久提案事实投影的结果，不来自候选、确认摘要或 MatchEvidence 的身份确认布尔值；复用不修改原证据。来源 confidence 不是身份或版本匹配概率，搜索中的首项不是确认结果；源数据中的 URL 只是证据而非任意获取授权。
+- `SourceFanout.Only` 非空时只问其中列出的已启用来源，供增量预取只问重开系列的新来源。`SourcePacer` 让共用它的调用方共享每个来源的请求节拍：`Wait` 预约该来源的下一个时隙，与上一个时隙至少相隔给定间隔，非正间隔不限速；并发运行因此不会叠加出更快的速率。它补充上述并发闸门（只限并行数、不限速率），间隔取值由调用方给出。
+- `Snapshot` 对单个来源结果执行与扇出相同的快照校验并深拷贝，供所有者从手动搜索挑中的结果成为识别证据前使用。
+- `MatchEvidence` 是附在提案原始结果上的短摘要和字段来源快照，库里委托匹配产生的提案带着它；`SourceFacts` 不递归嵌入决策记录。外部来源不生成这个记录，快照校验拒绝携带它的来源结果。来源 confidence 不是身份或版本匹配概率，搜索中的首项不是识别结论；源数据中的 URL 只是证据而非任意获取授权。
 
 ## Boundary
 
@@ -28,7 +30,7 @@ parent: mm-architecture
 ## Evidence
 
 - `provider.go`、`locale.go`、`provider_budget.go`、`errors.go`：公开结果、状态出口、请求预算及错误处理。
-- `fanout.go`：多来源搜索扇出；经 MCP 来源搜索由 `TestMCPSourceSearchReportsEachCatalogueStatus`、`TestMCPMatchingConfirmedProposal` 守卫。
+- `fanout.go`、`pacing.go`：多来源搜索扇出与来源节拍；`fanout_test.go` 的 `TestEachCatalogueSourceKeepsItsOwnStatus`、`TestAnInvalidAnswerMakesOnlyItsSourceUnavailable` 守卫逐源状态与快照校验。
 - `bangumi.go`：Bangumi 搜索结果保留标签票数，由 `TestBangumiSearchKeepsTagVotes` 守卫。
 - `llm_status_test.go`、`prompts_locale_test.go`、`provider_routing_test.go`：状态缺省、语言与 LLM 路由。
 - `provider_budget_test.go`、`retry_loop_test.go`、`errors_test.go`：跨实例并发、重试取消、请求体重建与脱敏截断。

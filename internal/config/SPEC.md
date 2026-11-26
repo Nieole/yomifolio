@@ -34,3 +34,7 @@ parent: mm-architecture
 ## MCP 安全配置
 
 `MCPConfig.Origin` 统一验证可选 mcp.public_url：空值禁用 MCP 协议入口，非空值为无用户信息、查询或业务路径的 HTTPS origin；HTTP 必须显式 allow_lan_http 且主机为 localhost 或字面 private/loopback IP，不以 DNS 解析结果放宽明文范围。两个字段发布后对新请求立即生效；请求级 TLS、host、origin 与可信代理检查归 `mm-api`，显式允许局域网明文不等于允许公网明文。
+
+## 识别配置
+
+`identification` 段的来源间隔（`source_intervals_ms`）、来源优先级（`source_priority`）与标签策略（`tags`，`TagPolicy`）全部即时生效，由读取方在每次预取、重搜或识别补充时取当前快照。数值取 0 为默认值、负数关掉对应限制；`blocklist` 不写取 `DefaultTagPolicy` 的列表，写成 `[]` 表示不屏蔽。`ValidateConfigValues` 拒绝优先级里的未知来源键与编译不过的 `/…/` 正则条目。`config.example.yaml` 的默认值与代码默认值一致由本包测试守卫，`CloneConfig` 深拷贝优先级与屏蔽列表。策略的语义归 `mm-application`「按识别补充」与 `mm-identification`。

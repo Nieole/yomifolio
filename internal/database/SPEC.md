@@ -50,10 +50,14 @@ references: [mm-adr-0003]
 
 `MetadataJournal.TryChange` 用同一外层事务内的 savepoint 包住元数据写入；仅当失败写入已完整回滚且 savepoint 释放成功时报告 failed，供应用保存脱敏失败收据。事务/savepoint 错误要求外层中止，不把已 rollback 的数据记为 changed；不使用另一个事务补记撤销失败来假装原子性。
 
-`schema_model_budget.sql` 由统一 Migrate 安装，不进入 sqlc 输入。mcp_model_operations 与 mcp_model_calls 只保存独立命名空间的模型操作归属、冻结来源证据、不可变额度、准入消耗和白名单结果标签；唯一凭据/搜索及操作/item 约束防止重复额度/消费，used 受 allowance CHECK 约束。不与元数据变更审计共用表，不存模型内部推理；应用在实际事务内执行当前权限护栏。记录不随临时搜索缓存、运行历史裁剪或重启删除，用户/凭据失效仍由当前授权拒绝访问；不是通用审计或清理功能。
+`schema_model_budget.sql` 由统一 Migrate 安装，不进入 sqlc 输入。mcp_model_operations 与 mcp_model_calls 保存委托模型操作的归属、冻结来源证据、额度、准入消耗和白名单结果标签，唯一约束与 used 的 allowance CHECK 原样保留。这两张表只留存历史记录：当前没有任何读写入口，表与数据不随升级删除；不与元数据变更审计共用表，不存模型内部推理，不是通用审计或清理功能。
 
 
 `metadata_cover_materials` 是 handwritten DDL，由统一 Migrate 安装，保存 operation_id/path 多对多保留引用并索引 path；它不进入 sqlc 模型输入。收据和引用同事务插入，只有 changed 操作建立可公开保留引用；失败收据中出现的准备键不是公开授权。`CoverMaterialVisible` 同时检查当前书引用与保留引用，供原有文件名图片路由作提交可见性判定。`GetEnrichmentCoverBook` 的 sqlc 查询只取同库系列的首个封面书，按 sort_number/name/id 有界读取。清理不得按单条操作删除仍被别条记录/当前封面引用的文件；跨文件发布与清理竞争协议归 mm-application。
+
+## 系列识别持久化
+
+`schema_identification.sql` 是 handwritten DDL，由统一 Migrate 安装，不进入 sqlc 模型输入：识别结论、排除候选、上报、认可的系列名、查无此作、已审定、证据包、领取租约、裁决重放、增量预取请求、来源启用时间与存量推导完成标记，全部按 `series_id` 外键随系列级联删除（来源启用时间与完成标记不属于系列）。路径迁移不换系列 ID，结论随之保留。视图 `series_identification_status` 是识别状态的唯一定义，每次启动重建，规则改动对存量库立即生效；存量库缺的列经 `ensureColumn` 补上。时间存 Unix 毫秒，由应用以注入的时钟写入。推导、判定、租约与授权规则归 `mm-identification`，持久层不另造工作流。
 
 ## 共享作者身份
 
