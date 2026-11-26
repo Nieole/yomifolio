@@ -67,8 +67,8 @@ func TestCurrentAuthorityIntersectsEveryIndependentCapability(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// A retired flag a credential still stores, such as internal_llm, is no capability: it
-	// authorizes nothing, not even runs it once started.
+	// A stored flag outside the capabilities, such as internal_llm, authorizes nothing, and no
+	// credential can be issued with it.
 	if _, err = store.DB().Exec(`UPDATE mcp_credentials SET capabilities='["read","metadata_write","scan_control","internal_llm","cleanup"]' WHERE id=?`, credential.ID); err != nil {
 		t.Fatal(err)
 	}
