@@ -129,6 +129,10 @@ func run(ctx context.Context) error {
 				request.Header.Set("MCP-Protocol-Version", protocol.Load().(string))
 				response, err := client.Do(request)
 				if err != nil {
+					// A dropped upstream also strands the other pooled keep-alives, and a
+					// POST written on one is never retried. Discard them before reporting
+					// this failure so the client's next request dials afresh.
+					transport.CloseIdleConnections()
 					if len(envelope.ID) > 0 {
 						fail(envelope.ID, -32000, "MCP upstream unavailable")
 					}

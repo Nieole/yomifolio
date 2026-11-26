@@ -163,8 +163,11 @@ func TestAgentResearchesThroughTheSameUseCase(t *testing.T) {
 	series := library.series("Lima", "", "01.cbz")
 	reviewed := library.series("Mike", "", "01.cbz")
 	sources := &recordingSources{answer: func(source, query string) ([]*metadata.SeriesMetadata, error) {
-		if source == "bangumi" && query == "リマ" {
+		switch {
+		case source == "bangumi" && query == "リマ":
 			return []*metadata.SeriesMetadata{bangumiEntry(801, "Lima")}, nil
+		case source == "bangumi" && query == "マイク":
+			return []*metadata.SeriesMetadata{{Title: "Mike", Summary: "Source summary", Publisher: "Source press", Rating: 8, SourceID: 802, SourceURL: "https://bgm.tv/subject/802"}}, nil
 		}
 		return nil, nil
 	}}
@@ -194,11 +197,18 @@ func TestAgentResearchesThroughTheSameUseCase(t *testing.T) {
 	if packet := web.researchedEvidence(series); !slices.Contains(candidateIDs(packet), "bangumi:801") {
 		t.Fatalf("the owner does not see the agent's candidate: %q", candidateIDs(packet))
 	}
-	if _, refused := researchTool(t, writer, map[string]any{"series_id": reviewed, "query": "マイク"}); !strings.Contains(refused, "owner-reviewed") {
-		t.Fatalf("owner-reviewed series researched: %q", refused)
+	// Research only adds evidence, so an agent may research a series the owner keeps: the series
+	// stays owner-reviewed and its metadata stays as the owner left it.
+	metadataBefore := web.series(reviewed)
+	kept, refused := researchTool(t, writer, map[string]any{"series_id": reviewed, "query": "マイク"})
+	if refused != "" || kept.Status != "completed" || !slices.Equal(kept.Added, []string{"bangumi:802"}) || kept.Packet == nil {
+		t.Fatalf("research of an owner-reviewed series %+v %s", kept, refused)
 	}
-	if got := sources.queries("bangumi"); slices.Contains(got, "マイク") {
-		t.Fatalf("an owner-reviewed series reached the sources: %q", got)
+	if status := web.identification(reviewed).Status; status != "owner_reviewed" {
+		t.Fatalf("research changed the owner-reviewed status to %q", status)
+	}
+	if after := web.series(reviewed); !reflect.DeepEqual(after, metadataBefore) {
+		t.Fatalf("research changed the metadata of an owner-reviewed series:\n%+v\n%+v", metadataBefore, after)
 	}
 
 	reader := web.identificationAgent(cfg, 1, []int64{library.lib.ID}, []string{"read"})
