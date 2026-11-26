@@ -187,6 +187,7 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 				registerMCPEnrichment(server, enrichmentService, subject, r.Context())
 				registerMCPCleanup(server, enrichmentService, subject, r.Context())
 				registerMCPRelations(server, enrichmentService, subject)
+				registerMCPCorrections(server, enrichmentService, subject, r.Context())
 			}
 			registerMCPModelBudgets(server, service, subject)
 			if identificationService != nil {
