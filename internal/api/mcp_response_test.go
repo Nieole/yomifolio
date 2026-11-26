@@ -56,7 +56,7 @@ func TestGrantedToolsFollowsGrantedCapabilities(t *testing.T) {
 			t.Fatalf("granted tool %s hidden", name)
 		}
 	}
-	for _, name := range []string{"library_enrich_metadata", "library_start_scan", "library_assess_match"} {
+	for _, name := range []string{"library_improve_cover", "library_start_scan", "library_claim_series"} {
 		if tools.allows(name) {
 			t.Fatalf("ungranted tool %s offered", name)
 		}

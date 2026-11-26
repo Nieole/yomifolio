@@ -7,6 +7,7 @@ package bootstrap_test
 import (
 	"archive/zip"
 	"bytes"
+	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -343,4 +344,10 @@ func TestCoverImprovementCommitsWithItsReceiptOrNotAtAll(t *testing.T) {
 	if !w.blue() {
 		t.Fatal("cleanup changed the current cover")
 	}
+}
+
+// automaticCoverPath is the cover key the scanner derives from an archive's path, time and size.
+func automaticCoverPath(path string, modified time.Time, size int64) string {
+	h := fmt.Sprintf("%x", sha1.Sum([]byte(fmt.Sprintf("%s|%d|%d", path, modified.Unix(), size))))
+	return h[:2] + "/" + h + ".png"
 }

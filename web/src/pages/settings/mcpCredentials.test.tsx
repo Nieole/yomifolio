@@ -46,3 +46,10 @@ it('keeps existing restrictions on conflict', async () => {
  fireEvent.click(screen.getByLabelText('Cleanup')); fireEvent.click(screen.getByRole('button', { name: 'Save restrictions' }));
  await screen.findByRole('alert'); expect(screen.getByRole('button', { name: 'Save restrictions' })).toBeTruthy();
 });
+it('offers only the capabilities a credential can still carry', async () => {
+ setup(); await screen.findByText('Catalogue');
+ const offered = ['Read', 'Metadata write', 'Scan control', 'Cleanup'];
+ for (const label of offered) expect(screen.getByLabelText(label)).toBeTruthy();
+ expect(screen.queryByLabelText('Internal LLM')).toBeNull();
+ expect(screen.queryByText(/Internal LLM/)).toBeNull();
+});

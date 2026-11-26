@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"path/filepath"
+	"slices"
 )
 
 // SQLStore is constructed only by the composition root. All credential management
@@ -75,8 +76,17 @@ func scanCredential(row scanner) (Credential, error) {
 	if err = json.Unmarshal([]byte(libs), &c.LibraryIDs); err != nil {
 		return c, err
 	}
-	err = json.Unmarshal([]byte(caps), &c.Capabilities)
+	c.Capabilities, err = decodeCapabilities(caps)
 	return c, err
+}
+
+// decodeCapabilities reads the stored flags that are still capabilities.
+func decodeCapabilities(stored string) ([]string, error) {
+	var flags []string
+	if err := json.Unmarshal([]byte(stored), &flags); err != nil {
+		return nil, err
+	}
+	return slices.DeleteFunc(flags, func(flag string) bool { return !slices.Contains(capabilities, flag) }), nil
 }
 func (w sqlWrite) Get(ctx context.Context, id string) (Credential, error) {
 	return scanCredential(w.tx.QueryRowContext(ctx, `SELECT `+credentialColumns+` FROM mcp_credentials WHERE id=?`, id))
@@ -128,7 +138,7 @@ func loadAuthority(ctx context.Context, q authorityQuery, subject Subject) (Auth
 	if err = json.Unmarshal([]byte(libs), &out.Credential.LibraryIDs); err != nil {
 		return out, err
 	}
-	err = json.Unmarshal([]byte(caps), &out.Credential.Capabilities)
+	out.Credential.Capabilities, err = decodeCapabilities(caps)
 	return out, err
 }
 func (s *SQLStore) Series(ctx context.Context, id int64) (Series, error) {

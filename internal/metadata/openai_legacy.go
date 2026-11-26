@@ -96,7 +96,7 @@ func (o *OpenAILegacyProvider) sendRequest(ctx context.Context, prompt string, r
 		req.Header.Set("Authorization", "Bearer "+o.APIKey)
 	}
 
-	resp, err := modelRequest(o.client, req)
+	resp, err := o.client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("openai-legacy: request failed: %w", sanitizeTransportError(err))
 	}

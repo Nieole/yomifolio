@@ -42,7 +42,7 @@ func TestIdentifiedRatingIsRecomputedOnlyWhileItIsAnUntouchedFormulaResult(t *te
 	if err != nil {
 		t.Fatal(err)
 	}
-	svc := enrichment.New(store.DB(), nil, nil)
+	svc := enrichment.New(store.DB(), nil)
 	enrich := func(key string, sources ...enrichment.IdentifiedSource) enrichment.Operation {
 		t.Helper()
 		tx, err := store.DB().BeginTx(ctx, nil)

@@ -74,7 +74,7 @@ func testMCPDelegatedSeriesLifecycle(t *testing.T, tls bool) {
 		t.Fatal(err)
 	}
 	// Issuance is a separate administration action, not a browser session.
-	issued := request("POST", "/api/mcp/credentials", fmt.Sprintf(`{"user_id":1,"name":"catalogue","library_ids":[%d],"capabilities":["read","metadata_write","scan_control","internal_llm","cleanup"]}`, lib.ID))
+	issued := request("POST", "/api/mcp/credentials", fmt.Sprintf(`{"user_id":1,"name":"catalogue","library_ids":[%d],"capabilities":["read","metadata_write","scan_control","cleanup"]}`, lib.ID))
 	if issued.Code != 200 {
 		t.Fatalf("issue %d %s", issued.Code, issued.Body)
 	}
@@ -266,10 +266,6 @@ func assertMCPToolDiscovery(t *testing.T, result *mcp.ListToolsResult, err error
 		"library_get_series_cover": true, "library_get_page_thumbnails": true, "library_get_identification_images": true,
 		"library_get_series": true, "library_find_series": true,
 		"library_list_books": true, "library_get_book_clues": true,
-		"library_search_sources": false, "library_get_source_search": true,
-		"library_propose_match": false, "library_get_match_proposal": true,
-		"library_get_enrichment_state": true,
-		"library_enrich_metadata":      false, "library_enrich_metadata_batch": false,
 		"library_get_metadata_operation": true, "library_list_metadata_operations": true,
 		"library_undo_metadata_operation":    false,
 		"library_add_series_relation":        false,
@@ -277,7 +273,6 @@ func assertMCPToolDiscovery(t *testing.T, result *mcp.ListToolsResult, err error
 		"library_start_metadata_cleanup":     false,
 		"library_get_metadata_cleanup":       true,
 		"library_start_scan":                 false, "library_get_run": true,
-		"library_assess_match": false, "library_get_model_operation": true,
 		"library_list_runs": true, "library_wait_run": true, "library_cancel_run": false,
 		"library_identification_progress": true,
 		"library_find_duplicate_series":   true,

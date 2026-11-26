@@ -22,9 +22,12 @@ const (
 	Read          = "read"
 	MetadataWrite = "metadata_write"
 	ScanControl   = "scan_control"
-	InternalLLM   = "internal_llm"
 	Cleanup       = "cleanup"
 )
+
+// capabilities are the grants a credential can carry. A stored flag outside them, such as
+// internal_llm, is read as absent: it grants nothing and no listing or projection shows it.
+var capabilities = []string{Read, MetadataWrite, ScanControl, Cleanup}
 
 // Subject is durable attribution, not a cached authorization decision.
 // Every operation/checkpoint must call Authorize again with its actual library and capability.
@@ -78,12 +81,10 @@ type Store interface {
 	Series(context.Context, int64) (Series, error)
 }
 type Service struct {
-	store    Store
-	content  *bookcontent.Service
-	access   bookcontent.LibraryAccess
-	runs     *RunAccess
-	matching *MatchingAccess
-	models   *ModelBudgetAccess
+	store   Store
+	content *bookcontent.Service
+	access  bookcontent.LibraryAccess
+	runs    *RunAccess
 }
 
 func New(store Store) *Service { return &Service{store: store} }
@@ -97,7 +98,7 @@ func randomToken() (string, error) {
 	return hex.EncodeToString(b), err
 }
 func validate(in Restrictions) error {
-	if in.UserID <= 0 || strings.TrimSpace(in.Name) == "" || len(in.Name) > 100 || len(in.LibraryIDs) > 256 || len(in.Capabilities) > 5 {
+	if in.UserID <= 0 || strings.TrimSpace(in.Name) == "" || len(in.Name) > 100 || len(in.LibraryIDs) > 256 || len(in.Capabilities) > len(capabilities) {
 		return ErrInvalid
 	}
 	for _, id := range in.LibraryIDs {
@@ -106,7 +107,7 @@ func validate(in Restrictions) error {
 		}
 	}
 	for _, capability := range in.Capabilities {
-		if !slices.Contains([]string{Read, MetadataWrite, ScanControl, InternalLLM, Cleanup}, capability) {
+		if !slices.Contains(capabilities, capability) {
 			return ErrInvalid
 		}
 	}
@@ -250,7 +251,7 @@ func authorizeAuthority(authority Authority, library int64, capability string) e
 	if !slices.Contains(authority.Credential.LibraryIDs, library) || !slices.Contains(authority.Credential.Capabilities, capability) {
 		return ErrDenied
 	}
-	// Regular accounts have no delegated management or paid-model permission.
+	// Regular accounts have no delegated management permission.
 	if capability != Read && !authority.Admin {
 		return ErrDenied
 	}

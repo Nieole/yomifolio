@@ -84,7 +84,6 @@ export const messages: MessageCatalog = {
     "mcp.read": "查询",
     "mcp.metadata_write": "元数据写入",
     "mcp.scan_control": "扫描控制",
-    "mcp.internal_llm": "内部 LLM",
     "mcp.cleanup": "清理",
     "mcp.bounds": "未选择资料库即无访问权。普通用户仍只读，不能获得付费模型权限。目前仅实现系列读取，勾选其他能力不会启用尚未实现的工具。已签发限制只能收紧。",
     "mcp.secretHint": "请立即安全保存此密钥。仅显示一次，不保存到浏览器。",

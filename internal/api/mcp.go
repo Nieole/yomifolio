@@ -167,8 +167,9 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 		// The strict canonical authority check above replaces SDK localhost-only Host
 		// protection, permitting explicitly configured HTTPS reverse proxies.
 		handler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
-			server := mcp.NewServer(&mcp.Implementation{Name: "yomifolio-library", Version: "1"}, nil)
-			listOnlyGranted(server, newGrantedTools(capabilities))
+			granted := newGrantedTools(capabilities)
+			server := mcp.NewServer(&mcp.Implementation{Name: "yomifolio-library", Version: "1"}, &mcp.ServerOptions{Instructions: mcpInstructions(granted)})
+			listOnlyGranted(server, granted)
 			type input struct {
 				SeriesID int64 `json:"series_id" jsonschema:"positive series identifier"`
 			}
@@ -182,14 +183,12 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 			registerDiscoveryTools(server, service, subject, r.Context())
 			registerMCPImages(server, service, subject, r.Context())
 			registerMCPRuns(server, service, subject)
-			registerMCPMatching(server, service, subject)
 			if enrichmentService != nil {
-				registerMCPEnrichment(server, enrichmentService, subject, r.Context())
+				registerMCPEnrichment(server, enrichmentService, subject)
 				registerMCPCleanup(server, enrichmentService, subject, r.Context())
 				registerMCPRelations(server, enrichmentService, subject)
 				registerMCPCorrections(server, enrichmentService, subject, r.Context())
 			}
-			registerMCPModelBudgets(server, service, subject)
 			if identificationService != nil {
 				registerMCPIdentification(server, identificationService, subject)
 				registerMCPResearch(server, identificationService, subject)

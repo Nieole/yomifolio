@@ -75,7 +75,7 @@ func TestMCPAccountPasswordAndManagementIsolation(t *testing.T) {
 	reader = session(request("POST", "/api/auth/change-password", `{"current_password":"initialpass","new_password":"readerpass"}`, reader))
 	issue := func() struct{ ID, Token string } {
 		t.Helper()
-		w := request("POST", "/api/mcp/credentials", fmt.Sprintf(`{"user_id":%d,"name":"Reader agent","library_ids":[%d],"capabilities":["read","metadata_write","scan_control","internal_llm","cleanup"]}`, user.ID, lib.ID), admin)
+		w := request("POST", "/api/mcp/credentials", fmt.Sprintf(`{"user_id":%d,"name":"Reader agent","library_ids":[%d],"capabilities":["read","metadata_write","scan_control","cleanup"]}`, user.ID, lib.ID), admin)
 		if w.Code != 200 {
 			t.Fatalf("issue %d %s", w.Code, w.Body)
 		}
