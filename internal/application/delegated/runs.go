@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"slices"
 	"strconv"
 	"time"
 
@@ -89,15 +90,15 @@ func (s *Service) GetRun(ctx context.Context, subject Subject, id int64) (Run, e
 }
 
 // ListRuns paginates a library's run history by descending run ID, filtering before
-// pagination. Even runs in the same library are private to the issuing credential.
+// pagination. Even runs in the same library are private to the issuing credential. Any one
+// capability of the library admits the listing; each run then shows only while its own
+// capability is still authorized.
 func (s *Service) ListRuns(ctx context.Context, subject Subject, library, before int64, limit int) ([]Run, error) {
 	if s.runs == nil || limit < 1 || limit > 100 || before < 0 {
 		return nil, ErrInvalid
 	}
-	if err := s.Authorize(ctx, subject, library, ScanControl); err != nil {
-		if readErr := s.Authorize(ctx, subject, library, Read); readErr != nil && s.Authorize(ctx, subject, library, Cleanup) != nil {
-			return nil, readErr
-		}
+	if !slices.ContainsFunc(capabilities, func(capability string) bool { return s.Authorize(ctx, subject, library, capability) == nil }) {
+		return nil, ErrDenied
 	}
 	variant := task.Variant("delegated:" + subject.CredentialID + ":")
 	out := []Run{}

@@ -38,7 +38,7 @@ mcp:
 - **资料库不选不等于全部**：空选择没有访问权。
 - 四项能力互不蕴含：`查询`(read)、`元数据写入`(metadata_write)、`扫描控制`(scan_control)、`清理`(cleanup)。旧凭据上残留的 `internal_llm` 不授权任何东西、界面上也不显示，其余能力照常；下次收紧这张凭据时它会被一并去掉。
 - 密钥**只在签发时显示一次**，请立即保存；之后只能重新签发。
-- 签发时可选任意用户；凭据照该用户当前权限与限制工作。查询以外的能力都要求该用户是管理员，所以普通用户的凭据只能查询与上报。
+- 签发时可选任意用户；凭据照该用户当前权限与限制工作。查询以外的能力都要求该用户是管理员，所以普通用户的凭据只能查询与挂备注，它的工具清单和初始化说明也只列这些工具。
 - 修改或重置该用户密码会撤销其全部 MCP 凭据。撤销后队列中的工作不再派发，运行中的工作在安全点停止，**已提交的修改不回滚**。
 - 收紧能力或资料库同样即时生效：客户端下一次列工具时就看不到被收回的工具。清单只公开凭据当前可用的工具；调用清单里没有的工具仍会被同一句统一拒绝挡住——每个工具都自己鉴权，清单不是访问边界。
 
@@ -89,7 +89,7 @@ go build -o mcp-proxy ./cmd/mcp-proxy
 
 ## 4. 工具与能力对照
 
-客户端只会看到凭据当前允许的工具，初始化说明也只介绍这些工具。
+客户端只会看到凭据当前能用的工具，初始化说明也只介绍这些工具。普通用户的凭据不论还带了什么能力，都只有 `read` 这一行。
 
 | 能力 | 工具 |
 | --- | --- |
@@ -103,7 +103,7 @@ go build -o mcp-proxy ./cmd/mcp-proxy
 
 每个成功结果都带两份同样的 JSON：`structuredContent` 和一个文本块，只读文本的客户端也能拿到完整结果。图片工具把这段 JSON 文本放在最前，其后的图片顺序与其中 `images` 一致。每个工具的描述不超过 400 字符，末尾附一个可以照抄的 `Example:` 调用。
 
-运行类工具只作用于本凭据自己的运行，并按该运行所属能力重新鉴权。任何一项能力都会产生运行，因此四个运行类工具随任一能力列出；但调用 `library_list_runs` 仍要有 `scan_control`、`read`、`cleanup` 之一，只有 `metadata_write` 的凭据按 `run_id` 跟进自己的重搜运行。
+运行类工具只作用于本凭据自己的运行，并按该运行所属能力重新鉴权。任何一项能力都会产生运行，因此四个运行类工具有任一能力即可使用：只有 `metadata_write` 的凭据也能列出并跟进自己的重搜运行，已收回能力的运行则看不到。
 
 已下线的工具既不列出也不应答：`library_search_sources`、`library_get_source_search`、`library_propose_match`、`library_get_match_proposal`、`library_get_enrichment_state`、`library_enrich_metadata`、`library_enrich_metadata_batch`、`library_assess_match`、`library_get_model_operation` 调用时得到协议的未知工具错误。作者校正与封面改善成了上表里独立的工具。
 
@@ -126,8 +126,9 @@ agent 的任务是回答每个系列对应哪个来源的哪个条目。服务�
 主循环之外：
 
 - **纠正**（`metadata_write`）：`library_replace_identification` 撤换 agent 自己做错的识别，并撤回它带来、之后没被改过的字段；`library_correct_series_field` 改正来源给错、之后没人改过的标题、简介、出版社、状态或评分；`library_correct_authors`（先用 `library_get_series_authors` 读证据）和 `library_improve_cover` 校正作者和自动封面。每次纠正都留可撤销的收据。
-- **受保护的值**：人工编辑过的值、ComicInfo 导入的值、锁定字段、人工封面和人确认的识别，agent 永远改不了，只能上报：`protected_value_doubt` 挂备注；经 `library_report_series` 报 `disputed_owner_identification` 会让系列进入待复核。
-- **巡检**（`read`）：`library_find_duplicate_series`、`library_count_tags`、`library_report_series` 让只读凭据也能巡检资料库、留下备注，但改不了任何内容。
+- **受保护的值**：人工编辑过的值、ComicInfo 导入的值、锁定字段、人工封面和人确认的识别，agent 永远改不了，`library_undo_metadata_operation` 也拒绝撤销所有者自己操作留下的收据。只能上报：`protected_value_doubt` 挂备注。
+- **质疑**（`metadata_write`）：觉得某个识别有误时，不论是人确认的还是 agent 自己做的，经 `library_report_series` 报 `disputed_identification`，系列进入待复核，识别和字段都不动。所有者随后在系列详情页撤回该识别（旧条目记为排除候选），或在「待人工」确认识别无误。agent 自己不能撤回识别。
+- **巡检**（`read`）：`library_find_duplicate_series`、`library_count_tags`、`library_report_series` 让只读凭据也能巡检资料库、留下备注，但改不了任何内容；只读凭据看不到质疑这个分类。
 - **关系**：`library_add_series_relation` 在两个系列之间添加续作等作品群关系，留可撤销的收据；已有关系不会被改动。
 
 所有者在**审核中心 → 待人工**处理上报和待复核的系列，在系列详情页查看每个系列的识别结论。

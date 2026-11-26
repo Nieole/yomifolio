@@ -194,7 +194,7 @@ func newMCPHandler(service *delegated.Service, enrichmentService *enrichment.Ser
 				registerMCPResearch(server, identificationService, subject)
 				registerMCPIdentificationCorrections(server, identificationService, subject)
 				registerMCPIdentificationImages(server, identificationService, subject, r.Context())
-				registerMCPInspection(server, identificationService, subject)
+				registerMCPInspection(server, identificationService, subject, granted[delegated.MetadataWrite])
 			}
 			return server
 		}, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true, DisableLocalhostProtection: true})

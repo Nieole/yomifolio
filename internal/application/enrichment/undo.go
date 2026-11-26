@@ -2,6 +2,8 @@ package enrichment
 
 import (
 	"context"
+	"errors"
+
 	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/config"
 	"yomifolio/internal/covermaterial"
@@ -100,6 +102,20 @@ func (s *Service) List(ctx context.Context, actor delegated.Subject, series, bef
 	return out, nil
 }
 
+// ErrOwnerOperation means an agent asked to undo a receipt of the owner's own change. An agent never
+// undoes what a person decided; it reports the doubt to the owner instead.
+var ErrOwnerOperation = errors.New("an agent may not undo the owner's operation")
+
+// undoableBy refuses an agent the undo of a receipt the owner's web session made. It runs after the
+// target's authorization, so it never tells a missing receipt from one outside the credential.
+// Receipts of agents stay undoable by any credential the target library authorizes.
+func undoableBy(actor delegated.Subject, original Operation) error {
+	if actor.CredentialID != "" && original.Actor.CredentialID == "" {
+		return ErrOwnerOperation
+	}
+	return nil
+}
+
 // Undo restores only fields actually changed by the original operation. Current locks,
 // authorization and exact after-values (whole tag/link sets) are checked in this same
 // transaction; unrelated changes survive. The reversal is itself an immutable receipt.
@@ -130,6 +146,9 @@ func (s *Service) Undo(ctx context.Context, actor delegated.Subject, in UndoInpu
 		return Operation{}, delegated.ErrDenied
 	}
 	if err = authorize(ctx, tx, actor, current.LibraryID, true); err != nil {
+		return Operation{}, err
+	}
+	if err = undoableBy(actor, original); err != nil {
 		return Operation{}, err
 	}
 	digest := undoDigest(in)

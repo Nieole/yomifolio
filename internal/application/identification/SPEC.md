@@ -11,7 +11,7 @@ references: [mm-domain-language, mm-adr-0009, mm-adr-0011, mm-adr-0017, mm-metad
 
 `identification.Service` 拥有**系列识别**：按「系列 × 来源」保存的识别结论、排除候选、上报、查无此作结论与已审定决定，以及由它们推导的**识别状态**。它还拥有**证据包**及准备它的预取与重搜运行、agent 的主循环（领取租约、提交裁决）、agent 的纠正与巡检上报，以及所有者在网页上的识别决定。词汇归 `mm-domain-language`，取舍理由归 ADR 0017（draft）。
 
-它不直接写系列元数据。识别确认后的补充、撤换时的撤回与 agent 的字段改正，都在识别的同一写事务内交给 `enrichment.Service`（策略见 `mm-application`「按识别补充」）；来源范围、扇出、快照校验与限速节拍归 `mm-metadata`；占位标题与来源记录的判定归 `mm-seriesmeta`；提案结案归 `mm-proposal`。agent 用例每次调用经 `delegated.Service` 重查当前授权，写入在实际事务内 `AuthorizeTx`：领取、提交、重搜、撤换与改正要 `metadata_write`，进度、识别图片、巡检与上报只要 `read`，所以普通用户的凭据只能读和上报。所有者用例接收操作账户，在写事务内重查它是当前管理员。
+它不直接写系列元数据。识别确认后的补充、撤换时的撤回与 agent 的字段改正，都在识别的同一写事务内交给 `enrichment.Service`（策略见 `mm-application`「按识别补充」）；来源范围、扇出、快照校验与限速节拍归 `mm-metadata`；占位标题与来源记录的判定归 `mm-seriesmeta`；提案结案归 `mm-proposal`。agent 用例每次调用经 `delegated.Service` 重查当前授权，写入在实际事务内 `AuthorizeTx`：领取、提交、重搜、撤换与改正要 `metadata_write`，进度、识别图片、巡检与挂备注只要 `read`，质疑识别会改识别状态，另要 `metadata_write`（用户决定）。所以普通用户的凭据只能读和挂备注。重搜是运行，只有 `metadata_write` 的凭据也能用运行类工具列出并跟进它（用户决定，规则归 `mm-application`）。所有者用例接收操作账户，在写事务内重查它是当前管理员。
 
 属于系列的持久记录都随系列级联删除（存储布局归 `mm-database`）；路径迁移不换系列 ID（ADR 0009），结论原样保留。时间以 Unix 毫秒保存，取自装配注入的时钟（`mm-bootstrap`「识别时钟接缝」）。
 
@@ -58,7 +58,8 @@ references: [mm-domain-language, mm-adr-0009, mm-adr-0011, mm-adr-0017, mm-metad
 
 ## 上报
 
-- **识别类**（`ambiguous_candidates`、`uncertain_edition`、`missing_from_sources`）使系列进入待人工，只能经提交裁决给出（要 `metadata_write`）。**复核类**使系列进入待复核：系统的 `new_book_contradiction`，以及 agent 经 `library_report_series` 给出的 `disputed_owner_identification`；后者只接受至少有一条人工确认结论的系列，结论与字段都不动，agent 自己的错误识别要用撤换改。**备注类**（`directory_grouping`、`suspected_duplicate`、`tag_problem`、`protected_value_doubt`）只挂备注：不改识别状态，不结束租约，任何状态的系列（包括已审定）都可以挂。
+- **识别类**（`ambiguous_candidates`、`uncertain_edition`、`missing_from_sources`）使系列进入待人工，只能经提交裁决给出（要 `metadata_write`）。**复核类**使系列进入待复核：系统的 `new_book_contradiction`，以及 agent 经 `library_report_series` 给出的 `disputed_identification`。**备注类**（`directory_grouping`、`suspected_duplicate`、`tag_problem`、`protected_value_doubt`）只挂备注：不改识别状态，不结束租约，任何状态的系列（包括已审定）都可以挂。
+- **质疑识别**（`disputed_identification`）接受至少有一条识别结论的系列，人确认的与 agent 确认的都可以（用户决定）：agent 认错了自己的识别、又不能撤换时（系列已不在已识别，或它拿不准该换成哪条）用它交给所有者。结论与字段都不动，系列进入待复核；所有者在详情页撤回该识别（旧条目记为排除候选）或在待人工页点「识别无误」。agent 不获得撤回原语。质疑会改识别状态，所以要 `metadata_write`（用户决定）：只读凭据与普通用户的凭据只能挂备注，工具的分类 enum 与描述也只给它们备注类。没有任何结论的系列以 `ErrNothingToDispute` 拒绝，提示走领取与提交。
 - `protected_value_doubt`（用户决定）用于 agent 认为有误但不得改动的值：人工编辑过的值、ComicInfo 导入的值、锁定字段、人工或锁定的封面。改正被拒为 `locked`、`not_from_source`，以及封面改善得到冲突收据时，提示都指向它。
 - 去重由 `raiseOnce` 执行。同一系列已有同分类的备注就不再记，不论它还开着还是已被所有者关闭（用户决定）：经 `library_report_series` 再报返回 `recorded:false`、原理由不变；经提交裁决再报，裁决照常接受但不新记。识别类与复核类只在同分类仍未关闭时不重复记。所以上报是幂等的，不需要请求键。
 - 上报的授权在记录事务内用 `read` 重查，系列不存在与无权读来相同；结果带系列当前的识别状态，表明备注没有改变它。
@@ -82,8 +83,9 @@ references: [mm-domain-language, mm-adr-0009, mm-adr-0011, mm-adr-0017, mm-metad
 
 ## agent 的纠正
 
-- **撤换** `Replace`：`candidate_ids` 取自该系列证据包（1–5 个，每个来源至多一个），每个候选替换该系列在它那个来源上由 agent 做的识别。该来源没有识别（`not_concluded`）、已经是这个条目（`already_identified`）、是人确认的（`owner_confirmed`，提示改报 `disputed_owner_identification`）都拒绝。判定通过后走与所有者撤换相同的 `replace`：删掉旧结论，`enrichment.Service.RetractIdentified` 撤回旧条目带来、之后没被改动的字段（单独一张可撤销的收据），再按系列现有的全部识别重新补充。被替换的条目不记排除候选，因为排除只由人的否决产生。
+- **撤换** `Replace`：`candidate_ids` 取自该系列证据包（1–5 个，每个来源至多一个），每个候选替换该系列在它那个来源上由 agent 做的识别。该来源没有识别（`not_concluded`）、已经是这个条目（`already_identified`）、是人确认的（`owner_confirmed`，提示改报 `disputed_identification`）都拒绝。判定通过后走与所有者撤换相同的 `replace`：删掉旧结论，`enrichment.Service.RetractIdentified` 撤回旧条目带来、之后没被改动的字段（单独一张可撤销的收据），再按系列现有的全部识别重新补充。被替换的条目不记排除候选，因为排除只由人的否决产生。
 - **改正字段** `CorrectField`：只改 `title`、`summary`、`publisher`、`status`、`rating`，只限未锁、且 `seriesmeta.SourceBacked` 认定当前值仍等于来源记录值的字段（升级回填的 `manual` 记录不算）。不区分来源记录出自 agent 的识别、人工确认的识别还是历史提案应用；人工编辑与 ComicInfo 值没有来源记录，因此碰不到。拒绝为 `locked`、`not_from_source` 或 `unchanged`。改正写一条新的来源记录（source 为 `agent`），扫描照样保留它、agent 也能再改正；收据保存被替换值原来的来源记录，撤销时原样放回。改正后的评分不是公式结果，之后不会被重算。
+- agent 不能撤销所有者网页操作留下的收据（挑候选、手动识别、撤换与撤回的补充和撤回收据），拒绝时提示改为上报（规则归 `mm-application`「安全补充与持久撤销」）。
 - 撤换与改正都拒绝待人工、待复核、已审定的系列（`owner_holds`，带出当前状态）：这三种都在等所有者，复核之前内容不该被动。标题占位例外只由服务端在识别补充中执行，不对 agent 开放。作者校正与封面改善是 `enrichment.Service` 的独立原语（`mm-application`），作者证据经 `SourceEvidence` 依次读证据包、历史提案与结论里的快照，所有者在手动搜索里挑中、不在证据包里的条目也能作证据。
 
 ## 识别图片

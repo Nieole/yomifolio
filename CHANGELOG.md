@@ -22,7 +22,7 @@
 
 - 系列详情页新增「识别」页签（仅管理员）：各来源的识别结论、确认者、确认时间与条目链接，可撤换或撤回识别（旧条目记为排除候选，并撤回它带来、之后没被改动的字段），可设为或撤回已审定。单系列手动搜索挑中目录来源的条目即记为人工确认的识别，并按上述策略补充，不再生成提案（LLM 结果仍走提案）；挑中之前排除过的条目会先确认，再解除排除。资料库筛选新增识别状态。
 
-- 新增 MCP 识别原语：`library_replace_identification` 撤换 agent 自己的识别，`library_correct_series_field` 改正来源写入、之后没人改过的字段，两者都留可撤销的收据；人工编辑过的值、ComicInfo 值、锁定字段与人确认的识别一律拒绝，并提示改为上报。作者校正与封面改善拆为独立的 `library_correct_authors`、`library_improve_cover`，另有只读的 `library_get_series_authors`。`library_get_identification_images` 一次取本地封面、指定页缩略图与证据包候选的封面，候选封面只从各来源自己的图片域名拉取并缩小。只读凭据可以用 `library_find_duplicate_series`、`library_count_tags` 巡检，用 `library_report_series` 上报：目录分组、疑似重复、标签问题与受保护值疑点只挂备注，质疑人确认的识别使系列进入待复核。`library_add_series_relation` 添加可撤销的作品群关系，网页操作记录显示这类收据。
+- 新增 MCP 识别原语：`library_replace_identification` 撤换 agent 自己的识别，`library_correct_series_field` 改正来源写入、之后没人改过的字段，两者都留可撤销的收据；人工编辑过的值、ComicInfo 值、锁定字段与人确认的识别一律拒绝，并提示改为上报。作者校正与封面改善拆为独立的 `library_correct_authors`、`library_improve_cover`，另有只读的 `library_get_series_authors`。`library_get_identification_images` 一次取本地封面、指定页缩略图与证据包候选的封面，候选封面只从各来源自己的图片域名拉取并缩小。只读凭据可以用 `library_find_duplicate_series`、`library_count_tags` 巡检，用 `library_report_series` 挂备注：目录分组、疑似重复、标签问题与受保护值疑点。有元数据写入能力的 agent 还可以用它质疑一个识别（人确认的或它自己做的），系列进入待复核、字段不动，由所有者在详情页撤回或在待人工页确认识别无误。agent 不能撤销所有者自己操作留下的收据，会被提示改为上报。`library_add_series_relation` 添加可撤销的作品群关系，网页操作记录显示这类收据。
 
 - **不兼容**：MCP 下线细粒度识别链 `library_search_sources`、`library_get_source_search`、`library_propose_match`、`library_get_match_proposal`、`library_get_enrichment_state`、`library_enrich_metadata`、`library_enrich_metadata_batch`，以及内部模型工具 `library_assess_match`、`library_get_model_operation` 和 `internal_llm` 能力。它们不出现在工具清单中，调用时得到未知工具错误；签发与收窄凭据不再接受 `internal_llm`，已有凭据上的这项能力不授权任何东西，网页签发界面去掉了该选项。已有的模型额度记录保留在数据库中，不提供查询入口。
 
@@ -32,7 +32,7 @@
 
 - 修复 AI 分组审核「全部应用」与单条应用同时发生时整批失败：单条应用抢先提交的那条候选不再让整批报「不再待处理」并整体回滚，其余仍待裁决的候选照常应用。
 
-- 修复 MCP 工具清单不随凭据能力变化：`tools/list` 只列出当前凭据已授予能力覆盖的工具，收紧能力后下一次清单立即不再出现被收回的工具（此前始终列出全部 26 个）。运行读取与运行清单（`library_get_run`、`library_wait_run`、`library_cancel_run`、`library_list_runs`）随任一能力可见，其余工具各归一项能力。清单只是披露当前授权：工具仍全部注册，调用清单之外的工具照旧进入处理器并被同一句拒绝挡住，因此不会因清单过滤而改变鉴权行为。
+- 修复 MCP 工具清单不随凭据能力变化：`tools/list` 只列出当前凭据已授予能力覆盖的工具，收紧能力后下一次清单立即不再出现被收回的工具（此前始终列出全部 26 个）。运行读取与运行清单（`library_get_run`、`library_wait_run`、`library_cancel_run`、`library_list_runs`）随任一能力可见、可用，只有元数据写入能力的凭据也能列出自己的重搜运行；其余工具各归一项能力。普通用户的凭据只按查询能力列工具，初始化说明也不再介绍它用不了的写入工具。清单只是披露当前授权：工具仍全部注册，调用清单之外的工具照旧进入处理器并被同一句拒绝挡住，因此不会因清单过滤而改变鉴权行为。
 
 - 修复 MCP 工具结果只把载荷放进 `structuredContent`、文本块仅有“见 structuredContent”提示：发现、匹配、元数据与清理类工具现在同时返回载荷 JSON 文本，仅供文本读取的客户端也能拿到结果；相应把传输层信封放宽到覆盖两份序列化结果与 64 KiB 请求体上限。
 

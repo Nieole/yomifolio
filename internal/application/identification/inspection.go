@@ -328,21 +328,30 @@ func tagSampleSeries(ctx context.Context, q queryer, tag int64, scope string) ([
 	return out, rows.Err()
 }
 
-// CategoryDisputedOwnerIdentification is the category of the recheck escalation an agent raises
-// when it believes a person's identification of the series is wrong. An agent may not replace a
-// person's identification, so this hands the question to the owner.
-const CategoryDisputedOwnerIdentification = "disputed_owner_identification"
+// CategoryDisputedIdentification is the category of the recheck escalation an agent raises when it
+// believes an identification of the series is wrong, a person's or an agent's. An agent may not
+// replace a person's identification nor withdraw any, so this hands the question to the owner.
+const CategoryDisputedIdentification = "disputed_identification"
 
-// ErrNoOwnerIdentification means a dispute names a series no person identified.
-var ErrNoOwnerIdentification = errors.New("series has no identification a person confirmed")
+var (
+	// ErrNothingToDispute means a dispute names a series no source identifies.
+	ErrNothingToDispute = errors.New("series has no identification to dispute")
+	// ErrDisputeNeedsWrite means a credential that may only read the series disputed its
+	// identification: a dispute changes the series' status, so it needs metadata_write.
+	ErrDisputeNeedsWrite = errors.New("disputing an identification needs metadata_write")
+)
 
 // ReportCategories are the categories Report takes, in the order agents are offered them.
-var ReportCategories = []string{CategoryDirectoryGrouping, CategorySuspectedDuplicate, CategoryTagProblem, CategoryProtectedValueDoubt, CategoryDisputedOwnerIdentification}
+var ReportCategories = []string{CategoryDirectoryGrouping, CategorySuspectedDuplicate, CategoryTagProblem, CategoryProtectedValueDoubt, CategoryDisputedIdentification}
+
+// NoteCategories are the report categories that leave a note, the ones a credential that may only
+// read can report.
+var NoteCategories = ReportCategories[:len(ReportCategories)-1]
 
 // ReportInput is one report an agent leaves the owner on a series.
 type ReportInput struct {
 	SeriesID int64  `json:"series_id"`
-	Category string `json:"category" jsonschema:"directory_grouping, suspected_duplicate, tag_problem or protected_value_doubt leave a note; disputed_owner_identification sends a series a person identified to the owner's recheck"`
+	Category string `json:"category" jsonschema:"directory_grouping, suspected_duplicate, tag_problem or protected_value_doubt leave a note; disputed_identification sends an identified series to the owner's recheck and needs metadata_write"`
 	Reason   string `json:"reason" jsonschema:"one checkable sentence, at most 1000 bytes"`
 }
 
@@ -357,21 +366,22 @@ type Report struct {
 	Status   string `json:"status"`
 }
 
-// Report leaves the owner a report on a series, under current read authority re-checked in the
-// recording transaction; a series that does not exist reads as one outside it. A note of one of the
-// note categories changes neither the series' identification status nor its metadata. A dispute
-// questions an identification a person confirmed, which no agent may replace: it raises a recheck
-// escalation, so the series waits for the owner's recheck with its identification and metadata as
-// they are; a series no person identified is refused with ErrNoOwnerIdentification. A report needs
-// no claim and stays open until the owner closes it. Like a note given to Submit, it is not repeated
-// while one of the same category is open, nor, for a note, after the owner closed one.
+// Report leaves the owner a report on a series, under current authority re-checked in the recording
+// transaction; a series that does not exist reads as one outside it. A note of one of the note
+// categories needs read and changes neither the series' identification status nor its metadata. A
+// dispute questions an identification of the series, a person's or an agent's: it raises a recheck
+// escalation, so the series waits for the owner's recheck with its identifications and metadata as
+// they are. A dispute changes the status, so it needs metadata_write beyond read
+// (ErrDisputeNeedsWrite), and a series no source identifies is refused with ErrNothingToDispute. A
+// report needs no claim and stays open until the owner closes it. Like a note given to Submit, it is
+// not repeated while one of the same category is open, nor, for a note, after the owner closed one.
 func (s *Service) Report(ctx context.Context, subject delegated.Subject, in ReportInput) (Report, error) {
 	in.Reason = strings.TrimSpace(in.Reason)
 	if !slices.Contains(ReportCategories, in.Category) || in.SeriesID <= 0 || in.Reason == "" || len(in.Reason) > maxReasonBytes {
 		return Report{}, delegated.ErrInvalid
 	}
 	class := EscalationNote
-	if in.Category == CategoryDisputedOwnerIdentification {
+	if in.Category == CategoryDisputedIdentification {
 		class = EscalationRecheck
 	}
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -391,12 +401,16 @@ func (s *Service) Report(ctx context.Context, subject delegated.Subject, in Repo
 		return Report{}, delegated.ErrDenied
 	}
 	if class == EscalationRecheck {
+		// Read already admits the series, so this refusal discloses nothing about it.
+		if err := delegated.AuthorizeTx(ctx, tx, subject, library, delegated.MetadataWrite); err != nil {
+			return Report{}, ErrDisputeNeedsWrite
+		}
 		var disputable bool
-		if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM identification_conclusions WHERE series_id = ? AND confirmer = ?)`, in.SeriesID, ConfirmedByOwner).Scan(&disputable); err != nil {
+		if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM identification_conclusions WHERE series_id = ?)`, in.SeriesID).Scan(&disputable); err != nil {
 			return Report{}, err
 		}
 		if !disputable {
-			return Report{}, ErrNoOwnerIdentification
+			return Report{}, ErrNothingToDispute
 		}
 	}
 	out := Report{SeriesID: in.SeriesID, Category: in.Category}

@@ -30,7 +30,7 @@ var correctionProblems = map[string]string{
 	identification.ProblemOwnerHolds:        "the owner holds this series now (status shows why); leave it",
 	identification.ProblemNotConcluded:      "the series is not identified with a cited candidate's source, so there is nothing to replace; the identified entries are in identification.entries of its receipts (library_list_metadata_operations)",
 	identification.ProblemAlreadyIdentified: "the series is already identified with a cited candidate; cite only entries that replace another",
-	identification.ProblemOwnerConfirmed:    "a person confirmed this identification, so you may not change it; if you are sure it is wrong, report it with library_report_series category " + identification.CategoryDisputedOwnerIdentification,
+	identification.ProblemOwnerConfirmed:    "a person confirmed this identification, so you may not change it; if you are sure it is wrong, report it with library_report_series category " + identification.CategoryDisputedIdentification,
 	identification.ProblemExcludedCandidate: verdictProblems[identification.ProblemExcludedCandidate],
 	identification.ProblemNotInEvidence:     "a cited candidate is not in this series' evidence; copy ids from its candidates, or add some with library_research_series",
 	identification.ProblemRequestKeyReused:  "this request_key already decided something else for the series; use a new request_key",

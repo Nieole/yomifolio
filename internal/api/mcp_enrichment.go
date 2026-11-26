@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -10,7 +11,12 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"yomifolio/internal/application/delegated"
 	"yomifolio/internal/application/enrichment"
+	"yomifolio/internal/application/identification"
 )
+
+// errOwnerOperation tells an agent the receipt it asked to undo records the owner's own change.
+var errOwnerOperation = errors.New("this receipt records a change the owner made, which an agent never undoes. Next: if you think it is wrong, tell the owner with library_report_series: " +
+	identification.CategoryProtectedValueDoubt + " for a value, " + identification.CategoryDisputedIdentification + " for an identification")
 
 func registerMCPEnrichment(server *mcp.Server, service *enrichment.Service, subject delegated.Subject) {
 	type lookup struct {
@@ -31,8 +37,11 @@ func registerMCPEnrichment(server *mcp.Server, service *enrichment.Service, subj
 		out, err := service.List(ctx, subject, in.SeriesID, in.Before, in.Limit)
 		return nil, out, publicMCPToolError(err, "invalid operation page", "metadata operations unavailable")
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "library_undo_metadata_operation", Description: `Reverse the fields one metadata operation actually changed. A field edited since then, a locked field or a changed author/tag/link set is a conflict; unrelated edits stay. request_key (1-80 printable ASCII) makes a retry return the original outcome. Example: {"request_key": "undo-1", "operation_id": "0d4f6c2a9b1e47c3a5d8e2f1b6c9a370"}`, Annotations: write}, func(ctx context.Context, _ *mcp.CallToolRequest, in enrichment.UndoInput) (*mcp.CallToolResult, enrichment.Operation, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "library_undo_metadata_operation", Description: `Reverse the fields one agent's metadata operation actually changed; the owner's own operations are refused. A field edited since, a locked field or a changed author/tag/link set is a conflict; unrelated edits stay. request_key (1-80 printable ASCII) makes a retry return the original outcome. Example: {"request_key": "undo-1", "operation_id": "0d4f6c2a9b1e47c3a5d8e2f1b6c9a370"}`, Annotations: write}, func(ctx context.Context, _ *mcp.CallToolRequest, in enrichment.UndoInput) (*mcp.CallToolResult, enrichment.Operation, error) {
 		out, err := service.Undo(ctx, subject, in)
+		if errors.Is(err, enrichment.ErrOwnerOperation) {
+			return nil, out, errOwnerOperation
+		}
 		return nil, out, publicMCPToolError(err, "invalid undo request or reused key", "metadata undo unavailable")
 	})
 }
