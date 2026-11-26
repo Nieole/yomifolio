@@ -643,7 +643,15 @@ func awaitRelocationPlan(t *testing.T, c *apiFixture, id int64) RelocationPlan {
 			t.Fatalf("get preview: %d %s (%v)", rec.Code, rec.Body.String(), err)
 		}
 		if plan.Status != "pending" && plan.Status != "checking" {
-			return plan
+			// The plan is saved inside its check run, which keeps occupying the library
+			// until the engine records that run's terminal status.
+			if plan.Status != "checked" {
+				return plan
+			}
+			run, err := c.taskEngine.runStore.LoadRun(context.Background(), plan.RunID)
+			if err == nil && run.Status.IsTerminal() {
+				return plan
+			}
 		}
 		select {
 		case <-deadline:

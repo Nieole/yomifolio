@@ -86,6 +86,20 @@ func TestRelocationCommitPreservesIdentityAndReadsNewLocation(t *testing.T) {
 	if gotBook.Title != book.Title || gotSeries.Name != series.Name || result.PlanID != plan.ID || result.RunID == 0 {
 		t.Fatalf("preserved identity/result: %+v %+v", gotBook, result)
 	}
+	// "completed" is saved before the commit run releases exclusive access; the run's
+	// terminal status is recorded only after that release.
+	for {
+		run, err := c.taskEngine.runStore.LoadRun(context.Background(), result.RunID)
+		if err == nil && run.Status.IsTerminal() {
+			break
+		}
+		select {
+		case <-deadline:
+			t.Fatalf("commit run did not finish: %+v %v", run, err)
+		default:
+			time.Sleep(time.Millisecond)
+		}
+	}
 	read()
 	if err = c.launchExternalLibraryTransferTask(lib.ID, session.SessionID, transfer); !errors.Is(err, external.ErrSessionNotFound) {
 		t.Fatalf("migration retained old transfer plan: %v", err)
