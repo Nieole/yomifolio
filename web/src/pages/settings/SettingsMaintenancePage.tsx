@@ -4,6 +4,7 @@ import { AlertTriangle, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useI18n } from '../../i18n/LocaleProvider';
 import { useSettingsMaintenance } from '../../features/settings-actions/useSettingsMaintenance';
+import { useEvidencePrefetch } from '../../features/identification/useEvidencePrefetch';
 import { SettingsPageIntro, sectionClassName } from './shared';
 
 interface PageCacheStats {
@@ -62,12 +63,14 @@ function formatRate(value: number) {
 export function SettingsMaintenancePage() {
   const { t } = useI18n();
   const { handleAction, showToast } = useSettingsMaintenance();
+  const startPrefetch = useEvidencePrefetch();
   const [pageCacheStats, setPageCacheStats] = useState<PageCacheStats | null>(null);
   const [storageIO, setStorageIO] = useState<StorageIODiagnostics | null>(null);
   const [loadingPageCache, setLoadingPageCache] = useState(false);
   const [loadingStorageIO, setLoadingStorageIO] = useState(false);
   const [clearingPageCache, setClearingPageCache] = useState(false);
-  const [confirmDialogState, setConfirmDialogState] = useState<{ open: boolean; message: string; url: string; successMessage: string; errorMessage: string; } | null>(null);
+  // run 在时，确认后执行它而不是按 url 发起通用动作。
+  const [confirmDialogState, setConfirmDialogState] = useState<{ open: boolean; message: string; url: string; successMessage: string; errorMessage: string; run?: () => void; } | null>(null);
 
   const fetchPageCacheStats = useCallback(async () => {
     setLoadingPageCache(true);
@@ -144,9 +147,9 @@ export function SettingsMaintenancePage() {
             <p className="font-medium">{t('settings.maintenance.rebuildFileIdentities')}</p>
             <p className="mt-1 text-xs text-red-200/80">{t('settings.maintenance.rebuildFileIdentitiesHint')}</p>
           </button>
-          <button onClick={() => handleRiskyAction('/api/system/batch-scrape', t('settings.maintenance.batchScrapeSuccess'), t('settings.maintenance.batchScrapeFailed'), t('settings.maintenance.batchScrapeConfirm'))} className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-4 text-left text-red-200 hover:bg-red-500/15">
-            <p className="font-medium">{t('settings.maintenance.batchScrape')}</p>
-            <p className="mt-1 text-xs text-red-200/80">{t('settings.maintenance.batchScrapeHint')}</p>
+          <button onClick={() => setConfirmDialogState({ open: true, message: t('settings.maintenance.prefetchConfirm'), url: '', successMessage: '', errorMessage: '', run: () => { void startPrefetch(); } })} className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-4 text-left text-red-200 hover:bg-red-500/15">
+            <p className="font-medium">{t('settings.maintenance.prefetch')}</p>
+            <p className="mt-1 text-xs text-red-200/80">{t('settings.maintenance.prefetchHint')}</p>
           </button>
           <button onClick={() => handleAction('/api/system/rebuild-franchises', t('settings.maintenance.rebuildFranchisesSuccess'), t('settings.maintenance.rebuildFranchisesFailed'))} className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-4 text-left text-red-200 hover:bg-red-500/15">
             <p className="font-medium">{t('settings.maintenance.rebuildFranchises')}</p>
@@ -311,7 +314,9 @@ export function SettingsMaintenancePage() {
         description={confirmDialogState?.message}
         onClose={() => setConfirmDialogState(null)}
         onConfirm={() => {
-          if (confirmDialogState) {
+          if (confirmDialogState?.run) {
+            confirmDialogState.run();
+          } else if (confirmDialogState) {
             handleAction(confirmDialogState.url, confirmDialogState.successMessage, confirmDialogState.errorMessage);
           }
           setConfirmDialogState(null);

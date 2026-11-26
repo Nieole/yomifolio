@@ -36,7 +36,6 @@ func (c *Host) SetupRoutes(r chi.Router) {
 		r.Get("/libraries/{libraryId}/external-libraries/session/{sessionId}", f.disk.getExternalLibrarySession)
 		r.Get("/libraries/{libraryId}/external-libraries/session/{sessionId}/series", f.disk.getExternalLibrarySeries)
 		r.Post("/libraries/{libraryId}/external-libraries/session/{sessionId}/transfer", f.disk.transferToExternalLibrary)
-		r.Post("/libraries/{libraryId}/scrape", f.maintenance.scrapeLibrary)
 		r.Post("/libraries/{libraryId}/ai-grouping", f.maintenance.aiGroupingLibrary)
 		r.Post("/libraries/{libraryId}/cleanup", f.library.cleanupLibrary)
 		r.Delete("/libraries/{libraryId}", f.library.deleteLibrary)
@@ -116,7 +115,6 @@ func (c *Host) SetupRoutes(r chi.Router) {
 		r.Post("/system/rebuild-thumbnails", f.maintenance.rebuildThumbnails)
 		r.Post("/system/cleanup-thumbnails", f.maintenance.cleanupThumbnails)
 		r.Post("/system/rebuild-file-identities", f.maintenance.rebuildFileIdentities)
-		r.Post("/system/batch-scrape", f.maintenance.batchScrapeAllSeries)
 
 		r.Route("/pages", func(r chi.Router) {
 			r.Get("/{bookId}", c.content.getPagesByBook)

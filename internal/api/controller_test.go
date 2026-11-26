@@ -138,49 +138,6 @@ func (s *countingStore) GetDashboardVolatileStats(ctx context.Context) (*databas
 	return s.Store.GetDashboardVolatileStats(ctx)
 }
 
-type blockingMetadataProvider struct {
-	requests chan string
-	release  chan struct{}
-}
-
-func newBlockingMetadataProvider() *blockingMetadataProvider {
-	return &blockingMetadataProvider{
-		requests: make(chan string, 8),
-		release:  make(chan struct{}),
-	}
-}
-
-func (p *blockingMetadataProvider) Name() string {
-	return "TestProvider"
-}
-
-func (p *blockingMetadataProvider) FetchSeriesMetadata(ctx context.Context, title string) (*metadata.SeriesMetadata, error) {
-	select {
-	case p.requests <- title:
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
-	select {
-	case <-p.release:
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
-	return &metadata.SeriesMetadata{
-		Title:      title + " scraped",
-		Summary:    "summary " + title,
-		Provider:   p.Name(),
-		Confidence: 0.95,
-	}, nil
-}
-
-func (p *blockingMetadataProvider) SearchMetadata(ctx context.Context, title string, limit, offset int) ([]*metadata.SeriesMetadata, int, error) {
-	result, err := p.FetchSeriesMetadata(ctx, title)
-	if err != nil || result == nil {
-		return nil, 0, err
-	}
-	return []*metadata.SeriesMetadata{result}, 1, nil
-}
-
 func createTestKOReaderAccount(t *testing.T, controller *apiFixture, username string) KOReaderAccountResponse {
 	t.Helper()
 
@@ -2922,7 +2879,7 @@ func TestRunSnapshotTracksScrapeMetricsAndLabels(t *testing.T) {
 	controller, _, _, _ := newTestController(t)
 
 	taskKey := "scrape_library_7"
-	progress := seedTask(t, controller.taskEngine, taskSeed{Key: taskKey, Identity: libraryTask("scrape", 7, variantScrapeOneLibrary), Total: 3, CanCancel: true, CanPause: true})
+	progress := seedTask(t, controller.taskEngine, taskSeed{Key: taskKey, Identity: libraryTask("scrape", 7, TaskVariant("one_library")), Total: 3, CanCancel: true, CanPause: true})
 	progress.Advance(1, 3, "task.msg.scrape.queueing_review", map[string]string{"name": "Foo"})
 	progress.Phase("queueing_review", "", nil)
 	progress.Report(runhandle.Frame{
@@ -2956,122 +2913,6 @@ func TestRunSnapshotTracksScrapeMetricsAndLabels(t *testing.T) {
 	if task.Labels["provider_name"] != "Bangumi" || task.Labels["current_series_name"] != "Foo" {
 		t.Fatalf("expected scrape labels, got %+v", task.Labels)
 	}
-}
-
-func TestLibraryScrapePauseResumeStopsNewProviderRequests(t *testing.T) {
-	controller, store, _, tempDir := newTestController(t)
-	provider := newBlockingMetadataProvider()
-	controller.providers.fetcherFactory = func(string) metadata.Fetcher {
-		return provider
-	}
-
-	libPath := filepath.Join(tempDir, "library")
-	if err := os.MkdirAll(libPath, 0o755); err != nil {
-		t.Fatalf("mkdir library failed: %v", err)
-	}
-	lib, err := store.CreateLibrary(context.Background(), database.CreateLibraryParams{
-		Name:                "Library",
-		Path:                libPath,
-		ScanMode:            "none",
-		KoreaderSyncEnabled: true,
-		ScanInterval:        60,
-		ScanFormats:         config.DefaultScanFormatsCSV,
-	})
-	if err != nil {
-		t.Fatalf("CreateLibrary failed: %v", err)
-	}
-	for _, name := range []string{"Alpha", "Beta"} {
-		if _, err := store.CreateSeries(context.Background(), database.CreateSeriesParams{
-			LibraryID:    lib.ID,
-			Name:         name,
-			Path:         filepath.Join(libPath, name),
-			Title:        sql.NullString{},
-			Summary:      sql.NullString{},
-			Publisher:    sql.NullString{},
-			Status:       sql.NullString{},
-			Rating:       sql.NullFloat64{},
-			Language:     sql.NullString{},
-			LockedFields: sql.NullString{},
-			NameInitial:  database.SeriesInitial("", name),
-		}); err != nil {
-			t.Fatalf("CreateSeries %s failed: %v", name, err)
-		}
-	}
-
-	if err := controller.launchLibraryScrapeTask(context.Background(), lib.ID, "test", task.TriggerManual); err != nil {
-		t.Fatalf("launch library scrape failed: %v", err)
-	}
-	taskKey := "scrape_library_" + strconv.FormatInt(lib.ID, 10)
-	rememberTaskKey(taskKey, libraryTask("scrape", lib.ID, variantScrapeOneLibrary))
-
-	first := waitForProviderRequest(t, provider.requests)
-	if first != "Alpha" {
-		t.Fatalf("expected first provider request Alpha, got %q", first)
-	}
-
-	pauseRec := runControlRequest(t, controller, controller.families.runs.pauseRun, taskKey)
-	if pauseRec.Code != http.StatusAccepted {
-		t.Fatalf("expected pause 202, got %d body=%s", pauseRec.Code, pauseRec.Body.String())
-	}
-
-	provider.release <- struct{}{}
-	assertNoProviderRequest(t, provider.requests, 150*time.Millisecond)
-
-	paused := currentTask(t, controller.taskEngine, taskKey)
-	if paused.Status != "paused" || paused.Metrics["provider_requests"] != 1 {
-		t.Fatalf("expected paused scrape after first request, got %+v", paused)
-	}
-
-	resumeRec := runControlRequest(t, controller, controller.families.runs.resumeRun, taskKey)
-	if resumeRec.Code != http.StatusAccepted {
-		t.Fatalf("expected resume 202, got %d body=%s", resumeRec.Code, resumeRec.Body.String())
-	}
-
-	second := waitForProviderRequest(t, provider.requests)
-	if second != "Beta" {
-		t.Fatalf("expected second provider request Beta after resume, got %q", second)
-	}
-	provider.release <- struct{}{}
-	waitForRunStatus(t, controller, taskKey, "completed")
-
-	done := currentTask(t, controller.taskEngine, taskKey)
-	if done.Metrics["provider_requests"] != 2 || done.Metrics["processed_series"] != 2 {
-		t.Fatalf("expected completed scrape metrics, got %+v", done.Metrics)
-	}
-}
-
-func waitForProviderRequest(t testing.TB, requests <-chan string) string {
-	t.Helper()
-	select {
-	case title := <-requests:
-		return title
-	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for provider request")
-		return ""
-	}
-}
-
-func assertNoProviderRequest(t testing.TB, requests <-chan string, duration time.Duration) {
-	t.Helper()
-	select {
-	case title := <-requests:
-		t.Fatalf("expected no provider request while paused, got %q", title)
-	case <-time.After(duration):
-	}
-}
-
-func waitForRunStatus(t testing.TB, controller *apiFixture, taskKey, status string) {
-	t.Helper()
-	deadline := time.Now().Add(3 * time.Second)
-	for time.Now().Before(deadline) {
-		task := currentTask(t, controller.taskEngine, taskKey)
-		if task.Status == status {
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	task := currentTask(t, controller.taskEngine, taskKey)
-	t.Fatalf("timed out waiting for task %s status %s, got %+v", taskKey, status, task)
 }
 
 func TestPauseTaskRejectsNonPausableTask(t *testing.T) {

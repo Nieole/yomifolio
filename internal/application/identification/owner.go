@@ -3,6 +3,8 @@ package identification
 import (
 	"context"
 	"database/sql"
+
+	"yomifolio/internal/task"
 )
 
 // SetOwnerReviewed records that the owner takes over the series' metadata. Setting it again
@@ -53,4 +55,16 @@ func (s *Service) ownerDecision(ctx context.Context, actor, seriesID int64, chan
 		return SeriesIdentification{}, err
 	}
 	return out, nil
+}
+
+// StartPrefetch launches the evidence prefetch the owner asked for, over one library or over every
+// library when libraryID is 0.
+func (s *Service) StartPrefetch(ctx context.Context, actor, libraryID int64) (PrefetchLaunch, error) {
+	if err := requireAdmin(ctx, s.db, actor); err != nil {
+		return PrefetchLaunch{}, err
+	}
+	if s.prefetch == nil {
+		return PrefetchLaunch{}, ErrDenied
+	}
+	return s.prefetch.Start(ctx, libraryID, task.TriggerManual)
 }

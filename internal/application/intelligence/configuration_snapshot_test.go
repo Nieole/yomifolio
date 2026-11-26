@@ -34,7 +34,7 @@ func TestGroupingPinsSourceBeforeDeferredRunStarts(t *testing.T) {
 	engine := task.New(task.Config{Store: taskstore.New(store.DB()), RunBackground: func(fn func()) { body = fn }})
 	original, replacement := &source{}, &source{}
 	active := original
-	service := intelligence.New(application.NewRuns(engine, nil), store, nil, organize.NewAIGrouping(store, nil), intelligence.Sources{Grouping: func() intelligence.GroupingProvider { return active }}, nil)
+	service := intelligence.New(application.NewRuns(engine, nil), store, organize.NewAIGrouping(store, nil), intelligence.Sources{Grouping: func() intelligence.GroupingProvider { return active }}, nil)
 	if _, err := service.GroupLibrary(ctx, lib.ID, "en-US", task.TriggerManual); err != nil {
 		t.Fatal(err)
 	}

@@ -8,7 +8,6 @@ import (
 
 	"yomifolio/internal/metadata"
 	"yomifolio/internal/proposal"
-	"yomifolio/internal/task"
 )
 
 // 以下 helper 用常量格式串按 locale 生成带占位的刮削响应文案（默认中文，en-US 输出英文），
@@ -315,53 +314,6 @@ func (c *providerHTTP) scrapeSeriesMetadata(w http.ResponseWriter, r *http.Reque
 		"metadata":    result,
 		"review_id":   queued.Proposal.ID,
 		"field_count": len(queued.Fields),
-	})
-}
-
-func (c *maintenanceHTTP) batchScrapeAllSeries(w http.ResponseWriter, r *http.Request) {
-	ctx := requestContextWithLocale(r)
-
-	var reqBody struct {
-		Provider string `json:"provider"`
-	}
-	_ = json.NewDecoder(r.Body).Decode(&reqBody)
-
-	if _, err := c.intelligence.ScrapeAll(ctx, reqBody.Provider, task.TriggerManual); err != nil {
-		writeTaskLaunchError(w, err, "A batch scrape task is already running", "Failed to list libraries")
-		return
-	}
-
-	provider := c.getMetadataFetcher(reqBody.Provider)
-
-	jsonResponse(w, http.StatusOK, map[string]interface{}{
-		"message":  fmt.Sprintf("批量刮削(%s)已异步启动，任务已加入后台队列", provider.Name()),
-		"provider": provider.Name(),
-	})
-}
-
-func (c *maintenanceHTTP) scrapeLibrary(w http.ResponseWriter, r *http.Request) {
-	ctx := requestContextWithLocale(r)
-	libraryID, err := parseID(r, "libraryId")
-	if err != nil {
-		jsonError(w, http.StatusBadRequest, "Invalid library ID")
-		return
-	}
-
-	var reqBody struct {
-		Provider string `json:"provider"`
-	}
-	_ = json.NewDecoder(r.Body).Decode(&reqBody)
-
-	if _, err := c.intelligence.ScrapeLibrary(ctx, libraryID, reqBody.Provider, task.TriggerManual); err != nil {
-		writeTaskLaunchError(w, err, "A library scrape task is already running", "Failed to list series in library")
-		return
-	}
-
-	provider := c.getMetadataFetcher(reqBody.Provider)
-
-	jsonResponse(w, http.StatusOK, map[string]interface{}{
-		"message":  fmt.Sprintf("资源库批量刮削(%s)已异步启动，任务已加入后台队列", provider.Name()),
-		"provider": provider.Name(),
 	})
 }
 

@@ -1,7 +1,8 @@
 // Package identification owns series identification: the durable per-source conclusions, the
 // entries a person excluded, escalations, not-found verdicts and the owner-reviewed decision, and
 // the identification status derived from them. The status is never stored or edited on its own;
-// the series_identification_status view is its single definition.
+// the series_identification_status view is its single definition. It also owns the evidence
+// packets that background prefetch runs prepare for the unprocessed series.
 //
 // Agent-facing use cases re-check delegated authority through Access on every call. Owner-facing
 // use cases take the acting account and re-check that it is an administrator in the same
@@ -59,15 +60,19 @@ type Access interface {
 
 // Service is synchronous: each call is one transaction or one read, and holds no process state.
 type Service struct {
-	db     *sql.DB
-	access Access
-	now    func() time.Time
+	db       *sql.DB
+	access   Access
+	prefetch *Prefetcher
+	now      func() time.Time
 }
 
 // New binds the service to the process database and delegated authority.
 func New(db *sql.DB, access Access) *Service {
 	return &Service{db: db, access: access, now: time.Now}
 }
+
+// WithPrefetch lets the owner launch the evidence prefetch through this service.
+func (s *Service) WithPrefetch(p *Prefetcher) *Service { s.prefetch = p; return s }
 
 // Confirmer says who confirmed a conclusion. An owner row from history has no user.
 type Confirmer struct {
@@ -120,6 +125,9 @@ type SeriesIdentification struct {
 	Conclusions        []Conclusion        `json:"conclusions"`
 	ExcludedCandidates []ExcludedCandidate `json:"excluded_candidates"`
 	OwnerReview        *OwnerReview        `json:"owner_review,omitempty"`
+	// Evidence is the series' evidence packet without the candidates excluded since its fetch;
+	// absent until a prefetch stored one.
+	Evidence *EvidencePacket `json:"evidence,omitempty"`
 }
 
 func stamp(ms int64) string { return time.UnixMilli(ms).UTC().Format(time.RFC3339) }
@@ -159,6 +167,9 @@ func read(ctx context.Context, q queryer, seriesID int64) (SeriesIdentification,
 		return SeriesIdentification{}, err
 	}
 	if out.ExcludedCandidates, err = exclusions(ctx, q, seriesID); err != nil {
+		return SeriesIdentification{}, err
+	}
+	if out.Evidence, err = readEvidence(ctx, q, seriesID, out.ExcludedCandidates); err != nil {
 		return SeriesIdentification{}, err
 	}
 	var review OwnerReview

@@ -16,6 +16,7 @@ import { SidebarGroup, SidebarLink } from './layout/SidebarNav';
 import { UserMenu } from './layout/UserMenu';
 import { LibraryActionsPopover } from './layout/LibraryActionsPopover';
 import { useTaskBubbles } from '../features/task-observation/useTaskBubbles';
+import { useEvidencePrefetch } from '../features/identification/useEvidencePrefetch';
 import { useLayoutShortcuts } from './layout/useLayoutShortcuts';
 
 import { DeleteLibraryDialog } from '../features/libraries/DeleteLibraryDialog';
@@ -115,6 +116,7 @@ export default function Layout() {
     const navigate = useNavigate();
     const location = useLocation();
     const { showToast } = useToast();
+    const startPrefetch = useEvidencePrefetch();
 
     const openConfirmDialog = (next: Omit<ConfirmDialogState, 'open'>) => {
         setConfirmDialog({ open: true, ...next });
@@ -195,16 +197,6 @@ export default function Layout() {
         } catch (error) {
             console.error("Trigger scan failed", error);
             showToast(t('layout.toast.scanFailed'), 'error');
-        }
-    };
-
-    const handleScrapeLibrary = async (id: string) => {
-        try {
-            await apiClient.post(`/api/libraries/${id}/scrape`, { provider: 'bangumi' });
-            showToast(t('layout.toast.scrapeQueued'), 'success');
-        } catch (error) {
-            console.error("Trigger scrape failed", error);
-            showToast(t('layout.toast.scrapeFailed'), 'error');
         }
     };
 
@@ -640,17 +632,17 @@ export default function Layout() {
                                                         e.stopPropagation();
                                                         setOpenLibraryMenu(null);
                                                         openConfirmDialog({
-                                                            title: t('layout.libraryActions.confirmScrapeTitle'),
-                                                            description: t('layout.libraryActions.confirmScrapeDescription'),
-                                                            confirmLabel: t('layout.libraryActions.startScrape'),
+                                                            title: t('layout.libraryActions.confirmPrefetchTitle'),
+                                                            description: t('layout.libraryActions.confirmPrefetchDescription'),
+                                                            confirmLabel: t('layout.libraryActions.startPrefetch'),
                                                             tone: 'primary',
-                                                            onConfirm: () => handleScrapeLibrary(String(lib.id)),
+                                                            onConfirm: () => { void startPrefetch(Number(lib.id)); },
                                                         });
                                                     }}
                                                     className="w-full flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-green-500 hover:text-white transition-colors"
                                                 >
                                                     <Download className="w-4 h-4 mr-2" />
-                                                    {t('layout.libraryActions.scrape')}
+                                                    {t('layout.libraryActions.prefetch')}
                                                 </button>
                                                 <button
                                                     onClick={(e) => {

@@ -21,10 +21,6 @@ const (
 	// 匹配模式钉死二进制哈希。**重启函数**按（类型，变体）分发，两条跑法因此各自重启回自己。
 	variantHashRebuildForeground TaskVariant = "foreground"
 	variantHashRebuildBackfill   TaskVariant = "low_priority_backfill"
-
-	// 刮削的两个变体：全库那条挂在系统作用域，单库那条带库作用域。
-	variantScrapeAllLibraries TaskVariant = "all_libraries"
-	variantScrapeOneLibrary   TaskVariant = "one_library"
 )
 
 // 任务的三个**作用域**。它们同时是身份行 scope 列的取值与任务列表的筛选值。

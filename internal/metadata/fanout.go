@@ -67,16 +67,19 @@ type SourceQuery struct {
 }
 
 // SourceFanout searches the catalogue sources one configuration snapshot enables.
-// Open resolves a source adapter; nil uses NewConfiguredProvider.
+// Open resolves a source adapter; nil uses NewConfiguredProvider. Pace, when set, runs before
+// every source access to space requests per source.
 type SourceFanout struct {
 	Config config.Config
 	Open   func(config.Config, string) Provider
+	Pace   func(ctx context.Context, source string) error
 }
 
 // Search asks each source in CatalogueSources order for one page of q and hands every page
 // to visit as soon as it is validated, so one failing source never hides the others.
-// checkpoint runs before and after each source access (nil observes only ctx); its error
-// stops the fan-out, discards the page in flight and is the only error Search returns.
+// checkpoint runs before and after each source access (nil observes only ctx), after Pace;
+// an error from either stops the fan-out, discards the page in flight and is the only error
+// Search returns.
 func (f SourceFanout) Search(ctx context.Context, q SourceQuery, checkpoint func(context.Context) error, visit func(SourcePage)) error {
 	if checkpoint == nil {
 		checkpoint = func(ctx context.Context) error { return ctx.Err() }
@@ -86,6 +89,11 @@ func (f SourceFanout) Search(ctx context.Context, q SourceQuery, checkpoint func
 		open = NewConfiguredProvider
 	}
 	for _, name := range CatalogueSources(f.Config) {
+		if f.Pace != nil {
+			if err := f.Pace(ctx, name); err != nil {
+				return err
+			}
+		}
 		if err := checkpoint(ctx); err != nil {
 			return err
 		}

@@ -20,6 +20,7 @@ const TASK_TYPE_OPTIONS = [
   'cleanup_run_history',
   'rebuild_file_identities',
   'scrape',
+  'evidence_prefetch',
   'ai_grouping',
   'rebuild_book_hashes',
   'reconcile_koreader_progress',

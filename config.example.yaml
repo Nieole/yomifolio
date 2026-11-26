@@ -92,6 +92,15 @@ scrapers:
     # MyAnimeList 需要 Client ID，Comic Vine 需要 API Key；留空则对应刮削源不可用。
     mal_client_id: ""       # 切勿把真实凭据提交到版本库 / never commit a real credential
     comicvine_api_key: ""   # 切勿把真实密钥提交到版本库 / never commit a real API key
+identification:
+    # 证据包预取向同一来源连发两次请求的最小间隔（毫秒）。0 取默认值，负数表示不限速。
+    # Minimum milliseconds between two evidence prefetch requests to one source. 0 uses the default, negative disables spacing.
+    source_intervals_ms:
+        bangumi: 1000
+        anilist: 2000       # AniList 目前限每分钟 30 次 / AniList currently allows 30 requests per minute
+        mangadex: 1000
+        myanimelist: 1000
+        comicvine: 18000    # Comic Vine 限每资源每小时 200 次 / Comic Vine allows 200 requests per resource per hour
 protocols:
     opds:
         enabled: false
