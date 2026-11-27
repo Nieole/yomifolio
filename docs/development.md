@@ -42,18 +42,11 @@ Build the **real** frontend before Go. `web/web.go` embeds `all:dist`; a fresh c
 Run the backend after building initial dist. For live UI development use `cd web && npm run dev`; Vite proxies `/api` to `http://localhost:8080`. Use a non-production library/database and do not expose the dev server to an untrusted network.
 
 ```bash
-cd web
-npm run lint
-npm run test
-npm run build
-cd ..
-go vet ./...
-go test ./...
-gofmt -l ./cmd ./internal
-golangci-lint run
+scripts/check.sh          # frontend, static analysis, generated-code drift, docs and notices
+scripts/check.sh --full   # adds full tests, race tests, CGO build, govulncheck and actionlint
 ```
 
-`gofmt -l` should print nothing. CI also runs Linux race tests (`go test -race -timeout=30m ./...`), Go vulnerability checking, documentation style checks, server compilation, and generated-code drift checks. CI covers Ubuntu, Windows, and macOS ARM64; not every check runs on every OS. Release builds first depend on the reusable CI gate.
+The script reproduces the [CI workflow](../.github/workflows/ci.yml) locally and takes tool versions from it. CI also runs native tests on Windows and macOS ARM64; platform differences cannot be reproduced locally. Release builds first depend on the reusable CI gate.
 
 For sandbox/cache permission issues, create `.gocache` and `.tmp`, then use the documented Unix-shell form:
 
@@ -61,7 +54,7 @@ For sandbox/cache permission issues, create `.gocache` and `.tmp`, then use the 
 GOCACHE="$(pwd)/.gocache" GOTMPDIR="$(pwd)/.tmp" go test ./...
 ```
 
-Use a worktree-specific `GOLANGCI_LINT_CACHE` when linting parallel worktrees to avoid cached absolute-path diagnostics; Go's content-addressed build cache can be shared safely.
+Create parallel worktrees with `scripts/new-worktree.sh`. `scripts/check.sh` shares the Go build cache across worktrees and gives each its own golangci-lint cache; set a worktree-specific `GOLANGCI_LINT_CACHE` yourself when running golangci-lint directly.
 
 ### Direct database tooling
 

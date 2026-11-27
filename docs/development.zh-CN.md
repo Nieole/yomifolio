@@ -42,18 +42,11 @@ go build -o build/yomifolio.exe ./cmd/server
 先构建初始 dist 再启动后端。前端开发执行 `cd web && npm run dev`，Vite 将 `/api` 代理到 `http://localhost:8080`。使用隔离的开发书库与数据库，不向不可信网络暴露开发服务器。
 
 ```bash
-cd web
-npm run lint
-npm run test
-npm run build
-cd ..
-go vet ./...
-go test ./...
-gofmt -l ./cmd ./internal
-golangci-lint run
+scripts/check.sh          # 前端、静态分析、生成物漂移、文档与许可检查
+scripts/check.sh --full   # 再加全量测试、race、CGO 构建、govulncheck 与 actionlint
 ```
 
-`gofmt -l` 应无输出。CI 还执行 Linux race 测试、漏洞检查、文档检查、服务构建和生成代码漂移检查；覆盖 Ubuntu、Windows 与 macOS ARM64，不是每个平台都运行所有检查。发布构建依赖复用 CI gate。具体参数与工具版本以工作流和 [AGENTS.md](../AGENTS.md) 为准。
+脚本照 [CI 工作流](../.github/workflows/ci.yml) 复现检查，工具版本以工作流为准。CI 另在 Windows 与 macOS ARM64 上跑原生测试，平台差异本地复现不了。发布构建依赖复用 CI gate。
 
 沙箱缓存权限有问题时，先建立 `.gocache`、`.tmp`，按 AGENTS 的 Unix shell 写法运行：
 
@@ -61,7 +54,7 @@ golangci-lint run
 GOCACHE="$(pwd)/.gocache" GOTMPDIR="$(pwd)/.tmp" go test ./...
 ```
 
-并行 worktree 使用独立 `GOLANGCI_LINT_CACHE`，避免缓存绝对路径引发诊断；Go 的内容寻址构建缓存可安全共享。
+并行 worktree 用 `scripts/new-worktree.sh` 建树；`scripts/check.sh` 让各树共享 Go 构建缓存、各用一份 golangci-lint 缓存，直接跑 golangci-lint 时要自己设独立的 `GOLANGCI_LINT_CACHE`。
 
 ### 生成代码与工程约定
 
