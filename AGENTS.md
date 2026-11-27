@@ -11,8 +11,8 @@ Run the frontend locally with `cd web && npm run dev`. Build the frontend with `
 GOCACHE="$(pwd)/.gocache" GOTMPDIR="$(pwd)/.tmp" go test ./...
 ```
 提交前跑 `scripts/check.sh`：它照 `.github/workflows/ci.yml` 在本地复现 CI 的检查，只打印失败步骤的
-摘要。`--full` 再加全量测试、race、CGO 构建与漏洞扫描，推 `main` 或交付一批票之前跑这一档；全量测试
-要十几分钟，放后台跑时盯它最后一行 `CHECK DONE exit=<n>`。
+摘要。`--full` 再加全量测试、race、CGO 构建与漏洞扫描，推 `main` 或交付一批票之前跑这一档；它要
+半小时以上，放后台跑，再用前台 `until grep -q 'CHECK DONE'` 循环等它最后一行 `CHECK DONE exit=<n>`。
 
 并行开多个 `git worktree` 时用 `scripts/new-worktree.sh` 建树，它把被忽略的 `web/dist` 拷进新树，
 否则 `go:embed` 让 `go build` 第一步就失败。树里照样跑 `scripts/check.sh`：它让各树共享 `GOCACHE`、
