@@ -12,6 +12,13 @@ GitHub Issues is a public feedback intake surface, not the engineering tracker. 
 - Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
 - Comments and conversation history append to the bottom of the file under a `## Comments` heading
 
+## 集成分支在 PR 上跑 CI
+
+一批票合到一条集成分支上时（如 `implement-spec`），第一次合并后把集成分支推到 `origin`，开一个
+draft PR（`gh pr create --draft --base main`），之后每次合并都推一次，让 CI 的三平台测试跟着跑。工单
+照旧在本地改 `Status:` 结案，PR 只为跑 CI。快进 `main` 之前，这个 PR 上的 CI 必须全绿：Windows 路径、
+Windows runner 上的超时这类问题，本地的 `scripts/check.sh --full` 查不出来。
+
 ## 两份长期文件
 
 - `.scratch/GAPS.md` — **产品缺口清单**。跟着产品走，不随任何一批票关闭；`/settle` 把
