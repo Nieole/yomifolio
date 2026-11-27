@@ -2,16 +2,15 @@ package bookcontent_test
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
-	_ "modernc.org/sqlite"
 	"yomifolio/internal/bookcontent"
 	"yomifolio/internal/config"
+	"yomifolio/internal/database/sqlitetest"
 	"yomifolio/internal/parser"
 	"yomifolio/internal/task"
 	"yomifolio/internal/taskstore"
@@ -68,11 +67,7 @@ func TestWholeBookHandleRetainsAccessUntilClose(t *testing.T) {
 
 func contentAccess(t *testing.T) *task.Engine {
 	t.Helper()
-	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "tasks.db")+"?_pragma=foreign_keys(1)")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
+	db := sqlitetest.Open(t, "tasks.db")
 	if err := taskstore.Migrate(db); err != nil {
 		t.Fatal(err)
 	}

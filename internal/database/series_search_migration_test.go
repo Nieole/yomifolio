@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"yomifolio/internal/database/sqliteconn"
 )
 
 //go:embed testdata/series_search_v4.sql
@@ -19,7 +21,7 @@ func searchMigrationDB(t *testing.T) (string, *sql.DB) {
 	if err := Migrate(path); err != nil {
 		t.Fatal(err)
 	}
-	db, err := sql.Open("sqlite", sqliteDSN(path))
+	db, err := sql.Open("sqlite", sqliteconn.DSN(path))
 	if err != nil {
 		t.Fatal(err)
 	}

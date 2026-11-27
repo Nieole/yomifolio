@@ -155,7 +155,7 @@ func TestKeyValueSideTablesMergeByKey(t *testing.T) {
 
 // 外键关掉时级联不发生而 DELETE 照跑，孤儿行是静默的，因此迁移当场拦下来。
 func TestMigrateRefusesWhenForeignKeysAreDisabled(t *testing.T) {
-	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "no-fk.db"))
+	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "no-fk.db")) //nolint:forbidigo // 要一个关掉外键的库，生产参数给不出
 	if err != nil {
 		t.Fatalf("open db failed: %v", err)
 	}

@@ -13,6 +13,8 @@ import (
 	"testing"
 
 	_ "modernc.org/sqlite"
+
+	"yomifolio/internal/database/sqliteconn"
 )
 
 func TestMigrateAddsIdentityColumnsBeforeDependentIndexes(t *testing.T) {
@@ -339,7 +341,7 @@ func TestMigrateReadingBookmarksAddsUserScope(t *testing.T) {
 	dbPath := filepath.Join(t.TempDir(), "legacy.db")
 
 	// 先造一个「旧版」库：书签表是加 user_id 之前的形态。
-	legacy, err := sql.Open("sqlite", sqliteDSN(dbPath))
+	legacy, err := sql.Open("sqlite", sqliteconn.DSN(dbPath))
 	if err != nil {
 		t.Fatalf("open legacy db failed: %v", err)
 	}
@@ -401,7 +403,7 @@ func TestMigrateReadingBookmarksAddsUserScope(t *testing.T) {
 		t.Fatalf("migrate failed: %v", err)
 	}
 
-	db, err := sql.Open("sqlite", sqliteDSN(dbPath))
+	db, err := sql.Open("sqlite", sqliteconn.DSN(dbPath))
 	if err != nil {
 		t.Fatalf("reopen db failed: %v", err)
 	}
@@ -704,7 +706,7 @@ func TestMigrateCleansUpOrphanUserScopedRows(t *testing.T) {
 		t.Fatalf("初次建库失败: %v", err)
 	}
 
-	db, err := sql.Open("sqlite", sqliteDSN(dbPath))
+	db, err := sql.Open("sqlite", sqliteconn.DSN(dbPath))
 	if err != nil {
 		t.Fatalf("open db failed: %v", err)
 	}
@@ -732,7 +734,7 @@ func TestMigrateCleansUpOrphanUserScopedRows(t *testing.T) {
 		t.Fatalf("升级失败: %v", err)
 	}
 
-	db, err = sql.Open("sqlite", sqliteDSN(dbPath))
+	db, err = sql.Open("sqlite", sqliteconn.DSN(dbPath))
 	if err != nil {
 		t.Fatalf("reopen db failed: %v", err)
 	}
@@ -855,7 +857,7 @@ func TestMigrateDropsLegacyTasksTable(t *testing.T) {
 				t.Fatalf("首次 Migrate 失败: %v", err)
 			}
 
-			db, err := sql.Open("sqlite", sqliteDSN(dbPath))
+			db, err := sql.Open("sqlite", sqliteconn.DSN(dbPath))
 			if err != nil {
 				t.Fatalf("open: %v", err)
 			}
@@ -910,7 +912,7 @@ func TestMigrateDropsLegacyTasksTable(t *testing.T) {
 				}
 			}
 
-			db, err = sql.Open("sqlite", sqliteDSN(dbPath))
+			db, err = sql.Open("sqlite", sqliteconn.DSN(dbPath))
 			if err != nil {
 				t.Fatalf("reopen: %v", err)
 			}
@@ -995,7 +997,7 @@ func TestMigrateRenamesIdentityTableToTasks(t *testing.T) {
 				t.Fatalf("首次 Migrate 失败: %v", err)
 			}
 
-			db, err := sql.Open("sqlite", sqliteDSN(dbPath))
+			db, err := sql.Open("sqlite", sqliteconn.DSN(dbPath))
 			if err != nil {
 				t.Fatalf("open: %v", err)
 			}
@@ -1044,7 +1046,7 @@ func TestMigrateRenamesIdentityTableToTasks(t *testing.T) {
 				}
 			}
 
-			db, err = sql.Open("sqlite", sqliteDSN(dbPath))
+			db, err = sql.Open("sqlite", sqliteconn.DSN(dbPath))
 			if err != nil {
 				t.Fatalf("reopen: %v", err)
 			}
@@ -1111,7 +1113,7 @@ func TestMigrateDropsTheTaskKeyColumn(t *testing.T) {
 				t.Fatalf("首次 Migrate 失败: %v", err)
 			}
 
-			db, err := sql.Open("sqlite", sqliteDSN(dbPath))
+			db, err := sql.Open("sqlite", sqliteconn.DSN(dbPath))
 			if err != nil {
 				t.Fatalf("open: %v", err)
 			}
@@ -1154,7 +1156,7 @@ func TestMigrateDropsTheTaskKeyColumn(t *testing.T) {
 				}
 			}
 
-			db, err = sql.Open("sqlite", sqliteDSN(dbPath))
+			db, err = sql.Open("sqlite", sqliteconn.DSN(dbPath))
 			if err != nil {
 				t.Fatalf("reopen: %v", err)
 			}

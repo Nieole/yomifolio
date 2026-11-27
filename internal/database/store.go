@@ -12,6 +12,8 @@ import (
 	"time"
 
 	_ "modernc.org/sqlite"
+
+	"yomifolio/internal/database/sqliteconn"
 )
 
 //go:embed schema.sql
@@ -193,12 +195,7 @@ func (s *SqlStore) DB() *sql.DB {
 }
 
 func NewStore(dbPath string) (Store, error) {
-	// 针对 100MB 级别的数据库进行精简优化：
-	// mmap_size=268435456 (256MB，足以将百兆级数据库整个隐射进内存，消除系统的换页压力)
-	// cache_size=-128000  (128MB，页缓存亦完全够用，不需要分配夸张的 500MB 防御性冗余)
-	// busy_timeout=15000  (保持长超时，预防因高并发读写引发 sqlite3 busy lock)
-	// temp_store=2        (MEMORY：百兆规模下，内存聚合 ORDER 操作极快，保持使用内存)
-	db, err := sql.Open("sqlite", sqliteDSN(dbPath))
+	db, err := sql.Open("sqlite", sqliteconn.DSN(dbPath))
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -251,7 +248,7 @@ func (s *SqlStore) DeleteKOReaderAccount(ctx context.Context, id int64) error {
 // ExecTx 提供一个事务包裹器以进行批量执行，这对防止 SQLite 并发锁极为关键。
 //
 // 收尾必须走 defer 而不是只在错误分支回滚：DSN 里的 _txlock=immediate 让 BeginTx 当场就握住
-// SQLite 写锁（见 migrate.go 的 sqliteDSN），fn 一旦 panic，事务既不提交也不回滚地悬在那里——
+// SQLite 写锁（见 sqliteconn.DSN），fn 一旦 panic，事务既不提交也不回滚地悬在那里——
 // 连接不还池、写锁不释放，此后整个进程的写入都要等满 busy_timeout 再报 database is locked，
 // 只有重启能救。HTTP 路径上尤其隐蔽：middleware.Recoverer 把 panic 吃掉之后服务看着还活着，
 // 写入却已经全死了。

@@ -6,12 +6,10 @@ package taskstore
 import (
 	"context"
 	"database/sql"
-	"path/filepath"
 	"testing"
 	"time"
 
-	_ "modernc.org/sqlite"
-
+	"yomifolio/internal/database/sqlitetest"
 	"yomifolio/internal/task"
 )
 
@@ -20,13 +18,7 @@ import (
 func newDBForTest(t *testing.T) *sql.DB {
 	t.Helper()
 
-	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "taskstore.db")+
-		"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=busy_timeout=15000&_txlock=immediate")
-	if err != nil {
-		t.Fatalf("open db failed: %v", err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
-	return db
+	return sqlitetest.Open(t, "taskstore.db")
 }
 
 // newStoreForTest 在临时目录建一个开着外键的库并迁移到位。

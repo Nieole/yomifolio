@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	_ "modernc.org/sqlite"
+
+	"yomifolio/internal/database/sqliteconn"
 )
 
 func TestMigrateCreatesTaskRunTablesAndDropsLegacyTasks(t *testing.T) {
@@ -16,7 +18,7 @@ func TestMigrateCreatesTaskRunTablesAndDropsLegacyTasks(t *testing.T) {
 	if err := Migrate(dbPath); err != nil {
 		t.Fatalf("migrate failed: %v", err)
 	}
-	db, err := sql.Open("sqlite", sqliteDSN(dbPath))
+	db, err := sql.Open("sqlite", sqliteconn.DSN(dbPath))
 	if err != nil {
 		t.Fatalf("open db failed: %v", err)
 	}

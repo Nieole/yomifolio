@@ -2,31 +2,23 @@ package application_test
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-	"path/filepath"
 	"testing"
 	"time"
 
-	_ "modernc.org/sqlite"
 	"yomifolio/internal/application"
 	"yomifolio/internal/config"
+	"yomifolio/internal/database/sqlitetest"
 	"yomifolio/internal/logger"
 	"yomifolio/internal/runhandle"
 	"yomifolio/internal/task"
 	"yomifolio/internal/taskstore"
 )
 
-// testRuns 照生产的日志与同步参数开任务库：默认的回滚日志下每次提交都要 fsync，而引擎是持着锁
-// 落盘的，磁盘一忙就会把 join 拖过这些用例给的截止时间。
+// testRuns 照生产连接参数开任务库：引擎是持着锁落盘的，提交一慢就会把 join 拖过这些用例给的截止时间。
 func testRuns(t *testing.T, background func(func()), publish func(task.Snapshot)) (*application.Runs, *task.Engine) {
 	t.Helper()
-	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "tasks.db")+
-		"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=busy_timeout=15000")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
+	db := sqlitetest.Open(t, "tasks.db")
 	if err := taskstore.Migrate(db); err != nil {
 		t.Fatal(err)
 	}

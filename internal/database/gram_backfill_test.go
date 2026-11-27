@@ -12,6 +12,8 @@ import (
 	"testing"
 
 	_ "modernc.org/sqlite"
+
+	"yomifolio/internal/database/sqliteconn"
 )
 
 func TestGramIndexBackfillOnUpgrade(t *testing.T) {
@@ -49,7 +51,7 @@ func TestGramIndexBackfillOnUpgrade(t *testing.T) {
 
 	expr, _ := gramMatchExpr("海贼")
 	// 回填前应当搜不到。
-	db, err := sql.Open("sqlite", sqliteDSN(dbPath))
+	db, err := sql.Open("sqlite", sqliteconn.DSN(dbPath))
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}

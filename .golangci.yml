@@ -8,7 +8,13 @@ version: "2"
 
 linters:
   default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    - forbidigo # 测试开 SQLite 走 sqlitetest.Open，见 settings.forbidigo
   settings:
+    forbidigo:
+      forbid:
+        - pattern: '^sql\.Open$'
+          msg: 测试开 SQLite 用 internal/database/sqlitetest.Open，连接参数与生产一致；确需非生产参数时加 //nolint:forbidigo 并写明原因
     errcheck:
       # Cleanup/teardown functions whose returned error is idiomatically ignored.
       exclude-functions:
@@ -44,6 +50,12 @@ linters:
       # exclude-function above misses them) are intentionally ignored across the codebase.
       - linters: [errcheck]
         source: '\.Close\(\)'
+      # forbidigo 只管测试：生产代码经 database 包开库，命令行工具开的是用户指定的库。
+      - linters: [forbidigo]
+        path-except: '_test\.go$'
+      # database 包自己的迁移测试要模拟旧库，连接参数由它们自己拼。
+      - linters: [forbidigo]
+        path: 'internal/database/'
 
 formatters:
   enable:

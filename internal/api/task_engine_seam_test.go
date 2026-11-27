@@ -7,17 +7,14 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
-	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
-	_ "modernc.org/sqlite"
-
+	"yomifolio/internal/database/sqlitetest"
 	"yomifolio/internal/diskwork"
 	"yomifolio/internal/task"
 	"yomifolio/internal/taskstore"
@@ -77,12 +74,7 @@ func windowSteppingClock() func() time.Time {
 func newTaskTestStore(t testing.TB) task.Store {
 	t.Helper()
 
-	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "tasks.db")+
-		"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=busy_timeout=15000&_txlock=immediate")
-	if err != nil {
-		t.Fatalf("打开任务库失败: %v", err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
+	db := sqlitetest.Open(t, "tasks.db")
 	if err := taskstore.Migrate(db); err != nil {
 		t.Fatalf("迁移任务库失败: %v", err)
 	}
