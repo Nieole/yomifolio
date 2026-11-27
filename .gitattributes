@@ -13,3 +13,6 @@ LICENSES/** -text whitespace=-blank-at-eof
 # Keep generated review mockups and Python fixture recipes LF-clean across worktrees.
 .thinkrail/context/mockups/*.html text eol=lf
 internal/parser/testdata/*.py text eol=lf
+
+# CHANGELOG 统一 LF：编辑工具写回时不会再把整篇换行改掉，发布工作流按行截取 Release 正文。
+CHANGELOG.md text eol=lf
